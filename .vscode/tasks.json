@@ -34,14 +34,14 @@
             "type": "pickString",
             "description": "Select package (dropdown)",
             "options": [
-                "nikita_brain",
-                "nikita_communication",
-                "nikita_hmi",
-                "nikita_interfaces",
-                "nikita_lidar",
-                "nikita_movement",
-                "nikita_servo_controller",
-                "nikita_teleop"
+                "rumblex_brain",
+                "rumblex_communication",
+                "rumblex_hmi",
+                "rumblex_interfaces",
+                "rumblex_lidar",
+                "rumblex_movement",
+                "rumblex_servo_controller",
+                "rumblex_teleop"
             ],
             "default": "${relativeFileDirnameBasename}"
         }

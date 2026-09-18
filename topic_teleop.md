@@ -2,7 +2,7 @@
 
 ## stehe auf:
 ```
-ros2 topic pub --once /joystick_request nikita_interfaces/msg/JoystickRequest "header:
+ros2 topic pub --once /joystick_request rumblex_interfaces/msg/JoystickRequest "header:
   stamp:
     sec: 0
     nanosec: 0
@@ -27,7 +27,7 @@ right_stick_vertical: 0.0"
 
 ## cyclic movement
 ```
-ros2 topic pub --rate 10 /joystick_request nikita_interfaces/msg/JoystickRequest "header:
+ros2 topic pub --rate 10 /joystick_request rumblex_interfaces/msg/JoystickRequest "header:
   stamp:
     sec: 0
     nanosec: 0
@@ -50,7 +50,7 @@ right_stick_horizontal: 0.0
 right_stick_vertical: 0.0"
 ```
 ```
-ros2 topic pub --once /joystick_request nikita_interfaces/msg/JoystickRequest "header:
+ros2 topic pub --once /joystick_request rumblex_interfaces/msg/JoystickRequest "header:
   stamp:
     sec: 0
     nanosec: 0

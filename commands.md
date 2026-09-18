@@ -6,7 +6,7 @@ sudo systemctl status autostart_ros2
 
 ## install dependencies
 ```
-PIP_BREAK_SYSTEM_PACKAGES=1 rosdep install --from-paths ~/Workspace/colcon_nikita --ignore-src -r -y
+PIP_BREAK_SYSTEM_PACKAGES=1 rosdep install --from-paths ~/Workspace/colcon_rumblex --ignore-src -r -y
 
 python3 -m pip install lewansoul-lx16a --break-system-packages
 python3 -m pip install lewansoul-lx16a-terminal --break-system-packages
@@ -17,7 +17,7 @@ git submodule update --init
 ## build
 ```
 colcon build --symlink-install
-colcon build --packages-up-to nikita_servo
+colcon build --packages-up-to rumblex_servo
 ```
 
 ```
@@ -45,7 +45,7 @@ ros2 topic pub --once /speech_recognition_online std_msgs/msg/String data:\ "tes
 
 ros2 topic pub --once /request_music std_msgs/msg/String "{data: 'musicfox_hot_dogs_for_breakfast.mp3'}"
 
-ros2 topic pub --once /joystick_request nikita_interfaces/msg/JoystickRequest "header:
+ros2 topic pub --once /joystick_request rumblex_interfaces/msg/JoystickRequest "header:
   stamp:
     sec: 0
     nanosec: 0
@@ -83,7 +83,7 @@ right_stick_vertical: 0.0"
 ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.5, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.3}}"
 ---
 
-ros2 topic pub --once /cmd_movement nikita_interfaces/msg/MovementRequest "header:
+ros2 topic pub --once /cmd_movement rumblex_interfaces/msg/MovementRequest "header:
   stamp:
     sec: 0
     nanosec: 0
@@ -95,7 +95,7 @@ name: 'SEQUENCE_BODY_ROLL'
 "
 ---
 
-ros2 topic pub --once /cmd_movement nikita_interfaces/msg/MovementRequest "header:
+ros2 topic pub --once /cmd_movement rumblex_interfaces/msg/MovementRequest "header:
   stamp:
     sec: 0
     nanosec: 0
@@ -106,7 +106,7 @@ duration_s: 1.0
 name: ''
 "
 
-ros2 topic pub --once /cmd_movement nikita_interfaces/msg/MovementRequest "header:
+ros2 topic pub --once /cmd_movement rumblex_interfaces/msg/MovementRequest "header:
   stamp:
     sec: 0
     nanosec: 0
@@ -117,7 +117,7 @@ duration_s: 1.0
 name: 'CONTINUOUS_RUNNING'
 "
 
-ros2 topic pub --once /cmd_movement_update nikita_interfaces/msg/ContinuousMovementUpdate "header:
+ros2 topic pub --once /cmd_movement_update rumblex_interfaces/msg/ContinuousMovementUpdate "header:
   stamp:
     sec: 0
     nanosec: 0
@@ -135,7 +135,7 @@ head_orientation: {roll: 0.0, pitch: 0.0, yaw: 0.0}
 ros2 topic echo --once /movement_type_actual
 ---
 
-ros2 topic pub --once /servo_status nikita_interfaces/msg/ServoStatus "header:
+ros2 topic pub --once /servo_status rumblex_interfaces/msg/ServoStatus "header:
   stamp:
     sec: 0
     nanosec: 0
@@ -154,7 +154,7 @@ min_voltage: 12.0
 
 
 ```
-ros2 topic pub --once /single_servo_request nikita_interfaces/msg/ServoAngle "
+ros2 topic pub --once /single_servo_request rumblex_interfaces/msg/ServoAngle "
   name: LEG_RIGHT_BACK_COXA 
   angle_deg: 0.0"
 ```
@@ -162,17 +162,17 @@ ros2 topic pub --once /single_servo_request nikita_interfaces/msg/ServoAngle "
 ## launch robot
 ```
 source install/local_setup.bash
-ros2 launch nikita_bringup target_launch.py
-ros2 launch nikita_bringup test_launch.py
+ros2 launch rumblex_bringup target_launch.py
+ros2 launch rumblex_bringup test_launch.py
 
-ros2 launch nikita_brain brain_launch.py
-ros2 launch nikita_communication communication_launch.py
-ros2 launch nikita_movement movement_launch.py
-ros2 launch nikita_servo servo_launch.py
-ros2 launch nikita_teleop teleop_launch.py
-ros2 launch nikita_lidar lidar_launch.yaml
+ros2 launch rumblex_brain brain_launch.py
+ros2 launch rumblex_communication communication_launch.py
+ros2 launch rumblex_movement movement_launch.py
+ros2 launch rumblex_servo servo_launch.py
+ros2 launch rumblex_teleop teleop_launch.py
+ros2 launch rumblex_lidar lidar_launch.yaml
 
-#ros2 launch nikita_servo_controller servo_controller_launch.py
+#ros2 launch rumblex_servo_controller servo_controller_launch.py
 
 
 ```

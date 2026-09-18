@@ -1,0 +1,6 @@
+
+rumblex@raspberrypi
+
+/boot/firmware/config.txt
+
+/etc/udev/rules.d/99-com.rules

@@ -1,0 +1,66 @@
+@startuml
+
+package "rumblex_brain" {
+    package "action" {
+        class ActionPlanner
+        class StepExecutor
+    }
+    package "requester" {
+        interface IRequester {
+          enum class RequestType
+          enum class Prio
+          class RequestSystem
+          class RequestEyes
+          class RequestTalking
+          class RequestMusic
+          class RequestListening
+          class RequestMovementHead
+          class RequestMovementBody
+          void update()
+        }
+        IRequester <|-- OwnWill
+        IRequester <|-- Need
+        IRequester <|-- Teleop
+        IRequester <|-- Reflex
+    }
+    package "handler" {
+        interface IHandler {
+            bool m_isDone
+            ros::Timer timer
+            void update()
+            void cancel()
+        }
+        IHandler <|-- Movement
+        IHandler <|-- Eyes
+        IHandler <|-- CCommunication
+        IHandler <|-- CSystem
+    }
+    package "requester" {
+        class CRecognition
+        class CTextInterpreter
+        class TextParser
+        class Vocabulary
+        class CRecognition
+        class CAwareness {
+            struct m_data
+        }
+    }
+
+    StepExecutor --* ActionPlanner
+    ActionPlanner --o OwnWill
+    ActionPlanner --o Need
+    ActionPlanner --o Teleop
+    ActionPlanner --o Reflex
+    StepExecutor *-up- Movement
+    StepExecutor *-up- Eyes
+    StepExecutor *-up- CCommunication
+    StepExecutor *-up- CSystem
+    CAwareness --o CRecognition
+    TextParser --* CAwareness
+    Vocabulary --* TextParser
+    CTextInterpreter --* CAwareness
+    CAwareness -down-o OwnWill
+    CAwareness -down-o Need
+    CAwareness -down-o Teleop
+}
+@enduml

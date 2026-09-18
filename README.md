@@ -1,9 +1,15 @@
 
-# Nikita Hexapod Robot (Maker Project)
+# RumbleX Hexapod Platform (Maker Project)
 
 **⚠️ WARNING: This repository is under heavy development! Breaking changes, incomplete features, and experimental code are expected. Use at your own risk. Contributions, feedback, and ideas are welcome.**
 
-Nikita is an open-source, modular hexapod robot platform for makers, tinkerers, and robotics enthusiasts. The project is built around ROS2 and aims to be a flexible playground for learning, hacking, and experimenting with robotics and human-machine interaction. 
+RumbleX is an open-source, modular hexapod robot platform for makers, tinkerers, and robotics enthusiasts. The project is built around ROS2 and aims to be a flexible playground for learning, hacking, and experimenting with robotics and human-machine interaction.
+
+The first robot built on the platform is **Nox**, which uses the existing hardware and configuration. A
+second robot, **Nira**, is planned. Shared ROS packages therefore use the `rumblex_` prefix, while
+robot-specific parameters and models are selected by the lowercase `robot` launch argument. Nox is the
+default (`robot:=nox`). See [ROBOT_PROFILES.md](ROBOT_PROFILES.md) for the profile layout and the files
+needed to add Nira.
 
 ## Features & Goals
 - **Maker Focus**: Designed for hands-on experimentation, learning, and creative robotics projects.
@@ -17,24 +23,24 @@ Nikita is an open-source, modular hexapod robot platform for makers, tinkerers, 
 
 
 ## Project Structure
-- `nikita_brain/`         — High-level behavior, action planning, and coordination
-- `nikita_movement/`      — Gait, kinematics, and movement primitives
-- `nikita_communication/` — Speech recognition, TTS, chatbot, and audio I/O
-- `nikita_hmi/`           — Human-machine interface (OLED, relay control)
-- `nikita_teleop/`        — Teleoperation (joystick, remote)
-- `nikita_lidar/`         — LIDAR sensor integration
-- `nikita_navigation/`    — 1D-lidar head-sweep navigation with obstacle avoidance
-- `nikita_interfaces/`    — Custom ROS2 message and service definitions
-- `nikita_bringup/`       — Launch and bringup scripts
-- `nikita_doc/`           — Documentation, diagrams, and hardware info
-- `nikita_utils/`         — Shared utilities, math helpers, and tests
-- `nikita_description/`   — URDF/XACRO robot model for visualization and simulation
-- `nikita_gazebo/`        — Gazebo Harmonic simulation (gz-sim 8.x)
+- `rumblex_brain/`         — High-level behavior, action planning, and coordination
+- `rumblex_movement/`      — Gait, kinematics, and movement primitives
+- `rumblex_communication/` — Speech recognition, TTS, chatbot, and audio I/O
+- `rumblex_hmi/`           — Human-machine interface (OLED, relay control)
+- `rumblex_teleop/`        — Teleoperation (joystick, remote)
+- `rumblex_lidar/`         — LIDAR sensor integration
+- `rumblex_navigation/`    — 1D-lidar head-sweep navigation with obstacle avoidance
+- `rumblex_interfaces/`    — Custom ROS2 message and service definitions
+- `rumblex_bringup/`       — Launch and bringup scripts
+- `rumblex_doc/`           — Documentation, diagrams, and hardware info
+- `rumblex_utils/`         — Shared utilities, math helpers, and tests
+- `rumblex_description/`   — URDF/XACRO robot model for visualization and simulation
+- `rumblex_gazebo/`        — Gazebo Harmonic simulation (gz-sim 8.x)
 
 ## Quick Start (for Makers)
 1. **Install Dependencies**
    ```bash
-   PIP_BREAK_SYSTEM_PACKAGES=1 rosdep install --from-paths ~/Workspace/colcon_nikita --ignore-src -r -y
+   PIP_BREAK_SYSTEM_PACKAGES=1 rosdep install --from-paths ~/Workspace/colcon_rumblex --ignore-src -r -y
    git submodule update --init --recursive
    ```
    If you want the simplest setup, keep using the full-workspace install above. If you want to split machines, the current package layout already allows two practical ROS setups:
@@ -46,44 +52,44 @@ Nikita is an open-source, modular hexapod robot platform for makers, tinkerers, 
    ```bash
    PIP_BREAK_SYSTEM_PACKAGES=1 rosdep install -r -y --ignore-src \
      --from-paths \
-       ~/Workspace/colcon_nikita/src/ros2_hexapod_nikita/nikita_interfaces \
-       ~/Workspace/colcon_nikita/src/ros2_hexapod_nikita/nikita_utils \
-       ~/Workspace/colcon_nikita/src/ros2_hexapod_nikita/nikita_movement \
-       ~/Workspace/colcon_nikita/src/ros2_hexapod_nikita/nikita_brain \
-       ~/Workspace/colcon_nikita/src/ros2_hexapod_nikita/nikita_communication \
-       ~/Workspace/colcon_nikita/src/ros2_hexapod_nikita/nikita_hmi \
-       ~/Workspace/colcon_nikita/src/ros2_hexapod_nikita/nikita_lidar \
-       ~/Workspace/colcon_nikita/src/ros2_hexapod_nikita/nikita_navigation \
-       ~/Workspace/colcon_nikita/src/ros2_hexapod_nikita/nikita_teleop \
-       ~/Workspace/colcon_nikita/src/ros2_hexapod_nikita/nikita_bringup
+       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_interfaces \
+       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_utils \
+       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_movement \
+       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_brain \
+       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_communication \
+       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_hmi \
+       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_lidar \
+       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_navigation \
+       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_teleop \
+       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_bringup
 
-   colcon build --symlink-install --packages-up-to nikita_bringup
+   colcon build --symlink-install --packages-up-to rumblex_bringup
    ```
 
    **Remote PC / simulation and GUI tools**
    - Intended for Gazebo, RViz, URDF inspection, and desktop debugging.
    - Keeps shared logic packages plus the visualization/simulation packages.
-   - Can skip robot-only hardware packages such as `nikita_hmi` and usually `nikita_bringup`.
+   - Can skip robot-only hardware packages such as `rumblex_hmi` and usually `rumblex_bringup`.
    ```bash
    PIP_BREAK_SYSTEM_PACKAGES=1 rosdep install -r -y --ignore-src \
      --from-paths \
-       ~/Workspace/colcon_nikita/src/ros2_hexapod_nikita/nikita_interfaces \
-       ~/Workspace/colcon_nikita/src/ros2_hexapod_nikita/nikita_utils \
-       ~/Workspace/colcon_nikita/src/ros2_hexapod_nikita/nikita_movement \
-       ~/Workspace/colcon_nikita/src/ros2_hexapod_nikita/nikita_brain \
-       ~/Workspace/colcon_nikita/src/ros2_hexapod_nikita/nikita_communication \
-       ~/Workspace/colcon_nikita/src/ros2_hexapod_nikita/nikita_navigation \
-       ~/Workspace/colcon_nikita/src/ros2_hexapod_nikita/nikita_description \
-       ~/Workspace/colcon_nikita/src/ros2_hexapod_nikita/nikita_gazebo
+       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_interfaces \
+       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_utils \
+       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_movement \
+       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_brain \
+       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_communication \
+       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_navigation \
+       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_description \
+       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_gazebo
 
    colcon build --symlink-install \
-     --packages-up-to nikita_gazebo nikita_description nikita_navigation
+     --packages-up-to rumblex_gazebo rumblex_description rumblex_navigation
    ```
 
    Notes:
-   - The split is already possible because the GUI-heavy dependencies are isolated mainly in `nikita_description` and `nikita_gazebo`, while `nikita_bringup` stays on the robot/runtime side.
+   - The split is already possible because the GUI-heavy dependencies are isolated mainly in `rumblex_description` and `rumblex_gazebo`, while `rumblex_bringup` stays on the robot/runtime side.
    - Do not run `rosdep install --from-paths ...` over the entire workspace on the robot if you want a lean headless install, because that will pull the Gazebo and RViz dependencies too.
-   - This is currently a documentation-level split, not a fully formalized profile system. If you later want stricter separation, the next step would be to introduce dedicated metapackages such as `nikita_robot` and `nikita_desktop`.
+   - Robot-specific configuration is selected independently through the `robot` launch argument.
 2. **Build the Workspace**
    ```bash
    colcon build --symlink-install
@@ -91,27 +97,27 @@ Nikita is an open-source, modular hexapod robot platform for makers, tinkerers, 
    ```
 3. **Launch the Robot**
    ```bash
-   ros2 launch nikita_bringup target_launch.py
+   ros2 launch rumblex_bringup target_launch.py robot:=nox
    # with navigation enabled
-   ros2 launch nikita_bringup target_launch.py enable_navigation:=true
+   ros2 launch rumblex_bringup target_launch.py robot:=nox enable_navigation:=true
    # or for testing
-   ros2 launch nikita_bringup test_launch.py
+   ros2 launch rumblex_bringup test_launch.py robot:=nox
    ```
 4. **Launch Individual Components**
    ```bash
-   ros2 launch nikita_brain brain_launch.py
-   ros2 launch nikita_communication communication_launch.py
-   ros2 launch nikita_movement movement_launch.py
-   ros2 launch nikita_teleop teleop_launch.py
-   ros2 launch nikita_lidar lidar_launch.yaml
-   ros2 launch nikita_navigation navigation_launch.py
+   ros2 launch rumblex_brain brain_launch.py
+   ros2 launch rumblex_communication communication_launch.py
+   ros2 launch rumblex_movement movement_launch.py
+   ros2 launch rumblex_teleop teleop_launch.py
+   ros2 launch rumblex_lidar lidar_launch.py
+   ros2 launch rumblex_navigation navigation_launch.py
    # with map server
-   ros2 launch nikita_navigation navigation_launch.py enable_map:=true
+   ros2 launch rumblex_navigation navigation_launch.py enable_map:=true
    ```
 5. **Interact & Hack**
    - Send movement commands:
      ```bash
-     ros2 topic pub --once /cmd_movement nikita_interfaces/msg/MovementRequest "..."
+     ros2 topic pub --once /cmd_movement rumblex_interfaces/msg/MovementRequest "..."
      ```
    - Monitor topics:
      ```bash
@@ -124,7 +130,7 @@ Nikita is an open-source, modular hexapod robot platform for makers, tinkerers, 
      ```
    - Joystick/teleop:
      ```bash
-     ros2 topic pub --once /joystick_request nikita_interfaces/msg/JoystickRequest "..."
+     ros2 topic pub --once /joystick_request rumblex_interfaces/msg/JoystickRequest "..."
      ```
 
 ## Simulation & Visualization
@@ -133,12 +139,12 @@ Nikita is an open-source, modular hexapod robot platform for makers, tinkerers, 
 Visualize the URDF model with interactive joint sliders — no Gazebo or hardware needed:
 ```bash
 source install/setup.bash
-ros2 launch nikita_description display.launch.py
+ros2 launch rumblex_description display.launch.py
 ```
 
 To preview the CAD/STL-based model instead, use its separate launch file:
 ```bash
-ros2 launch nikita_description display_mesh.launch.py
+ros2 launch rumblex_description display_mesh.launch.py
 ```
 The original primitive model remains available through `display.launch.py`.
 
@@ -154,22 +160,22 @@ sudo apt-get install ros-jazzy-gz-ros2-control ros-jazzy-controller-manager \
 sudo apt-get install ros-jazzy-nav2-map-server ros-jazzy-nav2-lifecycle-manager
 
 # Build and launch
-colcon build --symlink-install --packages-select nikita_description nikita_gazebo
+colcon build --symlink-install --packages-select rumblex_description rumblex_gazebo
 source install/setup.bash
-ros2 launch nikita_gazebo gazebo.launch.py
+ros2 launch rumblex_gazebo simulation_gazebo.launch.py robot:=nox
 
 # Launch with the simple room world and navigation
-ros2 launch nikita_gazebo simulation_gazebo.launch.py \
-  world:=$(ros2 pkg prefix nikita_gazebo)/share/nikita_gazebo/worlds/simple_room.sdf \
+ros2 launch rumblex_gazebo simulation_gazebo.launch.py \
+  world:=$(ros2 pkg prefix rumblex_gazebo)/share/rumblex_gazebo/worlds/simple_room.sdf \
   enable_navigation:=true
 ```
 
 ### Mesh Model in Gazebo
 The mesh model has its own launch file and does not change the existing primitive-model simulation:
 ```bash
-colcon build --symlink-install --packages-select nikita_description nikita_gazebo
+colcon build --symlink-install --packages-select rumblex_description rumblex_gazebo
 source install/setup.bash
-ros2 launch nikita_gazebo simulation_mesh.launch.py
+ros2 launch rumblex_gazebo simulation_mesh.launch.py
 ```
 This starts Gazebo Harmonic, spawns the STL-based robot, loads the existing 20-joint
 controller configuration, and starts the joint-state broadcaster. The mesh model omits
@@ -183,7 +189,7 @@ ros2 topic pub /forward_position_controller/commands std_msgs/msg/Float64MultiAr
 
 
 ## Raspberry Pi 5 Pin Layout
-The Raspberry Pi 5 inside Nikita hosts most of the human-machine interface hardware that lives in `nikita_hmi/`. The table follows the standard 40-pin header (odd numbers on the left when the USB ports face you). Pins with descriptions are currently wired up; empty cells are free for experiments.
+The Raspberry Pi 5 inside Nox hosts most of the human-machine interface hardware that lives in `rumblex_hmi/`. The table follows the standard 40-pin header (odd numbers on the left when the USB ports face you). Pins with descriptions are currently wired up; empty cells are free for experiments.
 
 | Pin   | Signal        | Usage                  | Pin    | Signal        | Usage               |
 | ----- | ------------- | ---------------------- | ------ | ------------- | ------------------- |
@@ -228,7 +234,7 @@ sudo systemctl status autostart_ros2
 
 
 ## Documentation
-- See `nikita_doc/` for hardware pinouts, protocol docs, and setup guides.
+- See `rumblex_doc/` for hardware pinouts, protocol docs, and setup guides.
 - Diagrams and images are provided for wiring and architecture overview.
 
 

@@ -1,7 +1,7 @@
 # topics of the node servo_controller 
 ```
 
-ros2 topic pub --once /servo_status nikita_interfaces/msg/ServoStatus "header:
+ros2 topic pub --once /servo_status rumblex_interfaces/msg/ServoStatus "header:
   stamp:
     sec: 0
     nanosec: 0
@@ -20,7 +20,7 @@ min_voltage: 12.0
 ## servo direct request
 ### set Servo ID
 ```
-ros2 topic pub --once /servo_direct_request nikita_interfaces/msg/ServoDirectRequest "
+ros2 topic pub --once /servo_direct_request rumblex_interfaces/msg/ServoDirectRequest "
 name: 'LEG_LEFT_FRONT_COXA'
 cmd: 13
 data1: 10
@@ -29,7 +29,7 @@ data2: 0
 ```
 
 
-ros2 topic pub --once /servo_request nikita_interfaces/msg/ServoRequest "header:
+ros2 topic pub --once /servo_request rumblex_interfaces/msg/ServoRequest "header:
   stamp:
     sec: 0
     nanosec: 0
@@ -79,7 +79,7 @@ time_to_reach_target_angles_ms: 3000"
 ```
 
 ```
-ros2 topic pub --once /single_servo_request nikita_interfaces/msg/ServoAngle "
+ros2 topic pub --once /single_servo_request rumblex_interfaces/msg/ServoAngle "
   name: LEG_RIGHT_BACK_COXA 
   angle_deg: 0.0"
 ```

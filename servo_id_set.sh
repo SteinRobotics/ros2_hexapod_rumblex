@@ -21,7 +21,7 @@ ID1="$2"
 echo "Lese ID von Servo '$SERVO_NAME' aus..."
 
 echo "Setze $SERVO_NAME auf ID $ID1..."
-ros2 topic pub --once /servo_direct_request nikita_interfaces/msg/ServoDirectRequest "
+ros2 topic pub --once /servo_direct_request rumblex_interfaces/msg/ServoDirectRequest "
 name: '$SERVO_NAME'
 cmd: 13
 data1: $ID1

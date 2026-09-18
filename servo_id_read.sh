@@ -18,7 +18,7 @@ fi
 SERVO_NAME="$1"
 echo "Lese ID von Servo '$SERVO_NAME' aus..."
 
-ros2 topic pub --once /servo_direct_request nikita_interfaces/msg/ServoDirectRequest "
+ros2 topic pub --once /servo_direct_request rumblex_interfaces/msg/ServoDirectRequest "
 name: '$SERVO_NAME'
 cmd: 14
 data1: 0

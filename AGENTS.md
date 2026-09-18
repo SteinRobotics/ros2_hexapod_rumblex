@@ -2,13 +2,16 @@
 
 ## Project Structure & Module Organization
 
-This repository is a ROS 2 colcon workspace for the Nikita hexapod. Runtime packages are organized by responsibility:
+This repository is a ROS 2 colcon workspace for the RumbleX hexapod platform. Nox is the existing robot;
+Nira is the planned second robot. Runtime packages are organized by responsibility:
 
-- `nikita_movement/`, `nikita_brain/`, and `nikita_communication/` contain core robot behavior and C++/Python nodes.
-- `nikita_interfaces/` defines shared ROS messages; `nikita_utils/` contains reusable C++ helpers.
-- `nikita_bringup/`, `nikita_teleop/`, `nikita_hmi/`, `nikita_lidar/`, and `nikita_navigation/` provide hardware integration and launchable components.
-- `nikita_description/` and `nikita_gazebo/` contain the robot model and simulation assets.
-- Package sources, headers, launch files, configuration, and package-local tests belong inside their respective package directories. Hardware and setup documentation is under `nikita_doc/`.
+- `rumblex_movement/`, `rumblex_brain/`, and `rumblex_communication/` contain core robot behavior and C++/Python nodes.
+- `rumblex_interfaces/` defines shared ROS messages; `rumblex_utils/` contains reusable C++ helpers.
+- `rumblex_bringup/`, `rumblex_teleop/`, `rumblex_hmi/`, `rumblex_lidar/`, and `rumblex_navigation/` provide hardware integration and launchable components.
+- `rumblex_description/` and `rumblex_gazebo/` contain the robot model and simulation assets.
+- Package sources, headers, launch files, configuration, and package-local tests belong inside their respective package directories. Hardware and setup documentation is under `rumblex_doc/`.
+- Keep robot-specific parameters in `config/<robot>/` directories and select them with the lowercase
+  `robot` launch argument. Do not put Nox-specific values back into shared package-level configuration.
 
 ## Build, Test, and Development Commands
 
@@ -27,7 +30,7 @@ colcon test --packages-select <package_name> --event-handlers console_direct+
 colcon test-result --verbose
 ```
 
-Use package launch files for local checks, for example `ros2 launch nikita_movement movement_launch.py` or `ros2 launch nikita_gazebo simulation_gazebo.launch.py`.
+Use package launch files for local checks, for example `ros2 launch rumblex_movement movement_launch.py` or `ros2 launch rumblex_gazebo simulation_gazebo.launch.py`.
 
 ## Coding Style & Naming Conventions
 
@@ -39,4 +42,4 @@ C++ tests use `ament_cmake_gtest`/GMock and live in each package's `test/` direc
 
 ## Commit & Pull Request Guidelines
 
-Recent commits use short, imperative, lowercase summaries such as `add servo interface board` and `move cad files to nikita_description`. Keep commits focused and use the same style. Pull requests should explain the behavior or hardware change, identify affected packages, include test/build commands and results, and attach screenshots or logs for visualization, UI, or hardware-facing changes. Call out required ROS dependencies and configuration changes explicitly.
+Recent commits use short, imperative, lowercase summaries such as `add servo interface board` and `move cad files to rumblex_description`. Keep commits focused and use the same style. Pull requests should explain the behavior or hardware change, identify affected packages, include test/build commands and results, and attach screenshots or logs for visualization, UI, or hardware-facing changes. Call out required ROS dependencies and configuration changes explicitly.

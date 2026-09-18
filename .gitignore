@@ -51,12 +51,12 @@ Thumbs.db
 *.mov
 *.wmv
 
-nikita_communication/soundfiles/
-nikita_communication/tts_cache/
-nikita_communication/keys/
-nikita_communication/models/
-nikita_description/cad/imported/
-nikita_description/cad/generated/
+rumblex_communication/soundfiles/
+rumblex_communication/tts_cache/
+rumblex_communication/keys/
+rumblex_communication/models/
+rumblex_description/cad/imported/
+rumblex_description/cad/generated/
 
 build/
 log/

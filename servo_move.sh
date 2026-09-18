@@ -10,7 +10,7 @@ SERVO_NAME="$1"
 ANGLE_DEG="$2"
 echo "Setze Servo '$SERVO_NAME' auf '$ANGLE_DEG'°"
 
-ros2 topic pub --once /single_servo_request nikita_interfaces/msg/ServoAngle "
+ros2 topic pub --once /single_servo_request rumblex_interfaces/msg/ServoAngle "
 name: '$SERVO_NAME'
 angle_deg: '$ANGLE_DEG'"
 

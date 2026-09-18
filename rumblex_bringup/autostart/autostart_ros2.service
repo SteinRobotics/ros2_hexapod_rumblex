@@ -1,0 +1,42 @@
+# Install:
+# sudo loginctl enable-linger rumblex
+# to be placed in /etc/systemd/system/autostart_ros2.service
+# sudo systemctl enable autostart_ros2.service
+# sudo systemctl list-units
+# sudo systemctl start autostart_ros2
+# sudo systemctl status autostart_ros2
+# sudo systemctl disable autostart_ros2.service
+# sudo systemctl is-enabled autostart_ros2.service
+
+# Reload
+# sudo systemctl daemon-reload
+
+# Debug:
+# journalctl -u autostart_ros2.service -b
+
+[Unit]
+Description=ROS2 Bringup
+After=network-online.target sound.target pipewire.service
+Wants=network-online.target pipewire.service
+
+[Service]
+User=rumblex
+Group=rumblex
+WorkingDirectory=/home/rumblex
+
+# Attach to your audio session
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=PULSE_SERVER=unix:/run/user/1000/pulse/native
+Environment=PIPEWIRE_RUNTIME_DIR=/run/user/1000
+Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
+
+# Allow access to sound devices
+SupplementaryGroups=audio
+
+ExecStart=/bin/bash -lc 'source /home/rumblex/Workspace/colcon_rumblex/install/setup.bash && ros2 launch rumblex_bringup target_launch.py robot:=nox'
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+
