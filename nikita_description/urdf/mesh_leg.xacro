@@ -53,7 +53,9 @@
     </joint>
     <link name="${prefix}_tibia_link">
       <visual>
-        <origin xyz="-0.015 0.04 0" rpy="${-90 * pi / 180} ${90 * pi / 180} ${180 * pi / 180}"/>
+        <!-- Rotate the CAD mesh by 90 degrees about the servo axis (link X),
+             including its offset from that axis, to match assembly_complete.py. -->
+        <origin xyz="-0.015 0 0.04" rpy="${-180 * pi / 180} 0 ${90 * pi / 180}"/>
         <geometry><mesh filename="package://nikita_description/meshes/assembly_tibia.stl" scale="${mesh_scale}"/></geometry>
         <material name="light_blue"/>
       </visual>
