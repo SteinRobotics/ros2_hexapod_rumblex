@@ -56,7 +56,7 @@ def servo_location(config: body_common.ServoCutoutConfig, z: float = SERVO_Z):
     """Return the world transform for a servo at a body cutout.
 
     ``config.offset_*`` locates the centre of the cutout, whereas a servo's
-    local origin is at the lower mounting-hole row.  Keeping that correction
+    local origin is at the bottom of the case. Keeping that correction
     here makes every consumer use the same convention.
     """
     angle = config.rotation_deg_clockwise
@@ -96,11 +96,9 @@ def build_assembly() -> Compound:
     servo_instances = []
     for name, config in body_common.SERVO_CUTOUT_CONFIGS.items():
         instance = servo_location(config) * servo_part
-        # TODO: add a rotation joint for each servo
         instance.label = f"servo_{name}"
         servo_instances.append(instance)
         servo_by_name[f"servo_{name}"] = instance
-        print(f"Placed servo '{name}' at position: {instance.location.position}")
 
     # add pcbs
     rpi_board = place_board(board_rpi5, LOCATION_RPI5)

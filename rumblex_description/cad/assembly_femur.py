@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from build123d import Compound, Pos, Rot, export_step, export_stl, import_step, RevoluteJoint, RigidJoint, Axis
+from build123d import Compound, Pos, Rot, export_step, export_stl, import_step, RevoluteJoint, RigidJoint
 
 
 from utils.colors import COLOR_DARK_GRAY
@@ -10,8 +10,11 @@ import servo_simplified
 import bracket_inclined
 from utils.ocp_utils import show
 
-BRAKET_BOTTOM_Z_OFFSET = 5.65  # mm
-BRAKET_INCLINED_X_OFFSET = -4.5  # mm
+# Retained fit offset for the vendor STEP; verify against the physical bracket.
+BRACKET_BOTTOM_INSERTION = 5.65
+
+# Turn the femur over about its length, keeping both horns seated in the coxa.
+FEMUR_ROLL = 180.0  # degrees about local Z
 
 def _center_xy_below(part, reference_bb):
     """Translate part so its XY is centred under reference_bb and its top (Z_max) touches reference_bb.min.Z."""
@@ -27,23 +30,42 @@ def build_assembly() -> Compound:
     servo = servo_simplified.build_model()
     servo.color = COLOR_DARK_GRAY
 
-    bracket_botton = import_step(str(Path(__file__).parent / "imported" / "HX-35HM Botton Bracket.STEP"))
-    bracket_botton.color = COLOR_DARK_GRAY
+    bracket_bottom = import_step(str(Path(__file__).parent / "imported" / "HX-35HM Botton Bracket.STEP"))
+    bracket_bottom.color = COLOR_DARK_GRAY
 
-    bracket_inclinded_u_shape = bracket_inclined.build_bracket()
-    bracket_inclinded_u_shape.color = COLOR_DARK_GRAY
+    inclined_bracket = bracket_inclined.build_bracket()
+    inclined_bracket.color = COLOR_DARK_GRAY
 
     servo_bb = servo.bounding_box()
-    bracket_botton_placed = _center_xy_below(Rot(180, 0, 90) * bracket_botton, servo_bb)
-    bracket_botton_placed = Pos(0, 0, BRAKET_BOTTOM_Z_OFFSET) * bracket_botton_placed
+    bracket_bottom_placed = _center_xy_below(Rot(180, 0, 90) * bracket_bottom, servo_bb)
+    bracket_bottom_placed = Pos(0, 0, BRACKET_BOTTOM_INSERTION) * bracket_bottom_placed
     
-    bracket_inclinded_placed = _center_xy_below(Rot(0, 0, 90) * Rot(bracket_inclined.THETA_DEG, 0, 0) * bracket_inclinded_u_shape, bracket_botton_placed.bounding_box())
-    bracket_inclinded_placed = Pos(BRAKET_INCLINED_X_OFFSET, 0, 0) * bracket_inclinded_placed
+    inclined_placed = Rot(0, 0, 90) * Rot(bracket_inclined.THETA_DEG, 0, 0) * inclined_bracket
+    mount = inclined_placed.joints["plate_mount"].location.position
+    bottom_box = bracket_bottom_placed.bounding_box()
+    inclined_placed = Pos(
+        bottom_box.center().X - mount.X,
+        bottom_box.center().Y - mount.Y,
+        bottom_box.min.Z - mount.Z,
+    ) * inclined_placed
 
 
-    femur = Compound(children=[servo, bracket_botton_placed, bracket_inclinded_placed])
-    RevoluteJoint("femur_to_coxa_revolute", femur, axis=Axis((0, 0, servo_simplified.HORN_Z_CTR), (0, 1, 0)))
-    RigidJoint("femur_to_tibia_fixed", femur, bracket_inclinded_placed.joints["fixed"].location)
+    back_horn_face_y = (
+        servo_simplified.BODY_Y
+        + servo_simplified.HORN_DISTANCE_TO_BODY
+        + servo_simplified.HORN_BACK_Y
+    )
+    horn_mid_y = (servo_simplified.HORN_FRONT_FACE_Y + back_horn_face_y) / 2
+    roll = Pos(0, horn_mid_y, 0) * Rot(0, 0, FEMUR_ROLL) * Pos(0, -horn_mid_y, 0)
+    servo = roll * servo
+    bracket_bottom_placed = roll * bracket_bottom_placed
+    inclined_placed = roll * inclined_placed
+
+    femur = Compound(children=[servo, bracket_bottom_placed, inclined_placed])
+    # The rear horn now occupies the original front mating face. Keep the
+    # incoming interface fixed; the tibia interface follows the rolled bracket.
+    RevoluteJoint("femur_to_coxa_revolute", femur, axis=servo_simplified.HORN_AXIS)
+    RigidJoint("femur_to_tibia_fixed", femur, inclined_placed.joints["fixed"].location)
     return femur
 
 

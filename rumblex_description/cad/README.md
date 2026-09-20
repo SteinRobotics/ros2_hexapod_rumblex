@@ -1,66 +1,50 @@
-# Hexapod Leg CAD (build123d)
+# RumbleX CAD (build123d)
 
-Parametric CAD scripts for a hexapod leg plate, spacer, and servo-mounted assemblies using build123d.
-
-## Project Layout
-
-- `leg_top.py`: 2D plate sketch + extrusion, exports STEP and DXF
-- `spacer.py`: cylindrical spacer model with center hole, exports STEP and STL
-- `assembly_leg_with_spacers.py`: leg plate + spacer assembly
-- `assembly_leg_with_servo_HX35H.py`: HX-35H servo + leg assembly
-- `assembly_leg_with_servo_ST3215.py`: ST3215 servo + leg assembly
-- `assembly_leg_with_servo_and_bracket.py`: ST3215 servo + leg + imported bracket assembly
-- `cad_config.py`: shared dimensions and placement offsets
-- `ocp_utils.py`: optional viewer helper for OCP CAD Viewer
-- `imported/`: vendor STEP assets used by assemblies
-- `generated/`: exported output files
-
-## Requirements
-
-- Python 3.10+
-- build123d
-- ocp_vscode (optional, for in-editor viewing)
-
-Install:
+Run scripts from this directory with Python 3.10+ and `build123d` installed.
+`ocp_vscode` is optional for viewing. Vendor STEP files live in `imported/`;
+scripts export to `generated/` when run directly.
 
 ```bash
-python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip
-pip install build123d ocp_vscode
+python assembly_leg.py
+python assembly_complete.py
+python -m unittest test_cad_geometry -v
 ```
 
-## Usage
+## Dimensions and joints
 
-Run any script directly to generate outputs into `generated/`.
+All lengths are in millimetres and angles in degrees. Servo dimensions and
+mounting-hole positions are defined in `servo_simplified.py`. Foot and body
+cutout hole patterns use those same dimensions; drawing polygons retain their
+original coordinates with `align=None`.
 
-```bash
-python leg_top.py
-python spacer.py
-python assembly_leg_with_spacers.py
-python assembly_leg_with_servo_HX35H.py
-python assembly_leg_with_servo_ST3215.py
-python assembly_leg_with_servo_and_bracket.py
-```
+The servo rotation joint is at the front horn's outer mounting face. Bracket
+joints are at the matching inner leg face, centred on the shaft hole. The
+37 mm bracket opening matches the distance between the servo's outer horn
+faces. Assemblies connect these joints directly, without translations or
+rotations after connection. Inclined brackets also expose a `plate_mount`
+joint at the centre of their outer top face.
 
-## Shared Parameters
+The femur is rolled 180 degrees about its longitudinal (local Z) axis through
+the midpoint between the horn faces. Its rear horn mates with the coxa; the
+outgoing tibia interface follows the rolled bracket.
+The tibia is likewise rolled 180 degrees about its lengthwise axis (local X),
+through the horn midpoint at shaft height, so its rear horn mates with the femur.
 
-Common dimensions and placement offsets are centralized in `cad_config.py`.
+`assembly_leg.attach_leg()` is shared by the standalone leg and complete robot.
+Angles specify rotation about the mating axis; negative angles are supported.
+The display pose uses 90 degrees at the femur and -90 degrees at the tibia to
+place the feet below the body. These are pose settings, not dimensional fit
+corrections; the old corrected zero-angle pose is not preserved.
 
-- Spacer dimensions:
-  - `FOOT_SPACER_OUTER_DIAMETER`
-  - `SPACER_STUD_HOLE_DIAMETER`
-  - `SPACER_OVERALL_LENGTH`
-- Assembly placement offsets:
-  - `ST3215_LEG_OFFSET_X`
-  - `ST3215_LEG_OFFSET_Z`
-  - `HX35H_LEG_OFFSET_X`
-  - `HX35H_LEG_OFFSET_Y`
-  - `HX35H_LEG_OFFSET_Z`
+## Remaining vendor fits
 
-Adjusting these values updates all consumers that import them.
+The bottom bracket's 5.65 mm insertion and the head side bracket's registration
+offset are retained empirical fits to vendor STEP geometry. They still need
+physical verification. The separate `assembly_tibia_HX35H.py` vendor-servo
+example also retains its original offsets.
 
-## Notes
-
-- Imported STEP assets are expected at fixed paths under `imported/`.
-- `ocp_utils.show(...)` is safe to call even when the viewer backend is not running; it no-ops in that case.
+The headless tests check joint coincidence and shaft alignment, foot mounting
+hole alignment, bracket width, drawing coordinates, solid validity and the
+complete robot's default foot placement. They do not certify collision-free
+motion or manufacturing tolerances.

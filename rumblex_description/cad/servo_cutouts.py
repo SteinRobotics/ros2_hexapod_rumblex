@@ -16,7 +16,7 @@ from build123d import (
 from utils.geometry_utils import mirror_points_vertical_axis as mirror_y
 from utils.ocp_utils import show
 
-from servo_with_connections import SERVO_CONNECTIONS_FLAT
+from servo_simplified import HOLE_X, HOLE_Z_LOW, HOLE_Z_HIGH, M2_R
 
 THICKNESS = 1.5
 M2_RADIUS = 1.0
@@ -70,13 +70,15 @@ OUTLINE_POINTS_FOR_TESTING = [
 # ]
 
 SERVO_BRACKET_HOLES = [
-    (x, y, M2_RADIUS) for x, y in SERVO_CONNECTIONS_FLAT
+    (x, y, M2_R)
+    for x in (-HOLE_X, HOLE_X)
+    for y in (-(HOLE_Z_HIGH - HOLE_Z_LOW) / 2, (HOLE_Z_HIGH - HOLE_Z_LOW) / 2)
 ]
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
         Polygon(*OUTLINE_POINTS_FOR_TESTING)
-        Polygon(*SERVO_FRONT_CUTOUT, mode=Mode.SUBTRACT)
+        Polygon(*SERVO_FRONT_CUTOUT, align=None, mode=Mode.SUBTRACT)
 
         for x, y, radius in SERVO_BRACKET_HOLES:
             with Locations((x, y)):

@@ -23,13 +23,13 @@ from utils.ocp_utils import show
 
 from utils.colors import COLOR_DARK_GRAY
 
-from servo_cutouts import *
-
 # ── Outer-body dimensions (mm) ───────────────────────────────────────────────
 # Main rectangular case
 BODY_W = 25.00  # X width
 BODY_Y = 29.00   # Y depth
 BODY_H  = 45.00   # total height (Z); base rests on Z = 0
+CASE_FLANGE_THICKNESS = 1.5
+CASE_FLANGE_HEIGHT = 28.0
 
 
 # Servo horn Z centre
@@ -40,6 +40,11 @@ HORN_R       = 10.00
 HORN_FRONT_Y = 3.50
 HORN_BACK_Y  = 3.00
 HORN_DISTANCE_TO_BODY = 0.75
+HORN_FRONT_FACE_Y = -HORN_DISTANCE_TO_BODY - HORN_FRONT_Y
+
+# Shared by the servo and assemblies containing it. The joint origin is on
+# the horn's outer mounting face, where the bracket's inner face touches it.
+HORN_AXIS = Axis((0, HORN_FRONT_FACE_Y, HORN_Z_CTR), (0, 1, 0))
 
 # M2 mounting holes (through the servo body in the Y direction)
 M2_R        = 1.00
@@ -70,19 +75,19 @@ def build_model() -> Part:
             
         # Servo horn rotation axis
         RevoluteJoint(
-        "rotation",
-        axis=Axis((0, 0, HORN_Z_CTR), (0, 1, 0))
+            "rotation",
+            axis=HORN_AXIS,
         )
 
         # 4 - add the front horn cutout with a 1.5 mm depth
-        plane = Plane(origin=(0.0, -0.75, 14.00), x_dir=(-1, 0, 0), z_dir=(0, 1, 0))
+        plane = Plane(origin=(0, -CASE_FLANGE_THICKNESS / 2, CASE_FLANGE_HEIGHT / 2), x_dir=(-1, 0, 0), z_dir=(0, 1, 0))
         with Locations(Location(plane)):
-            Box(BODY_W, 28.00, 1.5)
+            Box(BODY_W, CASE_FLANGE_HEIGHT, CASE_FLANGE_THICKNESS)
             
         # 5 - add the back horn cutout with a 1.5 mm depth
-        plane = Plane(origin=(0.0, BODY_Y + 0.75, 14.00), x_dir=(-1, 0, 0), z_dir=(0, 1, 0))
+        plane = Plane(origin=(0, BODY_Y + CASE_FLANGE_THICKNESS / 2, CASE_FLANGE_HEIGHT / 2), x_dir=(-1, 0, 0), z_dir=(0, 1, 0))
         with Locations(Location(plane)):
-            Box(BODY_W, 28.00, 1.5)
+            Box(BODY_W, CASE_FLANGE_HEIGHT, CASE_FLANGE_THICKNESS)
 
         # 8 - M2 mounting holes (through in Y, spanning back-plate to front-case)
         hole_depth = BODY_Y + 4.0   # +2 ensures clean Boolean cut

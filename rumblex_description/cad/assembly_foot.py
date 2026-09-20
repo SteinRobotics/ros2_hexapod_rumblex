@@ -5,16 +5,19 @@ from pathlib import Path
 from build123d import Compound, Pos, Rot, export_step
 
 FOOT_SPACER_OUTER_DIAMETER = 4.0
-FOOT_SPACER_OVERALL_LENGTH = 32.0
 FOOT_SPACER_STUD_HOLE_DIAMETER = 2.5
 import foot_back
 import foot_connection
 import foot_front
 import utils.spacer as spacer
 import toe
+import servo_simplified
 from utils.ocp_utils import show
 
 from utils.colors import COLOR_CREAMY_WHITE, COLOR_WINE_RED, COLOR_DARK_GRAY
+
+# Distance between the inside faces of the two foot plates.
+FOOT_SPACER_OVERALL_LENGTH = servo_simplified.BODY_Y + 2 * servo_simplified.CASE_FLANGE_THICKNESS
 
 
 TARGET_HOLE_X = foot_back.FOOT_MOUNT_HOLES[0]["x"]

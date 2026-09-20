@@ -8,8 +8,7 @@ A small U-shaped mounting bracket (e.g. servo / motor mount):
     flanking it 14mm apart).
   - A top plate joining the two legs, TILTED to match the legs'
     inclined top edge (so its underside sits flush on the slope),
-    carrying 3 elongated slots (for a servo horn / motor shaft
-    clearance) plus 4 small Ø2mm corner mounting holes.
+    carrying three shaft holes with four small mounting holes around each.
 
 All dimensions taken from the reference drawing (mm).
 """
@@ -44,8 +43,7 @@ SLOT_SPACING = 10.0
 # plate lives on so it sits flush against that slope.
 _THETA = math.atan2(LEG_H - LEG_H_LOW, PLATE_D)
 THETA_DEG = math.degrees(_THETA)                  # rotation to level the top plate for assembly
-# SLANT_DEPTH = PLATE_D / math.cos(_THETA)         # true plate depth along the slope
-SLANT_DEPTH = PLATE_D 
+SLANT_DEPTH = PLATE_D / math.cos(_THETA)  # full depth along the sloping top edge
 _ZC = (LEG_H + LEG_H_LOW) / 2                     # height of the slope's midpoint
  
 # Plane origin sits at the midpoint of the legs' top edge; its normal is
@@ -127,12 +125,14 @@ def build_bracket() -> Part:
         add(leg.locate(Location((-PLATE_W / 2, -PLATE_D / 2, 0))))
         add(leg.locate(Location((PLATE_W / 2 - LEG_T, -PLATE_D / 2, 0))))
 
-        # joint Z axis points along the leg hole axis (global X)
+        RigidJoint("plate_mount", joint_location=Location(PLATE_PLANE.offset(PLATE_T)))
+
+        # Inner mating face; joint Z points along the leg hole axis (global X).
         RigidJoint(
             label="fixed",
             joint_location=Location(
                 Plane(
-                    origin=(-PLATE_W / 2 + LEG_T / 2, 0, HOLE_ROW_Z),
+                    origin=(-PLATE_W / 2 + LEG_T, 0, HOLE_ROW_Z),
                     x_dir=(0, 0, 1),
                     z_dir=(1, 0, 0),
                 )
@@ -142,8 +142,6 @@ def build_bracket() -> Part:
     return bracket.part
  
 
-
-inclined_bracket = build_bracket()
 
 def main() -> None:
     bracket = build_bracket()

@@ -30,8 +30,8 @@ from foot_common import (THICKNESS,
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
-        Polygon(*FOOT_OUTLINE)
-        Polygon(*SERVO_BACK_CUTOUT, mode=Mode.SUBTRACT)
+        Polygon(*FOOT_OUTLINE, align=None)
+        Polygon(*SERVO_BACK_CUTOUT, align=None, mode=Mode.SUBTRACT)
 
         for x, y, radius in SERVO_BRACKET_HOLES:
             with Locations((x, y)):

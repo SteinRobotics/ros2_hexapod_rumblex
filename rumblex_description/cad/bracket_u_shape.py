@@ -6,9 +6,8 @@ A small U-shaped mounting bracket (e.g. servo / motor mount):
     each carrying 4 mounting holes
     (one Ø8mm centre hole, one Ø2mm hole above it, two Ø2mm holes
     flanking it 14mm apart).
-  - A top plate joining the two legs, TILTED to match the legs'
-    carrying 3 elongated slots (for a servo horn / motor shaft
-    clearance) plus 4 small Ø2mm corner mounting holes.
+  - A flat top plate joining the two legs, carrying three shaft holes
+    with four small mounting holes around each shaft hole.
 
 All dimensions taken from the reference drawing (mm).
 """
@@ -37,8 +36,7 @@ SERVO_HORN_HOLE_COUNT = 4   # cross pattern: up / down / left / right
 SLOT_SPACING = 10.0
  
 
-# Plane origin sits at the midpoint of the legs' top edge; its normal is
-# tilted by _THETA so the plane's own "bottom" face is flush with that edge.
+# The plate's bottom face is flush with the legs' horizontal top edges.
 PLATE_PLANE = Plane(
     origin=(0, 0, 0),
     x_dir=(1, 0, 0),
@@ -78,10 +76,7 @@ def leg_solid() -> Part:
  
 # -------------------------------------------------------------- top plate --
 def top_plate_solid() -> Part:
-    """Top plate built directly on PLATE_PLANE, so it comes out already
-    tilted to match the legs' inclined top edge. The plane's origin is the
-    plate's *bottom* face (flush against the legs), and it's extruded
-    upward along the plane's own normal by PLATE_T."""
+    """Extrude the top plate upward from the legs' top edges."""
  
     with BuildPart() as plate:
         with BuildSketch(PLATE_PLANE):
@@ -116,12 +111,12 @@ def build_bracket() -> Part:
         add(leg.locate(Location((-PLATE_W / 2, -PLATE_D / 2, -LEG_H))))
         add(leg.locate(Location((PLATE_W / 2 - LEG_T, -PLATE_D / 2, -LEG_H))))
  
-        # joint along the leg hole (BIG_HOLE_D) axis through the left and the right leg
+        # Inner mating face on the left leg, at the horn's centre hole.
         RigidJoint(
             label="fixed",
             joint_location=Location(
                 Plane(
-                    origin=(-PLATE_W / 2 + LEG_T / 2, 0, -LEG_H + HOLE_ROW_Z),
+                    origin=(-PLATE_W / 2 + LEG_T, 0, -LEG_H + HOLE_ROW_Z),
                     x_dir=(0, 0, 1),
                     z_dir=(1, 0, 0),
                 )
@@ -130,13 +125,11 @@ def build_bracket() -> Part:
  
     return bracket.part
  
-inclined_bracket = build_bracket()
-
 def main() -> None:
     bracket = build_bracket()
     Path("generated").mkdir(exist_ok=True)
-    export_step(bracket, "generated/inclined_bracket.step")
-    show(bracket, name="inclined_bracket", clear=True)
+    export_step(bracket, "generated/bracket_u_shape.step")
+    show(bracket, name="bracket_u_shape", clear=True)
     
 if __name__ == "__main__":
     main()

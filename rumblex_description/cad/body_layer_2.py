@@ -11,7 +11,7 @@ def build_surface() -> Sketch:
         add(body_common.build_surface())
 
         for points in body_common.SERVO_FRONT_CUTOUTS.values():
-            Polygon(*points, mode=Mode.SUBTRACT)
+            Polygon(*points, align=None, mode=Mode.SUBTRACT)
 
         for x, y, radius in body_common.LIST_SERVO_BRACKET_HOLES:
             with Locations((x, y)):

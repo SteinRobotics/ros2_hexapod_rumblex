@@ -14,6 +14,7 @@ from build123d import (
     Pos,
     Rectangle,
     RigidJoint,
+    RevoluteJoint,
     Rot,
     export_step,
     export_stl,
@@ -31,7 +32,12 @@ import servo_simplified
 # vertical pair of servo M2 holes.  This placement maps that pair onto the
 # servo's front (-Y) face at X = +HOLE_X.
 SIDE_BRACKET_ROTATION = Rot(0, 0, 90)
-SIDE_BRACKET_OFFSET = Pos(29.999, -44.3795 + servo_simplified.BODY_Y + 1.5, -165.2392)
+# Vendor STEP registration offset, retained until its mounting frame is measured.
+SIDE_BRACKET_OFFSET = Pos(
+    29.999,
+    -44.3795 + servo_simplified.BODY_Y + servo_simplified.CASE_FLANGE_THICKNESS,
+    -165.2392,
+)
 HEAD_POLYGON_RADIUS = 30.0  # mm, circumradius
 HEAD_POLYGON_THICKNESS = 20.0  # mm
 LIDAR_PLACEHOLDER_RADIUS = 10.0  # mm
@@ -40,7 +46,7 @@ LIDAR_PLACEHOLDER_CENTER_SPACING = 30.0  # mm
 
 
 def build_head_polygon(side_bracket: Part) -> Part:
-    """Build the octagonal head plate on the outer face of the side bracket."""
+    """Build a rounded square head plate on the outer face of the side bracket."""
     bracket_box = side_bracket.bounding_box()
     center_y = (bracket_box.min.Y + bracket_box.max.Y) / 2
     center_z = (bracket_box.min.Z + bracket_box.max.Z) / 2
@@ -115,6 +121,7 @@ def build_assembly(include_servo: bool = True) -> Compound:
     # ``servo`` is built even when it is not a visible child so this interface
     # remains valid with ``include_servo=False``.
     RigidJoint("servo_mount", head, servo.joints["rotation"].location)
+    RevoluteJoint("pitch", head, axis=servo_simplified.HORN_AXIS)
     return head
 
 

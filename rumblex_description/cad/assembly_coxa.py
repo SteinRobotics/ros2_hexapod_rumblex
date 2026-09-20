@@ -10,15 +10,13 @@ import bracket_inclined
 import bracket_u_shape
 from utils.ocp_utils import show
 
-BRACKET_INCLINED_Y_OFFSET = 4.5  # mm
-
 def _center_xy_below(part, reference_bb):
-    """Centre ``part`` under a reference box, with its top touching the box bottom."""
-    bb = part.bounding_box()
+    """Centre the bracket's top mounting face under the reference plate."""
+    mount = part.joints["plate_mount"].location.position
     return Pos(
-        (reference_bb.min.X + reference_bb.max.X) / 2 - (bb.min.X + bb.max.X) / 2,
-        (reference_bb.min.Y + reference_bb.max.Y) / 2 - (bb.min.Y + bb.max.Y) / 2,
-        reference_bb.min.Z - bb.max.Z,
+        reference_bb.center().X - mount.X,
+        reference_bb.center().Y - mount.Y,
+        reference_bb.min.Z - mount.Z,
     ) * part
 
 
@@ -35,7 +33,6 @@ def build_assembly() -> Compound:
         Rot(bracket_inclined.THETA_DEG, 0, 0) * bracket_inclined_part,
         bracket_straight_placed.bounding_box(),
     )
-    bracket_inclined_placed = Pos(0, BRACKET_INCLINED_Y_OFFSET, 0) * bracket_inclined_placed
 
 
     coxa = Compound(children=[bracket_straight_placed, bracket_inclined_placed])

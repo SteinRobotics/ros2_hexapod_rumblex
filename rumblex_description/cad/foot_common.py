@@ -48,7 +48,7 @@ TIP_SLOTS = [
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
-        Polygon(*FOOT_OUTLINE)
+        Polygon(*FOOT_OUTLINE, align=None)
 
         for hole in FOOT_MOUNT_HOLES:
             with Locations((hole["x"], hole["y"])):
