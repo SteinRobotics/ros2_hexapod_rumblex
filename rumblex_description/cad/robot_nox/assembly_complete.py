@@ -10,7 +10,7 @@ if __package__ in (None, ""):
 
 from robot_nox import EXPORT_DIR
 
-from build123d import Compound, export_step
+from build123d import Compound, export_step, export_stl
 
 import robot_nox.assembly_body_with_servos as assembly_body_with_servos
 import robot_nox.assembly_coxa as assembly_coxa
@@ -52,6 +52,7 @@ def main() -> None:
     assembly = build_assembly()
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
     export_step(assembly, str(EXPORT_DIR / "assembly_complete.step"))
+    export_stl(assembly, str(EXPORT_DIR / "assembly_complete.stl"))
     show(assembly, name="assembly_complete", clear=True)
 
 
