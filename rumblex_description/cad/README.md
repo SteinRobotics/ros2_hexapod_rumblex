@@ -14,7 +14,7 @@ python -m unittest test_cad_geometry -v
 ## Dimensions and joints
 
 All lengths are in millimetres and angles in degrees. Servo dimensions and
-mounting-hole positions are defined in `servo_simplified.py`. Foot and body
+mounting-hole positions and shared cutout profiles are defined in `servo_simplified.py`. Foot and body
 cutout hole patterns use those same dimensions; drawing polygons retain their
 original coordinates with `align=None`.
 

@@ -5,7 +5,13 @@ import os
 try:
     from ocp_vscode import show_object
     from ocp_vscode.comms import port_check
-    from ocp_vscode.state import get_ports
+    try:
+        from ocp_viewer_core.state import get_ports
+    except ModuleNotFoundError as exc:
+        # Before OCP Viewer 4.1, connection state lived in ocp_vscode.
+        if exc.name not in {"ocp_viewer_core", "ocp_viewer_core.state"}:
+            raise
+        from ocp_vscode.state import get_ports
 except Exception:
     show_object = None
     port_check = None

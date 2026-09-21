@@ -13,6 +13,7 @@ import body_common
 import body_layer_0
 import body_layer_1
 import body_layer_2
+import body_layer_3
 
 SPACER_OUTER_DIAMETER = 5.0
 SPACER_INNER_DIAMETER = 3.0
@@ -25,6 +26,7 @@ def build_assembly() -> Compound:
     body_layer_0_part = body_layer_0.build_model(body_layer_0.build_surface())
     body_layer_1_part = body_layer_1.build_model(body_layer_1.build_surface())
     body_layer_2_part = body_layer_2.build_model(body_layer_2.build_surface())
+    body_layer_3_part = body_layer_3.build_model(body_layer_3.build_surface())
     toe_part = toe.build_model()
 
     spacer_part_0_1 = spacer.build_model(
@@ -46,6 +48,7 @@ def build_assembly() -> Compound:
     body_layer_0_part.color = COLOR_CREAMY_WHITE
     body_layer_1_part.color = COLOR_CREAMY_WHITE
     body_layer_2_part.color = COLOR_CREAMY_WHITE
+    body_layer_3_part.color = COLOR_CREAMY_WHITE
     toe_part.color = COLOR_DARK_GRAY
     spacer_part_0_1.color = COLOR_WINE_RED
     spacer_part_1_2.color = COLOR_WINE_RED
@@ -54,6 +57,7 @@ def build_assembly() -> Compound:
     body_layer_0_part.label = "body_layer_0"
     body_layer_1_part.label = "body_layer_1"
     body_layer_2_part.label = "body_layer_2"
+    body_layer_3_part.label = "body_layer_3"
     toe_part.label = "toe"
 
     positions_for_toes = body_layer_0.TOE_MOUNTING_HOLES
@@ -66,11 +70,14 @@ def build_assembly() -> Compound:
     z_spacer_1_2 = z_layer_1 + body_common.THICKNESS
     z_layer_2 = z_spacer_1_2 + SPACER_LENGTH_1_to_2
     z_spacer_top = z_layer_2 + body_common.THICKNESS
+    z_layer_3 = z_spacer_top + SPACER_LENGTH_TOP
 
     body_layer_1_part = Pos(0, 0, z_layer_1) * body_layer_1_part
     body_layer_1_part.label = "body_layer_1"
     body_layer_2_part = Pos(0, 0, z_layer_2) * body_layer_2_part
     body_layer_2_part.label = "body_layer_2"
+    body_layer_3_part = Pos(0, 0, z_layer_3) * body_layer_3_part
+    body_layer_3_part.label = "body_layer_3"
 
     # Toes at the bottom, using their given (x, y, z) positions as-is
     toe_instances = []
@@ -99,6 +106,7 @@ def build_assembly() -> Compound:
             body_layer_0_part,
             body_layer_1_part,
             body_layer_2_part,
+            body_layer_3_part,
             *toe_instances,
             *spacer_instances,
         ],

@@ -23,13 +23,13 @@ from utils.ocp_utils import show
 import assembly_body
 import body_common
 import servo_simplified
-import board_rpi5
-import board_servo_plug
-import board_relay
-import board_bno055
-import board_ina228
-import board_servo_interface
-import board_i2c_distributor
+import boards.board_rpi5 as board_rpi5
+import boards.board_servo_plug as board_servo_plug
+import boards.board_relay as board_relay
+import boards.board_bno055 as board_bno055
+import boards.board_ina228 as board_ina228
+import boards.board_servo_interface as board_servo_interface
+import boards.board_i2c_distributor as board_i2c_distributor
 
 
 servo_by_name = {}

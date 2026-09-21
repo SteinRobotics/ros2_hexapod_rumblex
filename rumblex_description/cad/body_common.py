@@ -6,7 +6,7 @@ from typing import NamedTuple
 
 from build123d import *
 from utils.ocp_utils import show
-from servo_cutouts import SERVO_BACK_CUTOUT, SERVO_FRONT_CUTOUT, SERVO_BRACKET_HOLES
+from servo_simplified import SERVO_BACK_CUTOUT, SERVO_FRONT_CUTOUT, SERVO_BRACKET_HOLES
 
 THICKNESS = 1.5
 OCTAGON_ROTATION = 22.5  

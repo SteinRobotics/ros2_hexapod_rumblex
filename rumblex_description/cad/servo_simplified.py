@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Simplified HX-35H servo body — outer shell only, no internal parts.
+"""Simplified HX-35H servo body and shared mounting cutouts.
 
 """
 
@@ -8,17 +8,24 @@ from pathlib import Path
 from build123d import (
     Box,
     BuildPart,
+    BuildSketch,
+    Circle,
     Cylinder,
     Location,
     Locations,
     Mode,
     Part,
     Plane,
+    Polygon,
+    Sketch,
+    add,
+    extrude,
     export_step,
     RevoluteJoint,
     Axis,
 )
 
+from utils.geometry_utils import mirror_points_vertical_axis as mirror_y
 from utils.ocp_utils import show
 
 from utils.colors import COLOR_DARK_GRAY
@@ -51,6 +58,76 @@ M2_R        = 1.00
 HOLE_X      = 10.25
 HOLE_Z_LOW  = 2.60
 HOLE_Z_HIGH = 27.05
+
+
+# Shared foot/body cutout profiles in drawing coordinates (mm).
+CUTOUT_PREVIEW_THICKNESS = 1.5
+SERVO_CUTOUT_HIGHT = 15.0
+
+
+SERVO_BACK_CUTOUT_RIGHT = [
+    (  9.75,  -9.75),
+    (  9.75,   2.25),
+    ( 10.75,   2.25),
+    ( 10.75,   9.25),
+    (  6.75,   9.25),
+    (  6.75,  11.5),
+    (  10.0,  SERVO_CUTOUT_HIGHT),
+    (  15.0,  SERVO_CUTOUT_HIGHT),
+    (  15.0,  18.0),
+]
+
+SERVO_BACK_CUTOUT = (
+    SERVO_BACK_CUTOUT_RIGHT
+    + mirror_y(list(reversed(SERVO_BACK_CUTOUT_RIGHT)))
+)
+
+SERVO_FRONT_CUTOUT_RIGHT = [
+    ( 7.25, -13.75),
+    (  7.25,  11.5),
+    (  10.0,  SERVO_CUTOUT_HIGHT),
+    (  15.0,  SERVO_CUTOUT_HIGHT),
+    (  15.0,  18.0),
+]
+
+SERVO_FRONT_CUTOUT = (
+    SERVO_FRONT_CUTOUT_RIGHT
+    + mirror_y(list(reversed(SERVO_FRONT_CUTOUT_RIGHT)))
+)
+
+OUTLINE_POINTS_FOR_TESTING = [
+    (-15,  -15),
+    (  15,  -15),
+    (  15,   15),
+    ( -15,   15),
+]
+
+SERVO_BRACKET_HOLES = [
+    (x, y, M2_R)
+    for x in (-HOLE_X, HOLE_X)
+    for y in (-(HOLE_Z_HIGH - HOLE_Z_LOW) / 2, (HOLE_Z_HIGH - HOLE_Z_LOW) / 2)
+]
+
+
+def build_cutout_surface() -> Sketch:
+    """Build a sample plate sketch with the front cutout and mounting holes."""
+    with BuildSketch() as sketch:
+        Polygon(*OUTLINE_POINTS_FOR_TESTING)
+        Polygon(*SERVO_FRONT_CUTOUT, align=None, mode=Mode.SUBTRACT)
+
+        for x, y, radius in SERVO_BRACKET_HOLES:
+            with Locations((x, y)):
+                Circle(radius, mode=Mode.SUBTRACT)
+
+    return sketch.sketch
+
+def build_cutout_model(surface: Sketch) -> Part:
+    """Extrude a cutout preview sketch into a sample plate."""
+    with BuildPart() as model:
+        add(surface)
+        extrude(amount=CUTOUT_PREVIEW_THICKNESS)
+
+    return model.part
 
 
 # ── Model ────────────────────────────────────────────────────────────────────

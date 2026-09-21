@@ -20,8 +20,7 @@ from build123d import (
 
 from utils.ocp_utils import show
 
-from servo_cutouts import (SERVO_BACK_CUTOUT, 
-                           SERVO_BRACKET_HOLES)
+from servo_simplified import SERVO_BACK_CUTOUT, SERVO_BRACKET_HOLES
 
 from foot_common import (THICKNESS, 
                          FOOT_OUTLINE, 

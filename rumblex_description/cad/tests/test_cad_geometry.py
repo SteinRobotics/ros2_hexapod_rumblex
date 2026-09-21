@@ -2,18 +2,53 @@
 
 import unittest
 
-from build123d import Pos, Rot
+from build123d import Circle, Pos, Rot
 
+import assembly_body
 import assembly_complete
 import assembly_leg
+import body_common
+import body_layer_3
 import bracket_inclined
 import bracket_u_shape
 import foot_common
-import servo_cutouts
 import servo_simplified
 
 
 class GeometryTests(unittest.TestCase):
+    def test_body_layers_seat_on_spacers(self):
+        body = assembly_body.build_assembly()
+        self.assertTrue(body.is_valid)
+        parts = {child.label: child for child in body.children}
+        layers = [parts[f"body_layer_{index}"] for index in range(4)]
+        self.assertAlmostEqual(layers[0].bounding_box().min.Z, 0.0)
+        for index, group in enumerate(("spacer_0_1", "spacer_1_2", "spacer_top")):
+            for hole_index, location in enumerate(body_common.hole_locations):
+                spacer = parts[f"{group}_{hole_index}"]
+                box = spacer.bounding_box()
+                self.assertAlmostEqual(box.min.Z, layers[index].bounding_box().max.Z)
+                self.assertAlmostEqual(box.max.Z, layers[index + 1].bounding_box().min.Z)
+                self.assertAlmostEqual(box.center().X, location.position.X)
+                self.assertAlmostEqual(box.center().Y, location.position.Y)
+
+    def test_top_plate_keeps_common_openings_and_spacer_clearance(self):
+        surface = body_layer_3.build_surface()
+        part = body_layer_3.build_model(surface)
+        self.assertTrue(part.is_valid)
+        self.assertEqual(len(part.solids()), 1)
+        self.assertEqual(len(surface.faces()), 1)
+        face = surface.faces()[0]
+        self.assertEqual(len(face.outer_wire().edges()), 8)
+        # One inner opening, 18 slots, and eight mounting holes.
+        self.assertEqual(len(face.inner_wires()), 27)
+        expected = body_common.base_plate.sketch & body_common.build_surface()
+        self.assertLess((surface - expected).area, 1e-6)
+        self.assertLess((expected - surface).area, 1e-6)
+        for location in body_common.hole_locations:
+            footprint = location * Circle(body_common.spacer_outer_radius)
+            self.assertGreaterEqual(face.outer_wire().distance_to(footprint), 3.25 - 1e-6)
+        self.assertAlmostEqual(part.volume, surface.area * body_common.THICKNESS)
+
     def assert_joint_mates(self, first, second):
         self.assertLess((first.location.position - second.location.position).length, 1e-6)
         first_axis = first.location.z_axis.direction
@@ -57,7 +92,7 @@ class GeometryTests(unittest.TestCase):
             (tibia_rear_horn - femur.joints["femur_to_tibia_fixed"].location.position).length, 1e-6
         )
         for plate in (foot.children[2], foot.children[3]):
-            for x, y, _ in servo_cutouts.SERVO_BRACKET_HOLES:
+            for x, y, _ in servo_simplified.SERVO_BRACKET_HOLES:
                 local_hole = (
                     servo_part.location.inverse() * foot.location * plate.location * Pos(x, y, 0)
                 ).position
