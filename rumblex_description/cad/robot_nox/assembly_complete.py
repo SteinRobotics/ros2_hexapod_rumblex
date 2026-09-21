@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
 """Complete robot, using the same joint interfaces as a single leg."""
 
-from pathlib import Path
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from robot_nox import EXPORT_DIR
 
 from build123d import Compound, export_step
 
-import assembly_body_with_servos
-import assembly_coxa
-import assembly_head
-import assembly_leg
+import robot_nox.assembly_body_with_servos as assembly_body_with_servos
+import robot_nox.assembly_coxa as assembly_coxa
+import robot_nox.assembly_head as assembly_head
+import robot_nox.assembly_leg as assembly_leg
 from utils.ocp_utils import show
 
 ANGLE_LEG_FEMUR = assembly_leg.ANGLE_FEMUR - 90# degrees
@@ -43,8 +50,8 @@ def build_assembly() -> Compound:
 
 def main() -> None:
     assembly = build_assembly()
-    Path("generated").mkdir(exist_ok=True)
-    export_step(assembly, "generated/assembly_complete.step")
+    EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    export_step(assembly, str(EXPORT_DIR / "assembly_complete.step"))
     show(assembly, name="assembly_complete", clear=True)
 
 

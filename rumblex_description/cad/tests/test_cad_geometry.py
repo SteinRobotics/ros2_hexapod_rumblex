@@ -1,18 +1,25 @@
 """Headless geometry regressions. Run: python -m unittest test_cad_geometry."""
 
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 import unittest
 
 from build123d import Circle, Pos, Rot
 
-import assembly_body
-import assembly_complete
-import assembly_leg
-import body_common
-import body_layer_3
-import bracket_inclined
-import bracket_u_shape
-import foot_common
-import servo_simplified
+import robot_nox.assembly_body as assembly_body
+import robot_nox.assembly_complete as assembly_complete
+import robot_nox.assembly_leg as assembly_leg
+import robot_nox.body_common as body_common
+import robot_nox.body_layer_3 as body_layer_3
+import common.bracket_inclined as bracket_inclined
+import common.bracket_u_shape as bracket_u_shape
+import robot_nox.foot_common as foot_common
+import common.servo_simplified as servo_simplified
 
 
 class GeometryTests(unittest.TestCase):

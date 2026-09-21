@@ -11,13 +11,18 @@ Design goals:
   build_plate().
 """
 
-import sys
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from pathlib import Path
 from dataclasses import dataclass
 from build123d import *
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from ocp_utils import show
+from utils.ocp_utils import show
 
 
 @dataclass

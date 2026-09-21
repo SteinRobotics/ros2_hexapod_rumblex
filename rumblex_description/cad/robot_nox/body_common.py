@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
 
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 import math
-from pathlib import Path
+from robot_nox import EXPORT_DIR
 from typing import NamedTuple
 
 from build123d import *
 from utils.ocp_utils import show
-from servo_simplified import SERVO_BACK_CUTOUT, SERVO_FRONT_CUTOUT, SERVO_BRACKET_HOLES
+from common.servo_simplified import SERVO_BACK_CUTOUT, SERVO_FRONT_CUTOUT, SERVO_BRACKET_HOLES
 
 THICKNESS = 1.5
 # Clear distance from the top of layer 2 to the underside of layer 3.
@@ -237,12 +244,12 @@ def main() -> None:
     surface = build_surface()
     result = build_model(surface)
 
-    Path("generated").mkdir(exist_ok=True)
-    export_step(result, "generated/body_layer_common.step")
+    EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    export_step(result, str(EXPORT_DIR / "body_layer_common.step"))
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
-    dxf_export.write("generated/body_layer_common.dxf")
+    dxf_export.write(str(EXPORT_DIR / "body_layer_common.dxf"))
 
     show(result, name="body_layer_common", clear=True)
 

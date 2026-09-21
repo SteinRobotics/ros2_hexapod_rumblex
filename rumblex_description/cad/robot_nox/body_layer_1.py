@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 
-from pathlib import Path
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from robot_nox import EXPORT_DIR
 from build123d import *
 from utils.ocp_utils import show
 
-import body_common
+import robot_nox.body_common as body_common
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
@@ -32,12 +39,12 @@ def main() -> None:
     surface = build_surface()
     result = build_model(surface)
 
-    Path("generated").mkdir(exist_ok=True)
-    export_step(result, "generated/body_layer_1.step")
+    EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    export_step(result, str(EXPORT_DIR / "body_layer_1.step"))
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
-    dxf_export.write("generated/body_layer_1.dxf")
+    dxf_export.write(str(EXPORT_DIR / "body_layer_1.dxf"))
 
     show(result, name="body_layer_1", clear=True)
 

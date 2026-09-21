@@ -2,9 +2,13 @@
 
 Run scripts from this directory with Python 3.10+ and `build123d` installed.
 `ocp_vscode` is optional for viewing. Vendor STEP files live in `imported/`;
-scripts export to `generated/` when run directly.
+Nox scripts export to `generated/nox/`; shared component scripts export to
+`generated/` when run directly. Run `robot_nox.py` to export and display the
+complete Nox assembly from `robot_nox/assembly_complete.py`.
+Scripts in subfolders also support direct execution, for example
+`python robot_nox/assembly_complete.py` or `python common/toe.py`.
 
-`chassis_side.py` exports the rectangular front/back plate (`chassis_side_end`)
+`robot_nox/chassis_side.py` exports the rectangular front/back plate (`chassis_side_end`)
 and inverted-U left/right plate (`chassis_side`) as STEP and flat DXF files.
 The body assembly places two of each between layers 1 and 3, passing through
 layer 2's long slots. Tabs match the nominal 8 x 1.5 mm slots; no manufacturing
@@ -12,9 +16,9 @@ clearance or kerf compensation is applied.
 
 ```bash
 source .venv/bin/activate
-python assembly_leg.py
-python assembly_complete.py
-python -m unittest test_cad_geometry -v
+python -m robot_nox.assembly_leg
+python robot_nox.py
+python -m unittest discover -s tests -p test_cad_geometry.py -v
 ```
 
 ## Dimensions and joints

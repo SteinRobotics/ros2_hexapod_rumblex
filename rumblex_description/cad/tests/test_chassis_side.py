@@ -1,12 +1,19 @@
 """Check chassis tab engagement and clearance against the assembled body."""
 
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 import unittest
 
 from build123d import Box, Pos
 
-import assembly_body
-import body_common
-import chassis_side
+import robot_nox.assembly_body as assembly_body
+import robot_nox.body_common as body_common
+import robot_nox.chassis_side as chassis_side
 
 
 class ChassisSideTests(unittest.TestCase):

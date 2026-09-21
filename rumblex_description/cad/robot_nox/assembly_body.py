@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 
-from pathlib import Path
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from robot_nox import EXPORT_DIR
 
 from build123d import Color, Compound, Pos, Rot, export_step
 from sympy import im
@@ -8,15 +15,15 @@ from utils.ocp_utils import show
 
 from utils.colors import COLOR_CREAMY_WHITE, COLOR_WINE_RED, COLOR_DARK_GRAY
 
-import toe
+import common.toe as toe
 import utils.spacer as spacer
-import body_common
-import body_layer_0
-import body_layer_1
-import body_layer_2
-import body_layer_3
-import body_layer_4
-import chassis_side
+import robot_nox.body_common as body_common
+import robot_nox.body_layer_0 as body_layer_0
+import robot_nox.body_layer_1 as body_layer_1
+import robot_nox.body_layer_2 as body_layer_2
+import robot_nox.body_layer_3 as body_layer_3
+import robot_nox.body_layer_4 as body_layer_4
+import robot_nox.chassis_side as chassis_side
 
 SPACER_OUTER_DIAMETER = 5.0
 SPACER_INNER_DIAMETER = 3.0
@@ -127,8 +134,8 @@ def build_assembly() -> Compound:
 
 def main() -> None:
     assembly = build_assembly()
-    Path("generated").mkdir(exist_ok=True)
-    export_step(assembly, "generated/assembly_body.step")
+    EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    export_step(assembly, str(EXPORT_DIR / "assembly_body.step"))
 
     show(assembly, name="assembly_body", clear=True)
 

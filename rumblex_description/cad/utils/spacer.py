@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 
-import sys
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from pathlib import Path
 
 from build123d import BuildPart, Cylinder, Mode, Part, export_step, export_stl
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from ocp_utils import show
+from utils.ocp_utils import show
 
 FOOT_SPACER_OUTER_DIAMETER = 4.0
 FOOT_SPACER_OVERALL_LENGTH = 32.0

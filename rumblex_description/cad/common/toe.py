@@ -2,6 +2,13 @@
 
 # the toe is a truncated cone
 
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from pathlib import Path
 
 from build123d import BuildPart, Cone, Cylinder, Mode, Part, export_step

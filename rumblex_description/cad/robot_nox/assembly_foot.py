@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
 
-from pathlib import Path
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from robot_nox import EXPORT_DIR
 
 from build123d import Compound, Pos, Rot, export_step
 
 FOOT_SPACER_OUTER_DIAMETER = 4.0
 FOOT_SPACER_STUD_HOLE_DIAMETER = 2.5
-import foot_back
-import foot_connection
-import foot_front
+import robot_nox.foot_back as foot_back
+import robot_nox.foot_connection as foot_connection
+import robot_nox.foot_front as foot_front
 import utils.spacer as spacer
-import toe
-import servo_simplified
+import common.toe as toe
+import common.servo_simplified as servo_simplified
 from utils.ocp_utils import show
 
 from utils.colors import COLOR_CREAMY_WHITE, COLOR_WINE_RED, COLOR_DARK_GRAY
@@ -79,8 +86,8 @@ def build_assembly() -> Compound:
 
 def main() -> None:
     assembly = build_assembly()
-    Path("generated").mkdir(exist_ok=True)
-    export_step(assembly, "generated/assembly_foot.step")
+    EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    export_step(assembly, str(EXPORT_DIR / "assembly_foot.step"))
 
     show(assembly, name="assembly_foot", clear=True)
 

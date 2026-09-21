@@ -1,8 +1,15 @@
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from build123d import *
 from utils.ocp_utils import show
 
-import bracket_inclined
-import servo_simplified
+import common.bracket_inclined as bracket_inclined
+import common.servo_simplified as servo_simplified
 
 JOINT_ANGLE = 0.0  # initial angle for the joint connection
 

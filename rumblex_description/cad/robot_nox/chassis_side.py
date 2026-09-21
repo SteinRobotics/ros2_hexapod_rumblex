@@ -5,14 +5,21 @@ Sketch X runs along the slot rows; sketch Y is the assembled height. The
 bottom tab tips are at Y=0. All fits are nominal, without kerf compensation.
 """
 
-from pathlib import Path
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from robot_nox import EXPORT_DIR
 
 from build123d import (
     BuildPart, BuildSketch, Compound, ExportDXF, Locations, Part, Pos,
     Rectangle, Rot, Sketch, add, export_step, extrude,
 )
 
-import body_common
+import robot_nox.body_common as body_common
 from utils.colors import COLOR_CREAMY_WHITE
 from utils.ocp_utils import show
 
@@ -93,12 +100,12 @@ def build_plates(z_bottom: float, z_top: float) -> list[Part]:
 
 def main() -> None:
     # Import here so assembly_body can use the builders without a cycle.
-    import assembly_body
+    import robot_nox.assembly_body as assembly_body
 
     height = (3 * body_common.THICKNESS + assembly_body.SPACER_LENGTH_1_to_2
               + assembly_body.SPACER_LENGTH_TOP)
-    output = Path("generated")
-    output.mkdir(exist_ok=True)
+    output = EXPORT_DIR
+    output.mkdir(parents=True, exist_ok=True)
     previews = []
     for name, is_side in (("chassis_side_end", False), ("chassis_side", True)):
         surface = build_surface(height, side=is_side)

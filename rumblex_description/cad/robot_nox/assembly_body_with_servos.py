@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
 """Body assembly with the 7 coxa servos placed at their mounting positions."""
 
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 import math
-from pathlib import Path
+from robot_nox import EXPORT_DIR
 
 from build123d import Compound, Pos, Rot, export_step, export_stl
 
-from body_layer_0 import (
+from robot_nox.body_layer_0 import (
     Placement,
     LOCATION_RPI5,
     LOCATION_LEFT_SERVO_PLUG,
@@ -20,9 +27,9 @@ from body_layer_0 import (
 from utils.colors import COLOR_DARK_GRAY
 from utils.ocp_utils import show
 
-import assembly_body
-import body_common
-import servo_simplified
+import robot_nox.assembly_body as assembly_body
+import robot_nox.body_common as body_common
+import common.servo_simplified as servo_simplified
 import boards.board_rpi5 as board_rpi5
 import boards.board_servo_plug as board_servo_plug
 import boards.board_relay as board_relay
@@ -129,9 +136,9 @@ def build_assembly() -> Compound:
 
 def main() -> None:
     assembly = build_assembly()
-    Path("generated").mkdir(exist_ok=True)
-    export_step(assembly, "generated/assembly_body_servo.step")
-    export_stl(assembly, "generated/assembly_body_servo.stl")
+    EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    export_step(assembly, str(EXPORT_DIR / "assembly_body_servo.step"))
+    export_stl(assembly, str(EXPORT_DIR / "assembly_body_servo.stl"))
     show(assembly, name="assembly_body_servo", clear=True)
 
 

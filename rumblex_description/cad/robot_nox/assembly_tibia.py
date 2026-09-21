@@ -1,18 +1,25 @@
 #!/usr/bin/env python3
 
-from pathlib import Path
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from robot_nox import EXPORT_DIR
 
 from build123d import Compound, Pos, Rot, export_step, export_stl, RevoluteJoint
 
 from utils.colors import COLOR_DARK_GRAY
 
-import assembly_foot
-import foot_common
-import servo_simplified
+import robot_nox.assembly_foot as assembly_foot
+import robot_nox.foot_common as foot_common
+import common.servo_simplified as servo_simplified
 
 from utils.ocp_utils import show
 
-from servo_simplified import build_model as build_servo
+from common.servo_simplified import build_model as build_servo
 
 # The foot extends along local X, unlike the femur's local Z length axis.
 TIBIA_ROLL = 180.0  # degrees about local X
@@ -55,9 +62,9 @@ def build_assembly() -> Compound:
 
 def main() -> None:
     assembly = build_assembly()
-    Path("generated").mkdir(exist_ok=True)
-    export_step(assembly, "generated/assembly_tibia.step")
-    export_stl(assembly, "generated/assembly_tibia.stl")
+    EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    export_step(assembly, str(EXPORT_DIR / "assembly_tibia.step"))
+    export_stl(assembly, str(EXPORT_DIR / "assembly_tibia.stl"))
     show(assembly, name="assembly_tibia", clear=True)
 
 

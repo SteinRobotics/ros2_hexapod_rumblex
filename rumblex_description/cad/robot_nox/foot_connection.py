@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 
-from pathlib import Path
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from robot_nox import EXPORT_DIR
 
 from build123d import (
     BuildPart,
@@ -58,12 +65,12 @@ def build_model(surface: Sketch) -> Part:
 def main() -> None:
     surface = build_surface()
     result = build_model(surface)
-    Path("generated").mkdir(exist_ok=True)
-    export_step(result, "generated/foot_connection.step")
+    EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    export_step(result, str(EXPORT_DIR / "foot_connection.step"))
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
-    dxf_export.write("generated/foot_connection.dxf")
+    dxf_export.write(str(EXPORT_DIR / "foot_connection.dxf"))
 
     show(result, name="foot_connection", clear=True)
 

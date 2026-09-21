@@ -1,13 +1,22 @@
 #!/usr/bin/env python3
 
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from pathlib import Path
+
+from robot_nox import EXPORT_DIR
 
 from build123d import Compound, Pos, Rot, export_step, export_stl, import_step, RevoluteJoint, RigidJoint
 
 
 from utils.colors import COLOR_DARK_GRAY
-import servo_simplified
-import bracket_inclined
+import common.servo_simplified as servo_simplified
+import common.bracket_inclined as bracket_inclined
 from utils.ocp_utils import show
 
 # Retained fit offset for the vendor STEP; verify against the physical bracket.
@@ -30,7 +39,7 @@ def build_assembly() -> Compound:
     servo = servo_simplified.build_model()
     servo.color = COLOR_DARK_GRAY
 
-    bracket_bottom = import_step(str(Path(__file__).parent / "imported" / "HX-35HM Botton Bracket.STEP"))
+    bracket_bottom = import_step(str(Path(__file__).resolve().parents[1] / "imported" / "HX-35HM Botton Bracket.STEP"))
     bracket_bottom.color = COLOR_DARK_GRAY
 
     inclined_bracket = bracket_inclined.build_bracket()
@@ -71,9 +80,9 @@ def build_assembly() -> Compound:
 
 def main() -> None:
     assembly = build_assembly()
-    Path("generated").mkdir(exist_ok=True)
-    export_step(assembly, "generated/assembly_femur.step")
-    export_stl(assembly, "generated/assembly_femur.stl")
+    EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    export_step(assembly, str(EXPORT_DIR / "assembly_femur.step"))
+    export_stl(assembly, str(EXPORT_DIR / "assembly_femur.stl"))
 
     show(assembly, name="assembly_femur", clear=True)
 

@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
 """A leg chain connected at the actual horn mounting faces."""
 
-from pathlib import Path
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from robot_nox import EXPORT_DIR
 
 from build123d import Compound, export_step
 
-import assembly_coxa
-import assembly_femur
-import assembly_tibia
-import servo_simplified
+import robot_nox.assembly_coxa as assembly_coxa
+import robot_nox.assembly_femur as assembly_femur
+import robot_nox.assembly_tibia as assembly_tibia
+import common.servo_simplified as servo_simplified
 from utils.colors import COLOR_DARK_GRAY
 from utils.ocp_utils import show
 
@@ -44,8 +51,8 @@ def build_assembly() -> Compound:
 
 def main() -> None:
     assembly = build_assembly()
-    Path("generated").mkdir(exist_ok=True)
-    export_step(assembly, "generated/assembly_leg.step")
+    EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    export_step(assembly, str(EXPORT_DIR / "assembly_leg.step"))
     show(assembly, name="assembly_leg", clear=True)
 
 

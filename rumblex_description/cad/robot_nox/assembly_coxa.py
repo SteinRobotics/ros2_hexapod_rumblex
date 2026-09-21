@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
 
-from pathlib import Path
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from robot_nox import EXPORT_DIR
 
 from build123d import Compound, Pos, Rot, export_step, export_stl, RigidJoint
 
 
 from utils.colors import COLOR_DARK_GRAY
-import bracket_inclined
-import bracket_u_shape
+import common.bracket_inclined as bracket_inclined
+import common.bracket_u_shape as bracket_u_shape
 from utils.ocp_utils import show
 
 def _center_xy_below(part, reference_bb):
@@ -43,9 +50,9 @@ def build_assembly() -> Compound:
 
 def main() -> None:
     assembly = build_assembly()
-    Path("generated").mkdir(exist_ok=True)
-    export_step(assembly, "generated/assembly_coxa.step")
-    export_stl(assembly, "generated/assembly_coxa.stl")
+    EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    export_step(assembly, str(EXPORT_DIR / "assembly_coxa.step"))
+    export_stl(assembly, str(EXPORT_DIR / "assembly_coxa.stl"))
     show(assembly, name="assembly_coxa", clear=True)
 
 

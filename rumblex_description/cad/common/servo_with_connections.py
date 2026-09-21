@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from pathlib import Path
 
 from build123d import *
@@ -93,7 +100,7 @@ def build_markers() -> list[Part]:
 
 
 def build_assembly() -> Compound:
-    servo = import_step(str(Path(__file__).parent / "imported" / "HX-35H.stp"))
+    servo = import_step(str(Path(__file__).resolve().parents[1] / "imported" / "HX-35H.stp"))
     servo.color = COLOR_DARK_GRAY
 
     marker_parts = build_markers()

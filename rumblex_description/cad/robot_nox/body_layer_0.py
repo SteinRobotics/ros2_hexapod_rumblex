@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
 """Body layer 0: base plate with chamfered corner cutouts and PCB mounting holes."""
 
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from collections.abc import Iterable
 from dataclasses import dataclass
-from pathlib import Path
+from robot_nox import EXPORT_DIR
 
 from build123d import *
 from utils.ocp_utils import show
 
-import body_common
+import robot_nox.body_common as body_common
 import boards.board_rpi5 as board_rpi5
 import boards.board_servo_plug as board_servo_plug
 import boards.board_relay as board_relay
@@ -57,7 +64,7 @@ OCTAGON_POSITIONS = [
     body_common.octagon_position_left_bottom,
 ]
 
-OUTPUT_DIR = Path("generated")
+OUTPUT_DIR = EXPORT_DIR
 OUTPUT_NAME = "body_layer_0"
 
 
@@ -160,7 +167,7 @@ def main() -> None:
     surface = build_surface()
     model = build_model(surface)
 
-    OUTPUT_DIR.mkdir(exist_ok=True)
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     export_step(model, str(OUTPUT_DIR / f"{OUTPUT_NAME}.step"))
 
     dxf_export = ExportDXF()

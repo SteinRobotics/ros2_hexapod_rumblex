@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from pathlib import Path
+
+from robot_nox import EXPORT_DIR
 
 from build123d import (
     BuildPart,
@@ -26,7 +35,7 @@ from build123d import (
 from utils.ocp_utils import show
 from utils.colors import COLOR_DARK_GRAY
 
-import servo_simplified
+import common.servo_simplified as servo_simplified
 
 # The outer side-bracket mounting pair is 24.45 mm apart, matching one
 # vertical pair of servo M2 holes.  This placement maps that pair onto the
@@ -102,7 +111,7 @@ def build_assembly(include_servo: bool = True) -> Compound:
     servo = servo_simplified.build_model()
     servo.color = COLOR_DARK_GRAY
 
-    bracket_side_path = Path(__file__).parent / "imported" / "HX-35HM Side Bracket.STEP"
+    bracket_side_path = Path(__file__).resolve().parents[1] / "imported" / "HX-35HM Side Bracket.STEP"
     bracket_side = import_step(str(bracket_side_path))
     bracket_side.color = COLOR_DARK_GRAY
 
@@ -127,9 +136,9 @@ def build_assembly(include_servo: bool = True) -> Compound:
 
 def main() -> None:
     assembly = build_assembly()
-    Path("generated").mkdir(exist_ok=True)
-    export_step(assembly, "generated/assembly_head.step")
-    export_stl(assembly, "generated/assembly_head.stl")
+    EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    export_step(assembly, str(EXPORT_DIR / "assembly_head.step"))
+    export_stl(assembly, str(EXPORT_DIR / "assembly_head.stl"))
 
     show(assembly, name="assembly_head", clear=True)
 

@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
 
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from pathlib import Path
+
+from robot_nox import EXPORT_DIR
 
 from build123d import Color, Compound, Pos, Rot, export_step, import_step
 
-import assembly_foot
+import robot_nox.assembly_foot as assembly_foot
 HX35H_LEG_OFFSET_X = 12.3
 HX35H_LEG_OFFSET_Y = -3.5
 HX35H_LEG_OFFSET_Z = -30.6
@@ -14,7 +23,7 @@ DARK_GRAY = Color(0.25, 0.25, 0.25)
 
 
 def build_assembly() -> Compound:
-    servo = import_step(str(Path(__file__).parent / "imported" / "HX-35H.stp"))
+    servo = import_step(str(Path(__file__).resolve().parents[1] / "imported" / "HX-35H.stp"))
     servo.color = DARK_GRAY
     foot_assembly = assembly_foot.build_assembly()
 
@@ -35,8 +44,8 @@ def build_assembly() -> Compound:
 
 def main() -> None:
     assembly = build_assembly()
-    Path("generated").mkdir(exist_ok=True)
-    export_step(assembly, "generated/assembly_foot_servoHX35H.step")
+    EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    export_step(assembly, str(EXPORT_DIR / "assembly_foot_servoHX35H.step"))
 
     show(assembly, name="assembly_foot_servoHX35H", clear=True)
 

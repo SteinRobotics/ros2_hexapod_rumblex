@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 """Compact octagonal top plate with the shared opening, slots, and spacer holes."""
 
-from pathlib import Path
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from robot_nox import EXPORT_DIR
 
 from build123d import (
     BuildPart,
@@ -17,7 +24,7 @@ from build123d import (
     extrude,
 )
 
-import body_common
+import robot_nox.body_common as body_common
 from utils.ocp_utils import show
 
 
@@ -51,12 +58,12 @@ def main() -> None:
     surface = build_surface()
     result = build_model(surface)
 
-    Path("generated").mkdir(exist_ok=True)
-    export_step(result, "generated/body_layer_3.step")
+    EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    export_step(result, str(EXPORT_DIR / "body_layer_3.step"))
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
-    dxf_export.write("generated/body_layer_3.dxf")
+    dxf_export.write(str(EXPORT_DIR / "body_layer_3.dxf"))
 
     show(result, name="body_layer_3", clear=True)
 
