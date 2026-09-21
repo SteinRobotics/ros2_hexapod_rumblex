@@ -3,6 +3,7 @@
   <xacro:include filename="$(find rumblex_description)/urdf/materials.xacro"/>
   <xacro:include filename="$(find rumblex_description)/urdf/mesh_leg.xacro"/>
   <xacro:include filename="$(find rumblex_description)/urdf/ros2_control.xacro"/>
+  <xacro:property name="mesh_directory" value="package://rumblex_description/meshes/nox"/>
   <xacro:property name="coxa_length" value="0.050"/>
   <xacro:property name="femur_length" value="0.063"/>
   <xacro:property name="tibia_length" value="0.099"/>
@@ -15,7 +16,7 @@
   </xacro:if>
 
   <link name="base_link">
-    <visual><origin xyz="0 0 0"/><geometry><mesh filename="package://rumblex_description/meshes/assembly_body_servo.stl" scale="0.001 0.001 0.001"/></geometry><material name="dark_gray"/></visual>
+    <visual><origin xyz="0 0 0"/><geometry><mesh filename="${mesh_directory}/assembly_body_servo.stl" scale="0.001 0.001 0.001"/></geometry><material name="dark_gray"/></visual>
     <collision><origin xyz="0 0 0.020"/><geometry><box size="0.240 0.180 0.025"/></geometry></collision>
     <inertial><origin xyz="0 0 0.045"/><mass value="0.80"/><inertia ixx="0.003" ixy="0" ixz="0" iyy="0.004" iyz="0" izz="0.005"/></inertial>
   </link>
@@ -40,7 +41,7 @@
   <link name="head_yaw_link">
     <visual>
       <origin xyz="0.0295 0 -0.0143" rpy="${90*pi/180} 0 ${-90*pi/180}"/>
-      <geometry><mesh filename="package://rumblex_description/meshes/assembly_coxa.stl" scale="0.001 0.001 0.001"/></geometry>
+      <geometry><mesh filename="${mesh_directory}/assembly_coxa.stl" scale="0.001 0.001 0.001"/></geometry>
       <material name="dark_gray"/>
     </visual>
     <inertial><mass value="0.001"/><inertia ixx="1e-8" ixy="0" ixz="0" iyy="1e-8" iyz="0" izz="1e-8"/></inertial>
@@ -55,7 +56,7 @@
   <link name="head_pitch_link">
     <visual>
       <origin xyz="0 0 0.035" rpy="${180*pi/180} 0 0"/>
-      <geometry><mesh filename="package://rumblex_description/meshes/assembly_head.stl" scale="0.001 0.001 0.001"/></geometry>
+      <geometry><mesh filename="${mesh_directory}/assembly_head.stl" scale="0.001 0.001 0.001"/></geometry>
       <material name="dark_gray"/>
     </visual>
     <inertial><mass value="0.001"/><inertia ixx="1e-8" ixy="0" ixz="0" iyy="1e-8" iyz="0" izz="1e-8"/></inertial>

@@ -22,7 +22,7 @@
     <link name="${prefix}_coxa_link">
       <visual>
         <origin xyz="0 0.035 -0.01" rpy="${pi / 2.0} 0 0"/>
-        <geometry><mesh filename="package://rumblex_description/meshes/assembly_coxa.stl" scale="${mesh_scale}"/></geometry>
+        <geometry><mesh filename="${mesh_directory}/assembly_coxa.stl" scale="${mesh_scale}"/></geometry>
         <material name="orange"/>
       </visual>
       <collision><origin xyz="0 ${coxa_length / 2.0} 0" rpy="${pi / 2.0} 0 0"/><geometry><box size="0.030 0.050 0.045"/></geometry></collision>
@@ -37,8 +37,10 @@
     </joint>
     <link name="${prefix}_femur_link">
       <visual>
-        <origin xyz="0.015 0.043 0" rpy="${-90 * pi / 180} ${-90 * pi / 180} ${180 * pi / 180}"/>
-        <geometry><mesh filename="package://rumblex_description/meshes/assembly_femur.stl" scale="${mesh_scale}"/></geometry>
+        <!-- Roll 180 degrees about the leg segment's length axis (link Y),
+             rotating the CAD registration offset about that axis as well. -->
+        <origin xyz="-0.015 0.043 0" rpy="${pi / 2.0} ${pi / 2.0} 0"/>
+        <geometry><mesh filename="${mesh_directory}/assembly_femur.stl" scale="${mesh_scale}"/></geometry>
         <material name="dark_blue"/>
       </visual>
       <collision><origin xyz="0 ${femur_length / 2.0} 0" rpy="${-pi / 2.0} 0 0"/><geometry><box size="0.030 0.063 0.045"/></geometry></collision>
@@ -53,10 +55,10 @@
     </joint>
     <link name="${prefix}_tibia_link">
       <visual>
-        <!-- Rotate the CAD mesh by 90 degrees about the servo axis (link X),
-             including its offset from that axis, to match assembly_complete.py. -->
-        <origin xyz="-0.015 0 0.04" rpy="${-180 * pi / 180} 0 ${90 * pi / 180}"/>
-        <geometry><mesh filename="package://rumblex_description/meshes/assembly_tibia.stl" scale="${mesh_scale}"/></geometry>
+        <!-- Roll 180 degrees about the leg segment's length axis (link Y),
+             including the CAD offset, after the servo-axis registration. -->
+        <origin xyz="0.015 0 -0.04" rpy="0 0 ${pi / 2.0}"/>
+        <geometry><mesh filename="${mesh_directory}/assembly_tibia.stl" scale="${mesh_scale}"/></geometry>
         <material name="light_blue"/>
       </visual>
       <collision><origin xyz="0 ${tibia_length / 2.0} 0" rpy="${-pi / 2.0} 0 0"/><geometry><box size="0.025 0.099 0.040"/></geometry></collision>

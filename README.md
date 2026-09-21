@@ -148,6 +148,11 @@ ros2 launch rumblex_description display_mesh.launch.py
 ```
 The original primitive model remains available through `display.launch.py`.
 
+Nox's STL assets are stored in `rumblex_description/meshes/nox/`. Each robot's
+mesh Xacro sets `mesh_directory`, which is also used by the shared leg macro.
+The future Nira mesh model should point to `rumblex_description/meshes/nira/`
+and will be selected with `robot:=nira` once its model and assets are added.
+
 ### Gazebo Simulation
 Run the full hexapod simulation in Gazebo Harmonic:
 ```bash
