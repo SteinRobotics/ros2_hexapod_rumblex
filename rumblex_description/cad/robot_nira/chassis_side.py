@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rectangular end/diagonal plates and inverted-U sides, with body-slot tabs.
+"""Low front sills and swept, vented rear shoulders with body-slot tabs.
 
 Sketch X runs along the slot rows; sketch Y is the assembled height. The
 bottom tab tips are at Y=0. All fits are nominal, without kerf compensation.
@@ -16,11 +16,12 @@ from robot_nira import EXPORT_DIR
 
 from build123d import (
     BuildPart, BuildSketch, Compound, ExportDXF, Locations, Part, Pos,
-    Rectangle, Rot, Sketch, add, export_step, extrude,
+    Rectangle, Rot, Sketch, Mode, Polygon, add, export_step, extrude,
 )
 
 import robot_nira.body_common as body_common
 from utils.colors import COLOR_CREAMY_WHITE
+from robot_nira.lidar_layout import LOW_RAIL_HEIGHT
 from utils.ocp_utils import show
 
 
@@ -33,11 +34,12 @@ ROW_WIDTH = 2 * TAB_PITCH + TAB_WIDTH
 RAIL_HEIGHT = body_common.SPACER_LENGTH_TOP
 
 
-def build_surface(height: float, side: bool = False) -> Sketch:
+def build_surface(height: float, side: bool = False, front: bool = False) -> Sketch:
     """Build a profile spanning the outside faces of the two mating layers.
 
-    ``side=False`` selects the front/back rectangle. ``side=True`` selects
-    the inverted U, joining the two side slot rows across its top.
+    ``side=True`` selects a swept shoulder with lower legs in both slot rows.
+    ``front=True`` selects a low sill without upper tabs; the default is a
+    full-height rear plate.
     """
     if height <= 2 * TAB_DEPTH + (RAIL_HEIGHT if side else 0):
         raise ValueError("Height must leave room for the plate below the top rail")
@@ -64,6 +66,21 @@ def build_surface(height: float, side: bool = False) -> Sketch:
                 with Locations((row + offset, TAB_DEPTH / 2),
                                (row + offset, height - TAB_DEPTH / 2)):
                     Rectangle(TAB_WIDTH, TAB_DEPTH)
+        # Drop the nose to a low sill; sweep the side shoulders into the tail.
+        deck_top = height - TAB_DEPTH - RAIL_HEIGHT
+        sill = deck_top + LOW_RAIL_HEIGHT
+        if side:
+            Polygon((-14, sill + 12), (58, sill), (150, sill),
+                    (150, height + 1), (-14, height + 1),
+                    align=None, mode=Mode.SUBTRACT)
+            # Three slanted gills in each rear shoulder.
+            for x in (-49, -37, -25):
+                Polygon((x, sill + 5), (x + 4, sill + 5),
+                        (x - 2, height - 9), (x - 6, height - 9),
+                        align=None, mode=Mode.SUBTRACT)
+        elif front:
+            with Locations((0, (sill + height + 2) / 2)):
+                Rectangle(ROW_WIDTH + 2, height + 2 - sill, mode=Mode.SUBTRACT)
     return sketch.sketch
 
 
@@ -78,6 +95,7 @@ def build_plates(z_bottom: float, z_top: float) -> list[Part]:
     """Place four plates in the shared slots of the two given layer bases."""
     height = z_top + body_common.THICKNESS - z_bottom
     end = build_model(build_surface(height))
+    nose = build_model(build_surface(height, front=True))
     side = build_model(build_surface(height, side=True))
     plates = []
     # Local extrusion points towards -Y after the upright rotation. Shift
@@ -86,7 +104,7 @@ def build_plates(z_bottom: float, z_top: float) -> list[Part]:
     for loc in body_common.rectangle_slots_locations:
         if abs(loc.orientation.Z) > 1e-6:
             name = "front" if loc.position.X > 0 else "back"
-            plate = Pos(0, 0, z_bottom) * loc * upright * end
+            plate = Pos(0, 0, z_bottom) * loc * upright * (nose if name == "front" else end)
         elif loc.position.X > 0:
             name = "left" if loc.position.Y > 0 else "right"
             plate = Pos(0, loc.position.Y, z_bottom) * upright * side
@@ -99,13 +117,14 @@ def build_plates(z_bottom: float, z_top: float) -> list[Part]:
 
 
 def build_diagonal_plates(z_bottom: float, z_top: float) -> list[Part]:
-    """Place four rectangular tabbed plates between layers 2 and 3."""
+    """Place low front sill plates and full-height rear diagonal braces."""
     height = z_top + body_common.THICKNESS - z_bottom
     model = build_model(build_surface(height))
+    low_model = build_model(build_surface(height, front=True))
     upright = Pos(0, THICKNESS / 2, 0) * Rot(X=90)
     plates = []
     for location in body_common.diagonal_slots_locations:
-        plate = Pos(0, 0, z_bottom) * location * upright * model
+        plate = Pos(0, 0, z_bottom) * location * upright * (low_model if location.position.X > 0 else model)
         end = "front" if location.position.X > 0 else "back"
         side = "left" if location.position.Y > 0 else "right"
         plate.label = f"chassis_diagonal_{end}_{side}"
@@ -124,12 +143,14 @@ def main() -> None:
     output.mkdir(parents=True, exist_ok=True)
     previews = []
     diagonal_height = body_common.SPACER_LENGTH_TOP + 2 * TAB_DEPTH
-    for name, is_side, plate_height, preview_x in (
-        ("chassis_side_end", False, height, 0),
-        ("chassis_side", True, height, 160),
-        ("chassis_side_diagonal", False, diagonal_height, 260),
+    for name, is_side, is_front, plate_height, preview_x in (
+        ("chassis_back", False, False, height, 0),
+        ("chassis_front", False, True, height, 65),
+        ("chassis_side", True, False, height, 170),
+        ("chassis_diagonal_back", False, False, diagonal_height, 270),
+        ("chassis_diagonal_front", False, True, diagonal_height, 330),
     ):
-        surface = build_surface(plate_height, side=is_side)
+        surface = build_surface(plate_height, side=is_side, front=is_front)
         model = build_model(surface)
         model.label = name
         export_step(model, str(output / f"{name}.step"))

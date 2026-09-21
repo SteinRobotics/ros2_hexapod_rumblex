@@ -23,6 +23,8 @@ import robot_nira.body_layer_2 as body_layer_2
 import robot_nira.body_layer_3 as body_layer_3
 import robot_nira.body_layer_4 as body_layer_4
 import robot_nira.chassis_side as chassis_side
+from robot_nira import lidar_ydlidar_tmini
+from robot_nira.lidar_layout import LIDAR_X, LIDAR_Y
 
 SPACER_OUTER_DIAMETER = 5.0
 SPACER_INNER_DIAMETER = 3.0
@@ -58,7 +60,7 @@ def build_assembly() -> Compound:
     body_layer_0_part.color = COLOR_CREAMY_WHITE
     body_layer_1_part.color = COLOR_CREAMY_WHITE
     body_layer_2_part.color = COLOR_CREAMY_WHITE
-    body_layer_3_part.color = COLOR_CREAMY_WHITE
+    body_layer_3_part.color = COLOR_WINE_RED
     body_layer_4_part.color = COLOR_CREAMY_WHITE
     toe_part.color = COLOR_DARK_GRAY
     spacer_part_0_1.color = COLOR_WINE_RED
@@ -83,6 +85,9 @@ def build_assembly() -> Compound:
     z_layer_2 = z_spacer_1_2 + SPACER_LENGTH_1_to_2
     z_spacer_top = z_layer_2 + body_common.THICKNESS
     z_layer_3 = z_spacer_top + SPACER_LENGTH_TOP
+
+    lidar = Pos(LIDAR_X, LIDAR_Y, z_spacer_top) * lidar_ydlidar_tmini.build_model()
+    lidar.label = "lidar_ydlidar_tmini"
 
     body_layer_1_part = Pos(0, 0, z_layer_1) * body_layer_1_part
     body_layer_1_part.label = "body_layer_1"
@@ -110,6 +115,8 @@ def build_assembly() -> Compound:
     ]
     for part, length, z, name in spacer_groups:
         for i, loc in enumerate(positions_for_spacers):
+            if name == "spacer_top" and loc.position.X > 0:
+                continue
             instance = (Pos(0, 0, z + length / 2) * loc) * part
             instance.label = f"{name}_{i}"
             spacer_instances.append(instance)
@@ -122,6 +129,7 @@ def build_assembly() -> Compound:
             body_layer_2_part,
             body_layer_3_part,
             body_layer_4_part,
+            lidar,
             *chassis_side.build_plates(z_layer_1, z_layer_3),
             *chassis_side.build_diagonal_plates(z_layer_2, z_layer_3),
             *toe_instances,

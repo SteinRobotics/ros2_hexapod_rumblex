@@ -12,10 +12,21 @@ from build123d import *
 from utils.ocp_utils import show
 
 import robot_nira.body_common as body_common
+from robot_nira.lidar_layout import LIDAR_X
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
         add(body_common.build_surface())
+
+        # Integral front deck bridges the old central opening to both side rails.
+        Polygon((22, -49), (78, -49), (102, -25), (102, 25),
+                (78, 49), (22, 49), align=None)
+        # Generic adapter/retention slots, outside the simplified sensor envelope.
+        # These are not the manufacturer's mounting-hole pattern.
+        with Locations((LIDAR_X, -23), (LIDAR_X, 23)):
+            RectangleRounded(22, 3, 1, mode=Mode.SUBTRACT)
+        with Locations((30, 0)):
+            RectangleRounded(6, 16, 2, mode=Mode.SUBTRACT)
 
         # These plates start at layer 2, so retain three individual tab slots.
         with Locations(*body_common.diagonal_slots_locations):

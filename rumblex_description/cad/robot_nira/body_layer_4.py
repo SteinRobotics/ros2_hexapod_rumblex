@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compact octagonal top plate with the shared opening, slots, and spacer holes."""
+"""Vented arrowhead canopy with a solid spine and rear mounting holes."""
 
 # Allow direct execution as well as package imports.
 if __package__ in (None, ""):
@@ -13,8 +13,12 @@ from robot_nira import EXPORT_DIR
 from build123d import (
     BuildPart,
     BuildSketch,
+    Circle,
     ExportDXF,
+    Locations,
+    Mode,
     Part,
+    Polygon,
     Sketch,
     add,
     export_step,
@@ -22,12 +26,23 @@ from build123d import (
 )
 
 import robot_nira.body_common as body_common
+from robot_nira.lidar_layout import canopy_surface
 from utils.ocp_utils import show
 
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
-        add(body_common.base_plate.sketch)
+        add(canopy_surface())
+        # Paired swept gills leave a solid central spine and a perimeter rim.
+        for x in (-78, -62, -46, -30):
+            for side in (-1, 1):
+                Polygon((x - 5, side * 12), (x + 2, side * 12),
+                        (x - 16, side * 39), (x - 23, side * 39),
+                        align=None, mode=Mode.SUBTRACT)
+        for location in body_common.hole_locations:
+            if location.position.X < 0:
+                with Locations(location):
+                    Circle(body_common.hole_radius, mode=Mode.SUBTRACT)
 
     return sketch.sketch
 

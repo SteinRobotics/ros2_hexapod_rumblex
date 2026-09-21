@@ -63,3 +63,45 @@ The headless tests check joint coincidence and shaft alignment, foot mounting
 hole alignment, bracket width, drawing coordinates, solid validity and the
 complete robot's default foot placement. They do not certify collision-free
 motion or manufacturing tolerances.
+
+## Nira forward lidar deck
+
+Nira's T-mini sits directly on layer 2 at **(60, 0, 51.5) mm**, fully within
+the front third of the nominal 220 mm body (+X is forward). Its scan plane
+is at Z=77.8 mm. Layer 2 has an integral bridge across the former opening,
+two 22 x 3 mm adapter slots beside the housing, and a rear cable opening.
+The slots are generic attachment provisions: the simplified sensor model
+has no vendor mounting-hole or connector geometry, so the final adapter
+and cable routing still require physical verification.
+
+The upper body forms a swept rear canopy with paired ventilation gills,
+a solid central spine, and a burgundy layer-3 frame below the cream roof.
+The front and front-diagonal walls end 8 mm above the deck. Side shoulders
+sweep back to full height, retaining their three rear roof tabs; the rear
+walls, diagonal braces and four rear upper spacers support the canopy.
+Layer 4 now has through-holes aligned with those spacers.
+
+The forward **270° sector (-135° to +135° from +X)** is clear in the default
+complete-robot pose. The geometry test intersects a continuous 4 mm high
+scan band with the robot, from 20 to approximately 600 mm radius. It also
+checks full sensor-footprint support, single-solid validity, body collisions,
+and retained tab engagement. This does not verify clearance throughout
+head/leg motion, structural strength, optical tolerances or manufacturing fit.
+
+Export the revised parts and assembly with:
+
+```bash
+.venv/bin/python -m robot_nira.body_layer_2
+.venv/bin/python -m robot_nira.body_layer_3
+.venv/bin/python -m robot_nira.body_layer_4
+.venv/bin/python -m robot_nira.chassis_side
+.venv/bin/python -m robot_nira.assembly_body
+.venv/bin/python robot_nira.py
+.venv/bin/python -m unittest discover -s tests -p test_nira_lidar.py -v
+```
+
+Outputs are under `generated/nira/`. Side exports distinguish `chassis_front`,
+`chassis_back`, `chassis_side`, `chassis_diagonal_front`, and
+`chassis_diagonal_back`; the front and rear parts are no longer interchangeable.
+Each plate has a STEP model and a flat DXF drawing. The complete STEP includes
+the lidar. `lidar_body_preview.png` shows the redesigned body.

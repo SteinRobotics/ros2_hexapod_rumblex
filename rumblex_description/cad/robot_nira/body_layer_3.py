@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compact octagonal top plate with the shared opening, slots, and spacer holes."""
+"""Swept rear horseshoe frame supporting the lidar-clear canopy."""
 
 # Allow direct execution as well as package imports.
 if __package__ in (None, ""):
@@ -25,14 +25,14 @@ from build123d import (
 )
 
 import robot_nira.body_common as body_common
+from robot_nira.lidar_layout import canopy_surface
 from utils.ocp_utils import show
 
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
-        # Shared 220 x 130 mm rectangle with 20 mm corner chamfers.
-        # This leaves 3.25 mm beyond the shared spacer footprints.
-        add(body_common.base_plate.sketch)
+        # Rear horseshoe frame under the swept canopy.
+        add(canopy_surface())
         add(body_common.hantel.sketch, mode=Mode.SUBTRACT)
 
         for location in [*body_common.rectangle_slots_locations, *body_common.diagonal_slots_locations]:
