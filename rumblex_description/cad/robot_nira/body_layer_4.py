@@ -8,15 +8,12 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from robot_nox import EXPORT_DIR
+from robot_nira import EXPORT_DIR
 
 from build123d import (
     BuildPart,
     BuildSketch,
-    Circle,
     ExportDXF,
-    Locations,
-    Mode,
     Part,
     Sketch,
     add,
@@ -24,24 +21,13 @@ from build123d import (
     extrude,
 )
 
-import robot_nox.body_common as body_common
+import robot_nira.body_common as body_common
 from utils.ocp_utils import show
 
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
-        # Shared 220 x 130 mm rectangle with 20 mm corner chamfers.
-        # This leaves 3.25 mm beyond the shared spacer footprints.
         add(body_common.base_plate.sketch)
-        add(body_common.hantel.sketch, mode=Mode.SUBTRACT)
-
-        for location in [*body_common.rectangle_slots_locations, *body_common.diagonal_slots_locations]:
-            with Locations(location):
-                add(body_common.rectangle_slots.sketch, mode=Mode.SUBTRACT)
-
-        for location in body_common.hole_locations:
-            with Locations(location):
-                Circle(body_common.hole_radius, mode=Mode.SUBTRACT)
 
     return sketch.sketch
 
@@ -59,13 +45,13 @@ def main() -> None:
     result = build_model(surface)
 
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-    export_step(result, str(EXPORT_DIR / "body_layer_3.step"))
+    export_step(result, str(EXPORT_DIR / "body_layer_4.step"))
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
-    dxf_export.write(str(EXPORT_DIR / "body_layer_3.dxf"))
+    dxf_export.write(str(EXPORT_DIR / "body_layer_4.dxf"))
 
-    show(result, name="body_layer_3", clear=True)
+    show(result, name="body_layer_4", clear=True)
 
 
 if __name__ == "__main__":

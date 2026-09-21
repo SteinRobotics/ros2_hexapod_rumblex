@@ -9,12 +9,13 @@ if __package__ in (None, ""):
 
 import unittest
 
-from build123d import Circle, Pos, Rot
+from build123d import Circle, Face, Pos, Rot
 
 import robot_nox.assembly_body as assembly_body
 import robot_nox.assembly_complete as assembly_complete
 import robot_nox.assembly_leg as assembly_leg
 import robot_nox.body_common as body_common
+import robot_nox.body_layer_2 as body_layer_2
 import robot_nox.body_layer_3 as body_layer_3
 import common.bracket_inclined as bracket_inclined
 import common.bracket_u_shape as bracket_u_shape
@@ -23,6 +24,22 @@ import common.servo_simplified as servo_simplified
 
 
 class GeometryTests(unittest.TestCase):
+    def test_diagonal_slots_follow_inner_opening_in_both_layers(self):
+        reference = body_common.rectangle_slots_locations[0] * body_common.rectangle_slots.sketch
+        clearance = reference.distance_to(body_common.hantel.sketch)
+        for layer in (body_layer_2, body_layer_3):
+            surface = layer.build_surface()
+            holes = [Face(wire) for face in surface.faces() for wire in face.inner_wires()]
+            for location in body_common.diagonal_slots_locations:
+                slots = location * body_common.rectangle_slots.sketch
+                self.assertAlmostEqual(slots.distance_to(body_common.hantel.sketch), clearance)
+                for slot in slots.faces():
+                    # Each tab needs its own closed rectangular opening,
+                    # separate from the inner opening and servo cutouts.
+                    matching = [hole for hole in holes if (hole.center() - slot.center()).length < 1e-6]
+                    self.assertEqual(len(matching), 1)
+                    self.assertAlmostEqual(matching[0].area, slot.area)
+
     def test_body_layers_seat_on_spacers(self):
         body = assembly_body.build_assembly()
         self.assertTrue(body.is_valid)
@@ -46,9 +63,11 @@ class GeometryTests(unittest.TestCase):
         self.assertEqual(len(surface.faces()), 1)
         face = surface.faces()[0]
         self.assertEqual(len(face.outer_wire().edges()), 8)
-        # One inner opening, 18 slots, and eight mounting holes.
-        self.assertEqual(len(face.inner_wires()), 27)
+        # One inner opening, 30 slots, and eight mounting holes.
+        self.assertEqual(len(face.inner_wires()), 39)
         expected = body_common.base_plate.sketch & body_common.build_surface()
+        for location in body_common.diagonal_slots_locations:
+            expected -= location * body_common.rectangle_slots.sketch
         self.assertLess((surface - expected).area, 1e-6)
         self.assertLess((expected - surface).area, 1e-6)
         for location in body_common.hole_locations:

@@ -7,21 +7,21 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from robot_nox import EXPORT_DIR
+from robot_nira import EXPORT_DIR
 
 from build123d import Compound, Pos, Rot, export_step
 
 FOOT_SPACER_OUTER_DIAMETER = 4.0
 FOOT_SPACER_STUD_HOLE_DIAMETER = 2.5
-import robot_nox.foot_back as foot_back
-import robot_nox.foot_connection as foot_connection
-import robot_nox.foot_front as foot_front
+import robot_nira.foot_back as foot_back
+import robot_nira.foot_connection as foot_connection
+import robot_nira.foot_front as foot_front
 import utils.spacer as spacer
 import common.toe as toe
 import common.servo_simplified as servo_simplified
 from utils.ocp_utils import show
 
-from utils.colors import COLOR_DARK_GRAY, COLOR_BRASS
+from utils.colors import COLOR_CREAMY_WHITE, COLOR_WINE_RED, COLOR_DARK_GRAY
 
 # Distance between the inside faces of the two foot plates.
 FOOT_SPACER_OVERALL_LENGTH = servo_simplified.BODY_Y + 2 * servo_simplified.CASE_FLANGE_THICKNESS
@@ -41,11 +41,11 @@ def build_assembly() -> Compound:
         length=FOOT_SPACER_OVERALL_LENGTH,
     )
 
-    foot_front_part.color = COLOR_DARK_GRAY
-    foot_back_part.color = COLOR_DARK_GRAY
-    connection_part.color = COLOR_DARK_GRAY
+    foot_front_part.color = COLOR_CREAMY_WHITE
+    foot_back_part.color = COLOR_CREAMY_WHITE
+    connection_part.color = COLOR_CREAMY_WHITE
     toe_part.color = COLOR_DARK_GRAY
-    spacer_part.color = COLOR_BRASS
+    spacer_part.color = COLOR_WINE_RED
 
     # Keep the connection plate's rectangular outline centered on the tibia axis.
     # This lets the top/bottom hole pattern match the connection outline geometry.

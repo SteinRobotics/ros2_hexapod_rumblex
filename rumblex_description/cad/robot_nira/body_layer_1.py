@@ -7,29 +7,17 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from robot_nox import EXPORT_DIR
+from robot_nira import EXPORT_DIR
 from build123d import *
 from utils.ocp_utils import show
 
-import robot_nox.body_common as body_common
+import robot_nira.body_common as body_common
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
         add(body_common.build_surface())
 
-        # These plates start at layer 2, so retain three individual tab slots.
-        with Locations(*body_common.diagonal_slots_locations):
-            add(body_common.rectangle_slots.sketch, mode=Mode.SUBTRACT)
-
-        # Join each three-slot row while retaining its full outer span.
-        with Locations(*body_common.rectangle_slots_locations):
-            Rectangle(
-                body_common.rectangle_slots_completed_width + body_common.rectangle_slots_width,
-                body_common.rectangle_slots_height,
-                mode=Mode.SUBTRACT,
-            )
-
-        for points in body_common.SERVO_FRONT_CUTOUTS.values():
+        for points in body_common.SERVO_BACK_CUTOUTS.values():
             Polygon(*points, align=None, mode=Mode.SUBTRACT)
 
         for x, y, radius in body_common.LIST_SERVO_BRACKET_HOLES:
@@ -52,13 +40,13 @@ def main() -> None:
     result = build_model(surface)
 
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-    export_step(result, str(EXPORT_DIR / "body_layer_2.step"))
+    export_step(result, str(EXPORT_DIR / "body_layer_1.step"))
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
-    dxf_export.write(str(EXPORT_DIR / "body_layer_2.dxf"))
+    dxf_export.write(str(EXPORT_DIR / "body_layer_1.dxf"))
 
-    show(result, name="body_layer_2", clear=True)
+    show(result, name="body_layer_1", clear=True)
 
         
 if __name__ == "__main__":

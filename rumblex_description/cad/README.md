@@ -14,6 +14,11 @@ The body assembly places two of each between layers 1 and 3, passing through
 layer 2's long slots. Tabs match the nominal 8 x 1.5 mm slots; no manufacturing
 clearance or kerf compensation is applied.
 
+Four rectangular `chassis_side_diagonal` plates span the 45 mm gap between
+layers 2 and 3, with three tabs at each end. Their matching diagonal slot rows
+follow the inner octagonal opening with the same clearance as the horizontal
+rows. The plate body is 40 x 45 x 1.5 mm; including tabs, its height is 48 mm.
+
 ```bash
 source .venv/bin/activate
 python -m robot_nox.assembly_leg

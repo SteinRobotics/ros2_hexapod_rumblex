@@ -7,11 +7,11 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from robot_nox import EXPORT_DIR
+from robot_nira import EXPORT_DIR
 from build123d import *
 from utils.ocp_utils import show
 
-import robot_nox.body_common as body_common
+import robot_nira.body_common as body_common
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:

@@ -7,23 +7,22 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from robot_nox import EXPORT_DIR
+from robot_nira import EXPORT_DIR
 
-from build123d import Color, Compound, Pos, Rot, export_step
-from sympy import im
+from build123d import Compound, Pos, Rot, export_step
 from utils.ocp_utils import show
 
-from utils.colors import COLOR_BRASS, COLOR_DARK_GRAY
+from utils.colors import COLOR_CREAMY_WHITE, COLOR_WINE_RED, COLOR_DARK_GRAY
 
 import common.toe as toe
 import utils.spacer as spacer
-import robot_nox.body_common as body_common
-import robot_nox.body_layer_0 as body_layer_0
-import robot_nox.body_layer_1 as body_layer_1
-import robot_nox.body_layer_2 as body_layer_2
-import robot_nox.body_layer_3 as body_layer_3
-import robot_nox.body_layer_4 as body_layer_4
-import robot_nox.chassis_side as chassis_side
+import robot_nira.body_common as body_common
+import robot_nira.body_layer_0 as body_layer_0
+import robot_nira.body_layer_1 as body_layer_1
+import robot_nira.body_layer_2 as body_layer_2
+import robot_nira.body_layer_3 as body_layer_3
+import robot_nira.body_layer_4 as body_layer_4
+import robot_nira.chassis_side as chassis_side
 
 SPACER_OUTER_DIAMETER = 5.0
 SPACER_INNER_DIAMETER = 3.0
@@ -56,15 +55,15 @@ def build_assembly() -> Compound:
         length=SPACER_LENGTH_TOP,
     )
 
-    body_layer_0_part.color = COLOR_DARK_GRAY
-    body_layer_1_part.color = COLOR_DARK_GRAY
-    body_layer_2_part.color = COLOR_DARK_GRAY
-    body_layer_3_part.color = COLOR_DARK_GRAY
-    body_layer_4_part.color = COLOR_DARK_GRAY
+    body_layer_0_part.color = COLOR_CREAMY_WHITE
+    body_layer_1_part.color = COLOR_CREAMY_WHITE
+    body_layer_2_part.color = COLOR_CREAMY_WHITE
+    body_layer_3_part.color = COLOR_CREAMY_WHITE
+    body_layer_4_part.color = COLOR_CREAMY_WHITE
     toe_part.color = COLOR_DARK_GRAY
-    spacer_part_0_1.color = COLOR_BRASS
-    spacer_part_1_2.color = COLOR_BRASS
-    spacer_part_top.color = COLOR_BRASS
+    spacer_part_0_1.color = COLOR_WINE_RED
+    spacer_part_1_2.color = COLOR_WINE_RED
+    spacer_part_top.color = COLOR_WINE_RED
 
     body_layer_0_part.label = "body_layer_0"
     body_layer_1_part.label = "body_layer_1"

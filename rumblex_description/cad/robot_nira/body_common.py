@@ -8,7 +8,7 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import math
-from robot_nox import EXPORT_DIR
+from robot_nira import EXPORT_DIR
 from typing import NamedTuple
 
 from build123d import *

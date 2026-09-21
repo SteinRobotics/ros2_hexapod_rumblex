@@ -23,13 +23,16 @@ class ChassisSideTests(unittest.TestCase):
         plates = [p for p in body.children if p.label.startswith("chassis_")]
         self.assertEqual({p.label for p in plates}, {
             "chassis_front", "chassis_back", "chassis_left", "chassis_right",
+            "chassis_diagonal_front_left", "chassis_diagonal_front_right",
+            "chassis_diagonal_back_left", "chassis_diagonal_back_right",
         })
         for plate in plates:
             with self.subTest(plate=plate.label):
                 self.assertTrue(plate.is_valid)
                 self.assertEqual(len(plate.solids()), 1)
+                bottom_layer = 2 if plate.label.startswith("chassis_diagonal_") else 1
                 self.assertAlmostEqual(plate.bounding_box().min.Z,
-                                       layers["body_layer_1"].bounding_box().min.Z)
+                                       layers[f"body_layer_{bottom_layer}"].bounding_box().min.Z)
                 self.assertAlmostEqual(plate.bounding_box().max.Z,
                                        layers["body_layer_3"].bounding_box().max.Z)
                 for other in body.children:
@@ -46,7 +49,7 @@ class ChassisSideTests(unittest.TestCase):
                                            layers["body_layer_2"].bounding_box().max.Z)
                     self.assertAlmostEqual(rail.bounding_box().max.Z,
                                            layers["body_layer_3"].bounding_box().min.Z)
-                for index in (1, 3):
+                for index in (bottom_layer, 3):
                     z = layers[f"body_layer_{index}"].bounding_box().center().Z
                     slice_part = plate & (Pos(0, 0, z) * Box(300, 300, body_common.THICKNESS))
                     self.assertEqual(len(slice_part.solids()), tabs)
