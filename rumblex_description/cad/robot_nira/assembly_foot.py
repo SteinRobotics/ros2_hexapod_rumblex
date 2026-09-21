@@ -18,13 +18,11 @@ import robot_nira.foot_connection as foot_connection
 import robot_nira.foot_front as foot_front
 import utils.spacer as spacer
 import common.toe as toe
-import common.servo_simplified as servo_simplified
+import robot_nira.foot_outer as foot_outer
+from robot_nira.foot_common import FOOT_SPACER_OVERALL_LENGTH
 from utils.ocp_utils import show
 
 from utils.colors import COLOR_CREAMY_WHITE, COLOR_WINE_RED, COLOR_DARK_GRAY
-
-# Distance between the inside faces of the two foot plates.
-FOOT_SPACER_OVERALL_LENGTH = servo_simplified.BODY_Y + 2 * servo_simplified.CASE_FLANGE_THICKNESS
 
 
 TARGET_HOLE_X = foot_back.FOOT_MOUNT_HOLES[0]["x"]
@@ -52,7 +50,9 @@ def build_assembly() -> Compound:
     connection_offset_x = TARGET_HOLE_X + FOOT_SPACER_OUTER_DIAMETER/2
     connection_offset_y = TARGET_HOLE_Y
 
-    # Stack in +Z: foot_back -> spacer -> foot_front -> foot_connection.
+    # Stack cheeks along +Z; the toe connection and outer armor bridge them.
+    foot_front_part.label = "foot_front"
+    foot_back_part.label = "foot_back"
     foot_back_placed = foot_back_part
     spacer_z = foot_back.THICKNESS + FOOT_SPACER_OVERALL_LENGTH / 2
     spacer_placed_parts = [
@@ -80,6 +80,7 @@ def build_assembly() -> Compound:
             foot_front_placed,
             foot_back_placed,
             *spacer_placed_parts,
+            foot_outer.build_placed_model(),
         ]
     )
 

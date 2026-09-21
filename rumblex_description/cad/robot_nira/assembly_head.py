@@ -36,7 +36,6 @@ SIDE_BRACKET_OFFSET = Pos(
 # Pod coordinates: X across the face, -Y forward, Z up, as in the webcam.
 # The frame's origin is on the adapter's rear face, aligned to the bracket centre.
 PLATE_THICKNESS = 3.0
-BRACKET_SPACER_LENGTH = 6.0
 SPACER_OUTER_DIAMETER = 5.0
 M3_CLEARANCE = 3.2
 # Measured from the four diameter-3.2 circular edges of the vendor STEP.
@@ -128,7 +127,7 @@ def build_adapter() -> Part:
 
 def build_camera_pod(side_bracket: Part) -> list[Part]:
     """Place the cage outboard of the bracket, looking along servo-local +X."""
-    frame = Pos(side_bracket.bounding_box().max.X + BRACKET_SPACER_LENGTH,
+    frame = Pos(side_bracket.bounding_box().max.X,
                 BRACKET_CENTER_Y, BRACKET_CENTER_Z) * Rot(Z=90)
     camera = webcam_obsbot.build_model()
     camera_mount = Pos(webcam_obsbot.MOUNT_HOLE_X,
@@ -142,15 +141,6 @@ def build_camera_pod(side_bracket: Part) -> list[Part]:
             outer_diameter=SPACER_OUTER_DIAMETER,
             inner_diameter=M3_CLEARANCE, length=CAGE_SPACER_LENGTH)
         post.label = f"head_cage_spacer_{i}"
-        post.color = COLOR_WINE_RED
-        parts.append(post)
-    for i, (x, z) in enumerate((x, z)
-                              for x in (-BRACKET_HOLE_HALF_PITCH, BRACKET_HOLE_HALF_PITCH)
-                              for z in (-BRACKET_HOLE_HALF_PITCH, BRACKET_HOLE_HALF_PITCH)):
-        post = Pos(x, BRACKET_SPACER_LENGTH / 2, z) * Rot(X=90) * spacer.build_model(
-            outer_diameter=SPACER_OUTER_DIAMETER,
-            inner_diameter=M3_CLEARANCE, length=BRACKET_SPACER_LENGTH)
-        post.label = f"head_bracket_spacer_{i}"
         post.color = COLOR_WINE_RED
         parts.append(post)
     return [frame * part for part in parts]

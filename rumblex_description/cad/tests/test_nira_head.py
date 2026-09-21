@@ -49,14 +49,20 @@ class NiraHeadTests(unittest.TestCase):
             post = self.parts[f"head_cage_spacer_{i}"]
             for label in ("head_chin", "head_brow"):
                 self.assertLess(post.distance_to(self.parts[label]), 1e-6)
-            post = self.parts[f"head_bracket_spacer_{i}"]
-            bracket = self.parts["head_side_bracket"]
-            self.assertLess(post.distance_to(bracket), 1e-6)
-            self.assertLess(post.distance_to(self.parts["head_rear_adapter"]), 1e-6)
-            center = post.bounding_box().center()
-            bore = Pos(bracket.bounding_box().max.X - 0.75, center.Y, center.Z) * Rot(Y=90) * Cylinder(1.59, 1.5)
-            overlap = bore & bracket
-            self.assertLess(overlap.volume if overlap else 0, 1e-6)
+        bracket = self.parts["head_side_bracket"]
+        adapter = self.parts["head_rear_adapter"]
+        self.assertLess(adapter.distance_to(bracket), 1e-6)
+        self.assertAlmostEqual(adapter.bounding_box().min.X, bracket.bounding_box().max.X)
+        self.assertFalse(any(name.startswith("head_bracket_spacer_") for name in self.parts))
+        # Adapter and vendor bracket share the same four through bores.
+        for y in (-head.BRACKET_HOLE_HALF_PITCH, head.BRACKET_HOLE_HALF_PITCH):
+            for z in (-head.BRACKET_HOLE_HALF_PITCH, head.BRACKET_HOLE_HALF_PITCH):
+                bore = Pos(bracket.bounding_box().max.X + (head.PLATE_THICKNESS - 1.5) / 2,
+                           head.BRACKET_CENTER_Y + y, head.BRACKET_CENTER_Z + z) * Rot(Y=90) * Cylinder(
+                               1.59, head.PLATE_THICKNESS + 1.5)
+                for part in (bracket, adapter):
+                    overlap = bore & part
+                    self.assertLess(overlap.volume if overlap else 0, 1e-6)
 
     def test_omitting_servo_preserves_joint_frames(self):
         without = head.build_assembly(include_servo=False)

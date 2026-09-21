@@ -18,7 +18,6 @@ from build123d import (
     Mode,
     Part,
     Polygon,
-    Rectangle,
     Sketch,
     add,
     export_step,
@@ -29,27 +28,18 @@ from utils.ocp_utils import show
 
 from common.servo_simplified import SERVO_BACK_CUTOUT, SERVO_BRACKET_HOLES
 
-from robot_nira.foot_common import (THICKNESS, 
-                         FOOT_OUTLINE, 
-                         FOOT_MOUNT_HOLES, 
-                         TIP_SLOTS)
+from robot_nira.foot_common import THICKNESS, FOOT_MOUNT_HOLES
+from robot_nira.foot_common import build_surface as build_common_surface
+
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
-        Polygon(*FOOT_OUTLINE, align=None)
+        add(build_common_surface())
         Polygon(*SERVO_BACK_CUTOUT, align=None, mode=Mode.SUBTRACT)
 
         for x, y, radius in SERVO_BRACKET_HOLES:
             with Locations((x, y)):
                 Circle(radius, mode=Mode.SUBTRACT)
-
-        for hole in FOOT_MOUNT_HOLES:
-            with Locations((hole["x"], hole["y"])):
-                Circle(hole["radius"], mode=Mode.SUBTRACT)
-
-        for x, y, width, height in TIP_SLOTS:
-            with Locations((x, y)):
-                Rectangle(width, height, mode=Mode.SUBTRACT)
 
     return sketch.sketch
 

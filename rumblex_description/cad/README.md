@@ -105,3 +105,31 @@ Outputs are under `generated/nira/`. Side exports distinguish `chassis_front`,
 `chassis_diagonal_back`; the front and rear parts are no longer interchangeable.
 Each plate has a STEP model and a flat DXF drawing. The complete STEP includes
 the lidar. `lidar_body_preview.png` shows the redesigned body.
+
+## Nira vented foot armor
+
+The foot cheeks use a swept toe outline, a broad lower rail and four angled
+vents matching the layer-4 canopy. A new cream `foot_outer` plate bridges the
+cheeks on their outer (negative drawing-Y) edge. Its paired gills surround a
+solid spine, with clipped ends keeping the servo and toe connection accessible.
+The existing servo cutouts, mounting holes, spacers and toe interface are retained.
+
+The 1.5 mm outer plate has three 8 mm fingers on each edge, seated in matching
+through-slots in the cheeks. The fingers finish flush with the outside faces;
+the clear span is 32 mm and overall height is 35 mm. Fits are nominal, without
+kerf compensation; physical fit and retention need checking for the chosen
+material and laser process.
+
+```bash
+.venv/bin/python -m robot_nira.foot_front
+.venv/bin/python -m robot_nira.foot_back
+.venv/bin/python -m robot_nira.foot_outer
+.venv/bin/python -m robot_nira.assembly_foot
+.venv/bin/python -m unittest discover -s tests -p test_nira_foot.py -v
+```
+
+STEP and flat DXF exports are under `generated/nira/`; `foot_preview.png` shows
+the assembled armor and the three flat profiles. Geometry tests check valid
+single-solid plates, six fully engaged tabs, flush ends and outer-plate
+clearance from the foot hardware and tibia servo. They do not establish load
+capacity or clearance throughout leg motion.
