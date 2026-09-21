@@ -6,7 +6,7 @@ The canopy edge x + abs(y) = 44 leaves 16 mm behind its boundary at x=60.
 
 from build123d import BuildSketch, Polygon, Sketch
 
-LIDAR_X = 60.0
+LIDAR_X = 80.0
 LIDAR_Y = 0.0
 LOW_RAIL_HEIGHT = 8.0
 CANOPY_TIP_X = 44.0

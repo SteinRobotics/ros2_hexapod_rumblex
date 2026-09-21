@@ -23,6 +23,7 @@ import robot_nira.body_layer_2 as body_layer_2
 import robot_nira.body_layer_3 as body_layer_3
 import robot_nira.body_layer_4 as body_layer_4
 import robot_nira.chassis_side as chassis_side
+from robot_nira import board_ydlidar_tmini_interface
 from robot_nira import lidar_ydlidar_tmini
 from robot_nira.lidar_layout import LIDAR_X, LIDAR_Y
 
@@ -86,7 +87,14 @@ def build_assembly() -> Compound:
     z_spacer_top = z_layer_2 + body_common.THICKNESS
     z_layer_3 = z_spacer_top + SPACER_LENGTH_TOP
 
-    lidar = Pos(LIDAR_X, LIDAR_Y, z_spacer_top) * lidar_ydlidar_tmini.build_model()
+    board_interface = Pos(LIDAR_X, LIDAR_Y, z_spacer_top) * Rot(Z=90)* board_ydlidar_tmini_interface.build_model()
+    board_interface.label = "board_ydlidar_tmini_interface"
+
+    lidar = Pos(
+        LIDAR_X,
+        LIDAR_Y,
+        z_spacer_top + board_ydlidar_tmini_interface.TOTAL_HEIGHT + body_common.THICKNESS,
+    )  * lidar_ydlidar_tmini.build_model()
     lidar.label = "lidar_ydlidar_tmini"
 
     body_layer_1_part = Pos(0, 0, z_layer_1) * body_layer_1_part
@@ -129,6 +137,7 @@ def build_assembly() -> Compound:
             body_layer_2_part,
             body_layer_3_part,
             body_layer_4_part,
+            board_interface,
             lidar,
             *chassis_side.build_plates(z_layer_1, z_layer_3),
             *chassis_side.build_diagonal_plates(z_layer_2, z_layer_3),
