@@ -4,7 +4,7 @@ import math
 import unittest
 
 from build123d import (
-    Box, BuildPart, BuildSketch, Circle, Locations, Mode, Plane, Polygon, Pos,
+    Box, BuildPart, BuildSketch, Circle, Locations, Mode, Part, Plane, Polygon, Pos,
     add, extrude,
 )
 
@@ -29,24 +29,28 @@ class NiraLidarTests(unittest.TestCase):
         cls.parts = {part.label: part for part in cls.body.children}
         cls.lidar = cls.parts['lidar_ydlidar_tmini']
 
-    def test_sensor_is_supported_on_layer_2_in_front_third(self):
+    def test_sensor_stack_clears_interface_board_in_front_third(self):
         deck = self.parts['body_layer_2']
+        interface = self.parts['board_ydlidar_tmini_interface']
         box = self.lidar.bounding_box()
-        self.assertAlmostEqual(box.min.Z, deck.bounding_box().max.Z)
+        self.assertAlmostEqual(interface.bounding_box().min.Z, deck.bounding_box().max.Z)
+        self.assertLess(interface.distance_to(deck), 1e-6)
+        # The current assembly reserves one plate thickness above the enclosure;
+        # the intervening sensor adapter is not modeled yet.
+        self.assertAlmostEqual(box.min.Z - interface.bounding_box().max.Z,
+                               body_common.THICKNESS, delta=1e-6)
+        self.assertAlmostEqual(interface.joints['mount'].location.position.X, box.center().X)
+        self.assertAlmostEqual(interface.joints['mount'].location.position.Y, box.center().Y)
         self.assertGreater(box.min.X, body_common.rect_w / 6)
         self.assertAlmostEqual(box.center().X, LIDAR_X)
         self.assertAlmostEqual(box.center().Y, LIDAR_Y)
-        footprint = Pos(LIDAR_X, LIDAR_Y, deck.bounding_box().center().Z) * Box(
-            lidar_ydlidar_tmini.BODY_WIDTH, lidar_ydlidar_tmini.BODY_DEPTH,
-            body_common.THICKNESS,
-        )
-        self.assertAlmostEqual((footprint & deck).volume, footprint.volume, places=5)
 
     def test_modified_plates_are_valid_and_fit_the_body(self):
         for part in self.body.children:
             with self.subTest(part=part.label):
                 self.assertTrue(part.is_valid)
-                self.assertEqual(len(part.solids()), 1)
+                for component in leaves(part):
+                    self.assertEqual(len(component.solids()), 1, component.label)
             if not part.label.startswith(('chassis_', 'lidar_')):
                 continue
             for other in self.body.children:
@@ -93,6 +97,10 @@ class NiraLidarTests(unittest.TestCase):
         for part in leaves(self.robot):
             if part is self.lidar:
                 continue
+            # Child geometry is local to its parent; include the head/leg pose
+            # and every enclosing assembly before testing the world-space band.
+            # Wrap only the geometry so located() doesn't copy the assembly tree.
+            part = Part(part.wrapped, label=part.label).located(part.global_location)
             bounds = part.bounding_box()
             if bounds.max.Z < z - 2 or bounds.min.Z > z + 2:
                 continue

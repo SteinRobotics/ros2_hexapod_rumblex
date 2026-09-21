@@ -1,4 +1,4 @@
-"""Headless geometry regressions. Run: python -m unittest test_cad_geometry."""
+"""Headless Nox and shared-component geometry regressions."""
 
 # Allow direct execution as well as package imports.
 if __package__ in (None, ""):

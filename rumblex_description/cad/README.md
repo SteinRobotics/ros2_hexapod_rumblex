@@ -23,7 +23,7 @@ rows. The plate body is 40 x 45 x 1.5 mm; including tabs, its height is 48 mm.
 source .venv/bin/activate
 python -m robot_nox.assembly_leg
 python robot_nox.py
-python -m unittest discover -s tests -p test_cad_geometry.py -v
+python -m unittest discover -s tests -v
 ```
 
 ## Dimensions and joints
@@ -66,9 +66,11 @@ motion or manufacturing tolerances.
 
 ## Nira forward lidar deck
 
-Nira's T-mini sits directly on layer 2 at **(60, 0, 51.5) mm**, fully within
-the front third of the nominal 220 mm body (+X is forward). Its scan plane
-is at Z=77.8 mm. Layer 2 has an integral bridge across the former opening,
+Nira's T-mini sits above its interface enclosure at **(80, 0, 63) mm**, fully
+within the front third of the nominal 220 mm body (+X is forward). The enclosure
+rests on layer 2, with a 1.5 mm gap above it reserved for an unmodeled sensor
+adapter. The scan plane is at Z=89.3 mm. Layer 2 has an integral bridge across
+the former opening,
 two 22 x 3 mm adapter slots beside the housing, and a rear cable opening.
 The slots are generic attachment provisions: the simplified sensor model
 has no vendor mounting-hole or connector geometry, so the final adapter
@@ -84,7 +86,8 @@ Layer 4 now has through-holes aligned with those spacers.
 The forward **270° sector (-135° to +135° from +X)** is clear in the default
 complete-robot pose. The geometry test intersects a continuous 4 mm high
 scan band with the robot, from 20 to approximately 600 mm radius. It also
-checks full sensor-footprint support, single-solid validity, body collisions,
+checks interface-enclosure seating, sensor-stack clearance,
+single-solid components, body collisions,
 and retained tab engagement. This does not verify clearance throughout
 head/leg motion, structural strength, optical tolerances or manufacturing fit.
 
