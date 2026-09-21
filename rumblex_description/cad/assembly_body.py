@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from build123d import Color, Compound, Pos, Rot, export_step
+from sympy import im
 from utils.ocp_utils import show
 
 from utils.colors import COLOR_CREAMY_WHITE, COLOR_WINE_RED, COLOR_DARK_GRAY
@@ -14,12 +15,14 @@ import body_layer_0
 import body_layer_1
 import body_layer_2
 import body_layer_3
+import body_layer_4
+import chassis_side
 
 SPACER_OUTER_DIAMETER = 5.0
 SPACER_INNER_DIAMETER = 3.0
 SPACER_LENGTH_0_to_1 = 15.0
 SPACER_LENGTH_1_to_2 = 32.0
-SPACER_LENGTH_TOP = 45.0  
+SPACER_LENGTH_TOP = body_common.SPACER_LENGTH_TOP
 
 
 def build_assembly() -> Compound:
@@ -27,6 +30,7 @@ def build_assembly() -> Compound:
     body_layer_1_part = body_layer_1.build_model(body_layer_1.build_surface())
     body_layer_2_part = body_layer_2.build_model(body_layer_2.build_surface())
     body_layer_3_part = body_layer_3.build_model(body_layer_3.build_surface())
+    body_layer_4_part = body_layer_4.build_model(body_layer_4.build_surface())
     toe_part = toe.build_model()
 
     spacer_part_0_1 = spacer.build_model(
@@ -49,6 +53,7 @@ def build_assembly() -> Compound:
     body_layer_1_part.color = COLOR_CREAMY_WHITE
     body_layer_2_part.color = COLOR_CREAMY_WHITE
     body_layer_3_part.color = COLOR_CREAMY_WHITE
+    body_layer_4_part.color = COLOR_CREAMY_WHITE
     toe_part.color = COLOR_DARK_GRAY
     spacer_part_0_1.color = COLOR_WINE_RED
     spacer_part_1_2.color = COLOR_WINE_RED
@@ -58,6 +63,7 @@ def build_assembly() -> Compound:
     body_layer_1_part.label = "body_layer_1"
     body_layer_2_part.label = "body_layer_2"
     body_layer_3_part.label = "body_layer_3"
+    body_layer_4_part.label = "body_layer_4"
     toe_part.label = "toe"
 
     positions_for_toes = body_layer_0.TOE_MOUNTING_HOLES
@@ -78,6 +84,8 @@ def build_assembly() -> Compound:
     body_layer_2_part.label = "body_layer_2"
     body_layer_3_part = Pos(0, 0, z_layer_3) * body_layer_3_part
     body_layer_3_part.label = "body_layer_3"
+    body_layer_4_part = Pos(0, 0, z_layer_3 + body_common.THICKNESS) * body_layer_4_part
+    body_layer_4_part.label = "body_layer_4"
 
     # Toes at the bottom, using their given (x, y, z) positions as-is
     toe_instances = []
@@ -107,6 +115,8 @@ def build_assembly() -> Compound:
             body_layer_1_part,
             body_layer_2_part,
             body_layer_3_part,
+            body_layer_4_part,
+            *chassis_side.build_plates(z_layer_1, z_layer_3),
             *toe_instances,
             *spacer_instances,
         ],

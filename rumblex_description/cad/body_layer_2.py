@@ -10,6 +10,14 @@ def build_surface() -> Sketch:
     with BuildSketch() as sketch:
         add(body_common.build_surface())
 
+        # Join each three-slot row while retaining its full outer span.
+        with Locations(*body_common.rectangle_slots_locations):
+            Rectangle(
+                body_common.rectangle_slots_completed_width + body_common.rectangle_slots_width,
+                body_common.rectangle_slots_height,
+                mode=Mode.SUBTRACT,
+            )
+
         for points in body_common.SERVO_FRONT_CUTOUTS.values():
             Polygon(*points, align=None, mode=Mode.SUBTRACT)
 

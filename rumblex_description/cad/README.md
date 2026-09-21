@@ -4,6 +4,12 @@ Run scripts from this directory with Python 3.10+ and `build123d` installed.
 `ocp_vscode` is optional for viewing. Vendor STEP files live in `imported/`;
 scripts export to `generated/` when run directly.
 
+`chassis_side.py` exports the rectangular front/back plate (`chassis_side_end`)
+and inverted-U left/right plate (`chassis_side`) as STEP and flat DXF files.
+The body assembly places two of each between layers 1 and 3, passing through
+layer 2's long slots. Tabs match the nominal 8 x 1.5 mm slots; no manufacturing
+clearance or kerf compensation is applied.
+
 ```bash
 source .venv/bin/activate
 python assembly_leg.py
