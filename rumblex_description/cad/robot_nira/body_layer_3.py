@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Swept rear horseshoe frame supporting the lidar-clear canopy."""
+"""Swept canopy frame with a solid nose above the lidar."""
 
 # Allow direct execution as well as package imports.
 if __package__ in (None, ""):
@@ -18,6 +18,8 @@ from build123d import (
     Locations,
     Mode,
     Part,
+    Pos,
+    Rectangle,
     Sketch,
     add,
     export_step,
@@ -30,10 +32,12 @@ from utils.ocp_utils import show
 
 
 def build_surface() -> Sketch:
+    opening = body_common.hantel.sketch & (Pos(-100, 0) * Rectangle(240, 200))
     with BuildSketch() as sketch:
-        # Rear horseshoe frame under the swept canopy.
+        # Keep the rear service opening, but bridge its front so the lower
+        # frame has the same pointed nose as the roof above it.
         add(canopy_surface())
-        add(body_common.hantel.sketch, mode=Mode.SUBTRACT)
+        add(opening, mode=Mode.SUBTRACT)
 
         for location in [*body_common.rectangle_slots_locations, *body_common.diagonal_slots_locations]:
             with Locations(location):

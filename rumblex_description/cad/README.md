@@ -66,28 +66,31 @@ motion or manufacturing tolerances.
 
 ## Nira forward lidar deck
 
-Nira's T-mini sits above its interface enclosure at **(80, 0, 63) mm**, fully
-within the front third of the nominal 220 mm body (+X is forward). The enclosure
-rests on layer 2, with a 1.5 mm gap above it reserved for an unmodeled sensor
-adapter. The scan plane is at Z=89.3 mm. Layer 2 has an integral bridge across
-the former opening,
-two 22 x 3 mm adapter slots beside the housing, and a rear cable opening.
-The slots are generic attachment provisions: the simplified sensor model
-has no vendor mounting-hole or connector geometry, so the final adapter
-and cable routing still require physical verification.
+Nira's T-mini sits on its interface housing at **(80, 0, 64) mm**, fully
+within the front third of the nominal 220 mm body (+X is forward). The scan
+plane is at Z=90.3 mm. The interface module rests on layer 2 inside a separate
+cream `lidar_interface_housing`: a faceted, open-bottom cover with angled gills,
+a front connector opening, and two M3 mounting ears. Matching clearance holes
+are cut into layer 2. The 1.5 mm lid supports the sensor, leaving 1 mm above
+the interface module. The interface dimensions remain photo-based estimates;
+sensor fastening and cable routing still need the actual hardware dimensions.
+The cover exports as STEP/STL; the deck retains its generic adapter slots
+and rear cable opening.
 
-The upper body forms a swept rear canopy with paired ventilation gills,
-a solid central spine, and a burgundy layer-3 frame below the cream roof.
-The front and front-diagonal walls end 8 mm above the deck. Side shoulders
-sweep back to full height, retaining their three rear roof tabs; the rear
-walls, diagonal braces and four rear upper spacers support the canopy.
-Layer 4 now has through-holes aligned with those spacers.
+Both upper plates end at X=80 mm, directly above the lidar axis. The burgundy
+layer-3 frame has a solid nose below the cream, vented layer-4 roof. The upper
+spacers are 50 mm long, putting the canopy underside at Z=101.5 mm and leaving
+3.6 mm above the scanner. Side shoulders extend forward beneath the enlarged
+canopy while retaining their three rear roof tabs. The front sills remain low;
+the front diagonal sills have shortened raised sections to clear the housing,
+with all three bottom tabs retained. Rear walls, diagonal braces and four rear
+upper spacers support the canopy, with matching holes in both upper layers.
 
 The forward **270° sector (-135° to +135° from +X)** is clear in the default
 complete-robot pose. The geometry test intersects a continuous 4 mm high
 scan band with the robot, from 20 to approximately 600 mm radius. It also
-checks interface-enclosure seating, sensor-stack clearance,
-single-solid components, body collisions,
+checks interface seating, housing bores and connector access, canopy-tip
+alignment, scanner clearance, single-solid components, body collisions,
 and retained tab engagement. This does not verify clearance throughout
 head/leg motion, structural strength, optical tolerances or manufacturing fit.
 
@@ -98,6 +101,7 @@ Export the revised parts and assembly with:
 .venv/bin/python -m robot_nira.body_layer_3
 .venv/bin/python -m robot_nira.body_layer_4
 .venv/bin/python -m robot_nira.chassis_side
+.venv/bin/python -m robot_nira.lidar_interface_housing
 .venv/bin/python -m robot_nira.assembly_body
 .venv/bin/python robot_nira.py
 .venv/bin/python -m unittest discover -s tests -p test_nira_lidar.py -v
@@ -107,7 +111,8 @@ Outputs are under `generated/nira/`. Side exports distinguish `chassis_front`,
 `chassis_back`, `chassis_side`, `chassis_diagonal_front`, and
 `chassis_diagonal_back`; the front and rear parts are no longer interchangeable.
 Each plate has a STEP model and a flat DXF drawing. The complete STEP includes
-the lidar. `lidar_body_preview.png` shows the redesigned body.
+the lidar and interface housing. `lidar_body_preview.png` shows the body and
+an exploded view of the sensor, cover, and interface module.
 
 ## Nira vented foot armor
 

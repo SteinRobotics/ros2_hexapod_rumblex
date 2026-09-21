@@ -17,7 +17,7 @@ from common.servo_simplified import SERVO_BACK_CUTOUT, SERVO_FRONT_CUTOUT, SERVO
 
 THICKNESS = 1.5
 # Clear distance from the top of layer 2 to the underside of layer 3.
-SPACER_LENGTH_TOP = 45.0
+SPACER_LENGTH_TOP = 50.0
 OCTAGON_ROTATION = 22.5  
 
 

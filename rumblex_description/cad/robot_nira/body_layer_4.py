@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Vented arrowhead canopy with a solid spine and rear mounting holes."""
+"""Vented arrowhead canopy ending above the lidar, with rear mounting holes."""
 
 # Allow direct execution as well as package imports.
 if __package__ in (None, ""):

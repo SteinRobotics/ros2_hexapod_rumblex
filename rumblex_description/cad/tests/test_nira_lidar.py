@@ -4,11 +4,11 @@ import math
 import unittest
 
 from build123d import (
-    Box, BuildPart, BuildSketch, Circle, Locations, Mode, Part, Plane, Polygon, Pos,
+    Box, BuildPart, BuildSketch, Circle, Cylinder, Locations, Mode, Part, Plane, Polygon, Pos,
     add, extrude,
 )
 
-from robot_nira import body_common, lidar_ydlidar_tmini
+from robot_nira import body_common, lidar_ydlidar_tmini, lidar_interface_housing
 from robot_nira.assembly_complete import build_assembly
 from robot_nira.lidar_layout import LIDAR_X, LIDAR_Y, canopy_surface
 
@@ -32,18 +32,47 @@ class NiraLidarTests(unittest.TestCase):
     def test_sensor_stack_clears_interface_board_in_front_third(self):
         deck = self.parts['body_layer_2']
         interface = self.parts['board_ydlidar_tmini_interface']
+        housing = self.parts['lidar_interface_housing']
         box = self.lidar.bounding_box()
         self.assertAlmostEqual(interface.bounding_box().min.Z, deck.bounding_box().max.Z)
         self.assertLess(interface.distance_to(deck), 1e-6)
-        # The current assembly reserves one plate thickness above the enclosure;
-        # the intervening sensor adapter is not modeled yet.
-        self.assertAlmostEqual(box.min.Z - interface.bounding_box().max.Z,
-                               body_common.THICKNESS, delta=1e-6)
+        self.assertAlmostEqual(housing.bounding_box().min.Z, deck.bounding_box().max.Z)
+        self.assertAlmostEqual(box.min.Z, housing.bounding_box().max.Z)
+        self.assertLess(self.lidar.distance_to(housing), 1e-6)
+        self.assertGreaterEqual(box.min.Z - lidar_interface_housing.WALL
+                                - interface.bounding_box().max.Z, 1.0 - 1e-6)
         self.assertAlmostEqual(interface.joints['mount'].location.position.X, box.center().X)
         self.assertAlmostEqual(interface.joints['mount'].location.position.Y, box.center().Y)
         self.assertGreater(box.min.X, body_common.rect_w / 6)
         self.assertAlmostEqual(box.center().X, LIDAR_X)
         self.assertAlmostEqual(box.center().Y, LIDAR_Y)
+
+    def test_canopy_tips_end_over_scanner_with_vertical_clearance(self):
+        for name in ('body_layer_3', 'body_layer_4'):
+            with self.subTest(plate=name):
+                plate = self.parts[name]
+                bounds = plate.bounding_box()
+                self.assertAlmostEqual(bounds.max.X, self.lidar.bounding_box().center().X)
+                self.assertGreaterEqual(bounds.min.Z - self.lidar.bounding_box().max.Z, 3.0)
+                # Both layers must contain the nose, including the lower frame
+                # whose old service opening used to remove the entire tip.
+                tip = Pos(LIDAR_X - 1, LIDAR_Y, bounds.center().Z) * Box(1, 1, 1)
+                self.assertAlmostEqual((tip & plate).volume, tip.volume)
+
+    def test_housing_mounts_and_connector_remain_accessible(self):
+        housing = self.parts['lidar_interface_housing']
+        deck = self.parts['body_layer_2']
+        interface = self.parts['board_ydlidar_tmini_interface']
+        z = deck.bounding_box().max.Z
+        for x, y in lidar_interface_housing.MOUNT_POINTS:
+            bore = Pos(LIDAR_X + x, LIDAR_Y + y, z) * Cylinder(1.5, 10)
+            for part in (housing, deck):
+                overlap = bore & part
+                self.assertLess(overlap.volume if overlap else 0, 1e-6)
+        connector = interface.joints['connector'].location.position
+        access = Pos(connector.X + 5, connector.Y, connector.Z) * Box(10, 10, 4)
+        overlap = housing & access
+        self.assertLess(overlap.volume if overlap else 0, 1e-6)
 
     def test_modified_plates_are_valid_and_fit_the_body(self):
         for part in self.body.children:

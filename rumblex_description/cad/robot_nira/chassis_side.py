@@ -21,7 +21,7 @@ from build123d import (
 
 import robot_nira.body_common as body_common
 from utils.colors import COLOR_CREAMY_WHITE
-from robot_nira.lidar_layout import LOW_RAIL_HEIGHT
+from robot_nira.lidar_layout import LOW_RAIL_HEIGHT, SHOULDER_TOP_X
 from utils.ocp_utils import show
 
 
@@ -34,7 +34,8 @@ ROW_WIDTH = 2 * TAB_PITCH + TAB_WIDTH
 RAIL_HEIGHT = body_common.SPACER_LENGTH_TOP
 
 
-def build_surface(height: float, side: bool = False, front: bool = False) -> Sketch:
+def build_surface(height: float, side: bool = False, front: bool = False,
+                  diagonal: bool = False) -> Sketch:
     """Build a profile spanning the outside faces of the two mating layers.
 
     ``side=True`` selects a swept shoulder with lower legs in both slot rows.
@@ -70,8 +71,8 @@ def build_surface(height: float, side: bool = False, front: bool = False) -> Ske
         deck_top = height - TAB_DEPTH - RAIL_HEIGHT
         sill = deck_top + LOW_RAIL_HEIGHT
         if side:
-            Polygon((-14, sill + 12), (58, sill), (150, sill),
-                    (150, height + 1), (-14, height + 1),
+            Polygon((SHOULDER_TOP_X, height - TAB_DEPTH), (58, sill), (150, sill),
+                    (150, height + 1), (SHOULDER_TOP_X, height + 1),
                     align=None, mode=Mode.SUBTRACT)
             # Three slanted gills in each rear shoulder.
             for x in (-49, -37, -25):
@@ -81,6 +82,13 @@ def build_surface(height: float, side: bool = False, front: bool = False) -> Ske
         elif front:
             with Locations((0, (sill + height + 2) / 2)):
                 Rectangle(ROW_WIDTH + 2, height + 2 - sill, mode=Mode.SUBTRACT)
+            if diagonal:
+                # Narrow the raised front-diagonal sills around the interface
+                # cover. Keep all three bottom tabs, with 1 mm of rail over
+                # each outer tab's inner end.
+                with Locations((-23, TAB_DEPTH + (height + 2) / 2),
+                               (23, TAB_DEPTH + (height + 2) / 2)):
+                    Rectangle(20, height + 2, mode=Mode.SUBTRACT)
     return sketch.sketch
 
 
@@ -120,7 +128,7 @@ def build_diagonal_plates(z_bottom: float, z_top: float) -> list[Part]:
     """Place low front sill plates and full-height rear diagonal braces."""
     height = z_top + body_common.THICKNESS - z_bottom
     model = build_model(build_surface(height))
-    low_model = build_model(build_surface(height, front=True))
+    low_model = build_model(build_surface(height, front=True, diagonal=True))
     upright = Pos(0, THICKNESS / 2, 0) * Rot(X=90)
     plates = []
     for location in body_common.diagonal_slots_locations:
@@ -150,7 +158,8 @@ def main() -> None:
         ("chassis_diagonal_back", False, False, diagonal_height, 270),
         ("chassis_diagonal_front", False, True, diagonal_height, 330),
     ):
-        surface = build_surface(plate_height, side=is_side, front=is_front)
+        surface = build_surface(plate_height, side=is_side, front=is_front,
+                                diagonal=name.startswith("chassis_diagonal_"))
         model = build_model(surface)
         model.label = name
         export_step(model, str(output / f"{name}.step"))
