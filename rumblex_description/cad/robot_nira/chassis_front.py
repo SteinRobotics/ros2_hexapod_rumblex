@@ -5,7 +5,8 @@ if __package__ in (None, ""):
     from pathlib import Path
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from build123d import ExportDXF, Part, Sketch, export_step
+from build123d import (BuildSketch, ExportDXF, Locations, Mode, Part, Rectangle,
+                       Sketch, add, export_step)
 from robot_nira import EXPORT_DIR
 from robot_nira import chassis_common
 import robot_nira.body_common as body_common
@@ -13,7 +14,20 @@ from utils.ocp_utils import show
 
 
 def build_surface(height: float) -> Sketch:
-    return chassis_common.build_plate_surface(height, front=True)
+    """Low front sill with three fingers that meet the middle deck."""
+    base = chassis_common.build_plate_surface(height)
+    deck_top = height - chassis_common.TAB_DEPTH - chassis_common.RAIL_HEIGHT
+    top_of_body = deck_top - chassis_common.TAB_DEPTH
+    with BuildSketch() as sketch:
+        add(base)
+        with Locations((0, (top_of_body + height + 2) / 2)):
+            Rectangle(chassis_common.ROW_WIDTH + 2, height + 2 - top_of_body,
+                      mode=Mode.SUBTRACT)
+        with Locations(*[(offset, deck_top - chassis_common.TAB_DEPTH / 2)
+                         for offset in (-chassis_common.TAB_PITCH, 0,
+                                        chassis_common.TAB_PITCH)]):
+            Rectangle(chassis_common.TAB_WIDTH, chassis_common.TAB_DEPTH)
+    return sketch.sketch
 
 
 def build_model(height: float) -> Part:
