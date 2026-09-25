@@ -138,8 +138,15 @@ def build_surface(height: float, side: bool = False, front: bool = False,
                         (x - 2, height - 9), (x - 6, height - 9),
                         align=None, mode=Mode.SUBTRACT)
         elif front:
-            with Locations((0, (sill + height + 2) / 2)):
-                Rectangle(ROW_WIDTH + 2, height + 2 - sill, mode=Mode.SUBTRACT)
+            # The straight nose terminates at layer 2. Leave its body below
+            # the deck and pass three fingers through the individual slots.
+            top_of_body = sill if diagonal else deck_top - TAB_DEPTH
+            with Locations((0, (top_of_body + height + 2) / 2)):
+                Rectangle(ROW_WIDTH + 2, height + 2 - top_of_body, mode=Mode.SUBTRACT)
+            if not diagonal:
+                with Locations(*[(offset, deck_top - TAB_DEPTH / 2)
+                                 for offset in (-TAB_PITCH, 0, TAB_PITCH)]):
+                    Rectangle(TAB_WIDTH, TAB_DEPTH)
             if diagonal:
                 # Narrow the raised front-diagonal sills around the interface
                 # cover. Keep all three bottom tabs, with 1 mm of rail over

@@ -33,8 +33,14 @@ def build_surface() -> Sketch:
         with Locations(*body_common.diagonal_slots_locations):
             add(body_common.rectangle_slots.sketch, mode=Mode.SUBTRACT)
 
-        # Join each three-slot row while retaining its full outer span.
-        with Locations(*body_common.rectangle_slots_locations):
+        # The front sill ends at this deck, so its three top fingers need
+        # individual slots. The other rows retain their continuous openings.
+        front_location = max(body_common.rectangle_slots_locations,
+                             key=lambda location: location.position.X)
+        with Locations(front_location):
+            add(body_common.rectangle_slots.sketch, mode=Mode.SUBTRACT)
+        with Locations(*(location for location in body_common.rectangle_slots_locations
+                         if location != front_location)):
             Rectangle(
                 body_common.rectangle_slots_completed_width + body_common.rectangle_slots_width,
                 body_common.rectangle_slots_height,

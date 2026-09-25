@@ -154,6 +154,33 @@ class NiraLidarTests(unittest.TestCase):
                         extrude(amount=body_common.THICKNESS)
                     self.assertAlmostEqual((tabs & outline.part).volume, tabs.volume)
 
+    def test_front_plates_use_three_individual_deck_fingers(self):
+        deck = self.parts['body_layer_2']
+        deck_box = deck.bounding_box()
+        z = deck_box.center().Z
+        finger_volume = (chassis_side.TAB_WIDTH * chassis_side.THICKNESS
+                         * body_common.THICKNESS)
+
+        front = self.parts['chassis_front']
+        self.assertAlmostEqual(front.bounding_box().max.Z, deck_box.max.Z)
+        for name in ('chassis_front', 'chassis_diagonal_front_left',
+                     'chassis_diagonal_front_right'):
+            with self.subTest(plate=name):
+                fingers = self.parts[name] & Pos(0, 0, z) * Box(300, 200, body_common.THICKNESS)
+                self.assertEqual(len(fingers.solids()), 3)
+                self.assertAlmostEqual(fingers.volume, 3 * finger_volume)
+                self.assertLess((fingers & deck).volume, 1e-6)
+
+        for y in (-chassis_side.TAB_PITCH, 0, chassis_side.TAB_PITCH):
+            slot = Pos(100, y, z) * Box(body_common.rectangle_slots_height,
+                                         chassis_side.TAB_WIDTH, body_common.THICKNESS)
+            self.assertLess((slot & deck).volume, 1e-6)
+        for y in (-chassis_side.TAB_PITCH / 2, chassis_side.TAB_PITCH / 2):
+            web = Pos(100, y, z) * Box(body_common.rectangle_slots_height,
+                                        body_common.rectangle_slots_height,
+                                        body_common.THICKNESS)
+            self.assertAlmostEqual((web & deck).volume, web.volume)
+
     def test_slope_cover_closes_gap_between_side_plates(self):
         cover = self.parts['chassis_slope_cover']
         left = self.parts['chassis_left']
