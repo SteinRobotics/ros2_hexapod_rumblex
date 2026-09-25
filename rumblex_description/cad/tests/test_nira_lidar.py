@@ -240,13 +240,11 @@ class NiraLidarTests(unittest.TestCase):
 
     def test_two_speakers_face_perforations_from_inside(self):
         cover = self.parts['chassis_slope_cover']
-        holes = chassis_side.speaker_hole_positions()
-        self.assertGreater(len(holes), 20)
-        cylindrical_faces = [face for face in cover.faces()
-                             if face.geom_type.name == 'CYLINDER']
-        self.assertEqual(len(cylindrical_faces), 2 * len(holes))
+        slots = chassis_side.speaker_slot_positions()
+        self.assertGreater(len(slots), 20)
 
-        for name, y in zip(('left', 'right'), chassis_side.SPEAKER_Y_POSITIONS):
+        for name, y, slope in zip(('left', 'right'), chassis_side.SPEAKER_Y_POSITIONS,
+                                  (1, -1)):
             speaker = self.parts[f'loudspeaker_{name}']
             with self.subTest(speaker=name):
                 self.assertTrue(speaker.is_valid)
@@ -257,12 +255,20 @@ class NiraLidarTests(unittest.TestCase):
                 self.assertLess(overlap.volume if overlap else 0, 1e-6)
                 plane = chassis_side.speaker_plane(
                     self.parts['body_layer_3'].bounding_box().min.Z, y)
-                for across, along in (holes[0], (0, 0), holes[-1]):
+                for across, along in (slots[0], (0, 0), slots[-1]):
                     probe = (plane.location
                              * Pos(across, along, -chassis_side.THICKNESS / 2)
-                             * Cylinder(chassis_side.SPEAKER_HOLE_RADIUS / 2,
+                             * Cylinder(0.1,
                                         chassis_side.THICKNESS + 0.2))
                     self.assertFalse(cover & probe)
+                # A point along / or \ lies in the slot; one perpendicular
+                # to it lies in the solid bridge between slots.
+                for dx, dy, is_open in ((1, slope, True), (-1, -slope, True),
+                                        (1, -slope, False), (-1, slope, False)):
+                    probe = (plane.location
+                             * Pos(dx, dy, -chassis_side.THICKNESS / 2)
+                             * Cylinder(0.1, chassis_side.THICKNESS + 0.2))
+                    self.assertEqual((cover & probe).volume < 1e-6, is_open)
 
     def test_complete_robot_clears_270_degree_scan_band(self):
         # Continuous swept volume, including both +/-135-degree boundaries,

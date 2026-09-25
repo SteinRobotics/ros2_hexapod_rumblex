@@ -16,7 +16,7 @@ from robot_nira import EXPORT_DIR
 from math import hypot, sqrt
 
 from build123d import (
-    Box, BuildPart, BuildSketch, Circle, Compound, ExportDXF, Locations, Part, Plane, Pos,
+    Box, BuildPart, BuildSketch, Compound, ExportDXF, Locations, Part, Plane, Pos,
     Rectangle, Rot, Sketch, Mode, Polygon, add, export_step, extrude,
 )
 
@@ -34,9 +34,10 @@ COVER_CLEARANCE = 0.5
 JOINT_FINGER_COUNT = 5
 JOINT_FINGER_LENGTH = 7.0
 SPEAKER_Y_POSITIONS = (25.0, -25.0)
-SPEAKER_HOLE_RADIUS = 1.5
-SPEAKER_HOLE_PITCH = 6.0
-SPEAKER_HOLE_FIELD_RADIUS = loudspeaker.FRONT_DIAMETER / 2 - 3.5
+SPEAKER_SLOT_LENGTH = 4.0
+SPEAKER_SLOT_WIDTH = 1.5
+SPEAKER_SLOT_PITCH = 6.0
+SPEAKER_SLOT_FIELD_RADIUS = loudspeaker.FRONT_DIAMETER / 2 - 3.5
 TAB_WIDTH = body_common.rectangle_slots_width
 TAB_DEPTH = body_common.THICKNESS
 TAB_PITCH = body_common.rectangle_slots_completed_width / 2
@@ -96,15 +97,15 @@ def speaker_plane(z_top: float, y: float) -> Plane:
     )
 
 
-def speaker_hole_positions() -> list[tuple[float, float]]:
-    """Staggered hole centres within the front face, leaving a solid rim."""
+def speaker_slot_positions() -> list[tuple[float, float]]:
+    """Staggered slot centres within the speaker face, leaving a solid rim."""
     positions = []
-    row_pitch = SPEAKER_HOLE_PITCH * sqrt(3) / 2
+    row_pitch = SPEAKER_SLOT_PITCH * sqrt(3) / 2
     for row in range(-3, 4):
         for column in range(-3, 4):
-            across = (column + 0.5 * (row % 2)) * SPEAKER_HOLE_PITCH
+            across = (column + 0.5 * (row % 2)) * SPEAKER_SLOT_PITCH
             along = row * row_pitch
-            if hypot(across, along) <= SPEAKER_HOLE_FIELD_RADIUS:
+            if hypot(across, along) <= SPEAKER_SLOT_FIELD_RADIUS:
                 positions.append((across, along))
     return positions
 
@@ -268,10 +269,10 @@ def build_slope_cover(z_top: float) -> Part:
     result = result - notch
     with BuildPart() as perforated:
         add(result)
-        for y in SPEAKER_Y_POSITIONS:
+        for y, angle in zip(SPEAKER_Y_POSITIONS, (45, -45)):
             with BuildSketch(speaker_plane(z_top, y).offset(0.1)):
-                with Locations(*speaker_hole_positions()):
-                    Circle(SPEAKER_HOLE_RADIUS)
+                with Locations(*speaker_slot_positions()):
+                    Rectangle(SPEAKER_SLOT_LENGTH, SPEAKER_SLOT_WIDTH, rotation=angle)
             extrude(amount=-THICKNESS - 0.2, mode=Mode.SUBTRACT)
     result = perforated.part
     result.label = "chassis_slope_cover"
