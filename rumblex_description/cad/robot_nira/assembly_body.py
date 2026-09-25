@@ -22,7 +22,8 @@ import robot_nira.body_layer_1 as body_layer_1
 import robot_nira.body_layer_2 as body_layer_2
 import robot_nira.body_layer_3 as body_layer_3
 import robot_nira.body_layer_4 as body_layer_4
-import robot_nira.chassis_side as chassis_side
+import robot_nira.chassis_common as chassis_common
+import robot_nira.chassis_slope_cover as chassis_slope_cover
 from robot_nira import board_ydlidar_tmini_interface
 from robot_nira import lidar_ydlidar_tmini
 from robot_nira import lidar_interface_housing
@@ -154,10 +155,10 @@ def build_assembly() -> Compound:
             board_interface,
             housing,
             lidar,
-            *chassis_side.build_plates(z_layer_1, z_layer_3),
-            *chassis_side.build_diagonal_plates(z_layer_2, z_layer_3),
-            chassis_side.build_slope_cover(z_layer_3),
-            *chassis_side.build_speakers(z_layer_3),
+            *chassis_common.build_plates(z_layer_1, z_layer_3),
+            *chassis_common.build_diagonal_plates(z_layer_2, z_layer_3),
+            chassis_slope_cover.build_slope_cover(z_layer_3),
+            *chassis_slope_cover.build_speakers(z_layer_3),
             *toe_instances,
             *spacer_instances,
         ],

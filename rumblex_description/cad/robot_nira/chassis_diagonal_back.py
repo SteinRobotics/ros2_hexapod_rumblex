@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Nira side chassis plate."""
+"""Nira diagonal back chassis plate."""
 if __package__ in (None, ""):
     import sys
     from pathlib import Path
@@ -13,7 +13,7 @@ from utils.ocp_utils import show
 
 
 def build_surface(height: float) -> Sketch:
-    return chassis_common.build_plate_surface(height, side=True)
+    return chassis_common.build_plate_surface(height)
 
 
 def build_model(height: float) -> Part:
@@ -23,20 +23,19 @@ def build_model(height: float) -> Part:
 def main() -> None:
     import robot_nira.assembly_body as assembly_body
 
-    height = (3 * body_common.THICKNESS + assembly_body.SPACER_LENGTH_1_to_2
-              + assembly_body.SPACER_LENGTH_TOP)
+    height = body_common.SPACER_LENGTH_TOP + 2 * chassis_common.TAB_DEPTH
     surface = build_surface(height)
     model = chassis_common.build_model(surface)
-    model.label = "chassis_side"
+    model.label = "chassis_diagonal_back"
     step_dir = EXPORT_DIR / "step"
     dxf_dir = EXPORT_DIR / "dxf"
     step_dir.mkdir(parents=True, exist_ok=True)
     dxf_dir.mkdir(parents=True, exist_ok=True)
-    export_step(model, str(step_dir / "chassis_side.step"))
+    export_step(model, str(step_dir / "chassis_diagonal_back.step"))
     drawing = ExportDXF()
     drawing.add_shape(surface)
-    drawing.write(str(dxf_dir / "chassis_side.dxf"))
-    show(model, name="chassis_side", clear=True)
+    drawing.write(str(dxf_dir / "chassis_diagonal_back.dxf"))
+    show(model, name="chassis_diagonal_back", clear=True)
 
 
 if __name__ == "__main__":

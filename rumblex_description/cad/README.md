@@ -106,7 +106,12 @@ Export the revised parts and assembly with:
 .venv/bin/python -m robot_nira.body_layer_2
 .venv/bin/python -m robot_nira.body_layer_3
 .venv/bin/python -m robot_nira.body_layer_4
+.venv/bin/python -m robot_nira.chassis_back
+.venv/bin/python -m robot_nira.chassis_front
 .venv/bin/python -m robot_nira.chassis_side
+.venv/bin/python -m robot_nira.chassis_diagonal_back
+.venv/bin/python -m robot_nira.chassis_diagonal_front
+.venv/bin/python -m robot_nira.chassis_slope_cover
 .venv/bin/python -m robot_nira.lidar_interface_housing
 .venv/bin/python -m robot_nira.assembly_body
 .venv/bin/python robot_nira.py

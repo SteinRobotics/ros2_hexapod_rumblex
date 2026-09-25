@@ -8,7 +8,8 @@ from build123d import (
     add, extrude,
 )
 
-from robot_nira import body_common, chassis_side, lidar_ydlidar_tmini, lidar_interface_housing
+from robot_nira import (body_common, chassis_common, chassis_diagonal_front,
+                        chassis_slope_cover, lidar_ydlidar_tmini, lidar_interface_housing)
 from robot_nira.assembly_complete import build_assembly
 from robot_nira.lidar_layout import LIDAR_ASSEMBLY_X, LIDAR_X, LIDAR_Y, canopy_surface
 
@@ -169,7 +170,7 @@ class NiraLidarTests(unittest.TestCase):
         deck = self.parts['body_layer_2']
         deck_box = deck.bounding_box()
         z = deck_box.center().Z
-        front_diagonal_profile = chassis_side.build_front_diagonal_surface(
+        front_diagonal_profile = chassis_diagonal_front.build_surface(
             body_common.SPACER_LENGTH_TOP + 2 * body_common.THICKNESS)
         self.assertEqual(len(front_diagonal_profile.faces()[0].inner_wires()), 2)
 
@@ -181,10 +182,10 @@ class NiraLidarTests(unittest.TestCase):
                 fingers = self.parts[name] & Pos(0, 0, z) * Box(300, 200, body_common.THICKNESS)
                 diagonal = 'diagonal' in name
                 count = 2 if diagonal else 3
-                width = body_common.front_diagonal_tab_width if diagonal else chassis_side.TAB_WIDTH
+                width = body_common.front_diagonal_tab_width if diagonal else chassis_common.TAB_WIDTH
                 self.assertEqual(len(fingers.solids()), count)
                 self.assertAlmostEqual(fingers.volume,
-                                       count * width * chassis_side.THICKNESS
+                                       count * width * chassis_common.THICKNESS
                                        * body_common.THICKNESS)
                 self.assertLess((fingers & deck).volume, 1e-6)
 
@@ -194,11 +195,11 @@ class NiraLidarTests(unittest.TestCase):
                 plate = self.parts[name]
                 self.assertGreater(plate.distance_to(housing), 1.0)
 
-        for y in (-chassis_side.TAB_PITCH, 0, chassis_side.TAB_PITCH):
+        for y in (-chassis_common.TAB_PITCH, 0, chassis_common.TAB_PITCH):
             slot = Pos(100, y, z) * Box(body_common.rectangle_slots_height,
-                                         chassis_side.TAB_WIDTH, body_common.THICKNESS)
+                                         chassis_common.TAB_WIDTH, body_common.THICKNESS)
             self.assertLess((slot & deck).volume, 1e-6)
-        for y in (-chassis_side.TAB_PITCH / 2, chassis_side.TAB_PITCH / 2):
+        for y in (-chassis_common.TAB_PITCH / 2, chassis_common.TAB_PITCH / 2):
             web = Pos(100, y, z) * Box(body_common.rectangle_slots_height,
                                         body_common.rectangle_slots_height,
                                         body_common.THICKNESS)
@@ -212,7 +213,7 @@ class NiraLidarTests(unittest.TestCase):
 
         self.assertTrue(cover.is_valid)
         self.assertEqual(len(cover.solids()), 1)
-        self.assertAlmostEqual(cover.bounding_box().max.X, chassis_side.SLOPE_END_X)
+        self.assertAlmostEqual(cover.bounding_box().max.X, chassis_common.SLOPE_END_X)
         self.assertAlmostEqual(cover.bounding_box().max.Z, top)
         for side in (left, right):
             self.assertLess(cover.distance_to(side), 1e-6)
@@ -221,18 +222,18 @@ class NiraLidarTests(unittest.TestCase):
             # Five cover fingers occupy matching notches across the complete
             # side-plate thickness; the intervening edge stays against it.
             side_band = Pos(0, side.bounding_box().center().Y, top - 20) * Box(
-                300, chassis_side.THICKNESS, 100)
+                300, chassis_common.THICKNESS, 100)
             fingers = cover & side_band
-            self.assertEqual(len(fingers.solids()), chassis_side.JOINT_FINGER_COUNT)
+            self.assertEqual(len(fingers.solids()), chassis_common.JOINT_FINGER_COUNT)
             self.assertAlmostEqual(
                 fingers.volume,
-                chassis_side.JOINT_FINGER_COUNT
-                * chassis_side.JOINT_FINGER_LENGTH
-                * chassis_side.THICKNESS ** 2,
+                chassis_common.JOINT_FINGER_COUNT
+                * chassis_common.JOINT_FINGER_LENGTH
+                * chassis_common.THICKNESS ** 2,
             )
         # The cover spans the centre at mid-slope while clearing the housing
         # at its lower edge.
-        midpoint = (chassis_side.SHOULDER_TOP_X + chassis_side.SLOPE_END_X) / 2
+        midpoint = (chassis_slope_cover.SHOULDER_TOP_X + chassis_common.SLOPE_END_X) / 2
         probe = Pos(midpoint, 0, top - 21 - 0.75) * Box(1, 1, 1)
         self.assertGreater((cover & probe).volume, 0)
         housing_overlap = cover & self.parts['lidar_interface_housing']
@@ -240,10 +241,10 @@ class NiraLidarTests(unittest.TestCase):
 
     def test_two_speakers_face_perforations_from_inside(self):
         cover = self.parts['chassis_slope_cover']
-        slots = chassis_side.speaker_slot_positions()
+        slots = chassis_slope_cover.speaker_slot_positions()
         self.assertGreater(len(slots), 20)
 
-        for name, y, slope in zip(('left', 'right'), chassis_side.SPEAKER_Y_POSITIONS,
+        for name, y, slope in zip(('left', 'right'), chassis_slope_cover.SPEAKER_Y_POSITIONS,
                                   (1, -1)):
             speaker = self.parts[f'loudspeaker_{name}']
             with self.subTest(speaker=name):
@@ -253,21 +254,21 @@ class NiraLidarTests(unittest.TestCase):
                 self.assertLess(speaker.distance_to(cover), 1e-6)
                 overlap = speaker & cover
                 self.assertLess(overlap.volume if overlap else 0, 1e-6)
-                plane = chassis_side.speaker_plane(
+                plane = chassis_slope_cover.speaker_plane(
                     self.parts['body_layer_3'].bounding_box().min.Z, y)
                 for across, along in (slots[0], (0, 0), slots[-1]):
                     probe = (plane.location
-                             * Pos(across, along, -chassis_side.THICKNESS / 2)
+                             * Pos(across, along, -chassis_common.THICKNESS / 2)
                              * Cylinder(0.1,
-                                        chassis_side.THICKNESS + 0.2))
+                                        chassis_common.THICKNESS + 0.2))
                     self.assertFalse(cover & probe)
                 # A point along / or \ lies in the slot; one perpendicular
                 # to it lies in the solid bridge between slots.
                 for dx, dy, is_open in ((1, slope, True), (-1, -slope, True),
                                         (1, -slope, False), (-1, slope, False)):
                     probe = (plane.location
-                             * Pos(dx, dy, -chassis_side.THICKNESS / 2)
-                             * Cylinder(0.1, chassis_side.THICKNESS + 0.2))
+                             * Pos(dx, dy, -chassis_common.THICKNESS / 2)
+                             * Cylinder(0.1, chassis_common.THICKNESS + 0.2))
                     self.assertEqual((cover & probe).volume < 1e-6, is_open)
 
     def test_complete_robot_clears_270_degree_scan_band(self):
