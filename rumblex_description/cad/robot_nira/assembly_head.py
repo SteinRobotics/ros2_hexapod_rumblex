@@ -21,6 +21,7 @@ from utils.ocp_utils import show
 from utils.colors import COLOR_CREAMY_WHITE, COLOR_DARK_GRAY, COLOR_WINE_RED
 from utils import spacer
 from robot_nira import webcam_obsbot
+from robot_nira.armor_style import gill_points
 import common.servo_simplified as servo_simplified
 
 # The outer side-bracket mounting pair is 24.45 mm apart, matching one
@@ -56,10 +57,10 @@ TAB_WIDTH = 8.0
 # Roll the complete cage about the bracket centre along its viewing axis.
 # The symmetric bracket bores stay registered; the servo frame stays fixed.
 POD_ROLL = 180.0
-# Swept shoulders and twin points echo the outer foot's angular armor.
+# Clipped shoulders and a shallow central point echo the outer foot.
 DECK_OUTLINE = [
-    (-25, -3), (-35, -12), (-33, -32), (-18, -38),
-    (0, -34), (18, -38), (33, -32), (35, -12), (25, -3),
+    (-25, -3), (-35, -12), (-33, -30), (-23, -34),
+    (0, -38), (23, -34), (33, -30), (35, -12), (25, -3),
 ]
 
 
@@ -81,9 +82,9 @@ def build_deck(*, brow: bool = False) -> Part:
                 # Mirrored swept vents leave a continuous central spine,
                 # like the foot's cheek armor, behind the optical face.
                 for side in (-1, 1):
-                    for x in (8, 17):
-                        Polygon((side * x, -13), (side * (x + 4), -13),
-                                (side * (x - 1), -27), (side * (x - 5), -27),
+                    for longitudinal in (14, 26):
+                        Polygon(*[(transverse, -along) for along, transverse in
+                                  gill_points(longitudinal, 5, 6, side=side)],
                                 align=None, mode=Mode.SUBTRACT)
             else:
                 with Locations((webcam_obsbot.MOUNT_HOLE_X,
@@ -109,8 +110,8 @@ def build_adapter() -> Part:
     with BuildPart() as plate:
         with BuildSketch(rear_plane):
             Polygon((-18, CHIN_Z - 6), (18, CHIN_Z - 6), (30, CAMERA_BASE_Z + 5),
-                    (30, BROW_Z - 6), (20, BROW_Z + 7),
-                    (0, BROW_Z + 3), (-20, BROW_Z + 7),
+                    (30, BROW_Z - 6), (20, BROW_Z + 3),
+                    (0, BROW_Z + 7), (-20, BROW_Z + 3),
                     (-30, BROW_Z - 6), (-30, CAMERA_BASE_Z + 5),
                     align=None)
             with Locations(*[(x, z) for x in (-BRACKET_HOLE_HALF_PITCH,
@@ -126,8 +127,8 @@ def build_adapter() -> Part:
                 RectangleRounded(15, 10, 2, mode=Mode.SUBTRACT)
             for side in (-1, 1):
                 for z in (CAMERA_BASE_Z + 8, CAMERA_BASE_Z + 16, CAMERA_BASE_Z + 24):
-                    Polygon((side * 16, z), (side * 21, z),
-                            (side * 26, z + 5), (side * 21, z + 5),
+                    Polygon(*[(transverse, along) for along, transverse in
+                              gill_points(z, 16, 5, side=side)],
                             align=None, mode=Mode.SUBTRACT)
         extrude(amount=PLATE_THICKNESS)
     plate.part.label = "head_rear_adapter"

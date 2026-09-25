@@ -22,6 +22,7 @@ from build123d import (
 )
 
 from common import servo_simplified
+from robot_nira.armor_style import gill_points
 from utils.ocp_utils import show
 
 THICKNESS = 1.5
@@ -56,7 +57,7 @@ FOOT_OUTLINE = [
 
 # Swept gills stay above the spacer bosses and below the upper perimeter.
 CHEEK_GILLS = [
-    [(x, -13.0), (x + 5, -13.0), (x - 1, -1.0), (x - 6, -1.0)]
+    gill_points(x, -13.0, 7.0)
     for x in (33.0, 47.0, 61.0)
 ]
 
