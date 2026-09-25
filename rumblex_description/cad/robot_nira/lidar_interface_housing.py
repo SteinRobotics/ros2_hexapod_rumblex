@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Laser-cut, finger-jointed cover for Nira's lidar interface.
+"""Angular, vented laser-cut cover for Nira's lidar interface.
 
 Each component is a constant-thickness flat plate. The walls interlock at
 their corners and pass through slots in the lid and body deck.
@@ -13,8 +13,8 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from build123d import (
-    Align, Box, BuildPart, Compound, ExportDXF, Locations, Mode, Part,
-    Plane, Pos, Vector, export_step, export_stl,
+    Align, Box, BuildPart, BuildSketch, Compound, ExportDXF, Locations,
+    Mode, Part, Plane, Polygon, Pos, Vector, export_step, export_stl, extrude,
 )
 
 from robot_nira import EXPORT_DIR, board_ydlidar_tmini_interface as interface
@@ -25,7 +25,8 @@ from utils.ocp_utils import show
 WALL = 1.5
 CLEARANCE = 1.0
 HEIGHT = interface.TOTAL_HEIGHT + CLEARANCE + WALL
-# The board is rotated 90 degrees in the robot; its socket faces +X.
+# In this housing's local frame, the board is rotated 90 degrees and its socket faces +X.
+# The body assembly rotates both parts so the socket and cable opening face inward.
 HALF_X = interface.BASE_DEPTH / 2 + CLEARANCE + WALL
 HALF_Y = interface.BASE_WIDTH / 2 + CLEARANCE + WALL
 FINGER_HEIGHT = 2.0
@@ -38,14 +39,38 @@ DECK_TAB_WIDTH = 2.5
 DECK_TAB_DEPTH = body_common.THICKNESS
 DECK_SLOT_Y = HALF_Y - WALL / 2
 BOTTOM = (Align.CENTER, Align.CENTER, Align.MIN)
+SHOULDER = 3.0
+
+
+def wall_outline(half_width: float, bottom: float) -> None:
+    """Cut the high corners back while keeping the corner fingers below them."""
+    with BuildSketch() as outline:
+        Polygon(
+            (-half_width, bottom), (half_width, bottom),
+            (half_width, HEIGHT - WALL - SHOULDER),
+            (half_width - 4, HEIGHT - WALL),
+            (-half_width + 4, HEIGHT - WALL),
+            (-half_width, HEIGHT - WALL - SHOULDER), align=None,
+        )
+    extrude(outline.sketch, amount=WALL)
+
+
+def swept_wall_vents(centers: tuple[float, ...]) -> None:
+    """Short diagonal windows matching the foot armor's slashed openings."""
+    with BuildSketch() as vents:
+        for center in centers:
+            Polygon(
+                (center - 3, 4.5), (center + 0.5, 4.5),
+                (center + 3, 8), (center - 0.5, 8), align=None,
+            )
+    extrude(vents.sketch, amount=WALL, mode=Mode.SUBTRACT)
 
 
 def side_wall() -> Part:
     """Flat pattern: horizontal coordinate is X, vertical coordinate is Z."""
     span = HALF_X - WALL
     with BuildPart() as panel:
-        with Locations((0, HEIGHT / 2, 0)):
-            Box(2 * span, HEIGHT - 2 * WALL, WALL, align=BOTTOM)
+        wall_outline(span, WALL)
         for end in (-1, 1):
             for z in CORNER_FINGER_Z:
                 with Locations((end * (span + WALL / 2), z + FINGER_HEIGHT / 2, 0)):
@@ -56,14 +81,14 @@ def side_wall() -> Part:
         for x in DECK_TAB_X:
             with Locations((x, (WALL - DECK_TAB_DEPTH) / 2, 0)):
                 Box(DECK_TAB_WIDTH, WALL + DECK_TAB_DEPTH, WALL, align=BOTTOM)
+        swept_wall_vents((-13, -4, 5, 14))
     return panel.part
 
 
 def end_wall(front: bool) -> Part:
     """Flat pattern with side-finger recesses and a bottom cable opening."""
     with BuildPart() as panel:
-        with Locations((0, (HEIGHT - WALL) / 2, 0)):
-            Box(2 * HALF_Y, HEIGHT - WALL, WALL, align=BOTTOM)
+        wall_outline(HALF_Y, 0)
         for end in (-1, 1):
             for z in CORNER_FINGER_Z:
                 with Locations((end * (HALF_Y - WALL / 2), z + FINGER_HEIGHT / 2, 0)):
@@ -75,12 +100,31 @@ def end_wall(front: bool) -> Part:
             with Locations((0, 4, 0)):
                 Box(interface.CONNECTOR_WIDTH + 4, 8, WALL,
                     align=BOTTOM, mode=Mode.SUBTRACT)
+            swept_wall_vents((-17, 17))
+        else:
+            swept_wall_vents((-17, -6, 6, 17))
     return panel.part
 
 
 def lid() -> Part:
     with BuildPart() as panel:
-        Box(2 * HALF_X, 2 * HALF_Y, WALL, align=BOTTOM)
+        # The clipped corners and paired swept openings repeat the outer foot.
+        with BuildSketch() as surface:
+            Polygon(
+                (-HALF_X + 4, -HALF_Y), (HALF_X - 4, -HALF_Y),
+                (HALF_X, -HALF_Y + 4), (HALF_X, HALF_Y - 4),
+                (HALF_X - 4, HALF_Y), (-HALF_X + 4, HALF_Y),
+                (-HALF_X, HALF_Y - 4), (-HALF_X, -HALF_Y + 4),
+                align=None,
+            )
+            for side in (-1, 1):
+                for y in (-15, -3, 9):
+                    Polygon(
+                        (side * 7, y), (side * 12, y),
+                        (side * 17, y + 8), (side * 12, y + 8),
+                        align=None, mode=Mode.SUBTRACT,
+                    )
+        extrude(amount=WALL)
         for y in (-HALF_Y + WALL / 2, HALF_Y - WALL / 2):
             for x in SIDE_LID_TAB_X:
                 with Locations((x, y, 0)):

@@ -88,14 +88,21 @@ def build_assembly() -> Compound:
     z_spacer_top = z_layer_2 + body_common.THICKNESS
     z_layer_3 = z_spacer_top + SPACER_LENGTH_TOP
 
+    # Face the board connector and housing cable opening toward the robot center (-X).
+    lidar_interface_flip = Rot(Z=180)
     board_interface = (
         Pos(LIDAR_ASSEMBLY_X, LIDAR_Y, z_spacer_top)
+        * lidar_interface_flip
         * Rot(Z=90)
         * board_ydlidar_tmini_interface.build_model()
     )
     board_interface.label = "board_ydlidar_tmini_interface"
 
-    housing = Pos(LIDAR_ASSEMBLY_X, LIDAR_Y, z_spacer_top) * lidar_interface_housing.build_model()
+    housing = (
+        Pos(LIDAR_ASSEMBLY_X, LIDAR_Y, z_spacer_top)
+        * lidar_interface_flip
+        * lidar_interface_housing.build_model()
+    )
 
     lidar = Pos(
         LIDAR_ASSEMBLY_X,
