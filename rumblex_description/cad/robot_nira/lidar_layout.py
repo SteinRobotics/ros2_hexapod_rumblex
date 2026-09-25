@@ -9,6 +9,7 @@ from build123d import BuildSketch, Polygon, Sketch
 
 LIDAR_X = 80.0
 LIDAR_Y = 0.0
+LIDAR_ASSEMBLY_X = LIDAR_X + 10.0
 LOW_RAIL_HEIGHT = 8.0
 CANOPY_TIP_X = LIDAR_X
 CANOPY_HALF_WIDTH = 65.0

@@ -10,7 +10,7 @@ from build123d import (
 
 from robot_nira import body_common, chassis_side, lidar_ydlidar_tmini, lidar_interface_housing
 from robot_nira.assembly_complete import build_assembly
-from robot_nira.lidar_layout import LIDAR_X, LIDAR_Y, canopy_surface
+from robot_nira.lidar_layout import LIDAR_ASSEMBLY_X, LIDAR_X, LIDAR_Y, canopy_surface
 
 
 def leaves(part):
@@ -22,9 +22,9 @@ def leaves(part):
 
 
 class NiraLidarHousingCutTests(unittest.TestCase):
-    def test_housing_has_seven_flat_interlocking_parts(self):
+    def test_housing_has_five_flat_interlocking_parts(self):
         panels = lidar_interface_housing.flat_parts()
-        self.assertEqual(len(panels), 7)
+        self.assertEqual(len(panels), 5)
         for name, panel in panels.items():
             with self.subTest(panel=name):
                 self.assertTrue(panel.is_valid)
@@ -33,7 +33,7 @@ class NiraLidarHousingCutTests(unittest.TestCase):
                                        lidar_interface_housing.WALL)
         assembled = lidar_interface_housing.assemble(panels)
         self.assertTrue(assembled.is_valid)
-        self.assertEqual(len(assembled.solids()), 7)
+        self.assertEqual(len(assembled.solids()), 5)
         self.assertAlmostEqual(assembled.volume,
                                sum(panel.volume for panel in panels.values()))
 
@@ -53,7 +53,7 @@ class NiraLidarTests(unittest.TestCase):
         box = self.lidar.bounding_box()
         self.assertAlmostEqual(interface.bounding_box().min.Z, deck.bounding_box().max.Z)
         self.assertLess(interface.distance_to(deck), 1e-6)
-        self.assertAlmostEqual(housing.bounding_box().min.Z, deck.bounding_box().max.Z)
+        self.assertAlmostEqual(housing.bounding_box().min.Z, deck.bounding_box().min.Z)
         self.assertAlmostEqual(box.min.Z, housing.bounding_box().max.Z)
         self.assertLess(self.lidar.distance_to(housing), 1e-6)
         self.assertGreaterEqual(box.min.Z - lidar_interface_housing.WALL
@@ -61,7 +61,7 @@ class NiraLidarTests(unittest.TestCase):
         self.assertAlmostEqual(interface.joints['mount'].location.position.X, box.center().X)
         self.assertAlmostEqual(interface.joints['mount'].location.position.Y, box.center().Y)
         self.assertGreater(box.min.X, body_common.rect_w / 6)
-        self.assertAlmostEqual(box.center().X, LIDAR_X)
+        self.assertAlmostEqual(box.center().X, LIDAR_ASSEMBLY_X)
         self.assertAlmostEqual(box.center().Y, LIDAR_Y)
 
     def test_canopy_rear_frame_and_roof_clear_scanner(self):
@@ -73,7 +73,7 @@ class NiraLidarTests(unittest.TestCase):
                 bounds = plate.bounding_box()
                 self.assertGreaterEqual(bounds.min.Z - self.lidar.bounding_box().max.Z, 3.0)
         roof = self.parts['body_layer_4']
-        self.assertAlmostEqual(roof.bounding_box().max.X, self.lidar.bounding_box().center().X)
+        self.assertAlmostEqual(roof.bounding_box().max.X, LIDAR_X)
         tip = Pos(LIDAR_X - 1, LIDAR_Y, roof.bounding_box().center().Z) * Box(1, 1, 1)
         self.assertAlmostEqual((tip & roof).volume, tip.volume)
 
@@ -97,16 +97,22 @@ class NiraLidarTests(unittest.TestCase):
                               location.position.Y, z) * Box(1, 1, 1)
                     self.assertGreater((rim & frame).volume, 0)
 
-    def test_housing_mounts_and_connector_remain_accessible(self):
+    def test_housing_fingers_fit_deck_slots_and_connector_remains_accessible(self):
         housing = self.parts['lidar_interface_housing']
         deck = self.parts['body_layer_2']
         interface = self.parts['board_ydlidar_tmini_interface']
-        z = deck.bounding_box().max.Z
-        for x, y in lidar_interface_housing.MOUNT_POINTS:
-            bore = Pos(LIDAR_X + x, LIDAR_Y + y, z) * Cylinder(1.5, 10)
-            for part in (housing, deck):
-                overlap = bore & part
-                self.assertLess(overlap.volume if overlap else 0, 1e-6)
+        z = deck.bounding_box().center().Z
+        for x in lidar_interface_housing.DECK_TAB_X:
+            for y in (-lidar_interface_housing.DECK_SLOT_Y,
+                      lidar_interface_housing.DECK_SLOT_Y):
+                with self.subTest(x=x, y=y):
+                    finger = Pos(LIDAR_ASSEMBLY_X + x, y, z) * Box(
+                        lidar_interface_housing.DECK_TAB_WIDTH,
+                        lidar_interface_housing.WALL,
+                        body_common.THICKNESS,
+                    )
+                    self.assertAlmostEqual((housing & finger).volume, finger.volume)
+                    self.assertLess((deck & finger).volume, 1e-6)
         connector = interface.joints['connector'].location.position
         access = Pos(connector.X + 5, connector.Y, connector.Z) * Box(10, 10, 4)
         overlap = housing & access
@@ -117,7 +123,7 @@ class NiraLidarTests(unittest.TestCase):
             with self.subTest(part=part.label):
                 self.assertTrue(part.is_valid)
                 for component in leaves(part):
-                    expected = 7 if component.label == 'lidar_interface_housing' else 1
+                    expected = 5 if component.label == 'lidar_interface_housing' else 1
                     self.assertEqual(len(component.solids()), expected, component.label)
             if not part.label.startswith(('chassis_', 'lidar_')):
                 continue
@@ -214,12 +220,12 @@ class NiraLidarTests(unittest.TestCase):
         z = self.lidar.bounding_box().min.Z + lidar_ydlidar_tmini.SCAN_HEIGHT
         with BuildPart() as sector:
             with BuildSketch(Plane.XY.offset(z - 2)):
-                Polygon((LIDAR_X, LIDAR_Y), *[
-                    (LIDAR_X + 600 * math.cos(math.radians(angle)),
+                Polygon((LIDAR_ASSEMBLY_X, LIDAR_Y), *[
+                    (LIDAR_ASSEMBLY_X + 600 * math.cos(math.radians(angle)),
                      LIDAR_Y + 600 * math.sin(math.radians(angle)))
                     for angle in range(-135, 136, 3)
                 ], align=None)
-                with Locations((LIDAR_X, LIDAR_Y)):
+                with Locations((LIDAR_ASSEMBLY_X, LIDAR_Y)):
                     Circle(20, mode=Mode.SUBTRACT)
             extrude(amount=4)
         for part in leaves(self.robot):

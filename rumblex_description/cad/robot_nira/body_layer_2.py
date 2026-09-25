@@ -12,8 +12,8 @@ from build123d import *
 from utils.ocp_utils import show
 
 import robot_nira.body_common as body_common
-from robot_nira.lidar_layout import LIDAR_X
-from robot_nira.lidar_interface_housing import MOUNT_POINTS, MOUNT_HOLE_RADIUS
+from robot_nira.lidar_layout import LIDAR_X, LIDAR_ASSEMBLY_X
+from robot_nira.lidar_interface_housing import DECK_TAB_X, DECK_TAB_WIDTH, DECK_SLOT_Y, WALL
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
@@ -28,8 +28,10 @@ def build_surface() -> Sketch:
             RectangleRounded(22, 3, 1, mode=Mode.SUBTRACT)
         with Locations((30, 0)):
             RectangleRounded(6, 16, 2, mode=Mode.SUBTRACT)
-        with Locations(*[(LIDAR_X + x, y) for x, y in MOUNT_POINTS]):
-            Circle(MOUNT_HOLE_RADIUS, mode=Mode.SUBTRACT)
+        # Slots receive the housing side-wall fingers through this deck.
+        with Locations(*[(LIDAR_ASSEMBLY_X + x, y)
+                         for x in DECK_TAB_X for y in (-DECK_SLOT_Y, DECK_SLOT_Y)]):
+            Rectangle(DECK_TAB_WIDTH, WALL, mode=Mode.SUBTRACT)
 
         # These plates start at layer 2, so retain three individual tab slots.
         with Locations(*body_common.diagonal_slots_locations):

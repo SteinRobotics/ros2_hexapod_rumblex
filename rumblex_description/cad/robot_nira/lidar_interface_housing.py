@@ -2,7 +2,7 @@
 """Laser-cut, finger-jointed cover for Nira's lidar interface.
 
 Each component is a constant-thickness flat plate. The walls interlock at
-their corners, pass through slots in the lid, and engage the mounting feet.
+their corners and pass through slots in the lid and body deck.
 All fits are nominal; compensate for material thickness and laser kerf.
 """
 
@@ -13,12 +13,12 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from build123d import (
-    Align, Box, BuildPart, BuildSketch, Circle, Compound, ExportDXF,
-    Locations, Mode, Part, Plane, Pos, RectangleRounded, Vector,
-    export_step, export_stl, extrude,
+    Align, Box, BuildPart, Compound, ExportDXF, Locations, Mode, Part,
+    Plane, Pos, Vector, export_step, export_stl,
 )
 
 from robot_nira import EXPORT_DIR, board_ydlidar_tmini_interface as interface
+import robot_nira.body_common as body_common
 from utils.colors import COLOR_CREAMY_WHITE
 from utils.ocp_utils import show
 
@@ -28,19 +28,15 @@ HEIGHT = interface.TOTAL_HEIGHT + CLEARANCE + WALL
 # The board is rotated 90 degrees in the robot; its socket faces +X.
 HALF_X = interface.BASE_DEPTH / 2 + CLEARANCE + WALL
 HALF_Y = interface.BASE_WIDTH / 2 + CLEARANCE + WALL
-MOUNT_Y = HALF_Y + 3.5
-MOUNT_HOLE_RADIUS = 1.6
-MOUNT_POINTS = ((0, -MOUNT_Y), (0, MOUNT_Y))
-
 FINGER_HEIGHT = 2.0
 CORNER_FINGER_Z = (2.0, 6.0)
 LID_TAB_WIDTH = 4.0
 SIDE_LID_TAB_X = (-12.0, 0.0, 12.0)
 END_LID_TAB_Y = (-14.0, 0.0, 14.0)
-FOOT_TAB_X = (-3.0, 3.0)
-FOOT_TAB_WIDTH = 2.5
-FOOT_WIDTH = 12.0
-FOOT_DEPTH = 11.0
+DECK_TAB_X = (-3.0, 3.0)
+DECK_TAB_WIDTH = 2.5
+DECK_TAB_DEPTH = body_common.THICKNESS
+DECK_SLOT_Y = HALF_Y - WALL / 2
 BOTTOM = (Align.CENTER, Align.CENTER, Align.MIN)
 
 
@@ -57,9 +53,9 @@ def side_wall() -> Part:
         for x in SIDE_LID_TAB_X:
             with Locations((x, HEIGHT - WALL / 2, 0)):
                 Box(LID_TAB_WIDTH, WALL, WALL, align=BOTTOM)
-        for x in FOOT_TAB_X:
-            with Locations((x, WALL / 2, 0)):
-                Box(FOOT_TAB_WIDTH, WALL, WALL, align=BOTTOM)
+        for x in DECK_TAB_X:
+            with Locations((x, (WALL - DECK_TAB_DEPTH) / 2, 0)):
+                Box(DECK_TAB_WIDTH, WALL + DECK_TAB_DEPTH, WALL, align=BOTTOM)
     return panel.part
 
 
@@ -96,22 +92,6 @@ def lid() -> Part:
     return panel.part
 
 
-def mounting_foot(side: int) -> Part:
-    """The wall tabs enter slots beside the M3 mounting hole."""
-    wall_y = side * (HALF_Y - WALL / 2)
-    with BuildPart() as panel:
-        with BuildSketch():
-            RectangleRounded(FOOT_WIDTH, FOOT_DEPTH, 1.5)
-        extrude(amount=WALL)
-        with BuildSketch():
-            Circle(MOUNT_HOLE_RADIUS)
-        extrude(amount=WALL, mode=Mode.SUBTRACT)
-        for x in FOOT_TAB_X:
-            with Locations((x, wall_y - side * MOUNT_Y, 0)):
-                Box(FOOT_TAB_WIDTH, WALL, WALL, align=BOTTOM, mode=Mode.SUBTRACT)
-    return panel.part
-
-
 def flat_parts() -> dict[str, Part]:
     """Return one cut-ready flat solid per physical piece."""
     return {
@@ -120,8 +100,6 @@ def flat_parts() -> dict[str, Part]:
         "side_positive_y": side_wall(),
         "front": end_wall(True),
         "back": end_wall(False),
-        "foot_negative_y": mounting_foot(-1),
-        "foot_positive_y": mounting_foot(1),
     }
 
 
@@ -144,8 +122,6 @@ def assemble(panels: dict[str, Part]) -> Part:
         "side_positive_y": side_positive.location,
         "front": front.location,
         "back": back.location,
-        "foot_negative_y": Pos(0, -MOUNT_Y, 0),
-        "foot_positive_y": Pos(0, MOUNT_Y, 0),
     }
     pieces = []
     for name, panel in panels.items():
@@ -153,7 +129,7 @@ def assemble(panels: dict[str, Part]) -> Part:
         piece.label = name
         piece.color = COLOR_CREAMY_WHITE
         pieces.append(piece)
-    # A flat OCC compound keeps all seven solids in one place when the robot
+    # A flat OCC compound keeps all five solids in one place when the robot
     # assembly is moved. A nested child tree loses its parent placement during
     # boolean checks in build123d.
     result = Part(Compound(pieces).wrapped, label="lidar_interface_housing")
@@ -166,7 +142,7 @@ def build_model() -> Part:
 
 
 def export_flat_parts(panels: dict[str, Part]) -> None:
-    """Write the actual seven cut patterns, including every tab and slot."""
+    """Write the actual five cut patterns, including every tab and slot."""
     dxf_dir = EXPORT_DIR / "dxf" / "lidar_interface_housing"
     dxf_dir.mkdir(parents=True, exist_ok=True)
     for name, panel in panels.items():

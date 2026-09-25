@@ -10,7 +10,8 @@ if __package__ in (None, ""):
 
 from robot_nira import EXPORT_DIR
 
-from build123d import Compound, export_step, export_stl
+from build123d import Compound
+from common.export_utils import export_stl_ignoring_degenerate_faces
 
 import robot_nira.assembly_body_with_servos as assembly_body_with_servos
 import robot_nira.assembly_coxa as assembly_coxa
@@ -53,7 +54,7 @@ def main() -> None:
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
     (EXPORT_DIR / "stl").mkdir(parents=True, exist_ok=True)
     # export_step(assembly, str(EXPORT_DIR / "step/assembly_complete.step"))
-    export_stl(assembly, str(EXPORT_DIR / "stl/assembly_complete.stl"))
+    export_stl_ignoring_degenerate_faces(assembly, str(EXPORT_DIR / "stl/assembly_complete.stl"))
     show(assembly, name="assembly_complete", clear=True)
 
 
