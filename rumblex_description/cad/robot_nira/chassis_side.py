@@ -43,6 +43,25 @@ TAB_PITCH = body_common.rectangle_slots_completed_width / 2
 ROW_WIDTH = 2 * TAB_PITCH + TAB_WIDTH
 # The rail sits on layer 2 and reaches the underside of layer 3.
 RAIL_HEIGHT = body_common.SPACER_LENGTH_TOP
+FRONT_DIAGONAL_HEIGHT = 10.0
+
+
+def build_front_diagonal_surface(height: float) -> Sketch:
+    """Compact chamfered brace with the foot armor's paired swept vents."""
+    if height <= FRONT_DIAGONAL_HEIGHT:
+        raise ValueError("Height must leave room for the front diagonal brace")
+    with BuildSketch() as sketch:
+        Polygon(
+            (0, TAB_DEPTH), (0, TAB_DEPTH),
+            (13, TAB_DEPTH), (13, FRONT_DIAGONAL_HEIGHT - 3),
+            (10, FRONT_DIAGONAL_HEIGHT), (-10, FRONT_DIAGONAL_HEIGHT),
+            (-13, FRONT_DIAGONAL_HEIGHT - 3), (-13, TAB_DEPTH),
+            align=None,
+        )
+        with Locations(*[(x, TAB_DEPTH / 2)
+                         for x in body_common.front_diagonal_tab_offsets]):
+            Rectangle(body_common.front_diagonal_tab_width, TAB_DEPTH)
+    return sketch.sketch
 
 
 def slope_finger_profiles(z_top: float) -> list[tuple[tuple[float, float], ...]]:
@@ -98,6 +117,8 @@ def build_surface(height: float, side: bool = False, front: bool = False,
     ``front=True`` selects a low sill without upper tabs; the default is a
     full-height rear plate.
     """
+    if front and diagonal:
+        return build_front_diagonal_surface(height)
     if height <= 2 * TAB_DEPTH + (RAIL_HEIGHT if side else 0):
         raise ValueError("Height must leave room for the plate below the top rail")
 
@@ -140,20 +161,12 @@ def build_surface(height: float, side: bool = False, front: bool = False,
         elif front:
             # The straight nose terminates at layer 2. Leave its body below
             # the deck and pass three fingers through the individual slots.
-            top_of_body = sill if diagonal else deck_top - TAB_DEPTH
+            top_of_body = deck_top - TAB_DEPTH
             with Locations((0, (top_of_body + height + 2) / 2)):
                 Rectangle(ROW_WIDTH + 2, height + 2 - top_of_body, mode=Mode.SUBTRACT)
-            if not diagonal:
-                with Locations(*[(offset, deck_top - TAB_DEPTH / 2)
-                                 for offset in (-TAB_PITCH, 0, TAB_PITCH)]):
-                    Rectangle(TAB_WIDTH, TAB_DEPTH)
-            if diagonal:
-                # Narrow the raised front-diagonal sills around the interface
-                # cover. Keep all three bottom tabs, with 1 mm of rail over
-                # each outer tab's inner end.
-                with Locations((-23, TAB_DEPTH + (height + 2) / 2),
-                               (23, TAB_DEPTH + (height + 2) / 2)):
-                    Rectangle(20, height + 2, mode=Mode.SUBTRACT)
+            with Locations(*[(offset, deck_top - TAB_DEPTH / 2)
+                             for offset in (-TAB_PITCH, 0, TAB_PITCH)]):
+                Rectangle(TAB_WIDTH, TAB_DEPTH)
     return sketch.sketch
 
 
@@ -193,10 +206,13 @@ def build_diagonal_plates(z_bottom: float, z_top: float) -> list[Part]:
     """Place low front sill plates and full-height rear diagonal braces."""
     height = z_top + body_common.THICKNESS - z_bottom
     model = build_model(build_surface(height))
-    low_model = build_model(build_surface(height, front=True, diagonal=True))
+    low_model = build_model(build_front_diagonal_surface(height))
     upright = Pos(0, THICKNESS / 2, 0) * Rot(X=90)
     plates = []
-    for location in body_common.diagonal_slots_locations:
+    locations = [*(location for location in body_common.diagonal_slots_locations
+                   if location.position.X < 0),
+                 *body_common.front_diagonal_slots_locations]
+    for location in locations:
         plate = Pos(0, 0, z_bottom) * location * upright * (low_model if location.position.X > 0 else model)
         end = "front" if location.position.X > 0 else "back"
         side = "left" if location.position.Y > 0 else "right"

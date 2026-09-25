@@ -37,6 +37,16 @@ class NiraLidarHousingCutTests(unittest.TestCase):
         self.assertAlmostEqual(assembled.volume,
                                sum(panel.volume for panel in panels.values()))
 
+    def test_lid_is_solid_and_walls_stop_at_its_underside(self):
+        panels = lidar_interface_housing.flat_parts()
+        lid = panels['lid']
+        top = max(lid.faces(), key=lambda face: face.center().Z)
+        self.assertEqual(len(top.inner_wires()), 0)
+        for name in ('side_negative_y', 'side_positive_y', 'front', 'back'):
+            with self.subTest(panel=name):
+                self.assertAlmostEqual(panels[name].bounding_box().max.Y,
+                                       lidar_interface_housing.HEIGHT - lidar_interface_housing.WALL)
+
 
 class NiraLidarTests(unittest.TestCase):
     @classmethod
@@ -102,6 +112,7 @@ class NiraLidarTests(unittest.TestCase):
         deck = self.parts['body_layer_2']
         interface = self.parts['board_ydlidar_tmini_interface']
         z = deck.bounding_box().center().Z
+        self.assertEqual(len(lidar_interface_housing.DECK_TAB_POSITIONS), 6)
         for x in lidar_interface_housing.DECK_TAB_X:
             for y in (-lidar_interface_housing.DECK_SLOT_Y,
                       lidar_interface_housing.DECK_SLOT_Y):
@@ -154,12 +165,13 @@ class NiraLidarTests(unittest.TestCase):
                         extrude(amount=body_common.THICKNESS)
                     self.assertAlmostEqual((tabs & outline.part).volume, tabs.volume)
 
-    def test_front_plates_use_three_individual_deck_fingers(self):
+    def test_front_plates_fit_their_deck_fingers(self):
         deck = self.parts['body_layer_2']
         deck_box = deck.bounding_box()
         z = deck_box.center().Z
-        finger_volume = (chassis_side.TAB_WIDTH * chassis_side.THICKNESS
-                         * body_common.THICKNESS)
+        front_diagonal_profile = chassis_side.build_front_diagonal_surface(
+            body_common.SPACER_LENGTH_TOP + 2 * body_common.THICKNESS)
+        self.assertEqual(len(front_diagonal_profile.faces()[0].inner_wires()), 2)
 
         front = self.parts['chassis_front']
         self.assertAlmostEqual(front.bounding_box().max.Z, deck_box.max.Z)
@@ -167,9 +179,20 @@ class NiraLidarTests(unittest.TestCase):
                      'chassis_diagonal_front_right'):
             with self.subTest(plate=name):
                 fingers = self.parts[name] & Pos(0, 0, z) * Box(300, 200, body_common.THICKNESS)
-                self.assertEqual(len(fingers.solids()), 3)
-                self.assertAlmostEqual(fingers.volume, 3 * finger_volume)
+                diagonal = 'diagonal' in name
+                count = 2 if diagonal else 3
+                width = body_common.front_diagonal_tab_width if diagonal else chassis_side.TAB_WIDTH
+                self.assertEqual(len(fingers.solids()), count)
+                self.assertAlmostEqual(fingers.volume,
+                                       count * width * chassis_side.THICKNESS
+                                       * body_common.THICKNESS)
                 self.assertLess((fingers & deck).volume, 1e-6)
+
+        housing = self.parts['lidar_interface_housing']
+        for name in ('chassis_diagonal_front_left', 'chassis_diagonal_front_right'):
+            with self.subTest(plate=name):
+                plate = self.parts[name]
+                self.assertGreater(plate.distance_to(housing), 1.0)
 
         for y in (-chassis_side.TAB_PITCH, 0, chassis_side.TAB_PITCH):
             slot = Pos(100, y, z) * Box(body_common.rectangle_slots_height,

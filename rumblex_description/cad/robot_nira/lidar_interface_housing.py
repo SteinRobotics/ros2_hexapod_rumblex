@@ -54,18 +54,6 @@ def wall_outline(half_width: float, bottom: float) -> None:
         )
     extrude(outline.sketch, amount=WALL)
 
-
-def swept_wall_vents(centers: tuple[float, ...]) -> None:
-    """Short diagonal windows matching the foot armor's slashed openings."""
-    with BuildSketch() as vents:
-        for center in centers:
-            Polygon(
-                (center - 3, 4.5), (center + 0.5, 4.5),
-                (center + 3, 8), (center - 0.5, 8), align=None,
-            )
-    extrude(vents.sketch, amount=WALL, mode=Mode.SUBTRACT)
-
-
 def side_wall() -> Part:
     """Flat pattern: horizontal coordinate is X, vertical coordinate is Z."""
     span = HALF_X - WALL
@@ -81,7 +69,6 @@ def side_wall() -> Part:
         for x in DECK_TAB_X:
             with Locations((x, (WALL - DECK_TAB_DEPTH) / 2, 0)):
                 Box(DECK_TAB_WIDTH, WALL + DECK_TAB_DEPTH, WALL, align=BOTTOM)
-        swept_wall_vents((-13, -4, 5, 14))
     return panel.part
 
 
@@ -100,9 +87,6 @@ def end_wall(front: bool) -> Part:
             with Locations((0, 4, 0)):
                 Box(interface.CONNECTOR_WIDTH + 4, 8, WALL,
                     align=BOTTOM, mode=Mode.SUBTRACT)
-            swept_wall_vents((-17, 17))
-        else:
-            swept_wall_vents((-17, -6, 6, 17))
     return panel.part
 
 
@@ -117,13 +101,7 @@ def lid() -> Part:
                 (-HALF_X, HALF_Y - 4), (-HALF_X, -HALF_Y + 4),
                 align=None,
             )
-            for side in (-1, 1):
-                for y in (-15, -3, 9):
-                    Polygon(
-                        (side * 7, y), (side * 12, y),
-                        (side * 17, y + 8), (side * 12, y + 8),
-                        align=None, mode=Mode.SUBTRACT,
-                    )
+
         extrude(amount=WALL)
         for y in (-HALF_Y + WALL / 2, HALF_Y - WALL / 2):
             for x in SIDE_LID_TAB_X:

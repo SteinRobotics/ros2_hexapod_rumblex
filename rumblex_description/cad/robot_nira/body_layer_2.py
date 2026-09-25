@@ -13,7 +13,7 @@ from utils.ocp_utils import show
 
 import robot_nira.body_common as body_common
 from robot_nira.lidar_layout import LIDAR_X, LIDAR_ASSEMBLY_X
-from robot_nira.lidar_interface_housing import DECK_TAB_X, DECK_TAB_WIDTH, DECK_SLOT_Y, WALL
+from robot_nira.lidar_interface_housing import DECK_TAB_POSITIONS, DECK_TAB_WIDTH, WALL
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
@@ -24,14 +24,17 @@ def build_surface() -> Sketch:
         Polygon((55, -50), (78, -50), (102, -25), (102, 25),
                 (78, 50), (55, 50), align=None)
 
-        # Slots receive the housing side-wall fingers through this deck.
-        with Locations(*[(LIDAR_ASSEMBLY_X + x, y)
-                         for x in DECK_TAB_X for y in (-DECK_SLOT_Y, DECK_SLOT_Y)]):
+        # Three fingers on each housing side wall pass through matching deck slots.
+        with Locations(*[(LIDAR_ASSEMBLY_X + x, y) for x, y in DECK_TAB_POSITIONS]):
             Rectangle(DECK_TAB_WIDTH, WALL, mode=Mode.SUBTRACT)
 
-        # These plates start at layer 2, so retain three individual tab slots.
-        with Locations(*body_common.diagonal_slots_locations):
+        # Rear braces keep three tabs; the front pair use shorter joints
+        # farther outboard to clear the interface housing.
+        with Locations(*(location for location in body_common.diagonal_slots_locations
+                         if location.position.X < 0)):
             add(body_common.rectangle_slots.sketch, mode=Mode.SUBTRACT)
+        with Locations(*body_common.front_diagonal_slots_locations):
+            add(body_common.front_diagonal_slots.sketch, mode=Mode.SUBTRACT)
 
         # The front sill ends at this deck, so its three top fingers need
         # individual slots. The other rows retain their continuous openings.

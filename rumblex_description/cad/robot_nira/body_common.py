@@ -210,6 +210,24 @@ diagonal_slots_locations = [
     for sx, sy in ((1, 1), (-1, 1), (-1, -1), (1, -1))
 ]
 
+# The two front braces use a shorter joint, set farther from the sensor housing.
+# Keep the rear diagonal joints on the original three-tab pattern.
+front_diagonal_tab_width = 6.0
+front_diagonal_tab_offsets = (-7.0, 7.0)
+front_diagonal_outward_offset = 2.0
+front_diagonal_slots_locations = [
+    Location(
+        (loc.position.X,
+         loc.position.Y + math.copysign(front_diagonal_outward_offset, loc.position.Y)),
+        loc.orientation.Z,
+    )
+    for loc in diagonal_slots_locations if loc.position.X > 0
+]
+
+with BuildSketch() as front_diagonal_slots:
+    with Locations(*[(x, 0) for x in front_diagonal_tab_offsets]):
+        Rectangle(front_diagonal_tab_width, rectangle_slots_height)
+
 ############### Holes ###################
 hole_radius = 1.5
 spacer_outer_radius = 3.0
