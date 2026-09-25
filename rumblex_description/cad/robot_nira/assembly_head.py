@@ -21,7 +21,6 @@ from utils.ocp_utils import show
 from utils.colors import COLOR_CREAMY_WHITE, COLOR_DARK_GRAY, COLOR_WINE_RED
 from utils import spacer
 from robot_nira import webcam_obsbot
-from robot_nira.armor_style import gill_points
 import common.servo_simplified as servo_simplified
 
 # The outer side-bracket mounting pair is 24.45 mm apart, matching one
@@ -78,15 +77,7 @@ def build_deck(*, brow: bool = False) -> Part:
                 Rectangle(TAB_WIDTH, PLATE_THICKNESS)
             with Locations(*CAGE_HOLES):
                 Circle(M3_CLEARANCE / 2, mode=Mode.SUBTRACT)
-            if brow:
-                # Mirrored swept vents leave a continuous central spine,
-                # like the foot's cheek armor, behind the optical face.
-                for side in (-1, 1):
-                    for longitudinal in (14, 26):
-                        Polygon(*[(transverse, -along) for along, transverse in
-                                  gill_points(longitudinal, 5, 6, side=side)],
-                                align=None, mode=Mode.SUBTRACT)
-            else:
+            if not brow:
                 with Locations((webcam_obsbot.MOUNT_HOLE_X,
                                 CAMERA_Y + webcam_obsbot.MOUNT_HOLE_Y)):
                     Circle(3.3, mode=Mode.SUBTRACT)
@@ -125,11 +116,6 @@ def build_adapter() -> Part:
             # Cable exit at the camera bottom, below the fixed bracket bores.
             with Locations((0, CAMERA_BASE_Z + 3)):
                 RectangleRounded(15, 10, 2, mode=Mode.SUBTRACT)
-            for side in (-1, 1):
-                for z in (CAMERA_BASE_Z + 8, CAMERA_BASE_Z + 16, CAMERA_BASE_Z + 24):
-                    Polygon(*[(transverse, along) for along, transverse in
-                              gill_points(z, 16, 5, side=side)],
-                            align=None, mode=Mode.SUBTRACT)
         extrude(amount=PLATE_THICKNESS)
     plate.part.label = "head_rear_adapter"
     plate.part.color = COLOR_CREAMY_WHITE
