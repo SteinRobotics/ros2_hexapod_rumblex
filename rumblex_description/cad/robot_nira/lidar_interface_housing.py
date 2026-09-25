@@ -34,10 +34,13 @@ CORNER_FINGER_Z = (2.0, 6.0)
 LID_TAB_WIDTH = 4.0
 SIDE_LID_TAB_X = (-12.0, 0.0, 12.0)
 END_LID_TAB_Y = (-14.0, 0.0, 14.0)
-DECK_TAB_X = (-3.0, 3.0)
-DECK_TAB_WIDTH = 2.5
+DECK_TAB_X = (-12.0, 0.0, 12.0)
+DECK_TAB_WIDTH = 4.0
 DECK_TAB_DEPTH = body_common.THICKNESS
 DECK_SLOT_Y = HALF_Y - WALL / 2
+DECK_TAB_POSITIONS = tuple(
+    (x, y) for x in DECK_TAB_X for y in (-DECK_SLOT_Y, DECK_SLOT_Y)
+)
 BOTTOM = (Align.CENTER, Align.CENTER, Align.MIN)
 SHOULDER = 3.0
 
@@ -58,7 +61,7 @@ def side_wall() -> Part:
     """Flat pattern: horizontal coordinate is X, vertical coordinate is Z."""
     span = HALF_X - WALL
     with BuildPart() as panel:
-        wall_outline(span, WALL)
+        wall_outline(span, 0)
         for end in (-1, 1):
             for z in CORNER_FINGER_Z:
                 with Locations((end * (span + WALL / 2), z + FINGER_HEIGHT / 2, 0)):
