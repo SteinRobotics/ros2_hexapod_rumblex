@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Low front sills and swept, vented rear shoulders with body-slot tabs.
+"""Low front sills, swept rear shoulders, and a sloped front cover.
 
 Sketch X runs along the slot rows; sketch Y is the assembled height. The
 bottom tab tips are at Y=0. All fits are nominal, without kerf compensation.
@@ -13,25 +13,81 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from robot_nira import EXPORT_DIR
+from math import hypot, sqrt
 
 from build123d import (
-    BuildPart, BuildSketch, Compound, ExportDXF, Locations, Part, Pos,
+    Box, BuildPart, BuildSketch, Circle, Compound, ExportDXF, Locations, Part, Plane, Pos,
     Rectangle, Rot, Sketch, Mode, Polygon, add, export_step, extrude,
 )
 
+import common.loudspeaker as loudspeaker
 import robot_nira.body_common as body_common
+import robot_nira.lidar_interface_housing as lidar_housing
 from utils.colors import COLOR_CREAMY_WHITE
-from robot_nira.lidar_layout import LOW_RAIL_HEIGHT, SHOULDER_TOP_X
+from robot_nira.lidar_layout import LIDAR_X, LOW_RAIL_HEIGHT, SHOULDER_TOP_X
 from utils.ocp_utils import show
 
 
 THICKNESS = body_common.rectangle_slots_height
+SLOPE_END_X = 58.0
+COVER_CLEARANCE = 0.5
+JOINT_FINGER_COUNT = 5
+JOINT_FINGER_LENGTH = 7.0
+SPEAKER_Y_POSITIONS = (25.0, -25.0)
+SPEAKER_HOLE_RADIUS = 1.5
+SPEAKER_HOLE_PITCH = 6.0
+SPEAKER_HOLE_FIELD_RADIUS = loudspeaker.FRONT_DIAMETER / 2 - 3.5
 TAB_WIDTH = body_common.rectangle_slots_width
 TAB_DEPTH = body_common.THICKNESS
 TAB_PITCH = body_common.rectangle_slots_completed_width / 2
 ROW_WIDTH = 2 * TAB_PITCH + TAB_WIDTH
 # The rail sits on layer 2 and reaches the underside of layer 3.
 RAIL_HEIGHT = body_common.SPACER_LENGTH_TOP
+
+
+def slope_finger_profiles(z_top: float) -> list[tuple[tuple[float, float], ...]]:
+    """Rectangular box-joint cuts in the sloped XZ edge."""
+    run = SLOPE_END_X - SHOULDER_TOP_X
+    drop = RAIL_HEIGHT - LOW_RAIL_HEIGHT
+    length = hypot(run, drop)
+    inward_x = -THICKNESS * drop / length
+    inward_z = -THICKNESS * run / length
+    pitch = length / (JOINT_FINGER_COUNT + 1)
+    profiles = []
+    for index in range(1, JOINT_FINGER_COUNT + 1):
+        start = (index * pitch - JOINT_FINGER_LENGTH / 2) / length
+        end = (index * pitch + JOINT_FINGER_LENGTH / 2) / length
+        x0, z0 = SHOULDER_TOP_X + run * start, z_top - drop * start
+        x1, z1 = SHOULDER_TOP_X + run * end, z_top - drop * end
+        profiles.append(((x0, z0), (x1, z1),
+                         (x1 + inward_x, z1 + inward_z),
+                         (x0 + inward_x, z0 + inward_z)))
+    return profiles
+
+
+def speaker_plane(z_top: float, y: float) -> Plane:
+    """Outer slope face at a loudspeaker centre, normal pointing outside."""
+    run = SLOPE_END_X - SHOULDER_TOP_X
+    drop = RAIL_HEIGHT - LOW_RAIL_HEIGHT
+    length = hypot(run, drop)
+    return Plane(
+        origin=((SHOULDER_TOP_X + SLOPE_END_X) / 2, y, z_top - drop / 2),
+        x_dir=(0, 1, 0),
+        z_dir=(drop / length, 0, run / length),
+    )
+
+
+def speaker_hole_positions() -> list[tuple[float, float]]:
+    """Staggered hole centres within the front face, leaving a solid rim."""
+    positions = []
+    row_pitch = SPEAKER_HOLE_PITCH * sqrt(3) / 2
+    for row in range(-3, 4):
+        for column in range(-3, 4):
+            across = (column + 0.5 * (row % 2)) * SPEAKER_HOLE_PITCH
+            along = row * row_pitch
+            if hypot(across, along) <= SPEAKER_HOLE_FIELD_RADIUS:
+                positions.append((across, along))
+    return positions
 
 
 def build_surface(height: float, side: bool = False, front: bool = False,
@@ -71,9 +127,11 @@ def build_surface(height: float, side: bool = False, front: bool = False,
         deck_top = height - TAB_DEPTH - RAIL_HEIGHT
         sill = deck_top + LOW_RAIL_HEIGHT
         if side:
-            Polygon((SHOULDER_TOP_X, height - TAB_DEPTH), (58, sill), (150, sill),
+            Polygon((SHOULDER_TOP_X, height - TAB_DEPTH), (SLOPE_END_X, sill), (150, sill),
                     (150, height + 1), (SHOULDER_TOP_X, height + 1),
                     align=None, mode=Mode.SUBTRACT)
+            for profile in slope_finger_profiles(height - TAB_DEPTH):
+                Polygon(*profile, align=None, mode=Mode.SUBTRACT)
             # Three slanted gills in each rear shoulder.
             for x in (-49, -37, -25):
                 Polygon((x, sill + 5), (x + 4, sill + 5),
@@ -141,6 +199,76 @@ def build_diagonal_plates(z_bottom: float, z_top: float) -> list[Part]:
     return plates
 
 
+def build_slope_cover(z_top: float) -> Part:
+    """Bridge the sloped front edges of the two large side plates."""
+    run = SLOPE_END_X - SHOULDER_TOP_X
+    drop = RAIL_HEIGHT - LOW_RAIL_HEIGHT
+    slope_length = hypot(run, drop)
+    # Offset the sheet into the chassis, keeping its outer face flush with
+    # the shoulder edges and its ends against the inner faces of the sides.
+    inward_x = -THICKNESS * drop / slope_length
+    inward_z = -THICKNESS * run / slope_length
+    side_y = max(
+        loc.position.Y for loc in body_common.rectangle_slots_locations
+        if loc.position.X > 0 and abs(loc.orientation.Z) < 1e-6
+    )
+    inner_y = side_y - THICKNESS / 2
+    with BuildPart() as cover:
+        with BuildSketch(Plane.XZ):
+            Polygon(
+                (SHOULDER_TOP_X, z_top),
+                (SLOPE_END_X, z_top - drop),
+                (SLOPE_END_X + inward_x, z_top - drop + inward_z),
+                (SHOULDER_TOP_X + inward_x, z_top + inward_z),
+                align=None,
+            )
+        extrude(amount=2 * inner_y)
+    result = Pos(0, inner_y, 0) * cover.part
+    # Alternate short tongues with the side-plate edge. Each tongue fills a
+    # matching notch through the side plate thickness, flush at its outside.
+    for profile in slope_finger_profiles(z_top):
+        with BuildPart() as finger:
+            with BuildSketch(Plane.XZ):
+                Polygon(*profile, align=None)
+            extrude(amount=THICKNESS + 0.05)
+        result = result + Pos(0, side_y + THICKNESS / 2, 0) * finger.part
+        result = result + Pos(0, -inner_y + 0.05, 0) * finger.part
+    # The lidar housing reaches the lower centre of the slope. Its rear wall
+    # occupies only the middle of the cover, so trim that area locally.
+    housing_rear_x = LIDAR_X - lidar_housing.HALF_X
+    housing_top_z = z_top - RAIL_HEIGHT + lidar_housing.HEIGHT
+    notch = Pos((housing_rear_x + SLOPE_END_X) / 2, 0, housing_top_z - 50) * Box(
+        SLOPE_END_X - housing_rear_x + 2 * COVER_CLEARANCE,
+        2 * (lidar_housing.HALF_Y + COVER_CLEARANCE),
+        100,
+    )
+    result = result - notch
+    with BuildPart() as perforated:
+        add(result)
+        for y in SPEAKER_Y_POSITIONS:
+            with BuildSketch(speaker_plane(z_top, y).offset(0.1)):
+                with Locations(*speaker_hole_positions()):
+                    Circle(SPEAKER_HOLE_RADIUS)
+            extrude(amount=-THICKNESS - 0.2, mode=Mode.SUBTRACT)
+    result = perforated.part
+    result.label = "chassis_slope_cover"
+    result.color = COLOR_CREAMY_WHITE
+    return result
+
+
+def build_speakers(z_top: float) -> list[Part]:
+    """Seat two speaker fronts against the inner face of the sloped cover."""
+    model = loudspeaker.build_model()
+    speakers = []
+    for name, y in (("left", SPEAKER_Y_POSITIONS[0]),
+                    ("right", SPEAKER_Y_POSITIONS[1])):
+        speaker = (speaker_plane(z_top, y).location
+                   * Pos(0, 0, -THICKNESS - loudspeaker.DEPTH) * model)
+        speaker.label = f"loudspeaker_{name}"
+        speakers.append(speaker)
+    return speakers
+
+
 def main() -> None:
     # Import here so assembly_body can use the builders without a cycle.
     import robot_nira.assembly_body as assembly_body
@@ -149,6 +277,8 @@ def main() -> None:
               + assembly_body.SPACER_LENGTH_TOP)
     output = EXPORT_DIR
     output.mkdir(parents=True, exist_ok=True)
+    (output / "step").mkdir(parents=True, exist_ok=True)
+    (output / "dxf").mkdir(parents=True, exist_ok=True)
     previews = []
     diagonal_height = body_common.SPACER_LENGTH_TOP + 2 * TAB_DEPTH
     for name, is_side, is_front, plate_height, preview_x in (
@@ -162,11 +292,17 @@ def main() -> None:
                                 diagonal=name.startswith("chassis_diagonal_"))
         model = build_model(surface)
         model.label = name
-        export_step(model, str(output / f"{name}.step"))
+        export_step(model, str(output / "step" / f"{name}.step"))
         drawing = ExportDXF()
         drawing.add_shape(surface)
-        drawing.write(str(output / f"{name}.dxf"))
+        drawing.write(str(output / "dxf" / f"{name}.dxf"))
         previews.append(Pos(preview_x, 0, 0) * model)
+    slope_cover = build_slope_cover(assembly_body.SPACER_LENGTH_0_to_1
+                                    + assembly_body.SPACER_LENGTH_1_to_2
+                                    + 3 * body_common.THICKNESS
+                                    + assembly_body.SPACER_LENGTH_TOP)
+    export_step(slope_cover, str(output / "step/chassis_slope_cover.step"))
+    previews.append(Pos(440, 0, 0) * slope_cover)
     show(Compound(children=previews), name="chassis_side", clear=True)
 
 

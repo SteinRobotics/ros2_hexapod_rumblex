@@ -2,9 +2,12 @@
 
 Run scripts from this directory with Python 3.10+ and `build123d` installed.
 `ocp_vscode` is optional for viewing. Vendor STEP files live in `imported/`;
-Nox scripts export to `generated/nox/`; shared component scripts export to
-`generated/` when run directly. Run `robot_nox.py` to export and display the
-complete Nox assembly from `robot_nox/assembly_complete.py`.
+Nox scripts export to `generated/nox/`; scripts in `common/` export their parts
+to both `generated/nox/` and `generated/nira/` when run directly. Run
+`robot_nox.py` to export and display the complete Nox assembly from
+`robot_nox/assembly_complete.py`.
+STEP files go in each export directory's `step/` folder, DXF files in `dxf/`,
+and STL files in `stl/`. Nira uses `generated/nira/` with the same layout.
 Scripts in subfolders also support direct execution, for example
 `python robot_nox/assembly_complete.py` or `python common/toe.py`.
 
@@ -69,13 +72,16 @@ motion or manufacturing tolerances.
 Nira's T-mini sits on its interface housing at **(80, 0, 64) mm**, fully
 within the front third of the nominal 220 mm body (+X is forward). The scan
 plane is at Z=90.3 mm. The interface module rests on layer 2 inside a separate
-cream `lidar_interface_housing`: a faceted, open-bottom cover with angled gills,
-a front connector opening, and two M3 mounting ears. Matching clearance holes
+cream `lidar_interface_housing`: an open-bottom, laser-cut cover with finger-jointed
+walls, a front connector opening, and two M3 mounting feet. Matching clearance holes
 are cut into layer 2. The 1.5 mm lid supports the sensor, leaving 1 mm above
 the interface module. The interface dimensions remain photo-based estimates;
 sensor fastening and cable routing still need the actual hardware dimensions.
-The cover exports as STEP/STL; the deck retains its generic adapter slots
-and rear cable opening.
+The cover exports as STEP/STL, with seven cut-ready flat-panel DXFs for its
+lid, four walls, and two mounting feet under
+`generated/nira/dxf/lidar_interface_housing/`. Their
+tab and slot dimensions are nominal, without kerf allowance.
+The deck retains its generic adapter slots and rear cable opening.
 
 Both upper plates end at X=80 mm, directly above the lidar axis. The burgundy
 layer-3 frame has a solid nose below the cream, vented layer-4 roof. The upper
@@ -136,7 +142,8 @@ material and laser process.
 .venv/bin/python -m unittest discover -s tests -p test_nira_foot.py -v
 ```
 
-STEP and flat DXF exports are under `generated/nira/`; `foot_preview.png` shows
+STEP and flat DXF exports are under `generated/nira/step/` and
+`generated/nira/dxf/`; `foot_preview.png` shows
 the assembled armor and the three flat profiles. Geometry tests check valid
 single-solid plates, six fully engaged tabs, flush ends and outer-plate
 clearance from the foot hardware and tibia servo. They do not establish load

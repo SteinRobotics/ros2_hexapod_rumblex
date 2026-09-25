@@ -100,8 +100,10 @@ def build_model() -> Part:
 def main() -> None:
     result = build_model()
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-    export_step(result, str(EXPORT_DIR / "webcam_obsbot.step"))
-    export_stl(result, str(EXPORT_DIR / "webcam_obsbot.stl"))
+    (EXPORT_DIR / "stl").mkdir(parents=True, exist_ok=True)
+    (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
+    export_step(result, str(EXPORT_DIR / "step/webcam_obsbot.step"))
+    export_stl(result, str(EXPORT_DIR / "stl/webcam_obsbot.stl"))
     show(result, name="webcam_obsbot", clear=True)
 
 

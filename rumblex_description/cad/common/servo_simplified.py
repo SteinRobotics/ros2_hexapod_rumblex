@@ -27,10 +27,11 @@ from build123d import (
     Sketch,
     add,
     extrude,
-    export_step,
     RevoluteJoint,
     Axis,
 )
+
+from common.export_utils import export_common_part
 
 from utils.geometry_utils import mirror_points_vertical_axis as mirror_y
 from utils.ocp_utils import show
@@ -189,8 +190,7 @@ def build_model() -> Part:
 def main() -> None:
     result = build_model()
     result.color = COLOR_DARK_GRAY
-    Path("generated").mkdir(exist_ok=True)
-    export_step(result, "generated/servo_simplified_HX35H.step")
+    export_common_part(result, "servo_simplified_HX35H")
     show(result, name="servo_simplified_HX35H", clear=True)
 
 

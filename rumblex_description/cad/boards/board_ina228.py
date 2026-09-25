@@ -57,8 +57,8 @@ if __name__ == "__main__":
     surface = build_surface()
     result = build_board_with_spacers()
 
-    Path("generated").mkdir(exist_ok=True)
-    export_step(result, "generated/board_ina228.step")
+    # Path("generated").mkdir(exist_ok=True)
+    # export_step(result, "generated/step/board_ina228.step")
 
     show(result, name="board_ina228", clear=True)
     

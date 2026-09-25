@@ -122,6 +122,8 @@ def main() -> None:
               + assembly_body.SPACER_LENGTH_TOP)
     output = EXPORT_DIR
     output.mkdir(parents=True, exist_ok=True)
+    (output / "step").mkdir(parents=True, exist_ok=True)
+    (output / "dxf").mkdir(parents=True, exist_ok=True)
     previews = []
     diagonal_height = body_common.SPACER_LENGTH_TOP + 2 * TAB_DEPTH
     for name, is_side, plate_height, preview_x in (
@@ -132,10 +134,10 @@ def main() -> None:
         surface = build_surface(plate_height, side=is_side)
         model = build_model(surface)
         model.label = name
-        export_step(model, str(output / f"{name}.step"))
+        export_step(model, str(output / "step" / f"{name}.step"))
         drawing = ExportDXF()
         drawing.add_shape(surface)
-        drawing.write(str(output / f"{name}.dxf"))
+        drawing.write(str(output / "dxf" / f"{name}.dxf"))
         previews.append(Pos(preview_x, 0, 0) * model)
     show(Compound(children=previews), name="chassis_side", clear=True)
 

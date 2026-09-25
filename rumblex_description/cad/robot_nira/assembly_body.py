@@ -145,6 +145,8 @@ def build_assembly() -> Compound:
             lidar,
             *chassis_side.build_plates(z_layer_1, z_layer_3),
             *chassis_side.build_diagonal_plates(z_layer_2, z_layer_3),
+            chassis_side.build_slope_cover(z_layer_3),
+            *chassis_side.build_speakers(z_layer_3),
             *toe_instances,
             *spacer_instances,
         ],
@@ -156,7 +158,8 @@ def build_assembly() -> Compound:
 def main() -> None:
     assembly = build_assembly()
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-    export_step(assembly, str(EXPORT_DIR / "assembly_body.step"))
+    (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
+    export_step(assembly, str(EXPORT_DIR / "step/assembly_body.step"))
 
     show(assembly, name="assembly_body", clear=True)
 

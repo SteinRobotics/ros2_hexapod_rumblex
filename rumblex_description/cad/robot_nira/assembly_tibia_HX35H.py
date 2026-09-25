@@ -45,7 +45,8 @@ def build_assembly() -> Compound:
 def main() -> None:
     assembly = build_assembly()
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-    export_step(assembly, str(EXPORT_DIR / "assembly_foot_servoHX35H.step"))
+    (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
+    export_step(assembly, str(EXPORT_DIR / "step/assembly_foot_servoHX35H.step"))
 
     show(assembly, name="assembly_foot_servoHX35H", clear=True)
 

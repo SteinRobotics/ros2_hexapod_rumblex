@@ -8,7 +8,7 @@ from build123d import (
     add, extrude,
 )
 
-from robot_nira import body_common, lidar_ydlidar_tmini, lidar_interface_housing
+from robot_nira import body_common, chassis_side, lidar_ydlidar_tmini, lidar_interface_housing
 from robot_nira.assembly_complete import build_assembly
 from robot_nira.lidar_layout import LIDAR_X, LIDAR_Y, canopy_surface
 
@@ -19,6 +19,23 @@ def leaves(part):
             yield from leaves(child)
     else:
         yield part
+
+
+class NiraLidarHousingCutTests(unittest.TestCase):
+    def test_housing_has_seven_flat_interlocking_parts(self):
+        panels = lidar_interface_housing.flat_parts()
+        self.assertEqual(len(panels), 7)
+        for name, panel in panels.items():
+            with self.subTest(panel=name):
+                self.assertTrue(panel.is_valid)
+                self.assertEqual(len(panel.solids()), 1)
+                self.assertAlmostEqual(panel.bounding_box().size.Z,
+                                       lidar_interface_housing.WALL)
+        assembled = lidar_interface_housing.assemble(panels)
+        self.assertTrue(assembled.is_valid)
+        self.assertEqual(len(assembled.solids()), 7)
+        self.assertAlmostEqual(assembled.volume,
+                               sum(panel.volume for panel in panels.values()))
 
 
 class NiraLidarTests(unittest.TestCase):
@@ -47,17 +64,38 @@ class NiraLidarTests(unittest.TestCase):
         self.assertAlmostEqual(box.center().X, LIDAR_X)
         self.assertAlmostEqual(box.center().Y, LIDAR_Y)
 
-    def test_canopy_tips_end_over_scanner_with_vertical_clearance(self):
+    def test_canopy_rear_frame_and_roof_clear_scanner(self):
+        rear_frame = self.parts['body_layer_3']
+        self.assertAlmostEqual(rear_frame.bounding_box().max.X, 0)
         for name in ('body_layer_3', 'body_layer_4'):
             with self.subTest(plate=name):
                 plate = self.parts[name]
                 bounds = plate.bounding_box()
-                self.assertAlmostEqual(bounds.max.X, self.lidar.bounding_box().center().X)
                 self.assertGreaterEqual(bounds.min.Z - self.lidar.bounding_box().max.Z, 3.0)
-                # Both layers must contain the nose, including the lower frame
-                # whose old service opening used to remove the entire tip.
-                tip = Pos(LIDAR_X - 1, LIDAR_Y, bounds.center().Z) * Box(1, 1, 1)
-                self.assertAlmostEqual((tip & plate).volume, tip.volume)
+        roof = self.parts['body_layer_4']
+        self.assertAlmostEqual(roof.bounding_box().max.X, self.lidar.bounding_box().center().X)
+        tip = Pos(LIDAR_X - 1, LIDAR_Y, roof.bounding_box().center().Z) * Box(1, 1, 1)
+        self.assertAlmostEqual((tip & roof).volume, tip.volume)
+
+    def test_rear_frame_retains_joint_slots_and_spacer_holes(self):
+        frame = self.parts['body_layer_3']
+        z = frame.bounding_box().center().Z
+        for location in [*body_common.rectangle_slots_locations,
+                         *body_common.diagonal_slots_locations]:
+            if location.position.X < 0:
+                with self.subTest(slot=location):
+                    probe = Pos(location.position.X, location.position.Y, z) * Box(1, 1, 1)
+                    self.assertLess((probe & frame).volume, 1e-6)
+        for location in body_common.hole_locations:
+            if location.position.X < 0:
+                with self.subTest(hole=location):
+                    bore = Pos(location.position.X, location.position.Y, z) * Cylinder(
+                        body_common.hole_radius / 2, body_common.THICKNESS
+                    )
+                    self.assertLess((bore & frame).volume, 1e-6)
+                    rim = Pos(location.position.X + body_common.hole_radius + 1,
+                              location.position.Y, z) * Box(1, 1, 1)
+                    self.assertGreater((rim & frame).volume, 0)
 
     def test_housing_mounts_and_connector_remain_accessible(self):
         housing = self.parts['lidar_interface_housing']
@@ -79,7 +117,8 @@ class NiraLidarTests(unittest.TestCase):
             with self.subTest(part=part.label):
                 self.assertTrue(part.is_valid)
                 for component in leaves(part):
-                    self.assertEqual(len(component.solids()), 1, component.label)
+                    expected = 7 if component.label == 'lidar_interface_housing' else 1
+                    self.assertEqual(len(component.solids()), expected, component.label)
             if not part.label.startswith(('chassis_', 'lidar_')):
                 continue
             for other in self.body.children:
@@ -93,7 +132,7 @@ class NiraLidarTests(unittest.TestCase):
         top = self.parts['body_layer_3'].bounding_box()
         tab_slice = Pos(0, 0, top.center().Z) * Box(300, 200, body_common.THICKNESS)
         for part in self.body.children:
-            if not part.label.startswith('chassis_'):
+            if not part.label.startswith('chassis_') or part.label == 'chassis_slope_cover':
                 continue
             with self.subTest(part=part.label):
                 tabs = part & tab_slice
@@ -108,6 +147,66 @@ class NiraLidarTests(unittest.TestCase):
                             add(canopy_surface())
                         extrude(amount=body_common.THICKNESS)
                     self.assertAlmostEqual((tabs & outline.part).volume, tabs.volume)
+
+    def test_slope_cover_closes_gap_between_side_plates(self):
+        cover = self.parts['chassis_slope_cover']
+        left = self.parts['chassis_left']
+        right = self.parts['chassis_right']
+        top = self.parts['body_layer_3'].bounding_box().min.Z
+
+        self.assertTrue(cover.is_valid)
+        self.assertEqual(len(cover.solids()), 1)
+        self.assertAlmostEqual(cover.bounding_box().max.X, chassis_side.SLOPE_END_X)
+        self.assertAlmostEqual(cover.bounding_box().max.Z, top)
+        for side in (left, right):
+            self.assertLess(cover.distance_to(side), 1e-6)
+            overlap = cover & side
+            self.assertLess(overlap.volume if overlap else 0, 1e-6)
+            # Five cover fingers occupy matching notches across the complete
+            # side-plate thickness; the intervening edge stays against it.
+            side_band = Pos(0, side.bounding_box().center().Y, top - 20) * Box(
+                300, chassis_side.THICKNESS, 100)
+            fingers = cover & side_band
+            self.assertEqual(len(fingers.solids()), chassis_side.JOINT_FINGER_COUNT)
+            self.assertAlmostEqual(
+                fingers.volume,
+                chassis_side.JOINT_FINGER_COUNT
+                * chassis_side.JOINT_FINGER_LENGTH
+                * chassis_side.THICKNESS ** 2,
+            )
+        # The cover spans the centre at mid-slope while clearing the housing
+        # at its lower edge.
+        midpoint = (chassis_side.SHOULDER_TOP_X + chassis_side.SLOPE_END_X) / 2
+        probe = Pos(midpoint, 0, top - 21 - 0.75) * Box(1, 1, 1)
+        self.assertGreater((cover & probe).volume, 0)
+        housing_overlap = cover & self.parts['lidar_interface_housing']
+        self.assertLess(housing_overlap.volume if housing_overlap else 0, 1e-6)
+
+    def test_two_speakers_face_perforations_from_inside(self):
+        cover = self.parts['chassis_slope_cover']
+        holes = chassis_side.speaker_hole_positions()
+        self.assertGreater(len(holes), 20)
+        cylindrical_faces = [face for face in cover.faces()
+                             if face.geom_type.name == 'CYLINDER']
+        self.assertEqual(len(cylindrical_faces), 2 * len(holes))
+
+        for name, y in zip(('left', 'right'), chassis_side.SPEAKER_Y_POSITIONS):
+            speaker = self.parts[f'loudspeaker_{name}']
+            with self.subTest(speaker=name):
+                self.assertTrue(speaker.is_valid)
+                self.assertEqual(len(speaker.solids()), 1)
+                self.assertAlmostEqual(speaker.bounding_box().center().Y, y)
+                self.assertLess(speaker.distance_to(cover), 1e-6)
+                overlap = speaker & cover
+                self.assertLess(overlap.volume if overlap else 0, 1e-6)
+                plane = chassis_side.speaker_plane(
+                    self.parts['body_layer_3'].bounding_box().min.Z, y)
+                for across, along in (holes[0], (0, 0), holes[-1]):
+                    probe = (plane.location
+                             * Pos(across, along, -chassis_side.THICKNESS / 2)
+                             * Cylinder(chassis_side.SPEAKER_HOLE_RADIUS / 2,
+                                        chassis_side.THICKNESS + 0.2))
+                    self.assertFalse(cover & probe)
 
     def test_complete_robot_clears_270_degree_scan_band(self):
         # Continuous swept volume, including both +/-135-degree boundaries,

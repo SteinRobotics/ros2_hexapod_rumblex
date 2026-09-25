@@ -168,11 +168,13 @@ def main() -> None:
     model = build_model(surface)
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    export_step(model, str(OUTPUT_DIR / f"{OUTPUT_NAME}.step"))
+    (OUTPUT_DIR / "step").mkdir(parents=True, exist_ok=True)
+    (OUTPUT_DIR / "dxf").mkdir(parents=True, exist_ok=True)
+    export_step(model, str(OUTPUT_DIR / "step" / f"{OUTPUT_NAME}.step"))
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
-    dxf_export.write(str(OUTPUT_DIR / f"{OUTPUT_NAME}.dxf"))
+    dxf_export.write(str(OUTPUT_DIR / "dxf" / f"{OUTPUT_NAME}.dxf"))
 
     show(model, name=OUTPUT_NAME, clear=True)
 

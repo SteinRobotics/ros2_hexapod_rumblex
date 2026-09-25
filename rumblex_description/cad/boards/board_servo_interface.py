@@ -57,12 +57,12 @@ if __name__ == "__main__":
     surface = build_surface()
     result = build_board_with_spacers()
 
-    Path("generated").mkdir(exist_ok=True)
-    export_step(result, "generated/board_relay.step")
+    # Path("generated").mkdir(exist_ok=True)
+    # export_step(result, "generated/step/board_relay.step")
 
-    dxf_export = ExportDXF()
-    dxf_export.add_shape(surface)
-    dxf_export.write("generated/board_relay.dxf")
+    # dxf_export = ExportDXF()
+    # dxf_export.add_shape(surface)
+    # dxf_export.write("generated/dxf/board_relay.dxf")
 
     show(result, name="board_relay", clear=True)
     

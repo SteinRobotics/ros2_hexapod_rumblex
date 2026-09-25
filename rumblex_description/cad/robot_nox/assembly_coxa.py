@@ -51,8 +51,10 @@ def build_assembly() -> Compound:
 def main() -> None:
     assembly = build_assembly()
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-    export_step(assembly, str(EXPORT_DIR / "assembly_coxa.step"))
-    export_stl(assembly, str(EXPORT_DIR / "assembly_coxa.stl"))
+    (EXPORT_DIR / "stl").mkdir(parents=True, exist_ok=True)
+    (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
+    export_step(assembly, str(EXPORT_DIR / "step/assembly_coxa.step"))
+    export_stl(assembly, str(EXPORT_DIR / "stl/assembly_coxa.stl"))
     show(assembly, name="assembly_coxa", clear=True)
 
 

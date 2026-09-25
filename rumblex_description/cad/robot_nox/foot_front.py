@@ -67,11 +67,13 @@ def main() -> None:
     surface = build_surface()
     result = build_model(surface)
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-    export_step(result, str(EXPORT_DIR / "foot_front.step"))
+    (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
+    (EXPORT_DIR / "dxf").mkdir(parents=True, exist_ok=True)
+    export_step(result, str(EXPORT_DIR / "step/foot_front.step"))
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
-    dxf_export.write(str(EXPORT_DIR / "foot_front.dxf"))
+    dxf_export.write(str(EXPORT_DIR / "dxf/foot_front.dxf"))
 
     show(result, name="foot_front", clear=True)
 

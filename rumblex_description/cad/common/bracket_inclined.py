@@ -24,6 +24,7 @@ import math
 from pathlib import Path
 from build123d import *
 
+from common.export_utils import export_common_part
 from utils.ocp_utils import show
 
 # ---------------------------------------------------------------- params --
@@ -152,8 +153,7 @@ def build_bracket() -> Part:
 
 def main() -> None:
     bracket = build_bracket()
-    Path("generated").mkdir(exist_ok=True)
-    export_step(bracket, "generated/inclined_bracket.step")
+    export_common_part(bracket, "inclined_bracket")
     show(bracket, name="inclined_bracket", clear=True)
     
 if __name__ == "__main__":

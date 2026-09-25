@@ -11,8 +11,9 @@ if __package__ in (None, ""):
 
 from pathlib import Path
 
-from build123d import BuildPart, Cone, Cylinder, Mode, Part, export_step
+from build123d import BuildPart, Cone, Cylinder, Mode, Part
 
+from common.export_utils import export_common_part
 from utils.ocp_utils import show
 
 LITTLE_TOE_DIAMETER = 10.0
@@ -49,8 +50,7 @@ def build_model(
 
 def main() -> None:
     result = build_model()
-    Path("generated").mkdir(exist_ok=True)
-    export_step(result, "generated/toe.step")
+    export_common_part(result, "toe")
 
     show(result, name="toe", clear=True)
 

@@ -95,7 +95,7 @@ def build_plate(
 
 if __name__ == "__main__":
     result = build_plate()
-    Path("generated").mkdir(exist_ok=True)
-    export_step(result, "generated/plate_with_holes.step")
+    Path("generated/step").mkdir(parents=True, exist_ok=True)
+    export_step(result, "generated/step/plate_with_holes.step")
 
     show(result, name="plate_with_holes", clear=True)

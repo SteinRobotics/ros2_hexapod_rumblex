@@ -10,6 +10,7 @@ if __package__ in (None, ""):
 from pathlib import Path
 
 from build123d import *
+from common.export_utils import export_common_part
 from utils.ocp_utils import show
 
 from utils.colors import (
@@ -110,8 +111,7 @@ def build_assembly() -> Compound:
 
 def main() -> None:
     assembly = build_assembly()
-    Path("generated").mkdir(exist_ok=True)
-    export_step(assembly, "generated/servoHX-35H_connection_markers.step")
+    export_common_part(assembly, "servoHX-35H_connection_markers")
 
     show(assembly, name="servoHX-35H_connection_markers", clear=True)
 

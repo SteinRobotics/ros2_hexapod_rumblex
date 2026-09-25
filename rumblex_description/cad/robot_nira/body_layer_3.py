@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Swept canopy frame with a solid nose above the lidar."""
+"""Rear half of the canopy frame with its joint slots and spacer holes."""
 
 # Allow direct execution as well as package imports.
 if __package__ in (None, ""):
@@ -33,19 +33,23 @@ from utils.ocp_utils import show
 
 def build_surface() -> Sketch:
     opening = body_common.hantel.sketch & (Pos(-100, 0) * Rectangle(240, 200))
+    rear_half = Pos(-body_common.rect_w / 2, 0) * Rectangle(
+        body_common.rect_w, 2 * body_common.rect_h
+    )
     with BuildSketch() as sketch:
-        # Keep the rear service opening, but bridge its front so the lower
-        # frame has the same pointed nose as the roof above it.
         add(canopy_surface())
+        add(rear_half, mode=Mode.INTERSECT)
         add(opening, mode=Mode.SUBTRACT)
 
         for location in [*body_common.rectangle_slots_locations, *body_common.diagonal_slots_locations]:
-            with Locations(location):
-                add(body_common.rectangle_slots.sketch, mode=Mode.SUBTRACT)
+            if location.position.X < 0:
+                with Locations(location):
+                    add(body_common.rectangle_slots.sketch, mode=Mode.SUBTRACT)
 
         for location in body_common.hole_locations:
-            with Locations(location):
-                Circle(body_common.hole_radius, mode=Mode.SUBTRACT)
+            if location.position.X < 0:
+                with Locations(location):
+                    Circle(body_common.hole_radius, mode=Mode.SUBTRACT)
 
     return sketch.sketch
 
@@ -63,11 +67,13 @@ def main() -> None:
     result = build_model(surface)
 
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-    export_step(result, str(EXPORT_DIR / "body_layer_3.step"))
+    (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
+    (EXPORT_DIR / "dxf").mkdir(parents=True, exist_ok=True)
+    export_step(result, str(EXPORT_DIR / "step/body_layer_3.step"))
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
-    dxf_export.write(str(EXPORT_DIR / "body_layer_3.dxf"))
+    dxf_export.write(str(EXPORT_DIR / "dxf/body_layer_3.dxf"))
 
     show(result, name="body_layer_3", clear=True)
 

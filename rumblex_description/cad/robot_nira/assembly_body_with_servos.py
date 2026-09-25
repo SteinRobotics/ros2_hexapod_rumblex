@@ -137,8 +137,9 @@ def build_assembly() -> Compound:
 def main() -> None:
     assembly = build_assembly()
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-    export_step(assembly, str(EXPORT_DIR / "assembly_body_servo.step"))
-    export_stl(assembly, str(EXPORT_DIR / "assembly_body_servo.stl"))
+    (EXPORT_DIR / "stl").mkdir(parents=True, exist_ok=True)
+    # export_step(assembly, str(EXPORT_DIR / "step/assembly_body_servo.step"))
+    export_stl(assembly, str(EXPORT_DIR / "stl/assembly_body_servo.stl"))
     show(assembly, name="assembly_body_servo", clear=True)
 
 

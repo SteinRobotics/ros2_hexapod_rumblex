@@ -73,8 +73,8 @@ def build_model() -> Part:
 
 def main() -> None:
     result = build_model()
-    Path("generated").mkdir(exist_ok=True)
-    export_step(result, "generated/lidar_ydlidar_tmini.step")
+    Path("generated/step").mkdir(parents=True, exist_ok=True)
+    export_step(result, "generated/step/lidar_ydlidar_tmini.step")
     show(result, name="lidar_ydlidar_tmini", clear=True)
 
 

@@ -144,8 +144,10 @@ def build_model() -> Compound:
 def main() -> None:
     result = build_model()
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-    export_step(result, str(EXPORT_DIR / "board_ydlidar_tmini_interface.step"))
-    export_stl(result, str(EXPORT_DIR / "board_ydlidar_tmini_interface.stl"))
+    (EXPORT_DIR / "stl").mkdir(parents=True, exist_ok=True)
+    (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
+    export_step(result, str(EXPORT_DIR / "step/board_ydlidar_tmini_interface.step"))
+    export_stl(result, str(EXPORT_DIR / "stl/board_ydlidar_tmini_interface.stl"))
     show(result, name="board_ydlidar_tmini_interface", clear=True)
 
 

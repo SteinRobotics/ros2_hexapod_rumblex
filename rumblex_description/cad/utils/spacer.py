@@ -44,8 +44,8 @@ def build_model(
 
 def main() -> None:
     result = build_model()
-    Path("generated").mkdir(exist_ok=True)
-    export_step(result, "generated/spacer.step")
+    Path("generated/step").mkdir(parents=True, exist_ok=True)
+    export_step(result, "generated/step/spacer.step")
 
     show(result, name="spacer", clear=True)
 

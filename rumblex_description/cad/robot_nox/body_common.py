@@ -258,11 +258,13 @@ def main() -> None:
     result = build_model(surface)
 
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-    export_step(result, str(EXPORT_DIR / "body_layer_common.step"))
+    (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
+    (EXPORT_DIR / "dxf").mkdir(parents=True, exist_ok=True)
+    export_step(result, str(EXPORT_DIR / "step/body_layer_common.step"))
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
-    dxf_export.write(str(EXPORT_DIR / "body_layer_common.dxf"))
+    dxf_export.write(str(EXPORT_DIR / "dxf/body_layer_common.dxf"))
 
     show(result, name="body_layer_common", clear=True)
 

@@ -2,10 +2,11 @@
 
 import unittest
 
-from build123d import Cylinder, Pos, Rot
+from build123d import Box, Cylinder, Pos, Rot
 
 from robot_nira import assembly_head as head
 from robot_nira import webcam_obsbot
+from common import servo_simplified
 
 
 class NiraHeadTests(unittest.TestCase):
@@ -31,7 +32,7 @@ class NiraHeadTests(unittest.TestCase):
     def test_camera_seats_on_chin_with_accessible_tripod_bore(self):
         camera = self.parts["webcam_obsbot"]
         chin = self.parts["head_chin"]
-        self.assertAlmostEqual(camera.bounding_box().min.Z, chin.bounding_box().max.Z)
+        self.assertAlmostEqual(camera.bounding_box().max.Z, chin.bounding_box().min.Z)
         mount = camera.joints["mount"].location
         tool = mount * Pos(Z=-head.PLATE_THICKNESS / 2) * Cylinder(
             webcam_obsbot.MOUNT_HOLE_DIAMETER / 2, head.PLATE_THICKNESS)
@@ -43,6 +44,22 @@ class NiraHeadTests(unittest.TestCase):
         for part in self.parts.values():
             if part is not camera:
                 self.assertLess(part.bounding_box().max.X, lens_x)
+
+    def test_pod_roll_preserves_view_direction_and_servo_frame(self):
+        camera = self.parts["webcam_obsbot"]
+        mount = camera.joints["mount"].location
+        lens = camera.joints["lens"].location
+        # The camera is rolled upside down in servo coordinates; the parent
+        # assembly supplies the existing servo orientation on the robot.
+        self.assertAlmostEqual(mount.z_axis.direction.Z, -1)
+        self.assertAlmostEqual(lens.z_axis.direction.X, 1)
+        self.assertAlmostEqual(mount.position.Y, head.BRACKET_CENTER_Y)
+        self.assertAlmostEqual(mount.position.Z,
+                               head.BRACKET_CENTER_Z - head.CAMERA_BASE_Z)
+        servo = servo_simplified.build_model()
+        self.assertEqual(self.parts["head_pitch_servo"].location, servo.location)
+        self.assertEqual(self.assembly.joints["servo_mount"].location,
+                         servo.joints["rotation"].location)
 
     def test_standoffs_seat_on_plates_and_match_bracket_bores(self):
         for i in range(4):
@@ -69,6 +86,36 @@ class NiraHeadTests(unittest.TestCase):
         self.assertNotIn("head_pitch_servo", [part.label for part in without.children])
         for name in ("servo_mount", "pitch"):
             self.assertEqual(self.assembly.joints[name].location, without.joints[name].location)
+
+    def test_cable_channels_are_only_at_camera_bottom(self):
+        probe = Pos(0, -6, head.PLATE_THICKNESS / 2) * Box(2, 2, 2)
+        self.assertAlmostEqual((head.build_deck(brow=True) & probe).volume, probe.volume)
+        self.assertFalse(head.build_deck() & probe)
+        adapter = head.build_adapter()
+        lower = Pos(0, -1.5, head.CAMERA_BASE_Z + 3) * Box(2, 2, 2)
+        upper = Pos(0, -1.5, head.BROW_Z - 7) * Box(2, 2, 2)
+        self.assertFalse(adapter & lower)
+        self.assertAlmostEqual((adapter & upper).volume, upper.volume)
+
+    def test_mounted_cage_clears_lidar_scan_plane(self):
+        from robot_nira import assembly_body_with_servos, assembly_coxa, assembly_complete
+
+        body = assembly_body_with_servos.build_assembly()
+        yaw = assembly_coxa.build_assembly()
+        mounted_head = head.build_assembly()
+        servo = next(part for part in body.children if part.label == "servo_head")
+        servo.joints["rotation"].connect_to(
+            yaw.joints["body_to_coxa_fixed"], angle=assembly_complete.ANGLE_HEAD_YAW % 360)
+        yaw.joints["coxa_to_femur_fixed"].connect_to(
+            mounted_head.joints["pitch"], angle=assembly_complete.ANGLE_HEAD_PITCH % 360)
+        chassis = body.children[0]
+        lidar = next(part for part in chassis.children if part.label == "lidar_ydlidar_tmini")
+        scan_z = (body.location * chassis.location * lidar.joints["scan"].location).position.Z
+        for part in mounted_head.children:
+            if part.label in {"head_pitch_servo", "head_side_bracket"}:
+                continue
+            top = (mounted_head.location * part).bounding_box().max.Z
+            self.assertGreater(scan_z - top, 6.0, part.label)
 
 
 if __name__ == "__main__":

@@ -64,10 +64,12 @@ def main() -> None:
     surface = build_surface()
     model = build_model(surface)
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-    export_step(model, str(EXPORT_DIR / "foot_outer.step"))
+    (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
+    (EXPORT_DIR / "dxf").mkdir(parents=True, exist_ok=True)
+    export_step(model, str(EXPORT_DIR / "step/foot_outer.step"))
     drawing = ExportDXF()
     drawing.add_shape(surface)
-    drawing.write(str(EXPORT_DIR / "foot_outer.dxf"))
+    drawing.write(str(EXPORT_DIR / "dxf/foot_outer.dxf"))
     show(model, name="foot_outer", clear=True)
 
 

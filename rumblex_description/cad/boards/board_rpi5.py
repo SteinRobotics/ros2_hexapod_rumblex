@@ -57,12 +57,12 @@ if __name__ == "__main__":
     surface = build_surface()
     result = build_board_with_spacers()
 
-    Path("generated").mkdir(exist_ok=True)
-    export_step(result, "generated/board_rpi5.step")
+    # Path("generated").mkdir(exist_ok=True)
+    # export_step(result, "generated/step/board_rpi5.step")
 
-    dxf_export = ExportDXF()
-    dxf_export.add_shape(surface)
-    dxf_export.write("generated/board_rpi5.dxf")
+    # dxf_export = ExportDXF()
+    # dxf_export.add_shape(surface)
+    # dxf_export.write("generated/dxf/board_rpi5.dxf")
 
     show(result, name="board_rpi5", clear=True)
     

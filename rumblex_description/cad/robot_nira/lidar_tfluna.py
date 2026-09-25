@@ -116,8 +116,10 @@ def build_model() -> Part:
 def main() -> None:
     result = build_model()
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-    export_step(result, str(EXPORT_DIR / "lidar_tfluna.step"))
-    export_stl(result, str(EXPORT_DIR / "lidar_tfluna.stl"))
+    (EXPORT_DIR / "stl").mkdir(parents=True, exist_ok=True)
+    (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
+    export_step(result, str(EXPORT_DIR / "step/lidar_tfluna.step"))
+    export_stl(result, str(EXPORT_DIR / "stl/lidar_tfluna.stl"))
     show(result, name="lidar_tfluna", clear=True)
 
 
