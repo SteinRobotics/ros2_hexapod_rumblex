@@ -19,15 +19,11 @@ def build_surface() -> Sketch:
     with BuildSketch() as sketch:
         add(body_common.build_surface())
 
+
         # Integral front deck bridges the old central opening to both side rails.
-        Polygon((22, -49), (78, -49), (102, -25), (102, 25),
-                (78, 49), (22, 49), align=None)
-        # Generic adapter/retention slots, outside the simplified sensor envelope.
-        # These are not the manufacturer's mounting-hole pattern.
-        with Locations((LIDAR_X, -23), (LIDAR_X, 23)):
-            RectangleRounded(22, 3, 1, mode=Mode.SUBTRACT)
-        with Locations((30, 0)):
-            RectangleRounded(6, 16, 2, mode=Mode.SUBTRACT)
+        Polygon((55, -50), (78, -50), (102, -25), (102, 25),
+                (78, 50), (55, 50), align=None)
+
         # Slots receive the housing side-wall fingers through this deck.
         with Locations(*[(LIDAR_ASSEMBLY_X + x, y)
                          for x in DECK_TAB_X for y in (-DECK_SLOT_Y, DECK_SLOT_Y)]):
