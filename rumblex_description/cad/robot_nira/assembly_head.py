@@ -12,9 +12,9 @@ from pathlib import Path
 from robot_nira import EXPORT_DIR
 
 from build123d import (
-    BuildPart, BuildSketch, Circle, Compound, Locations, Mode,
+    BuildPart, BuildSketch, Circle, Compound, ExportDXF, Locations, Mode,
     Part, Plane, Polygon, Pos, Rectangle, RectangleRounded, RigidJoint,
-    RevoluteJoint, Rot, export_step, export_stl, extrude, import_step,
+    RevoluteJoint, Rot, Vector, export_step, export_stl, extrude, import_step,
 )
 
 from utils.ocp_utils import show
@@ -50,7 +50,8 @@ CAMERA_BASE_Z = -14.0 - CAGE_DROP
 CHIN_Z = CAMERA_BASE_Z - PLATE_THICKNESS
 BROW_Z = CAMERA_BASE_Z + webcam_obsbot.BODY_HEIGHT + 2.0
 CAGE_SPACER_LENGTH = BROW_Z - CAMERA_BASE_Z
-CAGE_HOLES = [(x, y) for x in (-28.0, 28.0) for y in (-14.0, -29.0)]
+# +Y is toward the rear adapter; both deck bores and spacers share these centers.
+CAGE_HOLES = [(x, y) for x in (-28.0, 28.0) for y in (-12.0, -27.0)]
 TAB_CENTERS = (-18.0, 18.0)
 TAB_WIDTH = 8.0
 # Roll the complete cage about the bracket centre along its viewing axis.
@@ -174,6 +175,27 @@ def build_assembly(include_servo: bool = True) -> Compound:
     return head
 
 
+def export_surfaces() -> None:
+    """Export the three flat cage plates in their own cutting planes."""
+    dxf_dir = EXPORT_DIR / "dxf"
+    dxf_dir.mkdir(parents=True, exist_ok=True)
+    rear_plane = Plane(origin=(0, -PLATE_THICKNESS, 0),
+                       x_dir=(1, 0, 0), z_dir=(0, -1, 0))
+    for name, plate, plane in (
+        ("head_chin", build_deck(), Plane(origin=(0, 0, PLATE_THICKNESS))),
+        ("head_brow", build_deck(brow=True), Plane(origin=(0, 0, PLATE_THICKNESS))),
+        ("head_rear_adapter", build_adapter(), rear_plane),
+    ):
+        faces = [face for face in plate.faces()
+                 if face.normal_at().dot(Vector(plane.z_dir)) > 1 - 1e-6
+                 and abs((face.center() - plane.origin).dot(Vector(plane.z_dir))) < 1e-6]
+        if len(faces) != 1:
+            raise ValueError(f"Expected one cutting face for {name}, found {len(faces)}")
+        drawing = ExportDXF()
+        drawing.add_shape(plane.to_local_coords(faces[0]))
+        drawing.write(str(dxf_dir / f"{name}.dxf"))
+
+
 def main() -> None:
     assembly = build_assembly()
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
@@ -181,6 +203,7 @@ def main() -> None:
     (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
     export_step(assembly, str(EXPORT_DIR / "step/assembly_head.step"))
     export_stl(assembly, str(EXPORT_DIR / "stl/assembly_head.stl"))
+    export_surfaces()
 
     show(assembly, name="assembly_head", clear=True)
 
