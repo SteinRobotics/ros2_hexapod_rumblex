@@ -13,7 +13,7 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from robot_nira import EXPORT_DIR
-from math import hypot, sqrt
+from math import hypot
 
 from build123d import (
     Box, BuildPart, BuildSketch, Compound, ExportDXF, Locations, Part, Plane, Pos,
@@ -21,6 +21,7 @@ from build123d import (
 )
 
 import common.loudspeaker as loudspeaker
+from robot_nira.armor_style import GILL_SWEEP_RATIO, GILL_WIDTH_RATIO, gill_points
 import robot_nira.body_common as body_common
 import robot_nira.lidar_interface_housing as lidar_housing
 from utils.colors import COLOR_CREAMY_WHITE
@@ -34,8 +35,8 @@ COVER_CLEARANCE = 0.5
 JOINT_FINGER_COUNT = 5
 JOINT_FINGER_LENGTH = 7.0
 SPEAKER_Y_POSITIONS = (25.0, -25.0)
-SPEAKER_SLOT_LENGTH = 4.0
-SPEAKER_SLOT_WIDTH = 1.5
+SPEAKER_GILL_SPAN = 3.5
+SPEAKER_GILL_ROW_GAP = 1.0
 SPEAKER_SLOT_PITCH = 6.0
 SPEAKER_SLOT_FIELD_RADIUS = loudspeaker.FRONT_DIAMETER / 2 - 3.5
 TAB_WIDTH = body_common.rectangle_slots_width
@@ -98,9 +99,11 @@ def speaker_plane(z_top: float, y: float) -> Plane:
 
 
 def speaker_slot_positions() -> list[tuple[float, float]]:
-    """Staggered slot centres within the speaker face, leaving a solid rim."""
+    """Staggered gill centres within the speaker face, leaving a solid rim."""
     positions = []
-    row_pitch = SPEAKER_SLOT_PITCH * sqrt(3) / 2
+    # A gill spans width + sweep along the slope. Leave a full bridge between rows.
+    row_pitch = (SPEAKER_GILL_SPAN * (GILL_WIDTH_RATIO + GILL_SWEEP_RATIO)
+                 + SPEAKER_GILL_ROW_GAP)
     for row in range(-3, 4):
         for column in range(-3, 4):
             across = (column + 0.5 * (row % 2)) * SPEAKER_SLOT_PITCH
@@ -108,6 +111,16 @@ def speaker_slot_positions() -> list[tuple[float, float]]:
             if hypot(across, along) <= SPEAKER_SLOT_FIELD_RADIUS:
                 positions.append((across, along))
     return positions
+
+
+def speaker_gill_points(across: float, along: float, side: int):
+    """Centre and mirror a foot-style gill on a speaker face."""
+    span = SPEAKER_GILL_SPAN
+    width = span * GILL_WIDTH_RATIO
+    sweep = span * GILL_SWEEP_RATIO
+    points = gill_points(along + (sweep - width) / 2,
+                         side * across - span / 2, span, side=side)
+    return [(transverse, longitudinal) for longitudinal, transverse in points]
 
 
 def build_surface(height: float, side: bool = False, front: bool = False,
@@ -269,10 +282,11 @@ def build_slope_cover(z_top: float) -> Part:
     result = result - notch
     with BuildPart() as perforated:
         add(result)
-        for y, angle in zip(SPEAKER_Y_POSITIONS, (45, -45)):
+        for y in SPEAKER_Y_POSITIONS:
             with BuildSketch(speaker_plane(z_top, y).offset(0.1)):
-                with Locations(*speaker_slot_positions()):
-                    Rectangle(SPEAKER_SLOT_LENGTH, SPEAKER_SLOT_WIDTH, rotation=angle)
+                for across, along in speaker_slot_positions():
+                    Polygon(*speaker_gill_points(across, along, -1 if y > 0 else 1),
+                            align=None)
             extrude(amount=-THICKNESS - 0.2, mode=Mode.SUBTRACT)
     result = perforated.part
     result.label = "chassis_slope_cover"
