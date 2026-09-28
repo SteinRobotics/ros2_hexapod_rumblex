@@ -17,9 +17,10 @@ import robot_nira.lidar_interface_housing as lidar_housing
 from robot_nira import EXPORT_DIR
 from robot_nira.armor_style import GILL_SWEEP_RATIO, GILL_WIDTH_RATIO, gill_points
 from robot_nira.chassis_common import (
-    RAIL_HEIGHT, SLOPE_END_X, THICKNESS, slope_finger_profiles,
+    RAIL_HEIGHT, SLOPE_END_X, SLOPE_START_X, THICKNESS,
+    slope_finger_profiles,
 )
-from robot_nira.lidar_layout import LIDAR_X, LOW_RAIL_HEIGHT, SHOULDER_TOP_X
+from robot_nira.lidar_layout import LOW_RAIL_HEIGHT
 from utils.colors import COLOR_CREAMY_WHITE
 from utils.ocp_utils import show
 
@@ -32,11 +33,11 @@ SPEAKER_SLOT_FIELD_RADIUS = loudspeaker.FRONT_DIAMETER / 2 - 3.5
 
 def speaker_plane(z_top: float, y: float) -> Plane:
     """Outer slope face at a loudspeaker centre, normal pointing outside."""
-    run = SLOPE_END_X - SHOULDER_TOP_X
+    run = SLOPE_END_X - SLOPE_START_X
     drop = RAIL_HEIGHT - LOW_RAIL_HEIGHT
     length = hypot(run, drop)
     return Plane(
-        origin=((SHOULDER_TOP_X + SLOPE_END_X) / 2, y, z_top - drop / 2),
+        origin=((SLOPE_START_X + SLOPE_END_X) / 2, y, z_top - drop / 2),
         x_dir=(0, 1, 0),
         z_dir=(drop / length, 0, run / length),
     )
@@ -69,7 +70,7 @@ def speaker_gill_points(across: float, along: float, side: int):
 
 def build_slope_cover(z_top: float) -> Part:
     """Bridge the sloped front edges of the two large side plates."""
-    run = SLOPE_END_X - SHOULDER_TOP_X
+    run = SLOPE_END_X - SLOPE_START_X
     drop = RAIL_HEIGHT - LOW_RAIL_HEIGHT
     slope_length = hypot(run, drop)
     # Offset the sheet into the chassis, keeping its outer face flush with
@@ -84,10 +85,10 @@ def build_slope_cover(z_top: float) -> Part:
     with BuildPart() as cover:
         with BuildSketch(Plane.XZ):
             Polygon(
-                (SHOULDER_TOP_X, z_top),
+                (SLOPE_START_X, z_top),
                 (SLOPE_END_X, z_top - drop),
                 (SLOPE_END_X + inward_x, z_top - drop + inward_z),
-                (SHOULDER_TOP_X + inward_x, z_top + inward_z),
+                (SLOPE_START_X + inward_x, z_top + inward_z),
                 align=None,
             )
         extrude(amount=2 * inner_y)

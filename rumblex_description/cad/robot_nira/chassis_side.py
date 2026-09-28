@@ -11,7 +11,7 @@ from robot_nira import EXPORT_DIR
 from robot_nira import chassis_common
 import robot_nira.body_common as body_common
 from robot_nira.armor_style import gill_points
-from robot_nira.lidar_layout import LOW_RAIL_HEIGHT, SHOULDER_TOP_X
+from robot_nira.lidar_layout import LOW_RAIL_HEIGHT
 from utils.colors import COLOR_CREAMY_WHITE
 from utils.ocp_utils import show
 
@@ -41,10 +41,17 @@ def build_surface(height: float) -> Sketch:
                                (row + offset, height - tab_depth / 2)):
                     Rectangle(chassis_common.TAB_WIDTH, tab_depth)
 
-        sill = height - tab_depth - rail_height + LOW_RAIL_HEIGHT
-        Polygon((SHOULDER_TOP_X, height - tab_depth),
+        deck_top = height - tab_depth - rail_height
+        sill = deck_top + LOW_RAIL_HEIGHT
+        # Extend only above the deck, leaving the lower front joint in its slot.
+        Polygon((chassis_common.SLOT_FRONT_X - 1, deck_top),
+                (chassis_common.SLOPE_END_X, deck_top),
+                (chassis_common.SLOPE_END_X, height - tab_depth),
+                (chassis_common.SLOT_FRONT_X - 1, height - tab_depth),
+                align=None)
+        Polygon((chassis_common.SLOPE_START_X, height - tab_depth),
                 (chassis_common.SLOPE_END_X, sill), (150, sill),
-                (150, height + 1), (SHOULDER_TOP_X, height + 1),
+                (150, height + 1), (chassis_common.SLOPE_START_X, height + 1),
                 align=None, mode=Mode.SUBTRACT)
         for profile in chassis_common.slope_finger_profiles(height - tab_depth):
             Polygon(*profile, align=None, mode=Mode.SUBTRACT)

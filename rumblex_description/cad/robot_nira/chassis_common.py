@@ -10,7 +10,10 @@ import robot_nira.body_common as body_common
 from robot_nira.lidar_layout import LOW_RAIL_HEIGHT, SHOULDER_TOP_X
 
 THICKNESS = body_common.rectangle_slots_height
-SLOPE_END_X = 58.0
+FRONT_EXTENSION = 10.0
+SLOT_FRONT_X = 58.0
+SLOPE_START_X = SHOULDER_TOP_X + FRONT_EXTENSION
+SLOPE_END_X = SLOT_FRONT_X + FRONT_EXTENSION
 JOINT_FINGER_COUNT = 5
 JOINT_FINGER_LENGTH = 7.0
 TAB_WIDTH = body_common.rectangle_slots_width
@@ -22,7 +25,7 @@ RAIL_HEIGHT = body_common.SPACER_LENGTH_TOP
 
 def slope_finger_profiles(z_top: float) -> list[tuple[tuple[float, float], ...]]:
     """Rectangular box-joint cuts in the sloped XZ edge."""
-    run = SLOPE_END_X - SHOULDER_TOP_X
+    run = SLOPE_END_X - SLOPE_START_X
     drop = RAIL_HEIGHT - LOW_RAIL_HEIGHT
     length = hypot(run, drop)
     inward_x = -THICKNESS * drop / length
@@ -32,8 +35,8 @@ def slope_finger_profiles(z_top: float) -> list[tuple[tuple[float, float], ...]]
     for index in range(1, JOINT_FINGER_COUNT + 1):
         start = (index * pitch - JOINT_FINGER_LENGTH / 2) / length
         end = (index * pitch + JOINT_FINGER_LENGTH / 2) / length
-        x0, z0 = SHOULDER_TOP_X + run * start, z_top - drop * start
-        x1, z1 = SHOULDER_TOP_X + run * end, z_top - drop * end
+        x0, z0 = SLOPE_START_X + run * start, z_top - drop * start
+        x1, z1 = SLOPE_START_X + run * end, z_top - drop * end
         profiles.append(((x0, z0), (x1, z1),
                          (x1 + inward_x, z1 + inward_z),
                          (x0 + inward_x, z0 + inward_z)))

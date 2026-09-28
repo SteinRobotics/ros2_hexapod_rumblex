@@ -21,7 +21,7 @@ def build_surface() -> Sketch:
 
 
         # Integral front deck bridges the old central opening to both side rails.
-        Polygon((55, -50), (78, -50), (102, -25), (102, 25),
+        Polygon((55, -50), (78, -50), (109, -25), (109, 25),
                 (78, 50), (55, 50), align=None)
 
         # Three fingers on each housing side wall pass through matching deck slots.

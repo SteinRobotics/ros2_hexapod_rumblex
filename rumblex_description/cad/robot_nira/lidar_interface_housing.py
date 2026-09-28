@@ -24,7 +24,7 @@ from utils.ocp_utils import show
 
 WALL = 1.5
 CLEARANCE = 1.0
-HEIGHT = interface.TOTAL_HEIGHT + CLEARANCE + WALL
+HEIGHT = interface.TOTAL_HEIGHT + CLEARANCE + WALL + 3.0
 # In this housing's local frame, the board is rotated 90 degrees and its socket faces +X.
 # The body assembly rotates both parts so the socket and cable opening face inward.
 HALF_X = interface.BASE_DEPTH / 2 + CLEARANCE + WALL
