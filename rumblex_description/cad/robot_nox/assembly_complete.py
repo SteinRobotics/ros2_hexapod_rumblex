@@ -12,7 +12,7 @@ from robot_nox import EXPORT_DIR
 
 from build123d import Compound, export_step, export_stl
 
-import robot_nox.assembly_body_with_servos as assembly_body_with_servos
+import robot_nox.assembly_torso_with_servos as assembly_torso_with_servos
 import robot_nox.assembly_coxa as assembly_coxa
 import robot_nox.assembly_head as assembly_head
 import robot_nox.assembly_leg as assembly_leg
@@ -25,7 +25,7 @@ ANGLE_HEAD_PITCH = -60.0
 
 
 def build_assembly() -> Compound:
-    body = assembly_body_with_servos.build_assembly()
+    body = assembly_torso_with_servos.build_assembly()
     servos = {child.label: child for child in body.children if child.label.startswith("servo_")}
     coxa_head = assembly_coxa.build_assembly()
     servos["servo_head"].joints["rotation"].connect_to(

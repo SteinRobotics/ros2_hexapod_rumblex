@@ -18,7 +18,7 @@ from build123d import (
 )
 
 from robot_nira import EXPORT_DIR, board_ydlidar_tmini_interface as interface
-import robot_nira.body_common as body_common
+import robot_nira.torso_common as torso_common
 from utils.colors import COLOR_CREAMY_WHITE
 from utils.ocp_utils import show
 
@@ -36,7 +36,7 @@ SIDE_LID_TAB_X = (-12.0, 0.0, 12.0)
 END_LID_TAB_Y = (-14.0, 0.0, 14.0)
 DECK_TAB_X = (-12.0, 0.0, 12.0)
 DECK_TAB_WIDTH = 4.0
-DECK_TAB_DEPTH = body_common.THICKNESS
+DECK_TAB_DEPTH = torso_common.THICKNESS
 DECK_SLOT_Y = HALF_Y - WALL / 2
 DECK_TAB_POSITIONS = tuple(
     (x, y) for x in DECK_TAB_X for y in (-DECK_SLOT_Y, DECK_SLOT_Y)

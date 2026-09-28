@@ -8,7 +8,7 @@ if __package__ in (None, ""):
 from build123d import ExportDXF, Part, Sketch, export_step
 from robot_nira import EXPORT_DIR
 from robot_nira import chassis_common
-import robot_nira.body_common as body_common
+import robot_nira.torso_common as torso_common
 from utils.ocp_utils import show
 
 
@@ -21,7 +21,7 @@ def build_model(height: float) -> Part:
 
 
 def main() -> None:
-    from robot_nira.body_layout import SIDE_PLATE_HEIGHT
+    from robot_nira.torso_layout import SIDE_PLATE_HEIGHT
 
     height = SIDE_PLATE_HEIGHT
     surface = build_surface(height)

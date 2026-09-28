@@ -99,9 +99,9 @@ class NiraHeadTests(unittest.TestCase):
         self.assertAlmostEqual((adapter & upper).volume, upper.volume)
 
     def test_mounted_cage_clears_lidar_scan_plane(self):
-        from robot_nira import assembly_body_with_servos, assembly_coxa, assembly_complete
+        from robot_nira import assembly_torso_with_servos, assembly_coxa, assembly_complete
 
-        body = assembly_body_with_servos.build_assembly()
+        body = assembly_torso_with_servos.build_assembly()
         yaw = assembly_coxa.build_assembly()
         mounted_head = head.build_assembly()
         servo = next(part for part in body.children if part.label == "servo_head")

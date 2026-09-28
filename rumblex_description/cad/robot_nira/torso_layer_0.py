@@ -14,7 +14,7 @@ from robot_nira import EXPORT_DIR
 from build123d import *
 from utils.ocp_utils import show
 
-import robot_nira.body_common as body_common
+import robot_nira.torso_common as torso_common
 from robot_nira.board_layout import Placement, BOARD_MOUNTS
 
 # orientation
@@ -33,17 +33,17 @@ TOE_MOUNTING_HOLES = [(x, y, TOE_HOLE_RADIUS) for x, y in TOE_MOUNTING_POSITIONS
 
 
 OCTAGON_POSITIONS = [
-    body_common.octagon_position_left_top,
-    body_common.octagon_position_right_top,
-    body_common.octagon_position_right_bottom,
-    body_common.octagon_position_left_bottom,
+    torso_common.octagon_position_left_top,
+    torso_common.octagon_position_right_top,
+    torso_common.octagon_position_right_bottom,
+    torso_common.octagon_position_left_bottom,
 ]
 
 OUTPUT_DIR = EXPORT_DIR
-OUTPUT_NAME = "body_layer_0"
+OUTPUT_NAME = "torso_layer_0"
 
 
-# TODO: move to generic helper file or to body_common.py
+# TODO: move to generic helper file or to torso_common.py
 def chamfered_octagon(width: float, height: float, chamfer_length: float, rotation: float = 0.0) -> Sketch:
     with BuildSketch() as sk:
         Rectangle(width, height, rotation=rotation)
@@ -72,15 +72,15 @@ def place_board_holes(
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
-        add(body_common.base_plate)
+        add(torso_common.base_plate)
 
         for pos in OCTAGON_POSITIONS:
             with Locations(pos):
                 add(chamfered_octagon(55, 55, 4))
 
-        for loc in body_common.hole_locations:
+        for loc in torso_common.hole_locations:
             with Locations(loc):
-                Circle(body_common.hole_radius, mode=Mode.SUBTRACT)
+                Circle(torso_common.hole_radius, mode=Mode.SUBTRACT)
 
         for x, y, radius in TOE_MOUNTING_HOLES:
             with Locations((x, y)):
@@ -96,7 +96,7 @@ def build_surface() -> Sketch:
 def build_model(surface: Sketch) -> Part:
     with BuildPart() as model:
         add(surface)
-        extrude(amount=body_common.THICKNESS)
+        extrude(amount=torso_common.THICKNESS)
     return model.part
 
 

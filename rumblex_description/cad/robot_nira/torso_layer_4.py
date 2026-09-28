@@ -25,7 +25,7 @@ from build123d import (
     extrude,
 )
 
-import robot_nira.body_common as body_common
+import robot_nira.torso_common as torso_common
 from robot_nira.lidar_layout import canopy_surface
 from utils.ocp_utils import show
 
@@ -39,10 +39,10 @@ def build_surface() -> Sketch:
                 Polygon((x - 5, side * 12), (x + 2, side * 12),
                         (x - 16, side * 39), (x - 23, side * 39),
                         align=None, mode=Mode.SUBTRACT)
-        for location in body_common.hole_locations:
+        for location in torso_common.hole_locations:
             if location.position.X < 0:
                 with Locations(location):
-                    Circle(body_common.hole_radius, mode=Mode.SUBTRACT)
+                    Circle(torso_common.hole_radius, mode=Mode.SUBTRACT)
 
     return sketch.sketch
 
@@ -50,7 +50,7 @@ def build_surface() -> Sketch:
 def build_model(surface: Sketch) -> Part:
     with BuildPart() as model:
         add(surface)
-        extrude(amount=body_common.THICKNESS)
+        extrude(amount=torso_common.THICKNESS)
 
     return model.part
 
@@ -62,13 +62,13 @@ def main() -> None:
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
     (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
     (EXPORT_DIR / "dxf").mkdir(parents=True, exist_ok=True)
-    export_step(result, str(EXPORT_DIR / "step/body_layer_4.step"))
+    export_step(result, str(EXPORT_DIR / "step/torso_layer_4.step"))
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
-    dxf_export.write(str(EXPORT_DIR / "dxf/body_layer_4.dxf"))
+    dxf_export.write(str(EXPORT_DIR / "dxf/torso_layer_4.dxf"))
 
-    show(result, name="body_layer_4", clear=True)
+    show(result, name="torso_layer_4", clear=True)
 
 
 if __name__ == "__main__":

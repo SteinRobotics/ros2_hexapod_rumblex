@@ -13,7 +13,7 @@ from robot_nox import EXPORT_DIR
 
 from build123d import Compound, Pos, Rot, export_step, export_stl
 
-from robot_nox.body_layer_0 import (
+from robot_nox.torso_layer_0 import (
     Placement,
     LOCATION_RPI5,
     LOCATION_LEFT_SERVO_PLUG,
@@ -27,8 +27,8 @@ from robot_nox.body_layer_0 import (
 from utils.colors import COLOR_DARK_GRAY
 from utils.ocp_utils import show
 
-import robot_nox.assembly_body as assembly_body
-import robot_nox.body_common as body_common
+import robot_nox.assembly_torso as assembly_torso
+import robot_nox.torso_common as torso_common
 import common.servo_simplified as servo_simplified
 import boards.board_rpi5 as board_rpi5
 import boards.board_servo_plug as board_servo_plug
@@ -45,11 +45,11 @@ servo_by_name = {}
 #   front horn (local Y < 0) sits inside body layer 2
 #   back  horn (local Y > BODY_Y) sits inside body layer 1
 _z_layer_2_center = (
-    body_common.THICKNESS
-    + assembly_body.SPACER_LENGTH_0_to_1
-    + body_common.THICKNESS
-    + assembly_body.SPACER_LENGTH_1_to_2
-    + body_common.THICKNESS / 2
+    torso_common.THICKNESS
+    + assembly_torso.SPACER_LENGTH_0_to_1
+    + torso_common.THICKNESS
+    + assembly_torso.SPACER_LENGTH_1_to_2
+    + torso_common.THICKNESS / 2
 )
 SERVO_Z = _z_layer_2_center - (
     servo_simplified.HORN_FRONT_Y / 2 + servo_simplified.HORN_DISTANCE_TO_BODY
@@ -59,7 +59,7 @@ SERVO_Z = _z_layer_2_center - (
 SERVO_Z_MID = (servo_simplified.HOLE_Z_LOW + servo_simplified.HOLE_Z_HIGH) / 2
 
 
-def servo_location(config: body_common.ServoCutoutConfig, z: float = SERVO_Z):
+def servo_location(config: torso_common.ServoCutoutConfig, z: float = SERVO_Z):
     """Return the world transform for a servo at a body cutout.
 
     ``config.offset_*`` locates the centre of the cutout, whereas a servo's
@@ -78,10 +78,10 @@ def place_board(board_module, placement: Placement):
 
     The board is flipped and rotated around its own center first, then
     moved to the placement's XY offset - matching the hole pattern cut in
-    body_layer_0.build_surface().
+    torso_layer_0.build_surface().
     """
     board = board_module.build_board_with_spacers()
-    z_pos = board_module.cfg.thickness + board_module.cfg.spacer_height + body_common.THICKNESS
+    z_pos = board_module.cfg.thickness + board_module.cfg.spacer_height + torso_common.THICKNESS
     return (
         Pos(placement.x, placement.y, z_pos)
         * Rot(0, 0, placement.rotation)
@@ -94,14 +94,14 @@ def build_assembly() -> Compound:
     # This module-level mapping is a convenience for parent assemblies.  Do
     # not retain instances from an earlier build.
     servo_by_name.clear()
-    body = assembly_body.build_assembly()
+    body = assembly_torso.build_assembly()
 
     # add servos
     servo_part = servo_simplified.build_model()
     servo_part.color = COLOR_DARK_GRAY
 
     servo_instances = []
-    for name, config in body_common.SERVO_CUTOUT_CONFIGS.items():
+    for name, config in torso_common.SERVO_CUTOUT_CONFIGS.items():
         instance = servo_location(config) * servo_part
         instance.label = f"servo_{name}"
         servo_instances.append(instance)

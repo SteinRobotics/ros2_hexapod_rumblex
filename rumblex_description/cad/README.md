@@ -73,7 +73,7 @@ and rejects missing or incompatible patterns. Physical fit still needs verificat
 
 ## Nira shared layout
 
-- `body_layout.py` defines body layer elevations, spacer lengths, the cover's
+- `torso_layout.py` defines body layer elevations, spacer lengths, the cover's
   seating offset and the front deck boundary. Body, servo and standalone
   chassis assemblies use these same elevations.
 - Chassis edges follow slot-row centres and widths. Canopy corners follow
@@ -132,9 +132,9 @@ head/leg motion, structural strength, optical tolerances or manufacturing fit.
 Export the revised parts and assembly with:
 
 ```bash
-.venv/bin/python -m robot_nira.body_layer_2
-.venv/bin/python -m robot_nira.body_layer_3
-.venv/bin/python -m robot_nira.body_layer_4
+.venv/bin/python -m robot_nira.torso_layer_2
+.venv/bin/python -m robot_nira.torso_layer_3
+.venv/bin/python -m robot_nira.torso_layer_4
 .venv/bin/python -m robot_nira.chassis_back
 .venv/bin/python -m robot_nira.chassis_front
 .venv/bin/python -m robot_nira.chassis_side
@@ -142,7 +142,7 @@ Export the revised parts and assembly with:
 .venv/bin/python -m robot_nira.chassis_diagonal_front
 .venv/bin/python -m robot_nira.chassis_slope_cover
 .venv/bin/python -m robot_nira.lidar_interface_housing
-.venv/bin/python -m robot_nira.assembly_body
+.venv/bin/python -m robot_nira.assembly_torso
 .venv/bin/python robot_nira.py
 .venv/bin/python -m unittest discover -s tests -p test_nira_lidar.py -v
 ```

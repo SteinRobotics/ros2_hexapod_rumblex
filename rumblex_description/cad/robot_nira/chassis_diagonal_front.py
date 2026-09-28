@@ -9,7 +9,7 @@ from build123d import (BuildSketch, ExportDXF, Locations, Part, Polygon,
                        Rectangle, Sketch, export_step)
 from robot_nira import EXPORT_DIR
 from robot_nira import chassis_common
-import robot_nira.body_common as body_common
+import robot_nira.torso_common as torso_common
 from utils.ocp_utils import show
 
 FRONT_DIAGONAL_HEIGHT = 10.0
@@ -29,8 +29,8 @@ def build_surface(height: float) -> Sketch:
             align=None,
         )
         with Locations(*[(x, tab_depth / 2)
-                         for x in body_common.front_diagonal_tab_offsets]):
-            Rectangle(body_common.front_diagonal_tab_width, tab_depth)
+                         for x in torso_common.front_diagonal_tab_offsets]):
+            Rectangle(torso_common.front_diagonal_tab_width, tab_depth)
     return sketch.sketch
 
 
@@ -39,9 +39,9 @@ def build_model(height: float) -> Part:
 
 
 def main() -> None:
-    import robot_nira.assembly_body as assembly_body
+    import robot_nira.assembly_torso as assembly_torso
 
-    from robot_nira.body_layout import DIAGONAL_PLATE_HEIGHT
+    from robot_nira.torso_layout import DIAGONAL_PLATE_HEIGHT
 
     height = DIAGONAL_PLATE_HEIGHT
     surface = build_surface(height)

@@ -278,13 +278,13 @@ def main() -> None:
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
     (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
     (EXPORT_DIR / "dxf").mkdir(parents=True, exist_ok=True)
-    export_step(result, str(EXPORT_DIR / "step/body_layer_common.step"))
+    export_step(result, str(EXPORT_DIR / "step/torso_layer_common.step"))
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
-    dxf_export.write(str(EXPORT_DIR / "dxf/body_layer_common.dxf"))
+    dxf_export.write(str(EXPORT_DIR / "dxf/torso_layer_common.dxf"))
 
-    show(result, name="body_layer_common", clear=True)
+    show(result, name="torso_layer_common", clear=True)
 
 
 if __name__ == "__main__":

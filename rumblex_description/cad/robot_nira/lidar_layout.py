@@ -6,17 +6,17 @@ scan sector; the canopy itself sits above the complete scanner envelope.
 """
 
 from build123d import BuildSketch, Polygon, Sketch
-from robot_nira import body_common
+from robot_nira import torso_common
 
 LIDAR_X = 80.0
 LIDAR_Y = 0.0
 LIDAR_ASSEMBLY_X = LIDAR_X + 13.0
 LOW_RAIL_HEIGHT = 8.0
 CANOPY_TIP_X = LIDAR_X
-CANOPY_HALF_WIDTH = body_common.rect_h / 2
-REAR_X = -body_common.rect_w / 2
-REAR_CORNER_X = REAR_X + body_common.chamfer_length
-REAR_CORNER_Y = CANOPY_HALF_WIDTH - body_common.chamfer_length
+CANOPY_HALF_WIDTH = torso_common.rect_h / 2
+REAR_X = -torso_common.rect_w / 2
+REAR_CORNER_X = REAR_X + torso_common.chamfer_length
+REAR_CORNER_Y = CANOPY_HALF_WIDTH - torso_common.chamfer_length
 SHOULDER_TOP_X = CANOPY_TIP_X - CANOPY_HALF_WIDTH - 10.0
 
 

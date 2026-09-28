@@ -19,18 +19,18 @@ from build123d import (
     Rectangle, Rot, Sketch, add, export_step, extrude,
 )
 
-import robot_nox.body_common as body_common
+import robot_nox.torso_common as torso_common
 from utils.colors import COLOR_DARK_GRAY
 from utils.ocp_utils import show
 
 
-THICKNESS = body_common.rectangle_slots_height
-TAB_WIDTH = body_common.rectangle_slots_width
-TAB_DEPTH = body_common.THICKNESS
-TAB_PITCH = body_common.rectangle_slots_completed_width / 2
+THICKNESS = torso_common.rectangle_slots_height
+TAB_WIDTH = torso_common.rectangle_slots_width
+TAB_DEPTH = torso_common.THICKNESS
+TAB_PITCH = torso_common.rectangle_slots_completed_width / 2
 ROW_WIDTH = 2 * TAB_PITCH + TAB_WIDTH
 # The rail sits on layer 2 and reaches the underside of layer 3.
-RAIL_HEIGHT = body_common.SPACER_LENGTH_TOP
+RAIL_HEIGHT = torso_common.SPACER_LENGTH_TOP
 
 
 def build_surface(height: float, side: bool = False) -> Sketch:
@@ -43,7 +43,7 @@ def build_surface(height: float, side: bool = False) -> Sketch:
         raise ValueError("Height must leave room for the plate below the top rail")
 
     side_rows = sorted(
-        loc.position.X for loc in body_common.rectangle_slots_locations
+        loc.position.X for loc in torso_common.rectangle_slots_locations
         if loc.position.Y > 0 and abs(loc.orientation.Z) < 1e-6
     )
     row_centers = side_rows if side else [0.0]
@@ -76,14 +76,14 @@ def build_model(surface: Sketch) -> Part:
 
 def build_plates(z_bottom: float, z_top: float) -> list[Part]:
     """Place four plates in the shared slots of the two given layer bases."""
-    height = z_top + body_common.THICKNESS - z_bottom
+    height = z_top + torso_common.THICKNESS - z_bottom
     end = build_model(build_surface(height))
     side = build_model(build_surface(height, side=True))
     plates = []
     # Local extrusion points towards -Y after the upright rotation. Shift
     # half a thickness so each plate is centred on its slot row.
     upright = Pos(0, THICKNESS / 2, 0) * Rot(X=90)
-    for loc in body_common.rectangle_slots_locations:
+    for loc in torso_common.rectangle_slots_locations:
         if abs(loc.orientation.Z) > 1e-6:
             name = "front" if loc.position.X > 0 else "back"
             plate = Pos(0, 0, z_bottom) * loc * upright * end
@@ -100,11 +100,11 @@ def build_plates(z_bottom: float, z_top: float) -> list[Part]:
 
 def build_diagonal_plates(z_bottom: float, z_top: float) -> list[Part]:
     """Place four rectangular tabbed plates between layers 2 and 3."""
-    height = z_top + body_common.THICKNESS - z_bottom
+    height = z_top + torso_common.THICKNESS - z_bottom
     model = build_model(build_surface(height))
     upright = Pos(0, THICKNESS / 2, 0) * Rot(X=90)
     plates = []
-    for location in body_common.diagonal_slots_locations:
+    for location in torso_common.diagonal_slots_locations:
         plate = Pos(0, 0, z_bottom) * location * upright * model
         end = "front" if location.position.X > 0 else "back"
         side = "left" if location.position.Y > 0 else "right"
@@ -115,17 +115,17 @@ def build_diagonal_plates(z_bottom: float, z_top: float) -> list[Part]:
 
 
 def main() -> None:
-    # Import here so assembly_body can use the builders without a cycle.
-    import robot_nox.assembly_body as assembly_body
+    # Import here so assembly_torso can use the builders without a cycle.
+    import robot_nox.assembly_torso as assembly_torso
 
-    height = (3 * body_common.THICKNESS + assembly_body.SPACER_LENGTH_1_to_2
-              + assembly_body.SPACER_LENGTH_TOP)
+    height = (3 * torso_common.THICKNESS + assembly_torso.SPACER_LENGTH_1_to_2
+              + assembly_torso.SPACER_LENGTH_TOP)
     output = EXPORT_DIR
     output.mkdir(parents=True, exist_ok=True)
     (output / "step").mkdir(parents=True, exist_ok=True)
     (output / "dxf").mkdir(parents=True, exist_ok=True)
     previews = []
-    diagonal_height = body_common.SPACER_LENGTH_TOP + 2 * TAB_DEPTH
+    diagonal_height = torso_common.SPACER_LENGTH_TOP + 2 * TAB_DEPTH
     for name, is_side, plate_height, preview_x in (
         ("chassis_side_end", False, height, 0),
         ("chassis_side", True, height, 160),

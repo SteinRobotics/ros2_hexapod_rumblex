@@ -8,7 +8,7 @@ if __package__ in (None, ""):
 from build123d import ExportDXF, Part, Pos, Rot, Sketch, export_step
 from robot_nira import EXPORT_DIR
 from robot_nira import chassis_common
-import robot_nira.body_common as body_common
+import robot_nira.torso_common as torso_common
 from utils.colors import COLOR_CREAMY_WHITE
 from utils.ocp_utils import show
 
@@ -25,14 +25,14 @@ def build_diagonal_plates(z_bottom: float, z_top: float) -> list[Part]:
     """Place rear and front diagonal braces in their slots."""
     from robot_nira import chassis_diagonal_front
 
-    height = z_top + body_common.THICKNESS - z_bottom
+    height = z_top + torso_common.THICKNESS - z_bottom
     rear = build_model(height)
     front = chassis_diagonal_front.build_model(height)
     upright = Pos(0, chassis_common.THICKNESS / 2, 0) * Rot(X=90)
     plates = []
-    locations = [*(location for location in body_common.diagonal_slots_locations
+    locations = [*(location for location in torso_common.diagonal_slots_locations
                    if location.position.X < 0),
-                 *body_common.front_diagonal_slots_locations]
+                 *torso_common.front_diagonal_slots_locations]
     for location in locations:
         is_front = location.position.X > 0
         plate = Pos(0, 0, z_bottom) * location * upright * (front if is_front else rear)
@@ -45,7 +45,7 @@ def build_diagonal_plates(z_bottom: float, z_top: float) -> list[Part]:
 
 
 def main() -> None:
-    from robot_nira.body_layout import DIAGONAL_PLATE_HEIGHT
+    from robot_nira.torso_layout import DIAGONAL_PLATE_HEIGHT
 
     height = DIAGONAL_PLATE_HEIGHT
     surface = build_surface(height)

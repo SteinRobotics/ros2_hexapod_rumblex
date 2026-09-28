@@ -5,8 +5,8 @@ from unittest.mock import patch
 from build123d import Cylinder, Pos, Vector
 
 from common import servo_simplified as servo
-from robot_nira import (assembly_body, assembly_body_with_servos, assembly_femur,
-                        body_layer_0, body_layout, board_layout, foot_common,
+from robot_nira import (assembly_torso, assembly_torso_with_servos, assembly_femur,
+                        torso_layer_0, torso_layout, board_layout, foot_common,
                         foot_connection, vendor_brackets)
 
 
@@ -60,21 +60,21 @@ class NiraMountingFrameTests(unittest.TestCase):
 class NiraBodyLayoutTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.body = assembly_body.build_assembly()
+        cls.body = assembly_torso.build_assembly()
         cls.parts = {part.label: part for part in cls.body.children}
 
     def test_layers_and_cover_follow_shared_mounting_elevations(self):
         for index in range(5):
-            self.assertAlmostEqual(self.parts[f'body_layer_{index}'].bounding_box().min.Z,
-                                   getattr(body_layout, f'LAYER_{index}_BOTTOM'))
-        cover = self.parts['body_layer_2_cover']
-        self.assertAlmostEqual(cover.bounding_box().min.Z, body_layout.COVER_BOTTOM)
+            self.assertAlmostEqual(self.parts[f'torso_layer_{index}'].bounding_box().min.Z,
+                                   getattr(torso_layout, f'LAYER_{index}_BOTTOM'))
+        cover = self.parts['torso_layer_2_cover']
+        self.assertAlmostEqual(cover.bounding_box().min.Z, torso_layout.COVER_BOTTOM)
         for name in ('battery_left', 'battery_right'):
             self.assertLess(self.parts[name].distance_to(cover), 1e-6)
 
     def test_body_toes_seat_on_plate_underside(self):
-        plate = self.parts['body_layer_0']
-        for i, (x, y) in enumerate(body_layer_0.TOE_MOUNTING_POSITIONS):
+        plate = self.parts['torso_layer_0']
+        for i, (x, y) in enumerate(torso_layer_0.TOE_MOUNTING_POSITIONS):
             toe = self.parts[f'toe_{i}']
             bounds = toe.bounding_box()
             self.assertAlmostEqual(bounds.center().X, x)
@@ -85,10 +85,10 @@ class NiraBodyLayoutTests(unittest.TestCase):
             self.assertLess(overlap.volume if overlap else 0, 1e-6)
 
     def test_board_spacers_align_with_base_holes(self):
-        plate = self.parts['body_layer_0']
+        plate = self.parts['torso_layer_0']
         z = plate.bounding_box().center().Z
         for mount in board_layout.BOARD_MOUNTS:
-            board = assembly_body_with_servos.place_board(mount.module, mount.placement)
+            board = assembly_torso_with_servos.place_board(mount.module, mount.placement)
             for post in board.children[1:]:
                 placed = board.location * post
                 center = placed.bounding_box().center()

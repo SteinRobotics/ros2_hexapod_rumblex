@@ -12,7 +12,7 @@ from build123d import (
     export_step, extrude,
 )
 import common.loudspeaker as loudspeaker
-import robot_nira.body_common as body_common
+import robot_nira.torso_common as torso_common
 import robot_nira.lidar_interface_housing as lidar_housing
 from robot_nira import EXPORT_DIR
 from robot_nira.armor_style import GILL_SWEEP_RATIO, GILL_WIDTH_RATIO, gill_points
@@ -78,7 +78,7 @@ def build_slope_cover(z_top: float) -> Part:
     inward_x = -THICKNESS * drop / slope_length
     inward_z = -THICKNESS * run / slope_length
     side_y = max(
-        loc.position.Y for loc in body_common.rectangle_slots_locations
+        loc.position.Y for loc in torso_common.rectangle_slots_locations
         if loc.position.X > 0 and abs(loc.orientation.Z) < 1e-6
     )
     inner_y = side_y - THICKNESS / 2
@@ -132,7 +132,7 @@ def build_speakers(z_top: float) -> list[Part]:
 
 
 def main() -> None:
-    from robot_nira.body_layout import LAYER_3_BOTTOM
+    from robot_nira.torso_layout import LAYER_3_BOTTOM
 
     z_top = LAYER_3_BOTTOM
     model = build_slope_cover(z_top)

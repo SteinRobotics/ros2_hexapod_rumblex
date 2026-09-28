@@ -11,28 +11,28 @@ from robot_nox import EXPORT_DIR
 from build123d import *
 from utils.ocp_utils import show
 
-import robot_nox.body_common as body_common
+import robot_nox.torso_common as torso_common
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
-        add(body_common.build_surface())
+        add(torso_common.build_surface())
 
         # These plates start at layer 2, so retain three individual tab slots.
-        with Locations(*body_common.diagonal_slots_locations):
-            add(body_common.rectangle_slots.sketch, mode=Mode.SUBTRACT)
+        with Locations(*torso_common.diagonal_slots_locations):
+            add(torso_common.rectangle_slots.sketch, mode=Mode.SUBTRACT)
 
         # Join each three-slot row while retaining its full outer span.
-        with Locations(*body_common.rectangle_slots_locations):
+        with Locations(*torso_common.rectangle_slots_locations):
             Rectangle(
-                body_common.rectangle_slots_completed_width + body_common.rectangle_slots_width,
-                body_common.rectangle_slots_height,
+                torso_common.rectangle_slots_completed_width + torso_common.rectangle_slots_width,
+                torso_common.rectangle_slots_height,
                 mode=Mode.SUBTRACT,
             )
 
-        for points in body_common.SERVO_FRONT_CUTOUTS.values():
+        for points in torso_common.SERVO_FRONT_CUTOUTS.values():
             Polygon(*points, align=None, mode=Mode.SUBTRACT)
 
-        for x, y, radius in body_common.LIST_SERVO_BRACKET_HOLES:
+        for x, y, radius in torso_common.LIST_SERVO_BRACKET_HOLES:
             with Locations((x, y)):
                 Circle(radius, mode=Mode.SUBTRACT)
 
@@ -42,7 +42,7 @@ def build_surface() -> Sketch:
 def build_model(surface: Sketch) -> Part:
     with BuildPart() as model:
         add(surface)
-        extrude(amount=body_common.THICKNESS)
+        extrude(amount=torso_common.THICKNESS)
 
     return model.part
 
@@ -54,13 +54,13 @@ def main() -> None:
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
     (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
     (EXPORT_DIR / "dxf").mkdir(parents=True, exist_ok=True)
-    export_step(result, str(EXPORT_DIR / "step/body_layer_2.step"))
+    export_step(result, str(EXPORT_DIR / "step/torso_layer_2.step"))
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
-    dxf_export.write(str(EXPORT_DIR / "dxf/body_layer_2.dxf"))
+    dxf_export.write(str(EXPORT_DIR / "dxf/torso_layer_2.dxf"))
 
-    show(result, name="body_layer_2", clear=True)
+    show(result, name="torso_layer_2", clear=True)
 
         
 if __name__ == "__main__":

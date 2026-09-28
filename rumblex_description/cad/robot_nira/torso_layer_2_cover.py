@@ -25,8 +25,8 @@ from build123d import (
 )
 
 from robot_nira import EXPORT_DIR
-import robot_nira.body_common as body_common
-from robot_nira.body_layout import FRONT_DECK_X as FRONT_EDGE_X
+import robot_nira.torso_common as torso_common
+from robot_nira.torso_layout import FRONT_DECK_X as FRONT_EDGE_X
 from utils.ocp_utils import show
 
 
@@ -49,10 +49,10 @@ def build_surface() -> Sketch:
 
 
 def build_opening_outline() -> Sketch:
-    bounds = body_common.hantel.sketch.bounding_box()
+    bounds = torso_common.hantel.sketch.bounding_box()
     rear_of_deck = Pos((bounds.min.X + FRONT_EDGE_X) / 2, bounds.center().Y) * Rectangle(
         FRONT_EDGE_X - bounds.min.X, bounds.size.Y)
-    opening = body_common.hantel.sketch & rear_of_deck
+    opening = torso_common.hantel.sketch & rear_of_deck
     return offset(opening, amount=-EDGE_CLEARANCE)
 
 
@@ -93,13 +93,13 @@ def main() -> None:
 
     (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
     (EXPORT_DIR / "dxf").mkdir(parents=True, exist_ok=True)
-    export_step(result, str(EXPORT_DIR / "step/body_layer_2_cover.step"))
+    export_step(result, str(EXPORT_DIR / "step/torso_layer_2_cover.step"))
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
-    dxf_export.write(str(EXPORT_DIR / "dxf/body_layer_2_cover.dxf"))
+    dxf_export.write(str(EXPORT_DIR / "dxf/torso_layer_2_cover.dxf"))
 
-    show(result, name="body_layer_2_cover", clear=True)
+    show(result, name="torso_layer_2_cover", clear=True)
 
 
 if __name__ == "__main__":

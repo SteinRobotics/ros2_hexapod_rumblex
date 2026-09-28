@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Compact octagonal top plate with the shared opening, slots, and spacer holes."""
 
 # Allow direct execution as well as package imports.
 if __package__ in (None, ""):
@@ -7,22 +8,26 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from robot_nira import EXPORT_DIR
-from build123d import *
+from robot_nox import EXPORT_DIR
+
+from build123d import (
+    BuildPart,
+    BuildSketch,
+    ExportDXF,
+    Part,
+    Sketch,
+    add,
+    export_step,
+    extrude,
+)
+
+import robot_nox.torso_common as torso_common
 from utils.ocp_utils import show
 
-import robot_nira.body_common as body_common
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
-        add(body_common.build_surface())
-
-        for points in body_common.SERVO_BACK_CUTOUTS.values():
-            Polygon(*points, align=None, mode=Mode.SUBTRACT)
-
-        for x, y, radius in body_common.LIST_SERVO_BRACKET_HOLES:
-            with Locations((x, y)):
-                Circle(radius, mode=Mode.SUBTRACT)
+        add(torso_common.base_plate.sketch)
 
     return sketch.sketch
 
@@ -30,7 +35,7 @@ def build_surface() -> Sketch:
 def build_model(surface: Sketch) -> Part:
     with BuildPart() as model:
         add(surface)
-        extrude(amount=body_common.THICKNESS)
+        extrude(amount=torso_common.THICKNESS)
 
     return model.part
 
@@ -42,14 +47,14 @@ def main() -> None:
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
     (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
     (EXPORT_DIR / "dxf").mkdir(parents=True, exist_ok=True)
-    export_step(result, str(EXPORT_DIR / "step/body_layer_1.step"))
+    export_step(result, str(EXPORT_DIR / "step/torso_layer_4.step"))
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
-    dxf_export.write(str(EXPORT_DIR / "dxf/body_layer_1.dxf"))
+    dxf_export.write(str(EXPORT_DIR / "dxf/torso_layer_4.dxf"))
 
-    show(result, name="body_layer_1", clear=True)
+    show(result, name="torso_layer_4", clear=True)
 
-        
+
 if __name__ == "__main__":
     main()

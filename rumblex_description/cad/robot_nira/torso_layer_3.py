@@ -26,30 +26,30 @@ from build123d import (
     extrude,
 )
 
-import robot_nira.body_common as body_common
+import robot_nira.torso_common as torso_common
 from robot_nira.lidar_layout import canopy_surface
 from utils.ocp_utils import show
 
 
 def build_surface() -> Sketch:
-    opening = body_common.hantel.sketch & (Pos(-100, 0) * Rectangle(240, 200))
-    rear_half = Pos(-body_common.rect_w / 2, 0) * Rectangle(
-        body_common.rect_w, 2 * body_common.rect_h
+    opening = torso_common.hantel.sketch & (Pos(-100, 0) * Rectangle(240, 200))
+    rear_half = Pos(-torso_common.rect_w / 2, 0) * Rectangle(
+        torso_common.rect_w, 2 * torso_common.rect_h
     )
     with BuildSketch() as sketch:
         add(canopy_surface())
         add(rear_half, mode=Mode.INTERSECT)
         add(opening, mode=Mode.SUBTRACT)
 
-        for location in [*body_common.rectangle_slots_locations, *body_common.diagonal_slots_locations]:
+        for location in [*torso_common.rectangle_slots_locations, *torso_common.diagonal_slots_locations]:
             if location.position.X < 0:
                 with Locations(location):
-                    add(body_common.rectangle_slots.sketch, mode=Mode.SUBTRACT)
+                    add(torso_common.rectangle_slots.sketch, mode=Mode.SUBTRACT)
 
-        for location in body_common.hole_locations:
+        for location in torso_common.hole_locations:
             if location.position.X < 0:
                 with Locations(location):
-                    Circle(body_common.hole_radius, mode=Mode.SUBTRACT)
+                    Circle(torso_common.hole_radius, mode=Mode.SUBTRACT)
 
     return sketch.sketch
 
@@ -57,7 +57,7 @@ def build_surface() -> Sketch:
 def build_model(surface: Sketch) -> Part:
     with BuildPart() as model:
         add(surface)
-        extrude(amount=body_common.THICKNESS)
+        extrude(amount=torso_common.THICKNESS)
 
     return model.part
 
@@ -69,13 +69,13 @@ def main() -> None:
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
     (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
     (EXPORT_DIR / "dxf").mkdir(parents=True, exist_ok=True)
-    export_step(result, str(EXPORT_DIR / "step/body_layer_3.step"))
+    export_step(result, str(EXPORT_DIR / "step/torso_layer_3.step"))
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
-    dxf_export.write(str(EXPORT_DIR / "dxf/body_layer_3.dxf"))
+    dxf_export.write(str(EXPORT_DIR / "dxf/torso_layer_3.dxf"))
 
-    show(result, name="body_layer_3", clear=True)
+    show(result, name="torso_layer_3", clear=True)
 
 
 if __name__ == "__main__":

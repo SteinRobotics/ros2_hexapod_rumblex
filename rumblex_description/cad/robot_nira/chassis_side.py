@@ -9,7 +9,7 @@ from build123d import (BuildSketch, ExportDXF, Locations, Mode, Part, Polygon,
                        Pos, Rectangle, Rot, Sketch, export_step)
 from robot_nira import EXPORT_DIR
 from robot_nira import chassis_common
-import robot_nira.body_common as body_common
+import robot_nira.torso_common as torso_common
 from robot_nira.armor_style import gill_points
 from robot_nira.lidar_layout import LOW_RAIL_HEIGHT
 from utils.colors import COLOR_CREAMY_WHITE
@@ -24,7 +24,7 @@ def build_surface(height: float) -> Sketch:
         raise ValueError("Height must leave room for the plate below the top rail")
 
     side_rows = sorted(
-        loc.position.X for loc in body_common.rectangle_slots_locations
+        loc.position.X for loc in torso_common.rectangle_slots_locations
         if loc.position.Y > 0 and abs(loc.orientation.Z) < 1e-6
     )
     with BuildSketch() as sketch:
@@ -72,13 +72,13 @@ def build_plates(z_bottom: float, z_top: float) -> list[Part]:
     """Place front, back, and side plates in the shared slots."""
     from robot_nira import chassis_back, chassis_front
 
-    height = z_top + body_common.THICKNESS - z_bottom
+    height = z_top + torso_common.THICKNESS - z_bottom
     end = chassis_back.build_model(height)
     nose = chassis_front.build_model(height)
     side = build_model(height)
     plates = []
     upright = Pos(0, chassis_common.THICKNESS / 2, 0) * Rot(X=90)
-    for loc in body_common.rectangle_slots_locations:
+    for loc in torso_common.rectangle_slots_locations:
         if abs(loc.orientation.Z) > 1e-6:
             name = "front" if loc.position.X > 0 else "back"
             plate = Pos(0, 0, z_bottom) * loc * upright * (nose if name == "front" else end)
@@ -94,7 +94,7 @@ def build_plates(z_bottom: float, z_top: float) -> list[Part]:
 
 
 def main() -> None:
-    from robot_nira.body_layout import SIDE_PLATE_HEIGHT
+    from robot_nira.torso_layout import SIDE_PLATE_HEIGHT
 
     height = SIDE_PLATE_HEIGHT
     surface = build_surface(height)

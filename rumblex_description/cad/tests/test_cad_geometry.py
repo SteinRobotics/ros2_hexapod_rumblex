@@ -11,12 +11,12 @@ import unittest
 
 from build123d import Circle, Face, Pos, Rot
 
-import robot_nox.assembly_body as assembly_body
+import robot_nox.assembly_torso as assembly_torso
 import robot_nox.assembly_complete as assembly_complete
 import robot_nox.assembly_leg as assembly_leg
-import robot_nox.body_common as body_common
-import robot_nox.body_layer_2 as body_layer_2
-import robot_nox.body_layer_3 as body_layer_3
+import robot_nox.torso_common as torso_common
+import robot_nox.torso_layer_2 as torso_layer_2
+import robot_nox.torso_layer_3 as torso_layer_3
 import common.bracket_inclined as bracket_inclined
 import common.bracket_u_shape as bracket_u_shape
 import robot_nox.foot_common as foot_common
@@ -25,14 +25,14 @@ import common.servo_simplified as servo_simplified
 
 class GeometryTests(unittest.TestCase):
     def test_diagonal_slots_follow_inner_opening_in_both_layers(self):
-        reference = body_common.rectangle_slots_locations[0] * body_common.rectangle_slots.sketch
-        clearance = reference.distance_to(body_common.hantel.sketch)
-        for layer in (body_layer_2, body_layer_3):
+        reference = torso_common.rectangle_slots_locations[0] * torso_common.rectangle_slots.sketch
+        clearance = reference.distance_to(torso_common.hantel.sketch)
+        for layer in (torso_layer_2, torso_layer_3):
             surface = layer.build_surface()
             holes = [Face(wire) for face in surface.faces() for wire in face.inner_wires()]
-            for location in body_common.diagonal_slots_locations:
-                slots = location * body_common.rectangle_slots.sketch
-                self.assertAlmostEqual(slots.distance_to(body_common.hantel.sketch), clearance)
+            for location in torso_common.diagonal_slots_locations:
+                slots = location * torso_common.rectangle_slots.sketch
+                self.assertAlmostEqual(slots.distance_to(torso_common.hantel.sketch), clearance)
                 for slot in slots.faces():
                     # Each tab needs its own closed rectangular opening,
                     # separate from the inner opening and servo cutouts.
@@ -41,13 +41,13 @@ class GeometryTests(unittest.TestCase):
                     self.assertAlmostEqual(matching[0].area, slot.area)
 
     def test_body_layers_seat_on_spacers(self):
-        body = assembly_body.build_assembly()
+        body = assembly_torso.build_assembly()
         self.assertTrue(body.is_valid)
         parts = {child.label: child for child in body.children}
-        layers = [parts[f"body_layer_{index}"] for index in range(4)]
+        layers = [parts[f"torso_layer_{index}"] for index in range(4)]
         self.assertAlmostEqual(layers[0].bounding_box().min.Z, 0.0)
         for index, group in enumerate(("spacer_0_1", "spacer_1_2", "spacer_top")):
-            for hole_index, location in enumerate(body_common.hole_locations):
+            for hole_index, location in enumerate(torso_common.hole_locations):
                 spacer = parts[f"{group}_{hole_index}"]
                 box = spacer.bounding_box()
                 self.assertAlmostEqual(box.min.Z, layers[index].bounding_box().max.Z)
@@ -56,8 +56,8 @@ class GeometryTests(unittest.TestCase):
                 self.assertAlmostEqual(box.center().Y, location.position.Y)
 
     def test_top_plate_keeps_common_openings_and_spacer_clearance(self):
-        surface = body_layer_3.build_surface()
-        part = body_layer_3.build_model(surface)
+        surface = torso_layer_3.build_surface()
+        part = torso_layer_3.build_model(surface)
         self.assertTrue(part.is_valid)
         self.assertEqual(len(part.solids()), 1)
         self.assertEqual(len(surface.faces()), 1)
@@ -65,15 +65,15 @@ class GeometryTests(unittest.TestCase):
         self.assertEqual(len(face.outer_wire().edges()), 8)
         # One inner opening, 30 slots, and eight mounting holes.
         self.assertEqual(len(face.inner_wires()), 39)
-        expected = body_common.base_plate.sketch & body_common.build_surface()
-        for location in body_common.diagonal_slots_locations:
-            expected -= location * body_common.rectangle_slots.sketch
+        expected = torso_common.base_plate.sketch & torso_common.build_surface()
+        for location in torso_common.diagonal_slots_locations:
+            expected -= location * torso_common.rectangle_slots.sketch
         self.assertLess((surface - expected).area, 1e-6)
         self.assertLess((expected - surface).area, 1e-6)
-        for location in body_common.hole_locations:
-            footprint = location * Circle(body_common.spacer_outer_radius)
+        for location in torso_common.hole_locations:
+            footprint = location * Circle(torso_common.spacer_outer_radius)
             self.assertGreaterEqual(face.outer_wire().distance_to(footprint), 3.25 - 1e-6)
-        self.assertAlmostEqual(part.volume, surface.area * body_common.THICKNESS)
+        self.assertAlmostEqual(part.volume, surface.area * torso_common.THICKNESS)
 
     def assert_joint_mates(self, first, second):
         self.assertLess((first.location.position - second.location.position).length, 1e-6)
