@@ -14,6 +14,7 @@ from utils.ocp_utils import show
 
 from utils.colors import COLOR_CREAMY_WHITE, COLOR_WINE_RED, COLOR_DARK_GRAY
 
+import common.battery as battery
 import common.toe as toe
 import utils.spacer as spacer
 import robot_nira.body_common as body_common
@@ -37,6 +38,8 @@ SPACER_INNER_DIAMETER = 3.0
 SPACER_LENGTH_0_to_1 = 15.0
 SPACER_LENGTH_1_to_2 = 32.0
 SPACER_LENGTH_TOP = body_common.SPACER_LENGTH_TOP
+BATTERY_GAP = 3.0
+BATTERY_X = -30.0
 
 
 def build_assembly() -> Compound:
@@ -47,6 +50,7 @@ def build_assembly() -> Compound:
     body_layer_2_cover_part = body_layer_2_cover.build_model(body_layer_2_cover.build_surface())
     body_layer_3_part = body_layer_3.build_model(body_layer_3.build_surface())
     body_layer_4_part = body_layer_4.build_model(body_layer_4.build_surface())
+    battery_part = battery.build_model()
     toe_part = toe.build_model()
 
     spacer_part_0_1 = spacer.build_model(
@@ -127,8 +131,14 @@ def build_assembly() -> Compound:
     body_layer_2_part.label = "body_layer_2"
     body_layer_2_addon_part = Pos(0, 0, z_layer_2 - body_layer_2_addon.THICKNESS) * body_layer_2_addon_part
     body_layer_2_addon_part.label = "body_layer_2_addon"
+    z_cover_top = z_layer_2 + 0.5 + body_layer_2_cover.THICKNESS
     body_layer_2_cover_part = Pos(0, 0, z_layer_2 + 0.5) * body_layer_2_cover_part
     body_layer_2_cover_part.label = "body_layer_2_cover"
+    battery_y = (battery.BODY_WIDTH + BATTERY_GAP) / 2
+    battery_left = Pos(BATTERY_X, battery_y, z_cover_top) * battery_part
+    battery_left.label = "battery_left"
+    battery_right = Pos(BATTERY_X, -battery_y, z_cover_top) * battery_part
+    battery_right.label = "battery_right"
     body_layer_3_part = Pos(0, 0, z_layer_3) * body_layer_3_part
     body_layer_3_part.label = "body_layer_3"
     body_layer_4_part = Pos(0, 0, z_layer_3 + body_common.THICKNESS) * body_layer_4_part
@@ -165,6 +175,8 @@ def build_assembly() -> Compound:
             body_layer_2_part,
             body_layer_2_addon_part,
             body_layer_2_cover_part,
+            battery_left,
+            battery_right,
             body_layer_3_part,
             body_layer_4_part,
             board_interface,

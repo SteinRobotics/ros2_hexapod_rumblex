@@ -8,10 +8,22 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from build123d import BuildPart, BuildSketch, ExportDXF, Part, Polygon, Sketch, add, export_step, extrude
+from build123d import (
+    BuildPart,
+    BuildSketch,
+    ExportDXF,
+    Mode,
+    Part,
+    Polygon,
+    Sketch,
+    add,
+    export_step,
+    extrude,
+)
 
 from robot_nira import EXPORT_DIR
 import robot_nira.body_common as body_common
+import robot_nira.body_layer_2_cover as body_layer_2_cover
 from utils.ocp_utils import show
 
 
@@ -27,6 +39,8 @@ def build_surface() -> Sketch:
     """Make the open rear profile; +X points toward the U's closed end."""
     half_width = WIDTH / 2
     inner_y = half_width - FINGER_WIDTH
+    opening_outline = body_layer_2_cover.build_opening_outline()
+    cable_cutouts = body_layer_2_cover.build_cable_cutouts(opening_outline, stop_at_edge=True)
     with BuildSketch() as sketch:
         Polygon(
             (REAR_X, -half_width),
@@ -39,6 +53,7 @@ def build_surface() -> Sketch:
             (REAR_X, -inner_y),
             align=None,
         )
+        add(cable_cutouts, mode=Mode.SUBTRACT)
     return sketch.sketch
 
 
