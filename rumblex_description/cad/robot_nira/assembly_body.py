@@ -20,6 +20,7 @@ import robot_nira.body_common as body_common
 import robot_nira.body_layer_0 as body_layer_0
 import robot_nira.body_layer_1 as body_layer_1
 import robot_nira.body_layer_2 as body_layer_2
+import robot_nira.body_layer_2_addon as body_layer_2_addon
 import robot_nira.body_layer_3 as body_layer_3
 import robot_nira.body_layer_4 as body_layer_4
 import robot_nira.chassis_diagonal_back as chassis_diagonal_back
@@ -41,6 +42,7 @@ def build_assembly() -> Compound:
     body_layer_0_part = body_layer_0.build_model(body_layer_0.build_surface())
     body_layer_1_part = body_layer_1.build_model(body_layer_1.build_surface())
     body_layer_2_part = body_layer_2.build_model(body_layer_2.build_surface())
+    body_layer_2_addon_part = body_layer_2_addon.build_model(body_layer_2_addon.build_surface())
     body_layer_3_part = body_layer_3.build_model(body_layer_3.build_surface())
     body_layer_4_part = body_layer_4.build_model(body_layer_4.build_surface())
     toe_part = toe.build_model()
@@ -64,6 +66,7 @@ def build_assembly() -> Compound:
     body_layer_0_part.color = COLOR_CREAMY_WHITE
     body_layer_1_part.color = COLOR_CREAMY_WHITE
     body_layer_2_part.color = COLOR_CREAMY_WHITE
+    body_layer_2_addon_part.color = COLOR_CREAMY_WHITE
     body_layer_3_part.color = COLOR_WINE_RED
     body_layer_4_part.color = COLOR_CREAMY_WHITE
     toe_part.color = COLOR_DARK_GRAY
@@ -74,6 +77,7 @@ def build_assembly() -> Compound:
     body_layer_0_part.label = "body_layer_0"
     body_layer_1_part.label = "body_layer_1"
     body_layer_2_part.label = "body_layer_2"
+    body_layer_2_addon_part.label = "body_layer_2_addon"
     body_layer_3_part.label = "body_layer_3"
     body_layer_4_part.label = "body_layer_4"
     toe_part.label = "toe"
@@ -117,6 +121,8 @@ def build_assembly() -> Compound:
     body_layer_1_part.label = "body_layer_1"
     body_layer_2_part = Pos(0, 0, z_layer_2) * body_layer_2_part
     body_layer_2_part.label = "body_layer_2"
+    body_layer_2_addon_part = Pos(0, 0, z_layer_2 - body_layer_2_addon.THICKNESS) * body_layer_2_addon_part
+    body_layer_2_addon_part.label = "body_layer_2_addon"
     body_layer_3_part = Pos(0, 0, z_layer_3) * body_layer_3_part
     body_layer_3_part.label = "body_layer_3"
     body_layer_4_part = Pos(0, 0, z_layer_3 + body_common.THICKNESS) * body_layer_4_part
@@ -151,6 +157,7 @@ def build_assembly() -> Compound:
             body_layer_0_part,
             body_layer_1_part,
             body_layer_2_part,
+            body_layer_2_addon_part,
             body_layer_3_part,
             body_layer_4_part,
             board_interface,
