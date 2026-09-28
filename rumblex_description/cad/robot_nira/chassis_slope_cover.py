@@ -132,12 +132,9 @@ def build_speakers(z_top: float) -> list[Part]:
 
 
 def main() -> None:
-    import robot_nira.assembly_body as assembly_body
+    from robot_nira.body_layout import LAYER_3_BOTTOM
 
-    z_top = (assembly_body.SPACER_LENGTH_0_to_1
-             + assembly_body.SPACER_LENGTH_1_to_2
-             + 3 * body_common.THICKNESS
-             + assembly_body.SPACER_LENGTH_TOP)
+    z_top = LAYER_3_BOTTOM
     model = build_slope_cover(z_top)
     output = EXPORT_DIR / "step"
     output.mkdir(parents=True, exist_ok=True)

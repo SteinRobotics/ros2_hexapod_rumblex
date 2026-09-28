@@ -8,6 +8,7 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from robot_nira import EXPORT_DIR
+from robot_nira import foot_common
 
 from build123d import (
     BuildPart,
@@ -30,9 +31,10 @@ THICKNESS = 3.0
 
 # The updated imported/leg_connection.svg now contains a compact connection
 # plate profile that is best expressed with rectangle booleans.
-OUTER_WIDTH = 35.0
+
+OUTER_WIDTH = foot_common.CHEEK_OUTER_SPAN
 OUTER_HEIGHT = 13.0
-SIDE_NOTCH_WIDTH = 1.5
+SIDE_NOTCH_WIDTH = foot_common.THICKNESS
 SIDE_NOTCH_HEIGHT = 5.0
 CENTER_HOLE_RADIUS = 0.5
 CENTER_HOLE_X = 0.0

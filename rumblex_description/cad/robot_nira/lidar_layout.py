@@ -6,13 +6,17 @@ scan sector; the canopy itself sits above the complete scanner envelope.
 """
 
 from build123d import BuildSketch, Polygon, Sketch
+from robot_nira import body_common
 
 LIDAR_X = 80.0
 LIDAR_Y = 0.0
 LIDAR_ASSEMBLY_X = LIDAR_X + 13.0
 LOW_RAIL_HEIGHT = 8.0
 CANOPY_TIP_X = LIDAR_X
-CANOPY_HALF_WIDTH = 65.0
+CANOPY_HALF_WIDTH = body_common.rect_h / 2
+REAR_X = -body_common.rect_w / 2
+REAR_CORNER_X = REAR_X + body_common.chamfer_length
+REAR_CORNER_Y = CANOPY_HALF_WIDTH - body_common.chamfer_length
 SHOULDER_TOP_X = CANOPY_TIP_X - CANOPY_HALF_WIDTH - 10.0
 
 
@@ -20,10 +24,10 @@ def canopy_surface() -> Sketch:
     """Faceted arrowhead roof with its nose over the lidar axis."""
     with BuildSketch() as sketch:
         Polygon(
-            (-110, -45), (-90, -CANOPY_HALF_WIDTH),
+            (REAR_X, -REAR_CORNER_Y), (REAR_CORNER_X, -CANOPY_HALF_WIDTH),
             (CANOPY_TIP_X - CANOPY_HALF_WIDTH, -CANOPY_HALF_WIDTH),
             (CANOPY_TIP_X, LIDAR_Y),
             (CANOPY_TIP_X - CANOPY_HALF_WIDTH, CANOPY_HALF_WIDTH),
-            (-90, CANOPY_HALF_WIDTH), (-110, 45), align=None,
+            (REAR_CORNER_X, CANOPY_HALF_WIDTH), (REAR_X, REAR_CORNER_Y), align=None,
         )
     return sketch.sketch

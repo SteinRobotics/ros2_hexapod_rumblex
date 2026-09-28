@@ -7,14 +7,12 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from pathlib import Path
-
 from robot_nira import EXPORT_DIR
 
 from build123d import (
     BuildPart, BuildSketch, Circle, Compound, ExportDXF, Locations, Mode,
     Part, Plane, Polygon, Pos, Rectangle, RectangleRounded, RigidJoint,
-    RevoluteJoint, Rot, Vector, export_step, export_stl, extrude, import_step,
+    RevoluteJoint, Rot, Vector, export_step, export_stl, extrude,
 )
 
 from utils.ocp_utils import show
@@ -23,25 +21,19 @@ from utils import spacer
 from robot_nira import webcam_obsbot
 import common.servo_simplified as servo_simplified
 
-# The outer side-bracket mounting pair is 24.45 mm apart, matching one
-# vertical pair of servo M2 holes.  This placement maps that pair onto the
-# servo's front (-Y) face at X = +HOLE_X.
-SIDE_BRACKET_ROTATION = Rot(0, 0, 90)
-# Vendor STEP registration offset, retained until its mounting frame is measured.
-SIDE_BRACKET_OFFSET = Pos(
-    29.999,
-    -44.3795 + servo_simplified.BODY_Y + servo_simplified.CASE_FLANGE_THICKNESS,
-    -165.2392,
-)
+from robot_nira import vendor_brackets
+
 # Pod coordinates: X across the face, -Y forward, Z up, as in the webcam.
 # The frame's origin is on the adapter's rear face, aligned to the bracket centre.
 PLATE_THICKNESS = 3.0
 SPACER_OUTER_DIAMETER = 5.0
 M3_CLEARANCE = 3.2
-# Measured from the four diameter-3.2 circular edges of the vendor STEP.
-BRACKET_HOLE_HALF_PITCH = 4.9497474683
-BRACKET_CENTER_Y = 14.5037836201
-BRACKET_CENTER_Z = 14.7999609333
+# All adapter mounting coordinates follow the vendor bracket's measured bores.
+BRACKET_HOLES = vendor_brackets.side_plate_holes()
+BRACKET_HOLE_HALF_PITCH = max(x for x, z in BRACKET_HOLES)
+_bracket_frame = vendor_brackets.build_side_bracket().joints["plate_mount"].location
+BRACKET_CENTER_Y = _bracket_frame.position.Y
+BRACKET_CENTER_Z = _bracket_frame.position.Z
 CAMERA_Y = -28.0
 # Lower the cage in the mounted robot frame to clear the lidar scan band.
 # Keep the rear adapter's bracket bores at their original coordinates.
@@ -106,10 +98,7 @@ def build_adapter() -> Part:
                     (0, BROW_Z + 7), (-20, BROW_Z + 3),
                     (-30, BROW_Z - 6), (-30, CAMERA_BASE_Z + 5),
                     align=None)
-            with Locations(*[(x, z) for x in (-BRACKET_HOLE_HALF_PITCH,
-                                              BRACKET_HOLE_HALF_PITCH)
-                             for z in (-BRACKET_HOLE_HALF_PITCH,
-                                       BRACKET_HOLE_HALF_PITCH)]):
+            with Locations(*BRACKET_HOLES):
                 Circle(M3_CLEARANCE / 2, mode=Mode.SUBTRACT)
             for z in (CHIN_Z, BROW_Z):
                 with Locations(*[(x, z + PLATE_THICKNESS / 2) for x in TAB_CENTERS]):
@@ -125,8 +114,7 @@ def build_adapter() -> Part:
 
 def build_camera_pod(side_bracket: Part) -> list[Part]:
     """Place the cage outboard of the bracket, looking along servo-local +X."""
-    frame = Pos(side_bracket.bounding_box().max.X,
-                BRACKET_CENTER_Y, BRACKET_CENTER_Z) * Rot(Z=90) * Rot(Y=POD_ROLL)
+    frame = side_bracket.joints["plate_mount"].location * Rot(Y=POD_ROLL)
     camera = webcam_obsbot.build_model()
     camera_mount = Pos(webcam_obsbot.MOUNT_HOLE_X,
                        CAMERA_Y + webcam_obsbot.MOUNT_HOLE_Y, CAMERA_BASE_Z)
@@ -155,11 +143,9 @@ def build_assembly(include_servo: bool = True) -> Compound:
     servo = servo_simplified.build_model()
     servo.color = COLOR_DARK_GRAY
 
-    bracket_side_path = Path(__file__).resolve().parents[1] / "imported" / "HX-35HM Side Bracket.STEP"
-    bracket_side = import_step(str(bracket_side_path))
-    bracket_side.color = COLOR_DARK_GRAY
+    bracket_side_placed = vendor_brackets.build_side_bracket()
+    bracket_side_placed.color = COLOR_DARK_GRAY
 
-    bracket_side_placed = SIDE_BRACKET_OFFSET * SIDE_BRACKET_ROTATION * bracket_side
     bracket_side_placed.label = "head_side_bracket"
     servo.label = "head_pitch_servo"
     head_children = [bracket_side_placed, *build_camera_pod(bracket_side_placed)]

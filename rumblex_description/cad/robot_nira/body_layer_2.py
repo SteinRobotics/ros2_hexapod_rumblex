@@ -8,6 +8,7 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from robot_nira import EXPORT_DIR
+from robot_nira.body_layout import FRONT_DECK_X
 from build123d import *
 from utils.ocp_utils import show
 
@@ -21,8 +22,8 @@ def build_surface() -> Sketch:
 
 
         # Integral front deck bridges the old central opening to both side rails.
-        Polygon((55, -50), (78, -50), (109, -25), (109, 25),
-                (78, 50), (55, 50), align=None)
+        Polygon((FRONT_DECK_X, -50), (78, -50), (109, -25), (109, 25),
+                (78, 50), (FRONT_DECK_X, 50), align=None)
 
         # Three fingers on each housing side wall pass through matching deck slots.
         with Locations(*[(LIDAR_ASSEMBLY_X + x, y) for x, y in DECK_TAB_POSITIONS]):

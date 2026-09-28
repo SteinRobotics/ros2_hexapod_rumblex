@@ -26,6 +26,7 @@ from build123d import (
 
 from robot_nira import EXPORT_DIR
 import robot_nira.body_common as body_common
+from robot_nira.body_layout import FRONT_DECK_X as FRONT_EDGE_X
 from utils.ocp_utils import show
 
 
@@ -34,7 +35,6 @@ EDGE_CLEARANCE = 0.2
 SIDE_CABLE_NOTCH_WIDTH = 14.0
 END_CABLE_NOTCH_WIDTH = 54.0  # Both former 10 mm slots at y=+/-20, plus 4 mm
 CABLE_NOTCH_DEPTH = 10.0
-FRONT_EDGE_X = 55.0  # Start of layer 2's solid front deck
 
 
 def build_surface() -> Sketch:
@@ -49,7 +49,9 @@ def build_surface() -> Sketch:
 
 
 def build_opening_outline() -> Sketch:
-    rear_of_deck = Pos(-100, 0) * Rectangle(2 * (100 + FRONT_EDGE_X), 200)
+    bounds = body_common.hantel.sketch.bounding_box()
+    rear_of_deck = Pos((bounds.min.X + FRONT_EDGE_X) / 2, bounds.center().Y) * Rectangle(
+        FRONT_EDGE_X - bounds.min.X, bounds.size.Y)
     opening = body_common.hantel.sketch & rear_of_deck
     return offset(opening, amount=-EDGE_CLEARANCE)
 

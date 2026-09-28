@@ -11,15 +11,18 @@ from robot_nira.lidar_layout import LOW_RAIL_HEIGHT, SHOULDER_TOP_X
 
 THICKNESS = body_common.rectangle_slots_height
 FRONT_EXTENSION = 10.0
-SLOT_FRONT_X = 58.0
-SLOPE_START_X = SHOULDER_TOP_X + FRONT_EXTENSION
-SLOPE_END_X = SLOT_FRONT_X + FRONT_EXTENSION
 JOINT_FINGER_COUNT = 5
 JOINT_FINGER_LENGTH = 7.0
 TAB_WIDTH = body_common.rectangle_slots_width
 TAB_DEPTH = body_common.THICKNESS
 TAB_PITCH = body_common.rectangle_slots_completed_width / 2
 ROW_WIDTH = 2 * TAB_PITCH + TAB_WIDTH
+SLOT_FRONT_X = max(
+    loc.position.X for loc in body_common.rectangle_slots_locations
+    if loc.position.Y > 0 and abs(loc.orientation.Z) < 1e-6
+) + ROW_WIDTH / 2
+SLOPE_START_X = SHOULDER_TOP_X + FRONT_EXTENSION
+SLOPE_END_X = SLOT_FRONT_X + FRONT_EXTENSION
 # The rail sits on layer 2 and reaches the underside of layer 3.
 RAIL_HEIGHT = body_common.SPACER_LENGTH_TOP
 

@@ -9,20 +9,13 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from collections.abc import Iterable
-from dataclasses import dataclass
 from robot_nira import EXPORT_DIR
 
 from build123d import *
 from utils.ocp_utils import show
 
 import robot_nira.body_common as body_common
-import boards.board_rpi5 as board_rpi5
-import boards.board_servo_plug as board_servo_plug
-import boards.board_relay as board_relay
-import boards.board_ina228 as board_ina228
-import boards.board_bno055 as board_bno055
-import boards.board_servo_interface as board_servo_interface
-import boards.board_i2c_distributor as board_i2c_distributor
+from robot_nira.board_layout import Placement, BOARD_MOUNTS
 
 # orientation
 #         ^ x
@@ -31,31 +24,13 @@ import boards.board_i2c_distributor as board_i2c_distributor
 #    <----x
 #    y
 #
-@dataclass(frozen=True)
-class Placement:
-    """2D position plus rotation (around Z / the vertical axis) in the sketch plane."""
-
-    x: float
-    y: float
-    rotation: float = 0.0
 
 
-LOCATION_RPI5 = Placement(-35.0, -6.0)  # rechts unten
-LOCATION_LEFT_SERVO_PLUG = Placement(0.0, 25.0)  # links mitte, sollen zusammengesetzt werden
-LOCATION_RIGHT_SERVO_PLUG = Placement(0.0, 40.0)  # links mitte, sollen zusammengesetzt werden
-LOCATION_RELAY = Placement(36.0, 32.0)  # links oben
-LOCATION_BNO055 = Placement(0.0, -2.0, 90.0)  # mitte, ggf leicht verschoben
-LOCATION_INA228 = Placement(-65.0, -6.0, 90.0)  # mitte unten
-LOCATION_SERVO_INTERFACE = Placement(35.0, 0.0)  # oben, mitte
-LOCATION_I2C_DISTRIBUTOR = Placement(35.0, -30.0)  # oben, rechts
+TOE_MOUNTING_POSITIONS = [(sx * 75.0, sy * 37.0) for sx, sy in
+                          ((1, 1), (1, -1), (-1, -1), (-1, 1))]
+TOE_HOLE_RADIUS = 1.5
+TOE_MOUNTING_HOLES = [(x, y, TOE_HOLE_RADIUS) for x, y in TOE_MOUNTING_POSITIONS]
 
-
-TOE_MOUNTING_HOLES = [
-    (75.0, 37.0, 1.500),
-    (75.0, -37.0, 1.500),
-    (-75.0, -37.0, 1.500),
-    (-75.0, 37.0, 1.500),
-]
 
 OCTAGON_POSITIONS = [
     body_common.octagon_position_left_top,
@@ -111,47 +86,9 @@ def build_surface() -> Sketch:
             with Locations((x, y)):
                 Circle(radius, mode=Mode.SUBTRACT)
 
-        # pcbs
-        place_board_holes(
-            board_rpi5.default_hole_positions(board_rpi5.cfg),
-            LOCATION_RPI5,
-            board_rpi5.cfg.hole_diameter / 2,
-        )
-        place_board_holes(
-            board_servo_plug.default_hole_positions(board_servo_plug.cfg),
-            LOCATION_LEFT_SERVO_PLUG,
-            board_servo_plug.cfg.hole_diameter / 2,
-        )
-        place_board_holes(
-            board_servo_plug.default_hole_positions(board_servo_plug.cfg),
-            LOCATION_RIGHT_SERVO_PLUG,
-            board_servo_plug.cfg.hole_diameter / 2,
-        )
-        place_board_holes(
-            board_relay.default_hole_positions(board_relay.cfg),
-            LOCATION_RELAY,
-            board_relay.cfg.hole_diameter / 2,
-        )
-        place_board_holes(
-            board_bno055.two_holes_on_one_side(board_bno055.cfg),
-            LOCATION_BNO055,
-            board_bno055.cfg.hole_diameter / 2,
-        )
-        place_board_holes(
-            board_ina228.two_holes_on_one_side(board_ina228.cfg),
-            LOCATION_INA228,
-            board_ina228.cfg.hole_diameter / 2,
-        )
-        place_board_holes(
-            board_servo_interface.default_hole_positions(board_servo_interface.cfg),
-            LOCATION_SERVO_INTERFACE,
-            board_servo_interface.cfg.hole_diameter / 2,
-        )
-        place_board_holes(
-            board_i2c_distributor.default_hole_positions(board_i2c_distributor.cfg),
-            LOCATION_I2C_DISTRIBUTOR,
-            board_i2c_distributor.cfg.hole_diameter / 2,
-        )
+        for mount in BOARD_MOUNTS:
+            place_board_holes(mount.holes(), mount.placement,
+                              mount.module.cfg.hole_diameter / 2)
 
     return sketch.sketch
 

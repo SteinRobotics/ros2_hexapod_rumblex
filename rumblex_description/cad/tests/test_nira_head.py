@@ -21,8 +21,9 @@ class NiraHeadTests(unittest.TestCase):
             self.assertTrue(part.is_valid, part.label)
             self.assertEqual(len(part.solids()), 1, part.label)
             for other in parts[i + 1:]:
-                # The vendor bracket's empirical servo registration predates
-                # this cage; validate every pair involving a new component.
+                # The simplified servo case and vendor flange overlap slightly.
+                # Their bore alignment is covered by NiraMountingFrameTests;
+                # this test checks interference involving the camera cage.
                 if {part.label, other.label} == {"head_pitch_servo", "head_side_bracket"}:
                     continue
                 overlap = part & other
@@ -69,7 +70,7 @@ class NiraHeadTests(unittest.TestCase):
         bracket = self.parts["head_side_bracket"]
         adapter = self.parts["head_rear_adapter"]
         self.assertLess(adapter.distance_to(bracket), 1e-6)
-        self.assertAlmostEqual(adapter.bounding_box().min.X, bracket.bounding_box().max.X)
+        self.assertAlmostEqual(adapter.bounding_box().min.X, bracket.bounding_box().max.X, delta=1e-6)
         self.assertFalse(any(name.startswith("head_bracket_spacer_") for name in self.parts))
         # Adapter and vendor bracket share the same four through bores.
         for y in (-head.BRACKET_HOLE_HALF_PITCH, head.BRACKET_HOLE_HALF_PITCH):

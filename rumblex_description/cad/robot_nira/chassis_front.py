@@ -35,10 +35,9 @@ def build_model(height: float) -> Part:
 
 
 def main() -> None:
-    import robot_nira.assembly_body as assembly_body
+    from robot_nira.body_layout import SIDE_PLATE_HEIGHT
 
-    height = (3 * body_common.THICKNESS + assembly_body.SPACER_LENGTH_1_to_2
-              + assembly_body.SPACER_LENGTH_TOP)
+    height = SIDE_PLATE_HEIGHT
     surface = build_surface(height)
     model = chassis_common.build_model(surface)
     model.label = "chassis_front"

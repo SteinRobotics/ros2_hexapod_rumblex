@@ -49,9 +49,10 @@ def build_surface(height: float) -> Sketch:
                 (chassis_common.SLOPE_END_X, height - tab_depth),
                 (chassis_common.SLOT_FRONT_X - 1, height - tab_depth),
                 align=None)
+        cutter_end_x = max(chassis_common.SLOT_FRONT_X, chassis_common.SLOPE_END_X) + tab_depth
         Polygon((chassis_common.SLOPE_START_X, height - tab_depth),
-                (chassis_common.SLOPE_END_X, sill), (150, sill),
-                (150, height + 1), (chassis_common.SLOPE_START_X, height + 1),
+                (chassis_common.SLOPE_END_X, sill), (cutter_end_x, sill),
+                (cutter_end_x, height + 1), (chassis_common.SLOPE_START_X, height + 1),
                 align=None, mode=Mode.SUBTRACT)
         for profile in chassis_common.slope_finger_profiles(height - tab_depth):
             Polygon(*profile, align=None, mode=Mode.SUBTRACT)
@@ -93,10 +94,9 @@ def build_plates(z_bottom: float, z_top: float) -> list[Part]:
 
 
 def main() -> None:
-    import robot_nira.assembly_body as assembly_body
+    from robot_nira.body_layout import SIDE_PLATE_HEIGHT
 
-    height = (3 * body_common.THICKNESS + assembly_body.SPACER_LENGTH_1_to_2
-              + assembly_body.SPACER_LENGTH_TOP)
+    height = SIDE_PLATE_HEIGHT
     surface = build_surface(height)
     model = chassis_common.build_model(surface)
     model.label = "chassis_side"

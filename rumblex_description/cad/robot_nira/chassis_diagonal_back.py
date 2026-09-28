@@ -45,7 +45,9 @@ def build_diagonal_plates(z_bottom: float, z_top: float) -> list[Part]:
 
 
 def main() -> None:
-    height = body_common.SPACER_LENGTH_TOP + 2 * chassis_common.TAB_DEPTH
+    from robot_nira.body_layout import DIAGONAL_PLATE_HEIGHT
+
+    height = DIAGONAL_PLATE_HEIGHT
     surface = build_surface(height)
     model = chassis_common.build_model(surface)
     model.label = "chassis_diagonal_back"

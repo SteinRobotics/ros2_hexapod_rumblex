@@ -33,11 +33,13 @@ from robot_nira import lidar_ydlidar_tmini
 from robot_nira import lidar_interface_housing
 from robot_nira.lidar_layout import LIDAR_ASSEMBLY_X, LIDAR_Y
 
+from robot_nira import body_layout
+from robot_nira.body_layout import (
+    SPACER_LENGTH_0_to_1, SPACER_LENGTH_1_to_2, SPACER_LENGTH_TOP,
+)
+
 SPACER_OUTER_DIAMETER = 5.0
 SPACER_INNER_DIAMETER = 3.0
-SPACER_LENGTH_0_to_1 = 15.0
-SPACER_LENGTH_1_to_2 = 32.0
-SPACER_LENGTH_TOP = body_common.SPACER_LENGTH_TOP
 BATTERY_GAP = 3.0
 BATTERY_X = -30.0
 
@@ -90,17 +92,16 @@ def build_assembly() -> Compound:
     body_layer_4_part.label = "body_layer_4"
     toe_part.label = "toe"
 
-    positions_for_toes = body_layer_0.TOE_MOUNTING_HOLES
+    positions_for_toes = body_layer_0.TOE_MOUNTING_POSITIONS
     positions_for_spacers = body_common.hole_locations
 
     # --- Z-stack the layers, separated by spacer lengths ---
-    z_layer_0 = 0.0
-    z_spacer_0_1 = z_layer_0 + body_common.THICKNESS
-    z_layer_1 = z_spacer_0_1 + SPACER_LENGTH_0_to_1
-    z_spacer_1_2 = z_layer_1 + body_common.THICKNESS
-    z_layer_2 = z_spacer_1_2 + SPACER_LENGTH_1_to_2
-    z_spacer_top = z_layer_2 + body_common.THICKNESS
-    z_layer_3 = z_spacer_top + SPACER_LENGTH_TOP
+    z_layer_1 = body_layout.LAYER_1_BOTTOM
+    z_layer_2 = body_layout.LAYER_2_BOTTOM
+    z_layer_3 = body_layout.LAYER_3_BOTTOM
+    z_spacer_0_1 = body_layout.LAYER_0_TOP
+    z_spacer_1_2 = body_layout.LAYER_1_TOP
+    z_spacer_top = body_layout.LAYER_2_TOP
 
     # Face the board connector and housing cable opening toward the robot center (-X).
     lidar_interface_flip = Rot(Z=180)
@@ -131,8 +132,8 @@ def build_assembly() -> Compound:
     body_layer_2_part.label = "body_layer_2"
     body_layer_2_addon_part = Pos(0, 0, z_layer_2 - body_layer_2_addon.THICKNESS) * body_layer_2_addon_part
     body_layer_2_addon_part.label = "body_layer_2_addon"
-    z_cover_top = z_layer_2 + 0.5 + body_layer_2_cover.THICKNESS
-    body_layer_2_cover_part = Pos(0, 0, z_layer_2 + 0.5) * body_layer_2_cover_part
+    z_cover_top = body_layout.COVER_BOTTOM + body_layer_2_cover.THICKNESS
+    body_layer_2_cover_part = Pos(0, 0, body_layout.COVER_BOTTOM) * body_layer_2_cover_part
     body_layer_2_cover_part.label = "body_layer_2_cover"
     battery_y = (battery.BODY_WIDTH + BATTERY_GAP) / 2
     battery_left = Pos(BATTERY_X, battery_y, z_cover_top) * battery_part
@@ -141,14 +142,14 @@ def build_assembly() -> Compound:
     battery_right.label = "battery_right"
     body_layer_3_part = Pos(0, 0, z_layer_3) * body_layer_3_part
     body_layer_3_part.label = "body_layer_3"
-    body_layer_4_part = Pos(0, 0, z_layer_3 + body_common.THICKNESS) * body_layer_4_part
+    body_layer_4_part = Pos(0, 0, body_layout.LAYER_4_BOTTOM) * body_layer_4_part
     body_layer_4_part.label = "body_layer_4"
 
-    # Toes at the bottom, using their given (x, y, z) positions as-is
+    # Seat the toe mounting faces against the underside of layer 0.
     toe_instances = []
-    for i, coord in enumerate(positions_for_toes):
-        x, y, z = coord
-        instance = Pos(x, y, z - toe.LITTLE_TOE_LENGTH) * Rot(X=180) * toe_part
+    inverted_toe = Rot(X=180) * toe_part
+    for i, (x, y) in enumerate(positions_for_toes):
+        instance = Pos(x, y, body_layout.LAYER_0_BOTTOM - inverted_toe.bounding_box().max.Z) * inverted_toe
         instance.label = f"toe_{i}"
         toe_instances.append(instance)
 

@@ -57,10 +57,44 @@ corrections; the old corrected zero-angle pose is not preserved.
 
 ## Remaining vendor fits
 
-The bottom bracket's 5.65 mm insertion and the head side bracket's registration
-offset are retained empirical fits to vendor STEP geometry. They still need
-physical verification. The separate `assembly_tibia_HX35H.py` vendor-servo
-example also retains its original offsets.
+Nox retains the bottom bracket's 5.65 mm insertion and the head side bracket's
+empirical registration offset. The separate `assembly_tibia_HX35H.py`
+vendor-servo examples also retain their original offsets.
+
+Nira's `vendor_brackets.py` measures mounting-hole centres and planar mounting
+faces from the vendor STEP files. Both brackets expose `servo_mount` and
+`plate_mount` joints. The side bracket aligns its vertical hole pair with the
+servo's rear flange; the bottom bracket aligns its horizontal pair with the
+servo's lower front row. Its outer plate joint seats the inclined bracket.
+The camera adapter bores follow the side bracket's measured hole pattern.
+Spline hole outlines in the bottom STEP are measured by enclosed area and
+centroid. Feature selection checks the hole count and servo mounting pitch,
+and rejects missing or incompatible patterns. Physical fit still needs verification.
+
+## Nira shared layout
+
+- `body_layout.py` defines body layer elevations, spacer lengths, the cover's
+  seating offset and the front deck boundary. Body, servo and standalone
+  chassis assemblies use these same elevations.
+- Chassis edges follow slot-row centres and widths. Canopy corners follow
+  the body width, height and chamfer; the removable cover shares the deck boundary.
+- `board_layout.py` lists every PCB placement and hole pattern for both the
+  base plate and populated assembly.
+- `foot_common.CHEEK_OUTER_SPAN` sizes both the foot armor and toe connection;
+  connection notches follow cheek thickness.
+- Body toe positions and hole radius are separate. Toe mounting faces sit
+  against the underside of layer 0, independent of the bore radius.
+
+The bracket mounting frames replace empirical placement, so the bottom
+bracket and outgoing femur interface move slightly. The body toes also move
+up 1 mm to contact the base plate. Material thicknesses, clearances, decorative
+outlines and display poses remain explicit design parameters.
+
+Run the shared-layout and mounting regression tests with:
+
+```bash
+.venv/bin/python -m unittest discover -s tests -p test_nira_layout.py -v
+```
 
 The headless tests check joint coincidence and shaft alignment, foot mounting
 hole alignment, bracket width, drawing coordinates, solid validity and the
@@ -69,28 +103,23 @@ motion or manufacturing tolerances.
 
 ## Nira forward lidar deck
 
-Nira's T-mini sits on its interface housing at **(80, 0, 64) mm**, fully
-within the front third of the nominal 220 mm body (+X is forward). The scan
-plane is at Z=90.3 mm. The interface module rests on layer 2 inside a separate
-cream `lidar_interface_housing`: an open-bottom, laser-cut cover with finger-jointed
-walls, a front connector opening, and two M3 mounting feet. Matching clearance holes
-are cut into layer 2. The 1.5 mm lid supports the sensor, leaving 1 mm above
-the interface module. The interface dimensions remain photo-based estimates;
-sensor fastening and cable routing still need the actual hardware dimensions.
-The cover exports as STEP/STL, with seven cut-ready flat-panel DXFs for its
-lid, four walls, and two mounting feet under
-`generated/nira/dxf/lidar_interface_housing/`. Their
-tab and slot dimensions are nominal, without kerf allowance.
-The deck retains its generic adapter slots and rear cable opening.
+Nira's T-mini sits on its interface housing at **(93, 0, 67) mm**
+(+X is forward), with its scan plane at Z=93.3 mm. The interface module
+rests on layer 2 inside a cream, open-bottom `lidar_interface_housing`.
+Its five laser-cut panels have finger joints, a cable opening and six tabs
+that engage the deck. Twelve wall tabs enter the lid's edge slots and finish
+flush with its upper face. The cover exports STEP/STL and five flat-panel
+DXFs under `generated/nira/dxf/lidar_interface_housing/`.
+Fits are nominal, without kerf allowance; interface dimensions remain
+photo-based estimates pending hardware measurement.
 
-Both upper plates end at X=80 mm, directly above the lidar axis. The burgundy
-layer-3 frame has a solid nose below the cream, vented layer-4 roof. The upper
-spacers are 50 mm long, putting the canopy underside at Z=101.5 mm and leaving
-3.6 mm above the scanner. Side shoulders extend forward beneath the enlarged
-canopy while retaining their three rear roof tabs. The front sills remain low;
-the front diagonal sills have shortened raised sections to clear the housing,
-with all three bottom tabs retained. Rear walls, diagonal braces and four rear
-upper spacers support the canopy, with matching holes in both upper layers.
+The rear layer-3 frame ends at X=0; the cream layer-4 roof ends at X=80 mm.
+The upper spacers are 50 mm long, placing the frame underside at Z=101.5 mm
+and roof underside at Z=103 mm. The roof has 2.1 mm vertical clearance above
+the scanner envelope. The frame is behind the scanner, so its physical
+separation is checked using the solids. The front diagonal braces have two
+bottom tabs and a compact solid profile. Rear walls, diagonal braces and four
+rear upper spacers support the canopy.
 
 The forward **270° sector (-135° to +135° from +X)** is clear in the default
 complete-robot pose. The geometry test intersects a continuous 4 mm high
@@ -153,3 +182,24 @@ the assembled armor and the three flat profiles. Geometry tests check valid
 single-solid plates, six fully engaged tabs, flush ends and outer-plate
 clearance from the foot hardware and tibia servo. They do not establish load
 capacity or clearance throughout leg motion.
+
+## Nira test scope
+
+Run all Nira tests with:
+
+```bash
+.venv/bin/python -m unittest discover -s tests -p 'test_nira_*.py' -v
+```
+
+Keep the four suites: foot interfaces and tab engagement (`test_nira_foot`),
+camera support and cable access (`test_nira_head`), shared mounting geometry
+(`test_nira_layout`), and housing/chassis fit plus optical clearance
+(`test_nira_lidar`). They exercise built geometry and mechanical relationships.
+The fixed foot mounting coordinates intentionally protect the existing hardware
+interface. Decorative opening counts are not a mechanical contract.
+
+The canopy tests require physical separation and a roof above the scanner;
+the continuous scan-band test separately protects the optical path. They do
+not impose the former 3 mm envelope gap or certify manufacturing clearance.
+The head cage collision test excludes the vendor bracket/simplified servo pair,
+whose case and flange overlap slightly; separate tests verify its bore alignment.
