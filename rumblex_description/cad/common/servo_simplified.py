@@ -190,7 +190,7 @@ def build_model() -> Part:
 def main() -> None:
     result = build_model()
     result.color = COLOR_DARK_GRAY
-    export_common_part(result, "servo_simplified_HX35H")
+    # export_common_part(result, "servo_simplified_HX35H")
     show(result, name="servo_simplified_HX35H", clear=True)
 
 

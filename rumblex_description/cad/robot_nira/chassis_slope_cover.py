@@ -23,7 +23,6 @@ from robot_nira.lidar_layout import LIDAR_X, LOW_RAIL_HEIGHT, SHOULDER_TOP_X
 from utils.colors import COLOR_CREAMY_WHITE
 from utils.ocp_utils import show
 
-COVER_CLEARANCE = 0.5
 SPEAKER_Y_POSITIONS = (25.0, -25.0)
 SPEAKER_GILL_SPAN = 3.5
 SPEAKER_GILL_ROW_GAP = 1.0
@@ -102,16 +101,8 @@ def build_slope_cover(z_top: float) -> Part:
             extrude(amount=THICKNESS + 0.05)
         result = result + Pos(0, side_y + THICKNESS / 2, 0) * finger.part
         result = result + Pos(0, -inner_y + 0.05, 0) * finger.part
-    # The lidar housing reaches the lower centre of the slope. Its rear wall
-    # occupies only the middle of the cover, so trim that area locally.
-    housing_rear_x = LIDAR_X - lidar_housing.HALF_X
-    housing_top_z = z_top - RAIL_HEIGHT + lidar_housing.HEIGHT
-    notch = Pos((housing_rear_x + SLOPE_END_X) / 2, 0, housing_top_z - 50) * Box(
-        SLOPE_END_X - housing_rear_x + 2 * COVER_CLEARANCE,
-        2 * (lidar_housing.HALF_Y + COVER_CLEARANCE),
-        100,
-    )
-    result = result - notch
+
+    
     with BuildPart() as perforated:
         add(result)
         for y in SPEAKER_Y_POSITIONS:

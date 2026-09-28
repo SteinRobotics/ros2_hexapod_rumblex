@@ -50,7 +50,7 @@ def build_model(
 
 def main() -> None:
     result = build_model()
-    export_common_part(result, "toe")
+    # export_common_part(result, "toe")
 
     show(result, name="toe", clear=True)
 

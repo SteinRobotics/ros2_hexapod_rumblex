@@ -62,7 +62,7 @@ def build_model() -> Part:
 
 def main() -> None:
     result = build_model()
-    export_common_part(result, result.label, stl=True)
+    # export_common_part(result, result.label, stl=True)
     show(result, name=result.label, clear=True)
 
 

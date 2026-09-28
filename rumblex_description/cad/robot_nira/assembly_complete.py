@@ -19,8 +19,27 @@ import robot_nira.assembly_head as assembly_head
 import robot_nira.assembly_leg as assembly_leg
 from utils.ocp_utils import show
 
-ANGLE_LEG_FEMUR = assembly_leg.ANGLE_FEMUR - 90# degrees
-ANGLE_LEG_TIBIA = assembly_leg.ANGLE_TIBIA - 90
+
+LAYDOWN_ANGLE_FEMUR = -60.0
+LAYDOWN_ANGLE_TIBIA = -60.0
+
+STANDUP_ANGLE_FEMUR = 0
+STANDUP_ANGLE_TIBIA = 0
+
+WALKING_ANGLE_FEMUR = 20
+WALKING_ANGLE_TIBIA = 20
+
+# Choose "laydown", "standing", or "walking" for the exported assembly.
+POSTURE = "standing"
+POSTURE_ANGLES = {
+    "laydown": (LAYDOWN_ANGLE_FEMUR, LAYDOWN_ANGLE_TIBIA),
+    "standing": (STANDUP_ANGLE_FEMUR, STANDUP_ANGLE_TIBIA),
+    "walking": (WALKING_ANGLE_FEMUR, WALKING_ANGLE_TIBIA),
+}
+posture_femur, posture_tibia = POSTURE_ANGLES[POSTURE]
+
+ANGLE_LEG_FEMUR = assembly_leg.ANGLE_FEMUR - 90 + posture_femur
+ANGLE_LEG_TIBIA = assembly_leg.ANGLE_TIBIA - 90 + posture_tibia
 ANGLE_HEAD_YAW = 0.0
 ANGLE_HEAD_PITCH = -60.0
 
