@@ -1,0 +1,98 @@
+################################
+# Coordinate system body
+
+#    ▲ x
+#    │
+#    │
+#   (x)─────▶ y
+#      z
+
+node_movement:
+  ros__parameters:
+
+    #### KINEMATIC PARAMETERS ####
+    COXA_LENGTH: 0.050
+    FEMUR_LENGTH: 0.063
+    TIBIA_LENGTH: 0.099
+    COXA_HEIGHT: 0.045
+
+    leg_names: 
+      RightFront: "RightFront"
+      RightMid:   "RightMid"
+      RightBack:  "RightBack"
+      LeftFront:  "LeftFront"
+      LeftMid:    "LeftMid"
+      LeftBack:   "LeftBack"
+
+    leg_offsets:
+      RightFront: { CENTER_TO_COXA_X:  0.109, CENTER_TO_COXA_Y: 0.068, OFFSET_COXA_ANGLE_DEG: 45.0}
+      RightMid:   { CENTER_TO_COXA_X:  0.000, CENTER_TO_COXA_Y: 0.088, OFFSET_COXA_ANGLE_DEG: 90.0 }
+      RightBack:  { CENTER_TO_COXA_X: -0.109, CENTER_TO_COXA_Y: 0.068, OFFSET_COXA_ANGLE_DEG: 135.0 }
+      LeftFront:  { CENTER_TO_COXA_X:  0.109, CENTER_TO_COXA_Y:  -0.068, OFFSET_COXA_ANGLE_DEG: -45.0 }
+      LeftMid:    { CENTER_TO_COXA_X:  0.000, CENTER_TO_COXA_Y:  -0.088, OFFSET_COXA_ANGLE_DEG: -90.0 }
+      LeftBack:   { CENTER_TO_COXA_X: -0.109, CENTER_TO_COXA_Y:  -0.068, OFFSET_COXA_ANGLE_DEG: -135.0 }
+
+    footPositions_standing:
+      RightFront: { x:  0.201, y: 0.160, z: -0.050 }
+      RightMid:   { x:  0.000, y: 0.218, z: -0.050 }
+      RightBack:  { x: -0.201, y: 0.160, z: -0.050 }
+      LeftFront:  { x:  0.201, y:  -0.160, z: -0.050 }
+      LeftMid:    { x:  0.000, y:  -0.218, z: -0.050 }
+      LeftBack:   { x: -0.201, y:  -0.160, z: -0.050 }
+
+    footPositions_laydown:
+      RightFront: { x:  0.180, y: 0.139, z: 0.010 }
+      RightMid:   { x:  0.000, y: 0.188, z: 0.010 }
+      RightBack:  { x: -0.180, y: 0.139, z: 0.010 }
+      LeftFront:  { x:  0.180, y:  -0.139, z: 0.010 }
+      LeftMid:    { x:  0.000, y:  -0.188, z: 0.010 }
+      LeftBack:   { x: -0.180, y:  -0.139, z: 0.010 }
+
+    #### GENERIC GAIT PARAMETERS ####
+    GENERIC_BODY_MAX_ROLL: 12.0  # deg
+    GENERIC_BODY_MAX_PITCH: 12.0 # deg
+    GENERIC_HEAD_MAX_YAW: 30.0
+    GENERIC_HEAD_MAX_PITCH: 20.0
+    GENERIC_LEG_LIFT_HEIGHT: 0.025      # [m]   // -0.05 + 0.025 = -0.025
+    GENERIC_STEP_LENGTH: 0.03     # [m]
+
+    #### GAIT TRIPOD PARAMETERS ####
+    GAIT_TRIPOD_FACTOR_VELOCITY_TO_CYCLE_TIME: 40.0      # [s²/m] ??
+    GAIT_TRIPOD_HEAD_MAX_YAW: 15.0 # deg
+
+    #### GAIT RUNNING PARAMETERS ####
+    GAIT_RUNNING_FACTOR_VELOCITY_TO_CYCLE_TIME: 60.0  # faster cycle than tripod
+    GAIT_RUNNING_HEAD_MAX_YAW: 5.0                    # deg, minimal head sway at high speed
+    GAIT_RUNNING_VELOCITY_FILTER_ALPHA: 0.05
+    GAIT_RUNNING_ROTATION_WEIGHT: 0.7
+    GAIT_RUNNING_FLIGHT_FRACTION: 0.15                # fraction of half-cycle where both groups are airborne
+
+    #### GAIT RIPPLE PARAMETERS ####
+    GAIT_RIPPLE_FACTOR_VELOCITY_TO_CYCLE_TIME: 40.0  # [s²/m]
+    GAIT_RIPPLE_HEAD_MAX_YAW: 10.0                   # deg
+
+    #### GAIT WAVE PARAMETERS ####
+    GAIT_WAVE_FACTOR_VELOCITY_TO_CYCLE_TIME: 40.0    # [s²/m]
+    GAIT_WAVE_HEAD_MAX_YAW: 8.0                      # deg
+
+    #### GAIT MOVE COMBINED PARAMETERS ####
+    GAIT_MOVE_COMBINED_THRESHOLD_WAVE_RIPPLE: 0.3
+    GAIT_MOVE_COMBINED_THRESHOLD_RIPPLE_TRIPOD: 0.6
+    GAIT_MOVE_COMBINED_HYSTERESIS_MARGIN: 0.04
+    GAIT_MOVE_COMBINED_MAX_VELOCITY_LINEAR: 0.02   # must match brain max_velocity_linear
+    GAIT_MOVE_COMBINED_MAX_VELOCITY_ROTATION: 0.02 # must match brain max_velocity_rotation
+
+    #### GAIT LEG WAVE PARAMETERS ####
+    GAIT_LEG_WAVE_LEG_LIFT_HEIGHT: 0.03 # m
+
+    #### GAIT LOOK PARAMETERS ####
+    GAIT_LOOK_BODY_MAX_YAW: 20.0 # degree
+    GAIT_LOOK_HEAD_MAX_YAW: 25.0     # degree
+
+    #### GAIT WATCH PARAMETERS ####
+    GAIT_WATCH_BODY_MAX_YAW: 10.0     # degree
+
+    #### GAIT TEST LEGS PARAMETERS ####
+    TESTLEGS_COXA_DELTA_DEG: 10.0
+    TESTLEGS_FEMUR_DELTA_DEG: 15.0
+    TESTLEGS_TIBIA_DELTA_DEG: 20.0

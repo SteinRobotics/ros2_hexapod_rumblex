@@ -13,6 +13,7 @@
   <exec_depend>bno055</exec_depend>
   <exec_depend>rumblex_brain</exec_depend>
   <exec_depend>rumblex_communication</exec_depend>
+  <exec_depend>rumblex_description</exec_depend>
   <exec_depend>rumblex_hmi</exec_depend>
   <exec_depend>rumblex_lidar</exec_depend>
   <exec_depend>rumblex_movement</exec_depend>

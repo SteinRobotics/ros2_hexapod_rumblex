@@ -19,6 +19,11 @@ def generate_launch_description():
             FindPackageShare('rumblex_movement'), '/launch/movement_offline_launch.py']),
         launch_arguments={'robot': robot}.items(),
     )
+    display_mesh = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            FindPackageShare('rumblex_description'), '/launch/display_mesh.launch.py']),
+        launch_arguments={'robot': robot}.items(),
+    )
     brain = launch.actions.TimerAction(
         period=2.0,
         actions=[IncludeLaunchDescription(
@@ -34,6 +39,6 @@ def generate_launch_description():
             description='Robot configuration profile (for example: nox or nira)'),
         communication,
         movement,
+        display_mesh,
         brain,
     ])
-

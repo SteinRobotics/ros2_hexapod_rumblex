@@ -21,6 +21,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             'robot', default_value='nox',
-            description='Robot configuration profile (for example: nox or nira)'),
+            choices=['nox', 'nira'],
+            description='Robot whose configuration to load from config/<robot>/'),
         node,
     ])
