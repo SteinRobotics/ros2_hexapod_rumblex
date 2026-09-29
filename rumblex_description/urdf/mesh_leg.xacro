@@ -1,73 +1,67 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!--
-    Mesh leg variant.  The CAD exports are in millimetres and use the
-    assembly joint as their local reference.  The small origins below are
-    deliberately explicit: they document the CAD-to-URDF registration and
-    keep the joint frames identical to leg.xacro.
-  -->
+  <!-- Nox CAD registration (cad/robot_nox), metres and radians.
+       Joint frames are the horn mounting faces, not the simplified IK frames
+       in leg.xacro. Zero pose matches assembly_complete: CAD angles 0/0/180.
+       Positive joint angles increase the CAD connection angles. The STL
+       exports already contain the femur and tibia rolls; do not apply again. -->
   <xacro:macro name="mesh_hexapod_leg" params="prefix cx cy psi_deg">
-    <xacro:property name="mount_yaw" value="${psi_deg * pi / 180.0 - pi / 2.0}"/>
+    <xacro:property name="mount_yaw" value="${psi_deg * pi / 180.0}"/>
     <xacro:property name="mesh_scale" value="0.001 0.001 0.001"/>
 
     <joint name="${prefix}_coxa_joint" type="revolute">
       <parent link="base_link"/>
       <child link="${prefix}_coxa_link"/>
-      <origin xyz="${cx} ${cy} ${coxa_height}" rpy="0 0 ${mount_yaw}"/>
-      <axis xyz="0 0 -1"/>
+      <origin xyz="${cx} ${cy} ${coxa_height}" rpy="${pi} 0 ${mount_yaw}"/>
+      <axis xyz="0 0 1"/>
       <limit lower="${-60 * pi / 180}" upper="${60 * pi / 180}" effort="3.0" velocity="6.0"/>
       <dynamics damping="0.1" friction="0.05"/>
     </joint>
     <link name="${prefix}_coxa_link">
       <visual>
-        <origin xyz="0 0.035 -0.01" rpy="${pi / 2.0} 0 0"/>
+        <origin xyz="0.0295 0 0.0185" rpy="${-pi / 2} 0 ${pi / 2}"/>
         <geometry><mesh filename="${mesh_directory}/assembly_coxa.stl" scale="${mesh_scale}"/></geometry>
         <material name="orange"/>
       </visual>
-      <collision><origin xyz="0 ${coxa_length / 2.0} 0" rpy="${pi / 2.0} 0 0"/><geometry><box size="0.030 0.050 0.045"/></geometry></collision>
-      <inertial><origin xyz="0 ${coxa_length / 2.0} 0"/><mass value="0.12"/><inertia ixx="3.0e-05" ixy="0" ixz="0" iyy="3.0e-05" iyz="0" izz="3.0e-05"/></inertial>
+      <collision><origin xyz="0.0265656926794 0 0.0170032120995"/><geometry><box size="0.0781313853589 0.041 0.043993575801"/></geometry></collision>
+      <inertial><origin xyz="0.0265656926794 0 0.0170032120995"/><mass value="0.12"/><inertia ixx="3.0e-05" ixy="0" ixz="0" iyy="3.0e-05" iyz="0" izz="3.0e-05"/></inertial>
     </link>
 
     <joint name="${prefix}_femur_joint" type="revolute">
       <parent link="${prefix}_coxa_link"/><child link="${prefix}_femur_link"/>
-      <origin xyz="0 ${coxa_length} 0" rpy="${30 * pi / 180} 0 0"/><axis xyz="1 0 0"/>
+      <origin xyz="0.053131385358869 -0.0185 0.0075064241990335" rpy="${pi / 2} -0.51048832191678 ${pi}"/><axis xyz="0 0 -1"/>
       <limit lower="${-30 * pi / 180}" upper="${90 * pi / 180}" effort="3.0" velocity="6.0"/>
       <dynamics damping="0.1" friction="0.05"/>
     </joint>
     <link name="${prefix}_femur_link">
       <visual>
-        <!-- Roll 180 degrees about the leg segment's length axis (link Y),
-             rotating the CAD registration offset about that axis as well. -->
-        <origin xyz="-0.015 0.043 0" rpy="${pi / 2.0} ${pi / 2.0} 0"/>
+        <origin xyz="-0.035 0 0.00425" rpy="${pi / 2} 0 ${pi / 2}"/>
         <geometry><mesh filename="${mesh_directory}/assembly_femur.stl" scale="${mesh_scale}"/></geometry>
         <material name="dark_blue"/>
       </visual>
-      <collision><origin xyz="0 ${femur_length / 2.0} 0" rpy="${-pi / 2.0} 0 0"/><geometry><box size="0.030 0.063 0.045"/></geometry></collision>
-      <inertial><origin xyz="0 ${femur_length / 2.0} 0"/><mass value="0.12"/><inertia ixx="4.0e-05" ixy="0" ixz="0" iyy="4.0e-05" iyz="0" izz="4.0e-05"/></inertial>
+      <collision><origin xyz="-0.0325302233968 0.00458351350954 0.0185"/><geometry><box size="0.0850604467937 0.0378201245829 0.041"/></geometry></collision>
+      <inertial><origin xyz="-0.0325302233968 0.00458351350954 0.0185"/><mass value="0.12"/><inertia ixx="4.0e-05" ixy="0" ixz="0" iyy="4.0e-05" iyz="0" izz="4.0e-05"/></inertial>
     </link>
 
     <joint name="${prefix}_tibia_joint" type="revolute">
       <parent link="${prefix}_femur_link"/><child link="${prefix}_tibia_link"/>
-      <origin xyz="0 ${femur_length} 0" rpy="${-120 * pi / 180} 0 0"/><axis xyz="1 0 0"/>
+      <origin xyz="-0.062560446793669 0.010993575800966 0.037" rpy="${-pi} 0 2.631104331673"/><axis xyz="0 0 -1"/>
       <limit lower="${-90 * pi / 180}" upper="${90 * pi / 180}" effort="3.0" velocity="6.0"/>
       <dynamics damping="0.1" friction="0.05"/>
     </joint>
     <link name="${prefix}_tibia_link">
       <visual>
-        <!-- Roll 180 degrees about the leg segment's length axis (link Y),
-             including the CAD offset, after the servo-axis registration. -->
-        <origin xyz="0.015 0 -0.04" rpy="0 0 ${pi / 2.0}"/>
+        <origin xyz="-0.035 0 0.00425" rpy="${pi / 2} 0 ${pi / 2}"/>
         <geometry><mesh filename="${mesh_directory}/assembly_tibia.stl" scale="${mesh_scale}"/></geometry>
         <material name="light_blue"/>
       </visual>
-      <collision><origin xyz="0 ${tibia_length / 2.0} 0" rpy="${-pi / 2.0} 0 0"/><geometry><box size="0.025 0.099 0.040"/></geometry></collision>
-      <inertial><origin xyz="0 ${tibia_length / 2.0} 0"/><mass value="0.10"/><inertia ixx="4.0e-05" ixy="0" ixz="0" iyy="4.0e-05" iyz="0" izz="4.0e-05"/></inertial>
+      <collision><origin xyz="0.0179625 0.03775 0.0185"/><geometry><box size="0.055925 0.114 0.037"/></geometry></collision>
+      <inertial><origin xyz="0.0179625 0.03775 0.0185"/><mass value="0.10"/><inertia ixx="4.0e-05" ixy="0" ixz="0" iyy="4.0e-05" iyz="0" izz="4.0e-05"/></inertial>
     </link>
 
-    <joint name="${prefix}_foot_joint" type="fixed"><parent link="${prefix}_tibia_link"/><child link="${prefix}_foot"/><origin xyz="0 ${tibia_length} 0"/></joint>
+    <joint name="${prefix}_foot_joint" type="fixed"><parent link="${prefix}_tibia_link"/><child link="${prefix}_foot"/><origin xyz="0.028425 0.09225 0.01825" rpy="${-pi / 2} ${pi / 2} 0"/></joint>
     <link name="${prefix}_foot">
-      <visual><geometry><sphere radius="0.006"/></geometry><material name="black"/></visual>
       <collision><geometry><sphere radius="0.006"/></geometry></collision>
       <inertial><mass value="0.005"/><inertia ixx="7.2e-08" ixy="0" ixz="0" iyy="7.2e-08" iyz="0" izz="7.2e-08"/></inertial>
     </link>

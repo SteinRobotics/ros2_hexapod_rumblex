@@ -193,6 +193,22 @@ single-solid plates, six fully engaged tabs, flush ends and outer-plate
 clearance from the foot hardware and tibia servo. They do not establish load
 capacity or clearance throughout leg motion.
 
+## Nox mesh description
+
+`urdf/nox_mesh.urdf.xacro` and `urdf/mesh_leg.xacro` register the existing
+Nox STL exports to the CAD horn mounting faces. The torso uses the checked-in
+`meshes/nox/assembly_body_servo.stl`. Zero joint angles reproduce the complete
+CAD assembly's leg angles (0/0/180 degrees) and head pitch (-60 degrees).
+Positive URDF joint angles increase the corresponding CAD connection angle.
+These joint frames differ from the simplified IK frames in `nox.urdf.xacro`;
+the collision envelopes and inertias remain approximations.
+
+The package test `test/test_nox_urdf.py` checks resource paths, the connected
+joint tree and simulation configuration. With the CAD virtualenv, ROS, xacro
+and PyYAML available, run `python -m unittest discover -s tests -p
+test_nox_urdf.py -v` from this directory to compare STL bounds and all leg/head
+mesh placements against CAD at zero and 12-degree joint angles.
+
 ## Nira test scope
 
 ### Nira URDF descriptions
