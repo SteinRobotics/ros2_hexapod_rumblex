@@ -23,7 +23,7 @@
         "noun": [ "excess", "party", "partie" ]
     },
     "commandMove": {
-        "doing": [ "fahr", "fahre", "beweg", "bewege", "lauf", "laufe", "dreh", "drehe" ],
+        "doing": [ "fahr", "fahre", "beweg", "bewege", "lauf", "laufe", "dreh", "drehe", "geh", "gehe" ],
         "direction": [ "vorn", "vorne", "hinten", "links", "rechts" ]
     },
     "commandStopMove": {

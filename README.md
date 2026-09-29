@@ -38,64 +38,10 @@ needed to add Nira.
 - `rumblex_gazebo/`        — Gazebo Harmonic simulation (gz-sim 8.x)
 
 ## Quick Start (for Makers)
-1. **Install Dependencies**
-   ```bash
-   PIP_BREAK_SYSTEM_PACKAGES=1 rosdep install --from-paths ~/Workspace/colcon_rumblex --ignore-src -r -y
-   git submodule update --init --recursive
-   ```
-   If you want the simplest setup, keep using the full-workspace install above. If you want to split machines, the current package layout already allows two practical ROS setups:
 
-   **Robot / headless target**
-   - Intended for the Raspberry Pi or onboard computer.
-   - Keeps runtime, sensor, audio, and hardware nodes.
-   - Skips GUI and Gazebo packages such as `rviz2`, `joint_state_publisher_gui`, `ros_gz_sim`, and controller GUI tooling.
-   ```bash
-   PIP_BREAK_SYSTEM_PACKAGES=1 rosdep install -r -y --ignore-src \
-     --from-paths \
-       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_interfaces \
-       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_utils \
-       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_movement \
-       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_brain \
-       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_communication \
-       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_hmi \
-       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_lidar \
-       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_navigation \
-       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_teleop \
-       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_bringup
+Follow [README_SETUP.md](README_SETUP.md) to install dependencies, create the ROS 2 Python virtual environment, and build the workspace on either a headless Raspberry Pi 5 or a developer PC. Activate the environment as described there before running these examples.
 
-   colcon build --symlink-install --packages-up-to rumblex_bringup
-   ```
-
-   **Remote PC / simulation and GUI tools**
-   - Intended for Gazebo, RViz, URDF inspection, and desktop debugging.
-   - Keeps shared logic packages plus the visualization/simulation packages.
-   - Can skip robot-only hardware packages such as `rumblex_hmi` and usually `rumblex_bringup`.
-   ```bash
-   PIP_BREAK_SYSTEM_PACKAGES=1 rosdep install -r -y --ignore-src \
-     --from-paths \
-       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_interfaces \
-       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_utils \
-       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_movement \
-       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_brain \
-       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_communication \
-       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_navigation \
-       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_description \
-       ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_gazebo
-
-   colcon build --symlink-install \
-     --packages-up-to rumblex_gazebo rumblex_description rumblex_navigation
-   ```
-
-   Notes:
-   - The split is already possible because the GUI-heavy dependencies are isolated mainly in `rumblex_description` and `rumblex_gazebo`, while `rumblex_bringup` stays on the robot/runtime side.
-   - Do not run `rosdep install --from-paths ...` over the entire workspace on the robot if you want a lean headless install, because that will pull the Gazebo and RViz dependencies too.
-   - Robot-specific configuration is selected independently through the `robot` launch argument.
-2. **Build the Workspace**
-   ```bash
-   colcon build --symlink-install
-   source install/local_setup.bash
-   ```
-3. **Launch the Robot**
+1. **Launch the Robot**
    ```bash
    ros2 launch rumblex_bringup target_launch.py robot:=nox
    # with navigation enabled
@@ -103,7 +49,7 @@ needed to add Nira.
    # or for testing
    ros2 launch rumblex_bringup test_launch.py robot:=nox
    ```
-4. **Launch Individual Components**
+2. **Launch Individual Components**
    ```bash
    ros2 launch rumblex_brain brain_launch.py
    ros2 launch rumblex_communication communication_launch.py
@@ -118,7 +64,7 @@ needed to add Nira.
    # with map server
    ros2 launch rumblex_navigation navigation_launch.py enable_map:=true
    ```
-5. **Interact & Hack**
+3. **Interact & Hack**
    - Send movement commands:
      ```bash
      ros2 topic pub --once /cmd_movement rumblex_interfaces/msg/MovementRequest "..."
@@ -142,7 +88,6 @@ needed to add Nira.
 ### Preview the Robot Model in RViz
 Visualize the URDF model with interactive joint sliders — no Gazebo or hardware needed:
 ```bash
-source install/setup.bash
 ros2 launch rumblex_description display.launch.py
 ```
 
@@ -158,19 +103,8 @@ The future Nira mesh model should point to `rumblex_description/meshes/nira/`
 and will be selected with `robot:=nira` once its model and assets are added.
 
 ### Gazebo Simulation
-Run the full hexapod simulation in Gazebo Harmonic:
+After the developer PC setup in [README_SETUP.md](README_SETUP.md#developer-pc-visualization-and-simulation), run the full hexapod simulation in Gazebo Harmonic:
 ```bash
-# Install simulation dependencies (once)
-sudo apt-get install ros-jazzy-gz-ros2-control ros-jazzy-controller-manager \
-  ros-jazzy-joint-state-broadcaster ros-jazzy-forward-command-controller \
-  ros-jazzy-joint-state-publisher-gui
-
-# Navigation dependencies (optional)
-sudo apt-get install ros-jazzy-nav2-map-server ros-jazzy-nav2-lifecycle-manager
-
-# Build and launch
-colcon build --symlink-install --packages-select rumblex_description rumblex_gazebo
-source install/setup.bash
 ros2 launch rumblex_gazebo simulation_gazebo.launch.py robot:=nox
 
 # Launch with the simple room world and navigation
@@ -182,8 +116,6 @@ ros2 launch rumblex_gazebo simulation_gazebo.launch.py \
 ### Mesh Model in Gazebo
 The mesh model has its own launch file and does not change the existing primitive-model simulation:
 ```bash
-colcon build --symlink-install --packages-select rumblex_description rumblex_gazebo
-source install/setup.bash
 ros2 launch rumblex_gazebo simulation_mesh.launch.py
 ```
 This starts Gazebo Harmonic, spawns the STL-based robot, loads the existing 20-joint
@@ -235,11 +167,7 @@ The Raspberry Pi 5 inside Nox hosts most of the human-machine interface hardware
 
 
 ## Systemd Service (Optional)
-To auto-start ROS2 on boot:
-```bash
-sudo systemctl start autostart_ros2
-sudo systemctl status autostart_ros2
-```
+For automatic ROS 2 startup on the Pi, follow the boot-service instructions in [README_SETUP.md](README_SETUP.md#raspberry-pi-5-headless-robot).
 
 
 ## Documentation
