@@ -5,11 +5,11 @@ from pathlib import Path
 from shutil import copy2
 
 from robot_nox import EXPORT_DIR
-from robot_nox import assembly_complete, assembly_coxa, assembly_femur, assembly_tibia
+from robot_nox import assembly_complete, assembly_coxa, assembly_femur, assembly_tibia, assembly_torso_with_servos
 
 
 def main() -> None:
-    for assembly in (assembly_complete, assembly_coxa, assembly_femur, assembly_tibia):
+    for assembly in (assembly_complete, assembly_coxa, assembly_femur, assembly_tibia, assembly_torso_with_servos):
         assembly.main()
 
     mesh_dir = Path(__file__).resolve().parent.parent / "meshes" / "nox"

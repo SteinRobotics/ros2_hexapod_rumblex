@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:include filename="$(find rumblex_description)/urdf/materials.xacro"/>
+  <xacro:include filename="$(find rumblex_description)/urdf/ros2_control.xacro"/>
+  <xacro:arg name="use_sim" default="false"/>
+
+  <!-- CAD registration from cad/robot_nira, in metres/radians.
+       base_link is the CAD origin, +X forward, +Z up. Side names retain
+       Nox's convention: right_* is +Y. Joint frames follow CAD horn frames.
+       Zero pose is assembly_complete's standing pose: CAD coxa/femur/tibia
+       angles 0/0/-180 degrees and head yaw/pitch 0/-60 degrees.
+       Positive joint angles increase the corresponding CAD angle.
+       Meshes are native millimetre exports; only visuals use their geometry.
+       Collision boxes are CAD envelopes. Masses, limits and dynamics are
+       provisional estimates, not measured Nira hardware parameters. -->
+  <xacro:macro name="nira_link" params="name mesh xyz rpy center size mass meshes">
+    <xacro:property name="dims" value="${[float(v) for v in size.split()]}"/>
+    <link name="${name}">
+      <visual>
+        <xacro:if value="${meshes}">
+          <origin xyz="${xyz}" rpy="${rpy}"/>
+          <geometry><mesh filename="package://rumblex_description/meshes/nira/${mesh}.stl"
+                          scale="0.001 0.001 0.001"/></geometry>
+        </xacro:if>
+        <xacro:unless value="${meshes}">
+          <origin xyz="${center}"/>
+          <geometry><box size="${size}"/></geometry>
+        </xacro:unless>
+        <material name="dark_gray"/>
+      </visual>
+      <collision>
+        <origin xyz="${center}"/>
+        <geometry><box size="${size}"/></geometry>
+      </collision>
+      <inertial>
+        <origin xyz="${center}"/>
+        <mass value="${mass}"/>
+        <inertia ixx="${mass * (dims[1]**2 + dims[2]**2) / 12}" ixy="0" ixz="0"
+                 iyy="${mass * (dims[0]**2 + dims[2]**2) / 12}" iyz="0"
+                 izz="${mass * (dims[0]**2 + dims[1]**2) / 12}"/>
+      </inertial>
+    </link>
+  </xacro:macro>
+
+  <xacro:macro name="nira_joint" params="name parent child xyz rpy axis lower upper">
+    <joint name="${name}" type="revolute">
+      <parent link="${parent}"/><child link="${child}"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <axis xyz="${axis}"/>
+      <limit lower="${lower * pi / 180}" upper="${upper * pi / 180}" effort="3.0" velocity="6.0"/>
+      <dynamics damping="0.1" friction="0.05"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="nira_leg" params="prefix xyz rpy meshes">
+    <xacro:nira_joint name="${prefix}_coxa_joint" parent="base_link" child="${prefix}_coxa_link"
+                      xyz="${xyz}" rpy="${rpy}" axis="0 0 1" lower="-60" upper="60"/>
+    <xacro:nira_link name="${prefix}_coxa_link" mesh="assembly_coxa"
+                     xyz="0.0295 0 0.0185" rpy="-1.57079632679 0 1.57079632679"
+                     center="0.0265656926794 0 0.0170032120995" size="0.0781313853589 0.041 0.043993575801"
+                     mass="0.12" meshes="${meshes}"/>
+    <xacro:nira_joint name="${prefix}_femur_joint" parent="${prefix}_coxa_link" child="${prefix}_femur_link"
+                      xyz="0.0531313853589 -0.0185 0.00750642419903" rpy="1.57079632679 -0.510488321917 3.14159265359" axis="0 0 -1" lower="-30" upper="90"/>
+    <xacro:nira_link name="${prefix}_femur_link" mesh="assembly_femur"
+                     xyz="-0.035 0 0.00425" rpy="1.57079632679 0 1.57079632679"
+                     center="-0.0323906817215 0.00458043191449 0.0182498422486" size="0.0847813634429 0.0378201245829 0.0410000000001"
+                     mass="0.12" meshes="${meshes}"/>
+    <xacro:nira_joint name="${prefix}_tibia_joint" parent="${prefix}_femur_link" child="${prefix}_tibia_link"
+                      xyz="-0.0622813634428 0.0109904942059 0.0367498422486" rpy="-3.14159265359 0 2.63110433167" axis="0 0 -1" lower="-90" upper="90"/>
+    <xacro:nira_link name="${prefix}_tibia_link" mesh="assembly_tibia"
+                     xyz="-0.035 0 0.00425" rpy="1.57079632679 0 1.57079632679"
+                     center="0.0187125 0.03775 0.0185" size="0.057425 0.114 0.037"
+                     mass="0.1" meshes="${meshes}"/>
+    <!-- Frame at the centre of the CAD rubber toe; its solid is in the tibia mesh. -->
+    <joint name="${prefix}_foot_joint" type="fixed">
+      <parent link="${prefix}_tibia_link"/><child link="${prefix}_foot"/>
+      <origin xyz="0.028425 0.09225 0.01825" rpy="-1.57079632679 1.57079632679 0"/>
+    </joint>
+    <link name="${prefix}_foot"/>
+  </xacro:macro>
+
+  <xacro:macro name="nira_model" params="meshes">
+    <xacro:if value="$(arg use_sim)">
+      <gazebo>
+        <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+          <parameters>$(find rumblex_gazebo)/config/nira/joint_controllers.yaml</parameters>
+        </plugin>
+      </gazebo>
+      <xacro:rumblex_ros2_control/>
+    </xacro:if>
+
+    <!-- Coarse body envelope includes the layered chassis and mounted electronics. -->
+    <xacro:nira_link name="base_link" mesh="assembly_torso_servo" xyz="0 0 0" rpy="0 0 0"
+                     center="0 0 0.05" size="0.270 0.190 0.110" mass="0.8" meshes="${meshes}"/>
+    <xacro:nira_leg prefix="right_front" xyz="0.11476587931 0.0697658793104 0.0525" rpy="3.14159265359 0 0.785398163397" meshes="${meshes}"/>
+    <xacro:nira_leg prefix="right_mid" xyz="0 0.095175 0.0525" rpy="3.14159265359 0 1.57079632679" meshes="${meshes}"/>
+    <xacro:nira_leg prefix="right_back" xyz="-0.11476587931 0.0697658793104 0.0525" rpy="3.14159265359 0 2.35619449019" meshes="${meshes}"/>
+    <xacro:nira_leg prefix="left_front" xyz="0.11476587931 -0.0697658793104 0.0525" rpy="3.14159265359 0 -0.785398163397" meshes="${meshes}"/>
+    <xacro:nira_leg prefix="left_mid" xyz="0 -0.095175 0.0525" rpy="3.14159265359 0 -1.57079632679" meshes="${meshes}"/>
+    <xacro:nira_leg prefix="left_back" xyz="-0.11476587931 -0.0697658793104 0.0525" rpy="-3.14159265359 0 -2.35619449019" meshes="${meshes}"/>
+
+    <xacro:nira_joint name="head_yaw_joint" parent="base_link" child="head_yaw_link"
+                      xyz="0.140175 0 0.0525" rpy="3.14159265359 0 0" axis="0 0 1" lower="-30" upper="30"/>
+    <xacro:nira_link name="head_yaw_link" mesh="assembly_coxa"
+                     xyz="0.0295 0 0.0185" rpy="-1.57079632679 0 1.57079632679"
+                     center="0.0265656926794 0 0.0170032120995" size="0.0781313853589 0.041 0.043993575801"
+                     mass="0.12" meshes="${meshes}"/>
+
+    <xacro:nira_joint name="head_pitch_joint" parent="head_yaw_link" child="head_pitch_link"
+                      xyz="0.0531313853589 -0.0185 0.00750642419903" rpy="1.57079632679 -1.55768587311 -3.14159265359" axis="0 0 -1" lower="-20" upper="20"/>
+    <xacro:nira_link name="head_pitch_link" mesh="assembly_head"
+                     xyz="-0.035 0 0.00425" rpy="1.57079632679 0 1.57079632679"
+                     center="-0.0122000005383 0.0226182043846 0.0187537674652" size="0.054 0.0702364087692 0.07"
+                     mass="0.15" meshes="${meshes}"/>
+
+    <!-- T-mini scan centre: assembly_torso + lidar_ydlidar_tmini.SCAN_HEIGHT.
+         The sensor housing is already included in the torso mesh. -->
+    <joint name="lidar_joint" type="fixed">
+      <parent link="base_link"/><child link="lidar_link"/>
+      <origin xyz="0.093 0 0.0933"/>
+    </joint>
+    <link name="lidar_link"/>
+
+    <!-- BNO055 board origin: board_layout and place_board(), including the flip. -->
+    <joint name="imu_joint" type="fixed">
+      <parent link="base_link"/><child link="imu_link"/>
+      <origin xyz="0 -0.002 0.0185" rpy="${pi} 0 ${-pi/2}"/>
+    </joint>
+    <link name="imu_link"/>
+  </xacro:macro>
+</robot>

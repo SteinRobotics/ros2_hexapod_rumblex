@@ -111,6 +111,10 @@ needed to add Nira.
    ros2 launch rumblex_teleop teleop_launch.py
    ros2 launch rumblex_lidar lidar_launch.py
    ros2 launch rumblex_navigation navigation_launch.py
+
+   ros2 launch rumblex_description display.launch.py robot:=nira
+   ros2 launch rumblex_description display_mesh.launch.py robot:=nira
+
    # with map server
    ros2 launch rumblex_navigation navigation_launch.py enable_map:=true
    ```

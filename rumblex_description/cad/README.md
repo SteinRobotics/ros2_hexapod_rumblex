@@ -195,6 +195,46 @@ capacity or clearance throughout leg motion.
 
 ## Nira test scope
 
+### Nira URDF descriptions
+
+`urdf/nira.urdf.xacro` uses primitive envelopes and
+`urdf/nira_mesh.urdf.xacro` uses the Nira STL assemblies. Both include
+`urdf/nira_model.xacro`, so their joint trees and sensor frames are identical.
+After building and sourcing the workspace, display either with:
+
+```bash
+ros2 launch rumblex_description display.launch.py robot:=nira
+ros2 launch rumblex_description display_mesh.launch.py robot:=nira
+```
+
+The joint and mesh registrations come from the CAD horn interfaces, including
+the measured vendor bracket placement. Zero joint angles reproduce
+`assembly_complete.py`'s standing pose and its -60 degree CAD head pitch.
+Positive URDF angles increase the corresponding CAD connection angle. As in
+Nox's description, `right_*` names refer to the +Y side. These CAD joint frames
+are not the simplified Nox inverse-kinematics frames.
+
+The torso STL includes the mounted T-mini and boards; `lidar_link` is at the
+scan centre and `imu_link` follows the BNO055 board placement. The separate
+head STL includes the camera pod and pitch servo. Collision envelopes,
+estimated masses and provisional motion limits support model development;
+they are not calibrated dynamics or verified mechanical travel limits.
+`use_sim:=true` adds the shared ros2_control interfaces and the Nira controller
+configuration. This does not provide a complete Nira movement profile or
+simulated sensor data.
+
+The description package's colcon tests check both variants, mesh resources,
+the connected joint tree and simulation configuration. The additional
+`tests/test_nira_urdf.py` CAD test checks exported mesh bounds and all leg/head
+registrations at zero and nonzero joint angles. Run it with the ROS environment
+sourced and `xacro` and `PyYAML` available to the CAD Python environment:
+
+```bash
+.venv/bin/python -m unittest discover -s tests -p test_nira_urdf.py -v
+```
+
+### Mechanical tests
+
 Run all Nira tests with:
 
 ```bash

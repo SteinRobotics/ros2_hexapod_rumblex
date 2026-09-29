@@ -1,0 +1,34 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 100  # Hz
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    forward_position_controller:
+      type: forward_command_controller/ForwardCommandController
+
+forward_position_controller:
+  ros__parameters:
+    joints:
+      - right_front_coxa_joint
+      - right_front_femur_joint
+      - right_front_tibia_joint
+      - right_mid_coxa_joint
+      - right_mid_femur_joint
+      - right_mid_tibia_joint
+      - right_back_coxa_joint
+      - right_back_femur_joint
+      - right_back_tibia_joint
+      - left_front_coxa_joint
+      - left_front_femur_joint
+      - left_front_tibia_joint
+      - left_mid_coxa_joint
+      - left_mid_femur_joint
+      - left_mid_tibia_joint
+      - left_back_coxa_joint
+      - left_back_femur_joint
+      - left_back_tibia_joint
+      - head_yaw_joint
+      - head_pitch_joint
+    interface_name: position

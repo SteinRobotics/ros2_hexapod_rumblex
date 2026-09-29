@@ -88,7 +88,7 @@ def build_assembly() -> Compound:
     boards = [place_board(mount.module, mount.placement) for mount in BOARD_MOUNTS]
 
     return Compound(
-        label="assembly_body_servo",
+        label="assembly_torso_servo",
         children=[
             body,
             *servo_instances,
@@ -101,9 +101,9 @@ def main() -> None:
     assembly = build_assembly()
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
     (EXPORT_DIR / "stl").mkdir(parents=True, exist_ok=True)
-    # export_step(assembly, str(EXPORT_DIR / "step/assembly_body_servo.step"))
-    export_stl(assembly, str(EXPORT_DIR / "stl/assembly_body_servo.stl"))
-    show(assembly, name="assembly_body_servo", clear=True)
+    # export_step(assembly, str(EXPORT_DIR / "step/assembly_torso_servo.step"))
+    export_stl(assembly, str(EXPORT_DIR / "stl/assembly_torso_servo.stl"))
+    show(assembly, name="assembly_torso_servo", clear=True)
 
 
 if __name__ == "__main__":
