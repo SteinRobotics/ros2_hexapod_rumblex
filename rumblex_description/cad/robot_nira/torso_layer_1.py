@@ -7,7 +7,7 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from robot_nira import EXPORT_DIR
+from robot_nira import EXPORT_DIR, dxf_directory
 from build123d import *
 from utils.ocp_utils import show
 
@@ -41,12 +41,12 @@ def main() -> None:
 
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
     (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
-    (EXPORT_DIR / "dxf").mkdir(parents=True, exist_ok=True)
+    dxf_dir = dxf_directory(torso_common.THICKNESS)
     export_step(result, str(EXPORT_DIR / "step/torso_layer_1.step"))
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
-    dxf_export.write(str(EXPORT_DIR / "dxf/torso_layer_1.dxf"))
+    dxf_export.write(str(dxf_dir / "torso_layer_1.dxf"))
 
     show(result, name="torso_layer_1", clear=True)
 

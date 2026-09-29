@@ -9,7 +9,7 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from collections.abc import Iterable
-from robot_nira import EXPORT_DIR
+from robot_nira import EXPORT_DIR, dxf_directory
 
 from build123d import *
 from utils.ocp_utils import show
@@ -106,12 +106,12 @@ def main() -> None:
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUTPUT_DIR / "step").mkdir(parents=True, exist_ok=True)
-    (OUTPUT_DIR / "dxf").mkdir(parents=True, exist_ok=True)
+    dxf_dir = dxf_directory(torso_common.THICKNESS, export_dir=OUTPUT_DIR)
     export_step(model, str(OUTPUT_DIR / "step" / f"{OUTPUT_NAME}.step"))
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
-    dxf_export.write(str(OUTPUT_DIR / "dxf" / f"{OUTPUT_NAME}.dxf"))
+    dxf_export.write(str(dxf_dir / f"{OUTPUT_NAME}.dxf"))
 
     show(model, name=OUTPUT_NAME, clear=True)
 

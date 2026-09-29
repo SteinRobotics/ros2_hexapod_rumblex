@@ -7,7 +7,10 @@ to both `generated/nox/` and `generated/nira/` when run directly. Run
 `robot_nox.py` to export and display the complete Nox assembly from
 `robot_nox/assembly_complete.py`.
 STEP files go in each export directory's `step/` folder, DXF files in `dxf/`,
-and STL files in `stl/`. Nira uses `generated/nira/` with the same layout.
+and STL files in `stl/`. Nira uses `generated/nira/`, with DXFs grouped by
+required material thickness: `dxf/dxf_1mm/` (1 mm), `dxf/dxf_1p5mm/` (1.5 mm),
+and `dxf/dxf_3mm/` (3 mm). Each exporter uses its model's thickness to select
+the folder.
 Scripts in subfolders also support direct execution, for example
 `python robot_nox/assembly_complete.py` or `python common/toe.py`.
 
@@ -28,6 +31,13 @@ python -m robot_nox.assembly_leg
 python robot_nox.py
 python -m unittest discover -s tests -v
 ```
+
+## imported parts are under
+```
+https://drive.google.com/drive/folders/1eJUvLfukNm479BLqgcmzPj9xVC_L7EXB
+```
+
+
 
 ## Dimensions and joints
 
@@ -109,7 +119,7 @@ rests on layer 2 inside a cream, open-bottom `lidar_interface_housing`.
 Its five laser-cut panels have finger joints, a cable opening and six tabs
 that engage the deck. Twelve wall tabs enter the lid's edge slots and finish
 flush with its upper face. The cover exports STEP/STL and five flat-panel
-DXFs under `generated/nira/dxf/lidar_interface_housing/`.
+DXFs under `generated/nira/dxf/dxf_1p5mm/lidar_interface_housing/`.
 Fits are nominal, without kerf allowance; interface dimensions remain
 photo-based estimates pending hardware measurement.
 

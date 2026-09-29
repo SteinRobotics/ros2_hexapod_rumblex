@@ -21,7 +21,7 @@ from build123d import (
     extrude,
 )
 
-from robot_nira import EXPORT_DIR
+from robot_nira import EXPORT_DIR, dxf_directory
 import robot_nira.torso_common as torso_common
 import robot_nira.torso_layer_2_cover as torso_layer_2_cover
 from utils.ocp_utils import show
@@ -69,12 +69,12 @@ def main() -> None:
     result = build_model(surface)
 
     (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
-    (EXPORT_DIR / "dxf").mkdir(parents=True, exist_ok=True)
+    dxf_dir = dxf_directory(THICKNESS)
     export_step(result, str(EXPORT_DIR / "step/torso_layer_2_addon.step"))
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
-    dxf_export.write(str(EXPORT_DIR / "dxf/torso_layer_2_addon.dxf"))
+    dxf_export.write(str(dxf_dir / "torso_layer_2_addon.dxf"))
 
     show(result, name="torso_layer_2_addon", clear=True)
 

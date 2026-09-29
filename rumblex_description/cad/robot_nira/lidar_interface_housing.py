@@ -17,7 +17,7 @@ from build123d import (
     Mode, Part, Plane, Polygon, Pos, Vector, export_step, export_stl, extrude,
 )
 
-from robot_nira import EXPORT_DIR, board_ydlidar_tmini_interface as interface
+from robot_nira import EXPORT_DIR, dxf_directory, board_ydlidar_tmini_interface as interface
 import robot_nira.torso_common as torso_common
 from utils.colors import COLOR_CREAMY_WHITE
 from utils.ocp_utils import show
@@ -168,7 +168,7 @@ def build_model() -> Part:
 
 def export_flat_parts(panels: dict[str, Part]) -> None:
     """Write the actual five cut patterns, including every tab and slot."""
-    dxf_dir = EXPORT_DIR / "dxf" / "lidar_interface_housing"
+    dxf_dir = dxf_directory(WALL) / "lidar_interface_housing"
     dxf_dir.mkdir(parents=True, exist_ok=True)
     for name, panel in panels.items():
         top = [face for face in panel.faces()
@@ -185,10 +185,6 @@ def main() -> None:
     panels = flat_parts()
     part = assemble(panels)
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-    (EXPORT_DIR / "stl").mkdir(parents=True, exist_ok=True)
-    (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
-    export_step(part, str(EXPORT_DIR / "step/lidar_interface_housing.step"))
-    export_stl(part, str(EXPORT_DIR / "stl/lidar_interface_housing.stl"))
     export_flat_parts(panels)
     show(part, name=part.label, clear=True)
 

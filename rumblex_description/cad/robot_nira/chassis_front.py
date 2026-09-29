@@ -7,7 +7,7 @@ if __package__ in (None, ""):
 
 from build123d import (BuildSketch, ExportDXF, Locations, Mode, Part, Rectangle,
                        Sketch, add, export_step)
-from robot_nira import EXPORT_DIR
+from robot_nira import EXPORT_DIR, dxf_directory
 from robot_nira import chassis_common
 import robot_nira.torso_common as torso_common
 from utils.ocp_utils import show
@@ -41,11 +41,8 @@ def main() -> None:
     surface = build_surface(height)
     model = chassis_common.build_model(surface)
     model.label = "chassis_front"
-    step_dir = EXPORT_DIR / "step"
-    dxf_dir = EXPORT_DIR / "dxf"
-    step_dir.mkdir(parents=True, exist_ok=True)
+    dxf_dir = dxf_directory(chassis_common.THICKNESS)
     dxf_dir.mkdir(parents=True, exist_ok=True)
-    export_step(model, str(step_dir / "chassis_front.step"))
     drawing = ExportDXF()
     drawing.add_shape(surface)
     drawing.write(str(dxf_dir / "chassis_front.dxf"))

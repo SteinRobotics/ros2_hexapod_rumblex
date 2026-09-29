@@ -16,7 +16,7 @@ from build123d import (
     Pos, Rectangle, Rot, Sketch, add, export_step, extrude,
 )
 
-from robot_nira import EXPORT_DIR
+from robot_nira import EXPORT_DIR, dxf_directory
 from robot_nira.foot_common import (
     THICKNESS, OUTER_PLATE_HEIGHT, OUTER_PLATE_Y, OUTER_TAB_WIDTH, OUTER_TAB_X,
 )
@@ -65,11 +65,11 @@ def main() -> None:
     model = build_model(surface)
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
     (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
-    (EXPORT_DIR / "dxf").mkdir(parents=True, exist_ok=True)
+    dxf_dir = dxf_directory(THICKNESS)
     export_step(model, str(EXPORT_DIR / "step/foot_outer.step"))
     drawing = ExportDXF()
     drawing.add_shape(surface)
-    drawing.write(str(EXPORT_DIR / "dxf/foot_outer.dxf"))
+    drawing.write(str(dxf_dir / "foot_outer.dxf"))
     show(model, name="foot_outer", clear=True)
 
 

@@ -8,7 +8,7 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import math
-from robot_nira import EXPORT_DIR
+from robot_nira import EXPORT_DIR, dxf_directory
 from typing import NamedTuple
 
 from build123d import *
@@ -274,16 +274,6 @@ def build_model(surface: Sketch) -> Part:
 def main() -> None:
     surface = build_surface()
     result = build_model(surface)
-
-    EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-    (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
-    (EXPORT_DIR / "dxf").mkdir(parents=True, exist_ok=True)
-    export_step(result, str(EXPORT_DIR / "step/torso_layer_common.step"))
-
-    dxf_export = ExportDXF()
-    dxf_export.add_shape(surface)
-    dxf_export.write(str(EXPORT_DIR / "dxf/torso_layer_common.dxf"))
-
     show(result, name="torso_layer_common", clear=True)
 
 

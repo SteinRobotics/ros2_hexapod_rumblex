@@ -7,7 +7,7 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from robot_nira import EXPORT_DIR
+from robot_nira import EXPORT_DIR, dxf_directory
 
 from build123d import (
     BuildPart, BuildSketch, Circle, Compound, ExportDXF, Locations, Mode,
@@ -163,7 +163,7 @@ def build_assembly(include_servo: bool = True) -> Compound:
 
 def export_surfaces() -> None:
     """Export the three flat cage plates in their own cutting planes."""
-    dxf_dir = EXPORT_DIR / "dxf"
+    dxf_dir = dxf_directory(PLATE_THICKNESS)
     dxf_dir.mkdir(parents=True, exist_ok=True)
     rear_plane = Plane(origin=(0, -PLATE_THICKNESS, 0),
                        x_dir=(1, 0, 0), z_dir=(0, -1, 0))

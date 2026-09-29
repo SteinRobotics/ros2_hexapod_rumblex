@@ -7,7 +7,7 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from robot_nira import EXPORT_DIR
+from robot_nira import EXPORT_DIR, dxf_directory
 
 from build123d import (
     BuildPart,
@@ -57,12 +57,12 @@ def main() -> None:
     result = build_model(surface)
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
     (EXPORT_DIR / "step").mkdir(parents=True, exist_ok=True)
-    (EXPORT_DIR / "dxf").mkdir(parents=True, exist_ok=True)
+    dxf_dir = dxf_directory(THICKNESS)
     export_step(result, str(EXPORT_DIR / "step/foot_front.step"))
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
-    dxf_export.write(str(EXPORT_DIR / "dxf/foot_front.dxf"))
+    dxf_export.write(str(dxf_dir / "foot_front.dxf"))
 
     show(result, name="foot_front", clear=True)
 
