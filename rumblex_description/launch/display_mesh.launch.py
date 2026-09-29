@@ -6,6 +6,7 @@ import re
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 import xacro
@@ -28,7 +29,11 @@ def _launch_robot(context):
             executable='robot_state_publisher',
             parameters=[{'robot_description': description}],
         ),
-        Node(package='joint_state_publisher_gui', executable='joint_state_publisher_gui'),
+        Node(
+            package='joint_state_publisher_gui',
+            executable='joint_state_publisher_gui',
+            condition=IfCondition(LaunchConfiguration('joint_state_publisher_gui')),
+        ),
         Node(
             package='rviz2',
             executable='rviz2',
@@ -42,6 +47,8 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'robot', default_value='nox',
             description='Robot model profile (for example: nox or nira)'),
+        DeclareLaunchArgument(
+            'joint_state_publisher_gui', default_value='true',
+            description='Show sliders for manually setting joint angles'),
         OpaqueFunction(function=_launch_robot),
     ])
-

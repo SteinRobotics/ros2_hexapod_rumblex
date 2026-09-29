@@ -22,7 +22,7 @@ def generate_launch_description():
     display_mesh = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             FindPackageShare('rumblex_description'), '/launch/display_mesh.launch.py']),
-        launch_arguments={'robot': robot}.items(),
+        launch_arguments={'robot': robot, 'joint_state_publisher_gui': 'false'}.items(),
     )
     brain = launch.actions.TimerAction(
         period=2.0,
