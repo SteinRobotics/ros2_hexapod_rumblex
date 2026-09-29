@@ -50,14 +50,16 @@ install(TARGETS
 install(DIRECTORY launch config maps
   DESTINATION share/${PROJECT_NAME}/)
 
-install(PROGRAMS scripts/test_map_walls.py
+install(PROGRAMS scripts/test_map_walls.py scripts/offline_odometry.py
   DESTINATION lib/${PROJECT_NAME})
-install(FILES scripts/wall_geometry.py
+install(FILES scripts/wall_geometry.py scripts/planar_motion.py
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(test_wall_geometry test/test_wall_geometry.py)
+  ament_add_pytest_test(test_planar_motion test/test_planar_motion.py)
+  ament_add_pytest_test(test_offline_odometry test/test_offline_odometry.py)
 endif()
 
 ament_package()

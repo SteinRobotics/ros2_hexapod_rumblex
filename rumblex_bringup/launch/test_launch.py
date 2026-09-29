@@ -34,7 +34,9 @@ def generate_launch_description():
     display_mesh = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             FindPackageShare('rumblex_description'), '/launch/display_mesh.launch.py']),
-        launch_arguments={'robot': robot, 'joint_state_publisher_gui': 'false'}.items(),
+        launch_arguments={
+            'robot': robot, 'joint_state_publisher_gui': 'false', 'fixed_frame': 'map',
+        }.items(),
     )
     brain = launch.actions.TimerAction(
         period=2.0,
@@ -61,7 +63,7 @@ def generate_launch_description():
             description='Publish offline scan_1d readings from map walls; disable for a real lidar'),
         DeclareLaunchArgument(
             'publish_test_map_tf', default_value='true',
-            description='Place the test robot at the map origin; disable when using localization'),
+            description='Simulate pose from active movement; disable when providing odometry/localization'),
         house_map,
         Node(
             package='rumblex_navigation', executable='test_map_walls.py',
@@ -71,11 +73,16 @@ def generate_launch_description():
                 'simulate_lidar': ParameterValue(LaunchConfiguration('simulate_lidar'), value_type=bool),
             }],
         ),
-        # This offline launch has no odometry/localization to connect these frames.
+        # Offline commanded-motion estimate: map -> odom -> base_link.
         Node(
             package='tf2_ros', executable='static_transform_publisher',
-            name='test_map_to_base_link', output='screen',
-            arguments=['--frame-id', 'map', '--child-frame-id', 'base_link'],
+            name='test_map_to_odom', output='screen',
+            arguments=['--frame-id', 'map', '--child-frame-id', 'odom'],
+            condition=IfCondition(LaunchConfiguration('publish_test_map_tf')),
+        ),
+        Node(
+            package='rumblex_navigation', executable='offline_odometry.py',
+            output='screen',
             condition=IfCondition(LaunchConfiguration('publish_test_map_tf')),
         ),
         communication,

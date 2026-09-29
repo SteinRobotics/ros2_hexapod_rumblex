@@ -37,7 +37,8 @@ def _launch_robot(context):
         Node(
             package='rviz2',
             executable='rviz2',
-            arguments=['-d', os.path.join(share, 'rviz', 'model.rviz')],
+            arguments=['-d', os.path.join(share, 'rviz', 'model.rviz'),
+                       '-f', LaunchConfiguration('fixed_frame')],
         ),
     ]
 
@@ -47,6 +48,9 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'robot', default_value='nox',
             description='Robot model profile (for example: nox or nira)'),
+        DeclareLaunchArgument(
+            'fixed_frame', default_value='base_link',
+            description='RViz fixed frame'),
         DeclareLaunchArgument(
             'joint_state_publisher_gui', default_value='true',
             description='Show sliders for manually setting joint angles'),

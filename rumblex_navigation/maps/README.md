@@ -45,11 +45,30 @@ localization or a `map` to `odom` transform. To inspect the map alone in RViz,
 select `map` as the fixed frame and `/map` as the Map display topic. Align
 the robot's pose with this map before using it for navigation.
 
-The offline `test_launch.py` additionally publishes an identity `map` to
-`base_link` transform so the map can be displayed in the default RViz
-`base_link` fixed frame. This places the robot at the map origin for visualization
-only. Disable it with `publish_test_map_tf:=false` when providing an actual
-odometry/localization transform tree; two publishers must not own the robot's pose.
+The offline `test_launch.py` uses `map` as the RViz fixed frame and publishes an
+identity `map` to `odom` transform. Its `offline_odometry.py` node integrates
+the velocity in `/cmd_movement_update` into `/odom` and a dynamic `odom` to
+`base_link` transform, starting at the map origin. It follows the same commands
+as the legs, including speech, joystick, scripted behaviors, and `/cmd_vel`
+requests routed through the brain. Integration runs only when
+`/movement_type_actual` reports `CONTINUOUS_MOVE` or `CONTINUOUS_RUNNING`, so
+standing up and stationary poses do not translate the robot.
+Commands stay active until replaced; send a zero Twist to stop:
+
+```bash
+ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist '{linear: {x: 0.1}}'
+ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist '{}'
+```
+
+Speech commands such as `fahr nach vorne` use the brain's current speed of
+0.005 m/s (5 mm/s), so translation will be slow. A direct `/cmd_vel` command
+can request a higher speed for visualization checks.
+
+This is an offline commanded-motion estimate, without foot-contact feedback,
+collision physics, or localization.
+Disable both test transforms and offline odometry with
+`publish_test_map_tf:=false` when providing an actual odometry/localization
+transform tree; two publishers must not own the robot's pose.
 
 The test launch extrudes occupied cells into 2 m high walls (from ground level
 to z=2 m) on `/test_map_walls`, displayed automatically in the model RViz config.
