@@ -49,6 +49,18 @@ class NiraDescriptionTests(unittest.TestCase):
             self.assertTrue(controller.is_file())
             self.assertEqual(controller.parent.name, 'nira')
 
+    def test_visual_materials_match_nira_parts(self):
+        for mesh in (False, True):
+            model = expand(mesh)
+            materials = {link.get('name'): link.find('visual/material').get('name')
+                         for link in model.findall('link') if link.find('visual') is not None}
+            self.assertEqual(materials['base_link'], 'creamy_white')
+            for prefix in ('right_front', 'right_mid', 'right_back',
+                           'left_front', 'left_mid', 'left_back'):
+                self.assertEqual(materials[f'{prefix}_coxa_link'], 'dark_gray')
+                self.assertEqual(materials[f'{prefix}_femur_link'], 'dark_gray')
+                self.assertEqual(materials[f'{prefix}_tibia_link'], 'creamy_white')
+
 
 if __name__ == '__main__':
     unittest.main()

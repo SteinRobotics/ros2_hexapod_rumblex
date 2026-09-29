@@ -5,6 +5,10 @@
     <color rgba="0.3 0.3 0.3 1.0"/>
   </material>
 
+  <material name="creamy_white">
+    <color rgba="0.94 0.91 0.82 1.0"/>
+  </material>
+
   <material name="orange">
     <color rgba="0.9 0.5 0.1 1.0"/>
   </material>
