@@ -58,4 +58,12 @@
     </visual>
     <inertial><mass value="0.001"/><inertia ixx="1e-8" ixy="0" ixz="0" iyy="1e-8" iyz="0" izz="1e-8"/></inertial>
   </link>
+  <!-- Nominal beam origin at the midpoint of the two CAD lidar front faces.
+       CAD +X maps to head_pitch_link +Y through the visual's rotation. -->
+  <joint name="lidar_joint" type="fixed">
+    <parent link="head_pitch_link"/>
+    <child link="lidar_link"/>
+    <origin xyz="-0.020194 0.063636 0.018754" rpy="0 0 ${pi/2}"/>
+  </joint>
+  <link name="lidar_link"/>
 </robot>

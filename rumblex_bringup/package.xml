@@ -10,6 +10,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <exec_depend>ros2launch</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
   <exec_depend>bno055</exec_depend>
   <exec_depend>rumblex_brain</exec_depend>
   <exec_depend>rumblex_communication</exec_depend>

@@ -1,0 +1,49 @@
+"""Check wall extrusion, door clearance and height-aware lidar intersections."""
+
+import math
+from pathlib import Path
+import sys
+import unittest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
+from wall_geometry import ray_distance, rotate, wall_boxes
+
+
+class WallGeometryTest(unittest.TestCase):
+    def test_merge_and_preserve_door_and_unknown(self):
+        data = [100, 0, 100, 100, -1, 100, 100, 100, 100]
+        boxes = wall_boxes(data, 3, 3, 0.5, 2.0)
+        self.assertEqual(len(boxes), 3)
+        self.assertTrue(all(low[2] == 0 and high[2] == 2 for low, high in boxes))
+        self.assertEqual(ray_distance((0.75, -1, 1), (0, 1, 0), boxes, 40), 2)
+        self.assertEqual(ray_distance((0.25, -1, 1), (0, 1, 0), boxes, 40), 1)
+
+    def test_height_and_pitch(self):
+        boxes = [((2, -1, 0), (2.2, 1, 2))]
+        self.assertEqual(ray_distance((0, 0, 0.2), (1, 0, 0), boxes, 40), 2)
+        self.assertTrue(math.isinf(ray_distance((0, 0, 2.1), (1, 0, 0), boxes, 40)))
+        direction = (math.sqrt(0.5), 0, math.sqrt(0.5))
+        self.assertTrue(math.isinf(ray_distance((0, 0, 0.2), direction, boxes, 40)))
+        self.assertAlmostEqual(ray_distance((0, 0, 0.2), (0.8, 0, 0.6), boxes, 40), 2.5)
+
+    def test_nearest_range_limits_and_inside(self):
+        boxes = [((4, -1, 0), (5, 1, 2)), ((2, -1, 0), (3, 1, 2))]
+        self.assertEqual(ray_distance((0, 0, 1), (1, 0, 0), boxes, 40), 2)
+        self.assertTrue(math.isinf(ray_distance((0, 0, 1), (1, 0, 0), boxes, 1)))
+        self.assertTrue(math.isinf(ray_distance((0, 0, 1), (-1, 0, 0), boxes, 40)))
+        self.assertEqual(ray_distance((2.5, 0, 1), (1, 0, 0), boxes, 40), 0)
+        self.assertTrue(math.isinf(ray_distance((0, 0, 1), (1, 0, 0), [], 40)))
+
+    def test_rotated_grid_and_sensor(self):
+        rotation = (0, 0, math.sqrt(0.5), math.sqrt(0.5))
+        inverse = (0, 0, -rotation[2], rotation[3])
+        direction = rotate((1, 0, 0), rotation)
+        self.assertAlmostEqual(direction[0], 0)
+        self.assertAlmostEqual(direction[1], 1)
+        local = rotate(direction, inverse)
+        self.assertAlmostEqual(local[0], 1)
+        self.assertAlmostEqual(local[1], 0)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -50,4 +50,14 @@ install(TARGETS
 install(DIRECTORY launch config maps
   DESTINATION share/${PROJECT_NAME}/)
 
+install(PROGRAMS scripts/test_map_walls.py
+  DESTINATION lib/${PROJECT_NAME})
+install(FILES scripts/wall_geometry.py
+  DESTINATION lib/${PROJECT_NAME})
+
+if(BUILD_TESTING)
+  find_package(ament_cmake_pytest REQUIRED)
+  ament_add_pytest_test(test_wall_geometry test/test_wall_geometry.py)
+endif()
+
 ament_package()

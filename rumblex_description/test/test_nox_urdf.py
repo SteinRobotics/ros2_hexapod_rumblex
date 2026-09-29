@@ -43,6 +43,14 @@ class NoxDescriptionTests(unittest.TestCase):
         self.assertTrue(controller.is_file())
         self.assertEqual(controller.parent.name, 'nox')
 
+    def test_lidar_frame_follows_head(self):
+        model = expand()
+        joint = model.find("joint[@name='lidar_joint']")
+        self.assertEqual(joint.get('type'), 'fixed')
+        self.assertEqual(joint.find('parent').get('link'), 'head_pitch_link')
+        self.assertEqual(joint.find('child').get('link'), 'lidar_link')
+        self.assertIsNotNone(model.find("link[@name='lidar_link']"))
+
 
 if __name__ == '__main__':
     unittest.main()
