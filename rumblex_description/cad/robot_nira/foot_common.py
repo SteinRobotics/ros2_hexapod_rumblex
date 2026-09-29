@@ -15,14 +15,17 @@ from build123d import (
     Mode,
     Part,
     Polygon,
+    Pos,
     Rectangle,
     Sketch,
+    Sphere,
     add,
     extrude,
 )
 
 from common import servo_simplified
 from robot_nira.armor_style import gill_points
+from utils.colors import COLOR_RED
 from utils.ocp_utils import show
 
 THICKNESS = 1.5
@@ -40,20 +43,39 @@ OUTER_TAB_X = (28.0, 46.0, 64.0)
 # Swept toe and a broad lower rail echo the faceted canopy. Keep the servo
 # shoulder and all mechanical interfaces in their original drawing frame.
 FOOT_OUTLINE = [
-    (-16.25, -27.25),
-    (72.0, -27.25),
-    (91.75, -16.75),
-    (91.75, 0.25),
-    (77.0, 2.25),
-    (24.0, 9.25),
-    (18.75, 9.25),
-    (12.75, 15.25),
-    (9.75, 15.25),
-    (6.75, 12.25),
-    (-7.25, -9.75),
-    (-12.25, -9.75),
-    (-19.25, -16.75),
-    (-19.25, -24.25),
+    (-16.25, -27.25),    #0 
+    (72.0, -27.25),      #1
+    (91.75, -16.75),     #2
+    (91.75, 0.25),       #3
+    (77.0, 2.25),        #4
+    (18.75, 7.0),       #5
+    (12.75, 15.25),      #6
+    (9.75, 15.25),       #7
+    (6.75, 12.25),       #8
+    (-7.25, -9.75),      #9
+    (-12.25, -9.75),     #10
+    (-19.25, -16.75),    #11
+    (-19.25, -24.25),    #12
+]
+
+# Preview only: zero-based FOOT_OUTLINE indices, e.g. (0, 4, 13).
+# A single point needs a trailing comma: (0,). Use () to disable markers.
+# Alternatively run: python robot_nira/foot_common.py --marker 0 --marker 4
+DEBUG_OUTLINE_POINTS = (5,)
+
+FOOT_OUTLINE_OLD = [
+    (-16.25, -25.75),  # 0
+    ( 53.75, -25.75),  # 1
+    ( 91.75, -16.75),  # 2
+    ( 91.75,   0.25),  # 3
+    ( 18.75,   9.25),  # 4
+    ( 12.75,  15.25),  # 5
+    (  9.75,  15.25),  # 6
+    (  6.75,  12.25),  # 7
+    ( -7.25,  -9.75),  # 8
+    (-12.25,  -9.75),  # 9
+    (-19.25, -16.75),  # 10
+    (-19.25, -22.75),  # 11
 ]
 
 # Swept gills stay above the spacer bosses and below the upper perimeter.
@@ -102,9 +124,27 @@ def build_model(surface: Sketch) -> Part:
     return model.part
 
 def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Preview the Nira foot outline.")
+    parser.add_argument(
+        "--marker", type=int, action="append", choices=range(len(FOOT_OUTLINE)),
+        help="Mark a zero-based FOOT_OUTLINE point (repeat for multiple points).",
+    )
+    args = parser.parse_args()
+    indices = args.marker if args.marker is not None else DEBUG_OUTLINE_POINTS
+    for index in indices:
+        if not 0 <= index < len(FOOT_OUTLINE):
+            parser.error(f"outline marker index {index} is out of range")
+
     surface = build_surface()
     result = build_model(surface)
     show(result, name="foot_cutout", clear=True)
+    for index in indices:
+        x, y = FOOT_OUTLINE[index]
+        marker = Pos(x, y, THICKNESS) * Sphere(1.0)
+        marker.color = COLOR_RED
+        show(marker, name=f"outline_{index} ({x}, {y})", clear=False)
 
 
 if __name__ == "__main__":
