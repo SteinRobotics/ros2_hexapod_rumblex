@@ -47,7 +47,6 @@ void CRequester::sendServoRequest(const double duration_s) {
     auto head = kinematics_->getHead();
     auto legs = kinematics_->getLegsAngles();
     servo_handler_->run(CRequest(head, legs, duration_s));
-    publishJointStates(legs, head);
 }
 
 void CRequester::publishJointStates(const std::map<ELegIndex, CLegAngles>& legs, const COrientation& head) {
@@ -99,6 +98,7 @@ void CRequester::update(std::chrono::milliseconds timeslice) {
         double duration_s = double(timeslice.count() / 1000.0);
         sendServoRequest(duration_s);
     }
+    publishJointStates(kinematics_->getLegsAngles(), kinematics_->getHead());
 }
 
 }  // namespace rumblex_movement

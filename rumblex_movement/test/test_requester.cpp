@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <thread>
+
 #include "handler/servohandler.hpp"
 #include "mock/mock_servohandler.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -51,6 +54,28 @@ class RequesterTest : public ::testing::Test {
 TEST_F(RequesterTest, ConstructAndUpdate) {
     // basic smoke test: update should run without throwing
     EXPECT_NO_THROW(requester_->update(std::chrono::milliseconds(0)));
+}
+
+TEST_F(RequesterTest, PublishesInitialJointStatesWithoutMovementRequest) {
+    sensor_msgs::msg::JointState::SharedPtr received;
+    auto subscriber = node_->create_subscription<sensor_msgs::msg::JointState>(
+        "joint_states", 10,
+        [&received](sensor_msgs::msg::JointState::SharedPtr message) { received = message; });
+
+    const auto deadline = std::chrono::steady_clock::now() + 3s;
+    while (!received && std::chrono::steady_clock::now() < deadline) {
+        requester_->update(100ms);
+        rclcpp::spin_some(node_);
+        std::this_thread::sleep_for(10ms);
+    }
+
+    ASSERT_NE(received, nullptr);
+    EXPECT_EQ(received->name.size(), 20u);
+    EXPECT_EQ(received->position.size(), received->name.size());
+    for (const auto* joint : {"right_front_coxa_joint", "right_front_femur_joint",
+                              "right_front_tibia_joint", "head_yaw_joint", "head_pitch_joint"}) {
+        EXPECT_NE(std::find(received->name.begin(), received->name.end(), joint), received->name.end());
+    }
 }
 
 TEST_F(RequesterTest, HandleNoRequestMessage) {

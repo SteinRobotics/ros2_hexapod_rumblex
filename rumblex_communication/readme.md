@@ -3,6 +3,8 @@
 ## picovoice porcupine
 Keyword module: `rumblex_communication/stt_keyword.py`
 
+Keyword spotting is planned for future use and is currently disabled. The communication node does not use this module, and `pvporcupine` is not a required package dependency.
+
 Expected runtime assets:
 - Picovoice access key in `PICOVOICE_ACCESS_KEY` or `keys/picovoice_access_key.txt`
 - Custom keyword files in `models/porcupine/` with one `.ppn` for `rumblex` and one for `jamie`

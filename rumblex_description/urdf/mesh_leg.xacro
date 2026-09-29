@@ -4,8 +4,9 @@
   <!-- Nox CAD registration (cad/robot_nox), metres and radians.
        Joint frames are the horn mounting faces, not the simplified IK frames
        in leg.xacro. Zero pose matches assembly_complete: CAD angles 0/0/180.
-       Positive joint angles increase the CAD connection angles. The STL
-       exports already contain the femur and tibia rolls; do not apply again. -->
+       The femur axis follows the kinematics convention: positive angles lift
+       the leg, opposite to the CAD connection angle. The STL exports already
+       contain the femur and tibia rolls; do not apply again. -->
   <xacro:macro name="mesh_hexapod_leg" params="prefix cx cy psi_deg">
     <xacro:property name="mount_yaw" value="${psi_deg * pi / 180.0}"/>
     <xacro:property name="mesh_scale" value="0.001 0.001 0.001"/>
@@ -30,7 +31,7 @@
 
     <joint name="${prefix}_femur_joint" type="revolute">
       <parent link="${prefix}_coxa_link"/><child link="${prefix}_femur_link"/>
-      <origin xyz="0.053131385358869 -0.0185 0.0075064241990335" rpy="${pi / 2} -0.51048832191678 ${pi}"/><axis xyz="0 0 -1"/>
+      <origin xyz="0.053131385358869 -0.0185 0.0075064241990335" rpy="${pi / 2} -0.51048832191678 ${pi}"/><axis xyz="0 0 1"/>
       <limit lower="${-30 * pi / 180}" upper="${90 * pi / 180}" effort="3.0" velocity="6.0"/>
       <dynamics damping="0.1" friction="0.05"/>
     </joint>

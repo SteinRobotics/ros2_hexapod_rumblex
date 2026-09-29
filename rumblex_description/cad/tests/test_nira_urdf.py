@@ -88,7 +88,7 @@ class NiraCadDescriptionTests(unittest.TestCase):
                 with self.subTest(angle=angle, leg=prefix):
                     servo = assembly_torso_with_servos.servo_location(torso_common.SERVO_CUTOUT_CONFIGS[mount]) * self.servo
                     servo.joints['rotation'].connect_to(self.coxa.joints['body_to_coxa_fixed'], angle=angle)
-                    self.coxa.joints['coxa_to_femur_fixed'].connect_to(self.femur.joints['femur_to_coxa_revolute'], angle=angle)
+                    self.coxa.joints['coxa_to_femur_fixed'].connect_to(self.femur.joints['femur_to_coxa_revolute'], angle=(-angle) % 360)
                     self.femur.joints['femur_to_tibia_fixed'].connect_to(self.tibia.joints['tibia_to_femur_revolute'], angle=180 + angle)
                     for segment in ('coxa', 'femur', 'tibia'):
                         self.assert_mesh_placement(f'{prefix}_{segment}_link', getattr(self, segment), frames)

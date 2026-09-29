@@ -60,7 +60,7 @@
                      center="0.0265656926794 0 0.0170032120995" size="0.0781313853589 0.041 0.043993575801"
                      mass="0.12" meshes="${meshes}" material="dark_gray"/>
     <xacro:nira_joint name="${prefix}_femur_joint" parent="${prefix}_coxa_link" child="${prefix}_femur_link"
-                      xyz="0.0531313853589 -0.0185 0.00750642419903" rpy="1.57079632679 -0.510488321917 3.14159265359" axis="0 0 -1" lower="-30" upper="90"/>
+                      xyz="0.0531313853589 -0.0185 0.00750642419903" rpy="1.57079632679 -0.510488321917 3.14159265359" axis="0 0 1" lower="-30" upper="90"/>
     <xacro:nira_link name="${prefix}_femur_link" mesh="assembly_femur"
                      xyz="-0.035 0 0.00425" rpy="1.57079632679 0 1.57079632679"
                      center="-0.0323906817215 0.00458043191449 0.0182498422486" size="0.0847813634429 0.0378201245829 0.0410000000001"
