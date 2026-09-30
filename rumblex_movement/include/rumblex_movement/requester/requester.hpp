@@ -17,16 +17,16 @@
 #include "rumblex_interfaces/msg/movement_request.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 //
-#include "gaitcontroller.hpp"
-#include "handler/servohandler.hpp"
-#include "igaits.hpp"
+#include "gait_controller.hpp"
+#include "gait_interfaces.hpp"
+#include "handler/servo_handler.hpp"
 #include "kinematics.hpp"
 
 namespace rumblex_movement {
 
 class CRequester {
    public:
-    CRequester(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CServoHandler> servoHandler = nullptr);
+    CRequester(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CServoHandler> servo_handler = nullptr);
     virtual ~CRequester() = default;
 
     void update(std::chrono::milliseconds timeslice);
@@ -35,9 +35,9 @@ class CRequester {
     void onContinuousMovementUpdate(const rumblex_interfaces::msg::ContinuousMovementUpdate& msg);
 
    private:
-    rclcpp::Subscription<rumblex_interfaces::msg::MovementRequest>::SharedPtr subMovementRequest_;
+    rclcpp::Subscription<rumblex_interfaces::msg::MovementRequest>::SharedPtr sub_movement_request_;
     rclcpp::Subscription<rumblex_interfaces::msg::ContinuousMovementUpdate>::SharedPtr
-        subContinuousMovementUpdate_;
+        sub_continuous_movement_update_;
 
     void sendServoRequest(const double duration_s);
 
@@ -47,10 +47,10 @@ class CRequester {
     std::shared_ptr<CServoHandler> servo_handler_;
 
     geometry_msgs::msg::Twist velocity_;
-    rumblex_interfaces::msg::Pose pose_torso_;
-    rumblex_interfaces::msg::Orientation orientation_head_;
+    rumblex_interfaces::msg::Pose torso_pose_;
+    rumblex_interfaces::msg::Orientation head_orientation_;
 
-    rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr pubJointStates_;
+    rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr pub_joint_states_;
     void publishJointStates(const std::map<ELegIndex, CLegAngles>& legs, const COrientation& head);
 };
 }  // namespace rumblex_movement

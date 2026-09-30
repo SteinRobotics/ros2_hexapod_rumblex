@@ -2,7 +2,7 @@
  * Copyright (c) 2024 Christian Stein
  ******************************************************************************/
 
-#include "requester/gaitcontroller.hpp"
+#include "requester/gait_controller.hpp"
 
 using rumblex_interfaces::msg::MovementRequest;
 
@@ -27,30 +27,30 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
 
     // Create all gait instances
     gaits_[MovementRequest::SEQUENCE_BODY_ROLL] =
-        std::make_shared<CGaitTorsoRoll>(node_, kinematics_, params_.torsoRoll);
+        std::make_shared<CTorsoRollGait>(node_, kinematics_, params_.torso_roll);
     gaits_[MovementRequest::SEQUENCE_CLAP] = std::make_shared<CClapGait>(node_, kinematics_, params_.clap);
     gaits_[MovementRequest::SEQUENCE_HIGH_FIVE] =
-        std::make_shared<CHighFiveGait>(node_, kinematics_, params_.highFive);
+        std::make_shared<CHighFiveGait>(node_, kinematics_, params_.high_five);
     gaits_[MovementRequest::SEQUENCE_LAYDOWN] =
-        std::make_shared<CLayDownGait>(node_, kinematics_, params_.layDown);
+        std::make_shared<CLayDownGait>(node_, kinematics_, params_.lay_down);
     gaits_[MovementRequest::SEQUENCE_LEGS_WAVE] =
-        std::make_shared<CGaitLegWave>(node_, kinematics_, params_.legWave);
-    gaits_[MovementRequest::SEQUENCE_LOOK] = std::make_shared<CGaitLook>(node_, kinematics_, params_.look);
+        std::make_shared<CLegWaveGait>(node_, kinematics_, params_.leg_wave);
+    gaits_[MovementRequest::SEQUENCE_LOOK] = std::make_shared<CLookGait>(node_, kinematics_, params_.look);
     gaits_[MovementRequest::CONTINUOUS_MOVE] = std::make_shared<CMoveCombinedGait>(
-        node_, kinematics_, params_.wave, params_.ripple, params_.tripod, params_.moveCombined);
+        node_, kinematics_, params_.wave, params_.ripple, params_.tripod, params_.move_combined);
     gaits_[MovementRequest::CONTINUOUS_RUNNING] =
-        std::make_shared<CGaitRunning>(node_, kinematics_, params_.running);
+        std::make_shared<CRunningGait>(node_, kinematics_, params_.running);
     gaits_[MovementRequest::SEQUENCE_STAND_UP] =
-        std::make_shared<CStandUpGait>(node_, kinematics_, params_.standUp);
+        std::make_shared<CStandUpGait>(node_, kinematics_, params_.stand_up);
     gaits_[MovementRequest::SEQUENCE_TESTLEGS] =
-        std::make_shared<CTestLegsGait>(node_, kinematics_, params_.testLegs);
+        std::make_shared<CTestLegsGait>(node_, kinematics_, params_.test_legs);
     gaits_[MovementRequest::SINGLE_POSE] =
-        std::make_shared<CGaitSinglePose>(node_, kinematics_, params_.singlePose);
+        std::make_shared<CSinglePoseGait>(node_, kinematics_, params_.single_pose);
     gaits_[MovementRequest::CONTINUOUS_POSE] =
-        std::make_shared<CGaitContinuousPose>(node_, kinematics_, params_.continuousPose);
+        std::make_shared<CContinuousPoseGait>(node_, kinematics_, params_.continuous_pose);
     gaits_[MovementRequest::SEQUENCE_WAITING] =
         std::make_shared<CWaitingGait>(node_, kinematics_, params_.waiting);
-    gaits_[MovementRequest::SEQUENCE_WATCH] = std::make_shared<CGaitWatch>(node_, kinematics_, params_.watch);
+    gaits_[MovementRequest::SEQUENCE_WATCH] = std::make_shared<CWatchGait>(node_, kinematics_, params_.watch);
 
     // Default active gait (robot starts laying down)
     active_gait_ = gaits_[MovementRequest::SEQUENCE_LAYDOWN];

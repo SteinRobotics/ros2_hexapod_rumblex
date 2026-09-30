@@ -4,8 +4,8 @@
 #include <numbers>
 #include <thread>
 
-#include "handler/servohandler.hpp"
-#include "mock/mock_servohandler.hpp"
+#include "handler/servo_handler.hpp"
+#include "mock/mock_servo_handler.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "requester/requester.hpp"
 #include "test_helpers.hpp"
@@ -21,23 +21,11 @@ class RequesterTest : public ::testing::Test {
         }
         rclcpp::NodeOptions options;
         auto overrides = test_helpers::defaultRobotParameters();
-        overrides.emplace_back("SERVO_CONTROLLER_OFFLINE", true);
-        overrides.emplace_back("STANDING_FOOT_POS_X",
-                               std::vector<double>{0.092, 0.0, -0.092, 0.092, 0.0, -0.092});
-        overrides.emplace_back("STANDING_FOOT_POS_Y",
-                               std::vector<double>{0.092, 0.130, 0.092, -0.092, -0.130, -0.092});
-        overrides.emplace_back("STANDING_FOOT_POS_Z",
-                               std::vector<double>{-0.050, -0.050, -0.050, -0.050, -0.050, -0.050});
-        overrides.emplace_back("LAYDOWN_FOOT_POS_X",
-                               std::vector<double>{0.071, 0.0, -0.071, 0.071, 0.0, -0.071});
-        overrides.emplace_back("LAYDOWN_FOOT_POS_Y",
-                               std::vector<double>{0.071, 0.100, 0.071, -0.071, -0.100, -0.071});
-        overrides.emplace_back("LAYDOWN_FOOT_POS_Z",
-                               std::vector<double>{0.010, 0.010, 0.010, 0.010, 0.010, 0.010});
+        overrides.emplace_back("servo.offline", true);
         options.parameter_overrides(overrides);
         node_ = std::make_shared<rclcpp::Node>("test_requester_node", options);
-        servoHandlerMock_ = std::make_shared<CServoHandlerMock>(node_);
-        requester_ = std::make_unique<CRequester>(node_, servoHandlerMock_);
+        servo_handler_mock_ = std::make_shared<CServoHandlerMock>(node_);
+        requester_ = std::make_unique<CRequester>(node_, servo_handler_mock_);
     }
 
     void TearDown() override {
@@ -49,7 +37,7 @@ class RequesterTest : public ::testing::Test {
 
     std::shared_ptr<rclcpp::Node> node_;
     std::unique_ptr<CRequester> requester_;
-    std::shared_ptr<CServoHandlerMock> servoHandlerMock_;
+    std::shared_ptr<CServoHandlerMock> servo_handler_mock_;
 };
 
 TEST_F(RequesterTest, ConstructAndUpdate) {

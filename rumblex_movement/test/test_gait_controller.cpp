@@ -7,7 +7,7 @@
 #include <geometry_msgs/msg/twist.hpp>
 
 #include "rclcpp/rclcpp.hpp"
-#include "requester/gaitcontroller.hpp"
+#include "requester/gait_controller.hpp"
 #include "requester/kinematics.hpp"
 #include "rumblex_interfaces/msg/movement_request.hpp"
 #include "test_helpers.hpp"

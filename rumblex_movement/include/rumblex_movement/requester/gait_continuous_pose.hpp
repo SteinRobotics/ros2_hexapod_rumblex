@@ -3,19 +3,20 @@
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 
+#include "requester/gait_interfaces.hpp"
 #include "requester/gait_parameters.hpp"
-#include "requester/igaits.hpp"
 #include "requester/kinematics.hpp"
 #include "requester/types.hpp"
+#include "rumblex_utils/filters.hpp"
 #include "rumblex_utils/linear_interpolation.hpp"
 
 namespace rumblex_movement {
 
-class CGaitSinglePose : public IContinuousGait {
+class CContinuousPoseGait : public IContinuousGait {
    public:
-    CGaitSinglePose(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CKinematics> kinematics,
-                    Parameters::SinglePose& params);
-    ~CGaitSinglePose() override = default;
+    CContinuousPoseGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CKinematics> kinematics,
+                        Parameters::ContinuousPose& params);
+    ~CContinuousPoseGait() override = default;
 
     void start(double duration_s, uint8_t direction) override;
     bool update(const geometry_msgs::msg::Twist& velocity, const CPose& torso,
@@ -29,15 +30,13 @@ class CGaitSinglePose : public IContinuousGait {
    private:
     std::shared_ptr<rclcpp::Node> node_;
     std::shared_ptr<CKinematics> kinematics_;
-    Parameters::SinglePose params_;
+    Parameters::ContinuousPose params_;
     EGaitState state_ = EGaitState::Stopped;
 
     CPose torso_origin_ = CPose();
     COrientation head_origin_ = COrientation();
-
-    double duration_s_ = 0.0;
-    double phase_increment_ = 0.1;
-    double phase_ = 0.0;
+    CPose torso_target_ = CPose();
+    COrientation head_target_ = COrientation();
 };
 
 }  // namespace rumblex_movement

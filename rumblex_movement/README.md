@@ -9,15 +9,17 @@ Extract numbers explicitly with `.numerical_value_in(unit)` at existing interfac
 `CPosition` coordinates and `CTorsoCenterOffset` coordinates are `Length`
 quantities. `COrientation` members (`roll`, `pitch`, `yaw`), `CLegAngles`
 members (`torso_coxa`, `coxa_femur`, `femur_tibia`), and the torso offset `psi` are `Angle`
-quantities. Existing YAML keys, ROS parameter names, servo IDs, and URDF joint
-names retain their `coxa`/`femur`/`tibia` naming at the interfaces.
-Torso poses and center offsets exclude the head, whose orientation is stored
-separately. Internal names use `torso`; existing ROS `body_pose` fields,
-`SEQUENCE_BODY_ROLL` IDs, body parameter keys, and YAML `body` keys remain compatible.
-Toe positions are stored in `toe_pos_`; methods use `Toe` in their names.
-Existing `footPositions` YAML keys and ROS parameter roots retain their names
-for compatibility.
-`CLeg` stores its joint angles in `angles_`. Arithmetic and
+quantities. Torso poses and center offsets exclude the head, whose orientation
+is stored separately. `CLeg` stores its toe position in `toe_position`.
+
+Standing and laydown toe positions use the ROS parameter roots
+`toe_positions_standing` and `toe_positions_laydown`, with per-leg `x`, `y`, and
+`z` coordinates in metres. Leg keys use lowercase names such as `right_front`.
+Gait parameters use `gait.<name>.<field>`; servo parameters use `servo.<field>`.
+See [naming conventions and parameter migration](NAMING.md) for the complete
+rename list. Custom configurations must migrate to the new keys.
+
+`CLeg` stores its joint angles in `angles`. Arithmetic and
 interpolation preserve units, and assignments reject bare numbers or quantities
 of the wrong dimension. For example:
 

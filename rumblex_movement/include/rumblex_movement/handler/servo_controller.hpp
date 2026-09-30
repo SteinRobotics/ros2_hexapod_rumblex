@@ -11,12 +11,12 @@
 #include <vector>
 
 #include "handler/servo_protocol.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "requester/types.hpp"
 #include "rumblex_interfaces/msg/servo_angle.hpp"
 #include "rumblex_interfaces/msg/servo_angles.hpp"
 #include "rumblex_interfaces/msg/servo_direct_request.hpp"
 #include "rumblex_interfaces/msg/servo_status.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "requester/types.hpp"
 #include "std_msgs/msg/header.hpp"
 
 namespace rumblex_movement {
@@ -107,7 +107,7 @@ class CServoController {
     CServoController(std::shared_ptr<rclcpp::Node> node);
     virtual ~CServoController() = default;
 
-    void requestAngles(const std::map<uint32_t, double>& targetAngles, const double duration_s);
+    void requestAngles(const std::map<uint32_t, double>& target_angles, const double duration_s);
     // void sendServoRequest(const rumblex_interfaces::msg::ServoRequest& msg);
 
     // void onServoRequestReceived(const rumblex_interfaces::msg::ServoRequest& msg);
@@ -126,21 +126,21 @@ class CServoController {
     int angle_to_ticks(double angle, int idx);
 
     std::map<int, CServo> servos_;
-    std::map<std::string, int> nameToIdx_;
-    uint8_t cycleCounter_ = 0;
+    std::map<std::string, int> name_to_idx_;
+    uint8_t cycle_counter_ = 0;
     std::shared_ptr<rclcpp::Node> node_;
 
-    rclcpp::Subscription<rumblex_interfaces::msg::ServoAngle>::SharedPtr subSingleServoRequest_;
-    rclcpp::Subscription<rumblex_interfaces::msg::ServoDirectRequest>::SharedPtr subServoDirectRequest_;
-    rclcpp::Publisher<rumblex_interfaces::msg::ServoStatus>::SharedPtr pubStatus_;
-    rclcpp::Publisher<rumblex_interfaces::msg::ServoAngles>::SharedPtr pubAngles_;
+    rclcpp::Subscription<rumblex_interfaces::msg::ServoAngle>::SharedPtr sub_single_servo_request_;
+    rclcpp::Subscription<rumblex_interfaces::msg::ServoDirectRequest>::SharedPtr sub_servo_direct_request_;
+    rclcpp::Publisher<rumblex_interfaces::msg::ServoStatus>::SharedPtr pub_status_;
+    rclcpp::Publisher<rumblex_interfaces::msg::ServoAngles>::SharedPtr pub_angles_;
 
     rclcpp::TimerBase::SharedPtr timer_;
-    rclcpp::Time actualTime_;
-    rclcpp::Time lastTime_;
+    rclcpp::Time actual_time_;
+    rclcpp::Time last_time_;
 
     std::shared_ptr<CServoProtocol> protocol_;
-    InitialAnglesCallback initialAnglesCallback_ = nullptr;
+    InitialAnglesCallback initial_angles_callback_ = nullptr;
 };
 
 }  // namespace rumblex_movement

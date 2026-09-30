@@ -16,7 +16,7 @@ def generate_launch_description():
         name='node_movement',
         executable='node_movement',
         output='screen',
-        parameters=[anatomy, servo_description, {'SERVO_CONTROLLER_OFFLINE': True}],
+        parameters=[anatomy, servo_description, {'servo.offline': True}],
     )
     return LaunchDescription([
         DeclareLaunchArgument(

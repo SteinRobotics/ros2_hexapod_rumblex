@@ -11,6 +11,7 @@
 #include <magic_enum.hpp>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
@@ -29,12 +30,33 @@ enum class ELegIndex {
     LeftBack,
 };
 
-inline ELegIndex legNameToIndex(std::string_view name) {
-    return magic_enum::enum_cast<ELegIndex>(name).value();
+inline std::string legIndexToName(ELegIndex index) {
+    switch (index) {
+        case ELegIndex::RightFront:
+            return "right_front";
+        case ELegIndex::RightMid:
+            return "right_mid";
+        case ELegIndex::RightBack:
+            return "right_back";
+        case ELegIndex::LeftFront:
+            return "left_front";
+        case ELegIndex::LeftMid:
+            return "left_mid";
+        case ELegIndex::LeftBack:
+            return "left_back";
+    }
+    return {};
 }
 
-inline std::string legIndexToName(ELegIndex index) {
-    return std::string(magic_enum::enum_name(index));
+inline std::optional<ELegIndex> parseLegIndex(std::string_view name) {
+    for (auto index : magic_enum::enum_values<ELegIndex>()) {
+        if (legIndexToName(index) == name) return index;
+    }
+    return std::nullopt;
+}
+
+inline ELegIndex legNameToIndex(std::string_view name) {
+    return parseLegIndex(name).value();
 }
 
 class CPosition {
@@ -176,10 +198,10 @@ class CLegAngles {
 class CLeg {
    public:
     CLeg() = default;
-    CLeg(CLegAngles angles, CPosition toe_pos) : angles_(angles), toe_pos_(toe_pos) {};
+    CLeg(CLegAngles angles, CPosition toe_position) : angles(angles), toe_position(toe_position) {};
 
-    CLegAngles angles_;
-    CPosition toe_pos_;
+    CLegAngles angles;
+    CPosition toe_position;
 };
 
 // --------------------------------------------------------

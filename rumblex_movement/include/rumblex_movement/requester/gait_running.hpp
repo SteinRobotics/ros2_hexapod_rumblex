@@ -14,8 +14,8 @@
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 
+#include "requester/gait_interfaces.hpp"
 #include "requester/gait_parameters.hpp"
-#include "requester/igaits.hpp"
 #include "requester/kinematics.hpp"
 #include "requester/types.hpp"
 #include "rumblex_utils/filters.hpp"
@@ -25,11 +25,11 @@
 
 namespace rumblex_movement {
 
-class CGaitRunning : public IContinuousGait {
+class CRunningGait : public IContinuousGait {
    public:
-    CGaitRunning(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CKinematics> kinematics,
+    CRunningGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CKinematics> kinematics,
                  Parameters::Running& params);
-    ~CGaitRunning() override = default;
+    ~CRunningGait() override = default;
 
     void start(double duration_s, uint8_t direction) override;
     bool update(const geometry_msgs::msg::Twist& velocity, const CPose& torso,

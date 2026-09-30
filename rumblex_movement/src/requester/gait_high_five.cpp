@@ -1,4 +1,4 @@
-#include "requester/gait_highfive.hpp"
+#include "requester/gait_high_five.hpp"
 
 #include <algorithm>
 
@@ -19,8 +19,8 @@ CHighFiveGait::CHighFiveGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr
 }
 
 void CHighFiveGait::start(double /*duration_s*/, uint8_t /*direction*/) {
-    initial_leg_angles_ = kinematics_->getAngles(ELegIndex::RightFront);
-    initial_head_ = kinematics_->getHead();
+    initial_leg_angles_ = kinematics_->getLegAngles(ELegIndex::RightFront);
+    initial_head_ = kinematics_->getHeadOrientation();
 
     phase_ = EPhase::Raising;
     state_ = EGaitState::Running;
@@ -58,7 +58,7 @@ bool CHighFiveGait::update() {
             applyInterpolatedPose(1.0 - phase_progress_);
             if (phase_progress_ >= 1.0 - 1e-6) {
                 kinematics_->setLegAngles(ELegIndex::RightFront, initial_leg_angles_);
-                kinematics_->setHead(initial_head_.yaw, initial_head_.pitch);
+                kinematics_->setHeadOrientation(initial_head_.yaw, initial_head_.pitch);
                 phase_ = EPhase::Finished;
             }
             break;
@@ -101,12 +101,12 @@ void CHighFiveGait::cancelStop() {
 void CHighFiveGait::applyInterpolatedPose(double alpha) {
     alpha = std::clamp(alpha, 0.0, 1.0);
     // use CLegAngles member interpolation
-    const auto legAngles = initial_leg_angles_.linearInterpolate(target_leg_angles_, alpha);
-    kinematics_->setLegAngles(ELegIndex::RightFront, legAngles);
+    const auto leg_angles = initial_leg_angles_.linearInterpolate(target_leg_angles_, alpha);
+    kinematics_->setLegAngles(ELegIndex::RightFront, leg_angles);
 
-    const auto headYaw = initial_head_.yaw + (target_head_yaw_ - initial_head_.yaw) * alpha;
-    const auto headPitch = initial_head_.pitch + (target_head_pitch_ - initial_head_.pitch) * alpha;
-    kinematics_->setHead(headYaw, headPitch);
+    const auto head_yaw = initial_head_.yaw + (target_head_yaw_ - initial_head_.yaw) * alpha;
+    const auto head_pitch = initial_head_.pitch + (target_head_pitch_ - initial_head_.pitch) * alpha;
+    kinematics_->setHeadOrientation(head_yaw, head_pitch);
 }
 
 void CHighFiveGait::transitionToLowering() {

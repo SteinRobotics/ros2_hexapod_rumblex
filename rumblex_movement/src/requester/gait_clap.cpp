@@ -24,8 +24,8 @@ CClapGait::CClapGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CKinema
 
 void CClapGait::start(double /*duration_s*/, uint8_t /*direction*/) {
     // Store initial positions
-    initial_toe_positions_ = kinematics_->getLegsPositions();
-    initial_torso_pose_ = kinematics_->getTorso();
+    initial_toe_positions_ = kinematics_->getToePositions();
+    initial_torso_pose_ = kinematics_->getTorsoPose();
 
     phase_ = EPhase::ShiftingBack;
     state_ = EGaitState::Running;
@@ -187,14 +187,14 @@ void CClapGait::applyBackLegLift(ELegIndex leg, double alpha) {
     alpha = std::clamp(alpha, 0.0, 1.0);
 
     // Lift the specified back leg
-    auto current_positions = kinematics_->getLegsPositions();
+    auto current_positions = kinematics_->getToePositions();
     CPosition lifted_position = initial_toe_positions_.at(leg);
     lifted_position.z += kBackLegLiftHeight * alpha;
 
     current_positions[leg] = lifted_position;
 
     // Apply the lifted position
-    kinematics_->setSingleToe(leg, lifted_position);
+    kinematics_->setToePosition(leg, lifted_position);
 }
 
 void CClapGait::applyFrontLegsLift(double alpha) {
@@ -207,16 +207,16 @@ void CClapGait::applyFrontLegsLift(double alpha) {
     left_front_pos.z += kFrontLegLiftHeight * alpha;
     right_front_pos.z += kFrontLegLiftHeight * alpha;
 
-    kinematics_->setSingleToe(ELegIndex::LeftFront, left_front_pos);
-    kinematics_->setSingleToe(ELegIndex::RightFront, right_front_pos);
+    kinematics_->setToePosition(ELegIndex::LeftFront, left_front_pos);
+    kinematics_->setToePosition(ELegIndex::RightFront, right_front_pos);
 }
 
 void CClapGait::applyFrontLegsClap(double alpha, [[maybe_unused]] bool closing) {
     alpha = std::clamp(alpha, 0.0, 1.0);
 
     // Get current leg angles
-    auto left_front_angles = kinematics_->getAngles(ELegIndex::LeftFront);
-    auto right_front_angles = kinematics_->getAngles(ELegIndex::RightFront);
+    auto left_front_angles = kinematics_->getLegAngles(ELegIndex::LeftFront);
+    auto right_front_angles = kinematics_->getLegAngles(ELegIndex::RightFront);
 
     // Adjust torso_coxa angles to bring legs together (closing) or apart (opening)
     // Left leg rotates clockwise (positive), right leg rotates counter-clockwise (negative)

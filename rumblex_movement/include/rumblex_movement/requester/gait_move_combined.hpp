@@ -5,8 +5,8 @@
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 
+#include "requester/gait_interfaces.hpp"
 #include "requester/gait_parameters.hpp"
-#include "requester/igaits.hpp"
 #include "requester/kinematics.hpp"
 #include "requester/types.hpp"
 #include "rumblex_utils/filters.hpp"
@@ -52,8 +52,8 @@ class CMoveCombinedGait : public IContinuousGait {
     LegMotion computeTripodLegMotion(ELegIndex index, double phase) const;
     LegMotion computeLegMotion(EMoveCombinedGaitType gait, ELegIndex index, double phase) const;
 
-    double getFactorVelocityCycleTime(EMoveCombinedGaitType gait) const;
-    units::Angle getHeadAmplitudeYaw(EMoveCombinedGaitType gait) const;
+    double getVelocityToPhaseGain(EMoveCombinedGaitType gait) const;
+    units::Angle getHeadYawAmplitude(EMoveCombinedGaitType gait) const;
 
     // Wave: 6 individual legs, each offset by π/3
     static constexpr double kWaveTransferPhase = 2.0 * M_PI / 6.0;

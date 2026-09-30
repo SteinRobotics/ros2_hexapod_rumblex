@@ -1,9 +1,9 @@
 node_movement:
   ros__parameters:
-    SERIAL_PORT: '/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0'   # "/dev/ttyUSB0"
-    SERVO_CONTROLLER_TYPE: 'feetech'
+    servo.serial_port: '/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0'   # "/dev/ttyUSB0"
+    servo.controller_type: 'feetech'
 
-    SERVO_NAME: ['HEAD_YAW', 'HEAD_PITCH',
+    servo.names: ['HEAD_YAW', 'HEAD_PITCH',
                  'LEG_RIGHT_FRONT_COXA', 'LEG_RIGHT_FRONT_FEMUR', 'LEG_RIGHT_FRONT_TIBIA',
                  'LEG_RIGHT_MID_COXA', 'LEG_RIGHT_MID_FEMUR', 'LEG_RIGHT_MID_TIBIA',
                  'LEG_RIGHT_BACK_COXA', 'LEG_RIGHT_BACK_FEMUR', 'LEG_RIGHT_BACK_TIBIA',
@@ -11,7 +11,7 @@ node_movement:
                  'LEG_LEFT_MID_COXA', 'LEG_LEFT_MID_FEMUR', 'LEG_LEFT_MID_TIBIA',
                  'LEG_LEFT_BACK_COXA', 'LEG_LEFT_BACK_FEMUR', 'LEG_LEFT_BACK_TIBIA'] 
 
-    SERVO_ADAPTATION_DEG: [  5.0, -10.0,          # HEAD: YAW, PITCH
+    servo.adaptation_deg: [  5.0, -10.0,          # HEAD: YAW, PITCH
                              0.0,   0.0,   0.0,   # LEG_RIGHT_FRONT: COXA, FEMUR, TIBIA
                              0.0,   0.0,   0.0,   # LEG_RIGHT_MID:   COXA, FEMUR, TIBIA
                            +10.0,   0.0,   0.0,   # LEG_RIGHT_BACK:  COXA, FEMUR, TIBIA
@@ -19,7 +19,7 @@ node_movement:
                              0.0,   0.0,   0.0,   # LEG_LEFT_MID:    COXA, FEMUR, TIBIA 
                              0.0,   0.0,   0.0]   # LEG_LEFT_BACK:   COXA, FEMUR, TIBIA
 
-    SERVO_OFFSET_DEG: [0.0, 0.0,         # HEAD: YAW, PITCH
+    servo.offset_deg: [0.0, 0.0,         # HEAD: YAW, PITCH
                        0.0, 20.0, -3.0,  # LEG_RIGHT_FRONT: COXA, FEMUR, TIBIA
                        0.0, 20.0, -3.0,  # LEG_RIGHT_MID:   COXA, FEMUR, TIBIA
                        0.0, 20.0, -3.0,  # LEG_RIGHT_BACK:  COXA, FEMUR, TIBIA
@@ -27,7 +27,7 @@ node_movement:
                        0.0, 20.0, -3.0,  # LEG_LEFT_MID:    COXA, FEMUR, TIBIA 
                        0.0, 20.0, -3.0]  # LEG_LEFT_BACK:   COXA, FEMUR, TIBIA
 
-    SERVO_ORIENTATION_CLOCKWISE: [False, True,         # HEAD: YAW, PITCH
+    servo.orientation_clockwise: [False, True,         # HEAD: YAW, PITCH
                                   True, True, True,  # LEG_RIGHT_FRONT: COXA, FEMUR, TIBIA
                                   True, True, True,  # LEG_RIGHT_MID:   COXA, FEMUR, TIBIA
                                   True, True, True,  # LEG_RIGHT_BACK:  COXA, FEMUR, TIBIA
@@ -46,7 +46,7 @@ node_movement:
 #             |
 # 034-024-014-|-013-023-033
 #
-    SERVO_SERIAL_ID: [10, 20,      # HEAD: YAW, PITCH
+    servo.serial_ids: [10, 20,      # HEAD: YAW, PITCH
                       11, 21, 31,  # LEG_RIGHT_FRONT: COXA, FEMUR, TIBIA
                       12, 22, 32,  # LEG_RIGHT_MID:   COXA, FEMUR, TIBIA
                       13, 23, 33,  # LEG_RIGHT_BACK:  COXA, FEMUR, TIBIA

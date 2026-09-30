@@ -22,10 +22,10 @@ class COfflineServoProtocol : public CServoProtocol {
         for (uint8_t id = 1; id <= 40; ++id) {
             positions_[id] = 500;    // neutral tick
             temperatures_[id] = 30;  // 30°C
-            voltages_[id] = 12100;   // 12.1 V in mV
-            ledErrcode_[id] = 0;
-            ledOn_[id] = false;
-            idMap_[id] = id;
+            voltages_[id] = 12100;   // 12.1 V in m_v
+            led_errcode_[id] = 0;
+            led_on_[id] = false;
+            id_map_[id] = id;
         }
     }
 
@@ -35,7 +35,7 @@ class COfflineServoProtocol : public CServoProtocol {
     }
 
     bool getLedErrcode(uint8_t id, uint8_t& out) override {
-        out = ledErrcode_.count(id) ? ledErrcode_[id] : 0;
+        out = led_errcode_.count(id) ? led_errcode_[id] : 0;
         return true;
     }
 
@@ -55,7 +55,7 @@ class COfflineServoProtocol : public CServoProtocol {
     }
 
     // Action commands - record requested values
-    bool actionStart(uint8_t /*ID*/ = SERVO_Broadcast_ID) override {
+    bool actionStart(uint8_t /*id*/ = SERVO_Broadcast_ID) override {
         return true;
     }
 
@@ -70,26 +70,26 @@ class COfflineServoProtocol : public CServoProtocol {
     }
 
     bool getServoID(uint8_t serial, uint8_t& out) override {
-        out = idMap_.count(serial) ? idMap_[serial] : serial;
+        out = id_map_.count(serial) ? id_map_[serial] : serial;
         return true;
     }
 
-    bool setServoID(uint8_t serial, uint8_t newId) override {
-        idMap_[serial] = newId;
+    bool setServoID(uint8_t serial, uint8_t new_id) override {
+        id_map_[serial] = new_id;
         return true;
     }
 
     // Test helper: read mapped id
     uint8_t getMappedId(uint8_t serial) const {
-        return idMap_.count(serial) ? idMap_.at(serial) : serial;
+        return id_map_.count(serial) ? id_map_.at(serial) : serial;
     }
 
     bool isLedOn(uint8_t id) override {
-        return ledOn_.count(id) ? ledOn_[id] : false;
+        return led_on_.count(id) ? led_on_[id] : false;
     }
 
     bool setLed(uint8_t id, bool on) override {
-        ledOn_[id] = on;
+        led_on_[id] = on;
         return true;
     }
 
@@ -97,9 +97,9 @@ class COfflineServoProtocol : public CServoProtocol {
     std::unordered_map<uint8_t, int> positions_;
     std::unordered_map<uint8_t, uint8_t> temperatures_;
     std::unordered_map<uint8_t, int> voltages_;
-    std::unordered_map<uint8_t, uint8_t> ledErrcode_;
-    std::unordered_map<uint8_t, bool> ledOn_;
-    std::unordered_map<uint8_t, uint8_t> idMap_;
+    std::unordered_map<uint8_t, uint8_t> led_errcode_;
+    std::unordered_map<uint8_t, bool> led_on_;
+    std::unordered_map<uint8_t, uint8_t> id_map_;
 };
 
 }  // namespace rumblex_movement

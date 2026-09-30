@@ -10,19 +10,19 @@ namespace rumblex_movement {
 
 constexpr double kRunningTimeToWaitBeforeStopSec = 2.0;
 
-CGaitRunning::CGaitRunning(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CKinematics> kinematics,
+CRunningGait::CRunningGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CKinematics> kinematics,
                            Parameters::Running& params)
     : node_(node), kinematics_(kinematics), params_(params) {
     no_velocity_timer_.stop();
     torso_old_ = CPose();
-    target_positions_ = kinematics_->getLegsStandingPositions();
+    target_positions_ = kinematics_->getStandingToePositions();
 }
 
-void CGaitRunning::start(double /*duration_s*/, uint8_t /*direction*/) {
+void CRunningGait::start(double /*duration_s*/, uint8_t /*direction*/) {
     state_ = EGaitState::Starting;
     phase_ = 0.0;
     velocity_ = geometry_msgs::msg::Twist();
-    target_positions_ = kinematics_->getLegsStandingPositions();
+    target_positions_ = kinematics_->getStandingToePositions();
 }
 
 // Running gait phase layout (one full cycle = 2π):
@@ -40,7 +40,7 @@ void CGaitRunning::start(double /*duration_s*/, uint8_t /*direction*/) {
 // respective halves, there is a brief overlap (~f) where ALL legs are airborne.
 // Keeping f small (e.g. 0.15 → ~27° of the cycle) limits the unstable period.
 
-CGaitRunning::LegMotion CGaitRunning::computeLegMotion(ELegIndex index, double phase) const {
+CRunningGait::LegMotion CRunningGait::computeLegMotion(ELegIndex index, double phase) const {
     bool is_group_a = std::ranges::contains(kGroupA, index);
     double half_phase = is_group_a ? std::fmod(phase, 2.0 * M_PI) : std::fmod(phase + M_PI, 2.0 * M_PI);
     if (half_phase < 0.0) half_phase += 2.0 * M_PI;
@@ -75,7 +75,7 @@ CGaitRunning::LegMotion CGaitRunning::computeLegMotion(ELegIndex index, double p
     return motion;
 }
 
-bool CGaitRunning::update(const geometry_msgs::msg::Twist& velocity, const CPose& torso,
+bool CRunningGait::update(const geometry_msgs::msg::Twist& velocity, const CPose& torso,
                           const COrientation& /*head*/) {
     if (state_ == EGaitState::Stopped) {
         return false;
@@ -83,7 +83,7 @@ bool CGaitRunning::update(const geometry_msgs::msg::Twist& velocity, const CPose
 
     // Torso pose changes while stationary
     if (utils::isTwistZero(velocity) && state_ == EGaitState::Running && torso != torso_old_) {
-        const auto base_toe_pos = kinematics_->getLegsStandingPositions();
+        const auto base_toe_pos = kinematics_->getStandingToePositions();
         kinematics_->moveTorso(base_toe_pos, torso);
         torso_old_ = torso;
         return true;
@@ -119,7 +119,7 @@ bool CGaitRunning::update(const geometry_msgs::msg::Twist& velocity, const CPose
     double norm_y = linear_y / combined_mag;
     double norm_rot = angular_z / combined_mag;
 
-    double delta_phase = params_.factor_velocity_to_gait_cycle_time * combined_mag;
+    double delta_phase = params_.velocity_to_phase_gain * combined_mag;
     phase_ += delta_phase;
     phase_ = std::fmod(phase_, 2.0 * M_PI);
 
@@ -128,15 +128,15 @@ bool CGaitRunning::update(const geometry_msgs::msg::Twist& velocity, const CPose
         state_ = EGaitState::Running;
     }
     if (state_ == EGaitState::StopPending && utils::isSinValueNearZero(phase_, delta_phase)) {
-        RCLCPP_INFO(node_->get_logger(), "CGaitRunning: Transitioning to Stopped, phase_: %.2f", phase_);
+        RCLCPP_INFO(node_->get_logger(), "CRunningGait: Transitioning to Stopped, phase_: %.2f", phase_);
         phase_ = 0.0;
         state_ = EGaitState::Stopped;
-        kinematics_->moveTorso(kinematics_->getLegsStandingPositions(), torso);
-        kinematics_->setHead(COrientation(0.0, 0.0, 0.0));
+        kinematics_->moveTorso(kinematics_->getStandingToePositions(), torso);
+        kinematics_->setHeadOrientation(COrientation(0.0, 0.0, 0.0));
         return true;
     }
 
-    const auto standing_positions = kinematics_->getLegsStandingPositions();
+    const auto standing_positions = kinematics_->getStandingToePositions();
 
     for (auto& [index, leg] : kinematics_->getLegs()) {
         const auto base_toe_pos = standing_positions.at(index);
@@ -171,20 +171,20 @@ bool CGaitRunning::update(const geometry_msgs::msg::Twist& velocity, const CPose
     kinematics_->moveTorso(target_positions_, torso);
 
     // Head movement
-    const auto head_yaw = params_.head_amplitude_yaw * std::sin(phase_);
+    const auto head_yaw = params_.head_yaw_amplitude * std::sin(phase_);
     COrientation head_request;
     head_request.yaw = head_yaw;
-    kinematics_->setHead(head_request);
+    kinematics_->setHeadOrientation(head_request);
     return true;
 }
 
-void CGaitRunning::requestStop() {
+void CRunningGait::requestStop() {
     if (state_ == EGaitState::Running) {
         state_ = EGaitState::StopPending;
     }
 }
 
-void CGaitRunning::cancelStop() {
+void CRunningGait::cancelStop() {
     if (state_ == EGaitState::StopPending) {
         state_ = EGaitState::Running;
     }

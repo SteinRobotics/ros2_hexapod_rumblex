@@ -49,22 +49,22 @@ set(SOURCES
   src/handler/feetech/SCSCL.cpp
   src/handler/feetech/SCSerial.cpp
   src/handler/feetech/SMS_STS.cpp
-  src/handler/servohandler.cpp
-  src/requester/gait_torsoroll.cpp
+  src/handler/servo_handler.cpp
+  src/requester/gait_torso_roll.cpp
   src/requester/gait_clap.cpp
-  src/requester/gait_continuouspose.cpp
-  src/requester/gait_highfive.cpp
-  src/requester/gait_laydown.cpp
-  src/requester/gait_legwave.cpp
+  src/requester/gait_continuous_pose.cpp
+  src/requester/gait_high_five.cpp
+  src/requester/gait_lay_down.cpp
+  src/requester/gait_leg_wave.cpp
   src/requester/gait_look.cpp
   src/requester/gait_move_combined.cpp
   src/requester/gait_running.cpp
-  src/requester/gait_standup.cpp
-  src/requester/gait_singlepose.cpp
-  src/requester/gait_testlegs.cpp
+  src/requester/gait_stand_up.cpp
+  src/requester/gait_single_pose.cpp
+  src/requester/gait_test_legs.cpp
   src/requester/gait_waiting.cpp
   src/requester/gait_watch.cpp
-  src/requester/gaitcontroller.cpp
+  src/requester/gait_controller.cpp
   src/requester/kinematics.cpp
   src/requester/requester.cpp
 )
@@ -117,6 +117,13 @@ install(DIRECTORY
 
 # Unit tests
 if(BUILD_TESTING)
+  ament_add_gtest(test_robot_configuration test/test_robot_configuration.cpp)
+  if(TARGET test_robot_configuration)
+    target_link_libraries(test_robot_configuration rumblex_movement_core)
+    target_compile_definitions(test_robot_configuration PRIVATE
+      RUMBLEX_CONFIG_DIR="${CMAKE_CURRENT_SOURCE_DIR}/config")
+  endif()
+
   ament_add_gtest(test_types test/test_types.cpp)
   if(TARGET test_types)
     target_link_libraries(test_types rumblex_movement_core)
@@ -143,32 +150,32 @@ if(BUILD_TESTING)
     target_link_libraries(test_requester rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp)
   endif()
 
-  ament_add_gtest(test_gait_torsoroll
-    test/test_gait_torsoroll.cpp
+  ament_add_gtest(test_gait_torso_roll
+    test/test_gait_torso_roll.cpp
   )
-  if(TARGET test_gait_torsoroll)
-    target_link_libraries(test_gait_torsoroll rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp)
+  if(TARGET test_gait_torso_roll)
+    target_link_libraries(test_gait_torso_roll rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp)
   endif()
 
-  ament_add_gtest(test_gait_laydown
-    test/test_gait_laydown.cpp
+  ament_add_gtest(test_gait_lay_down
+    test/test_gait_lay_down.cpp
   )
-  if(TARGET test_gait_laydown)
-    target_link_libraries(test_gait_laydown rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp ${geometry_msgs_TARGETS})
+  if(TARGET test_gait_lay_down)
+    target_link_libraries(test_gait_lay_down rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp ${geometry_msgs_TARGETS})
   endif()
 
-  ament_add_gtest(test_gait_standup
-    test/test_gait_standup.cpp
+  ament_add_gtest(test_gait_stand_up
+    test/test_gait_stand_up.cpp
   )
-  if(TARGET test_gait_standup)
-    target_link_libraries(test_gait_standup rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp ${geometry_msgs_TARGETS})
+  if(TARGET test_gait_stand_up)
+    target_link_libraries(test_gait_stand_up rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp ${geometry_msgs_TARGETS})
   endif()
 
-  ament_add_gtest(test_gait_highfive
-    test/test_gait_highfive.cpp
+  ament_add_gtest(test_gait_high_five
+    test/test_gait_high_five.cpp
   )
-  if(TARGET test_gait_highfive)
-    target_link_libraries(test_gait_highfive rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp ${geometry_msgs_TARGETS})
+  if(TARGET test_gait_high_five)
+    target_link_libraries(test_gait_high_five rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp ${geometry_msgs_TARGETS})
   endif()
 
   ament_add_gtest(test_gait_clap
@@ -186,11 +193,11 @@ if(BUILD_TESTING)
     target_link_libraries(test_leg_servo_conversion rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS})
   endif()
 
-  ament_add_gtest(test_gait_legwave
-    test/test_gait_legwave.cpp
+  ament_add_gtest(test_gait_leg_wave
+    test/test_gait_leg_wave.cpp
   )
-  if(TARGET test_gait_legwave)
-    target_link_libraries(test_gait_legwave rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp ${geometry_msgs_TARGETS})
+  if(TARGET test_gait_leg_wave)
+    target_link_libraries(test_gait_leg_wave rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp ${geometry_msgs_TARGETS})
   endif()
 
   ament_add_gtest(test_gait_controller

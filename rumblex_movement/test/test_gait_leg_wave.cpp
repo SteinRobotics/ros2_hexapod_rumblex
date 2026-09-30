@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "rclcpp/rclcpp.hpp"
-#include "requester/gait_legwave.hpp"
+#include "requester/gait_leg_wave.hpp"
 #include "requester/kinematics.hpp"
 #include "test_helpers.hpp"
 
@@ -24,13 +24,13 @@ class LegWaveGaitTest : public ::testing::Test {
         auto overrides = test_helpers::defaultRobotParameters();
         options.parameter_overrides(overrides);
 
-        node_ = std::make_shared<rclcpp::Node>("test_gait_legwave_node", options);
+        node_ = std::make_shared<rclcpp::Node>("test_gait_leg_wave_node", options);
         kinematics_ = std::make_shared<CKinematics>(node_);
         params_ = test_helpers::makeDeclaredParameters(node_);
 
         // Move legs from default laydown to standing (gaits assume robot is standing)
-        for (const auto& [idx, pos] : kinematics_->getLegsStandingPositions()) {
-            kinematics_->setSingleToe(idx, pos);
+        for (const auto& [idx, pos] : kinematics_->getStandingToePositions()) {
+            kinematics_->setToePosition(idx, pos);
         }
     }
 
@@ -47,8 +47,8 @@ class LegWaveGaitTest : public ::testing::Test {
 };
 
 TEST_F(LegWaveGaitTest, LiftOccursDuringRun) {
-    CGaitLegWave gait(node_, kinematics_, params_.legWave);
-    const auto standing = kinematics_->getLegsStandingPositions();
+    CLegWaveGait gait(node_, kinematics_, params_.leg_wave);
+    const auto standing = kinematics_->getStandingToePositions();
 
     gait.start(3.0, 0);
 
@@ -56,7 +56,7 @@ TEST_F(LegWaveGaitTest, LiftOccursDuringRun) {
     int iterations = 0;
     while (gait.state() != EGaitState::Stopped && iterations++ < kMaxIterations) {
         gait.update();
-        const auto pos = kinematics_->getLegsPositions();
+        const auto pos = kinematics_->getToePositions();
         for (const auto& kv : standing) {
             const auto& idx = kv.first;
             const auto& base = kv.second;
@@ -74,8 +74,8 @@ TEST_F(LegWaveGaitTest, LiftOccursDuringRun) {
 }
 
 TEST_F(LegWaveGaitTest, StopRequestReturnsToNeutral) {
-    CGaitLegWave gait(node_, kinematics_, params_.legWave);
-    const auto standing = kinematics_->getLegsStandingPositions();
+    CLegWaveGait gait(node_, kinematics_, params_.leg_wave);
+    const auto standing = kinematics_->getStandingToePositions();
 
     gait.start(3.0, 0);
 
@@ -92,7 +92,7 @@ TEST_F(LegWaveGaitTest, StopRequestReturnsToNeutral) {
 
     EXPECT_LT(iterations, kMaxIterations);
 
-    const auto final_pos = kinematics_->getLegsPositions();
+    const auto final_pos = kinematics_->getToePositions();
     for (const auto& kv : standing) {
         const auto& idx = kv.first;
         const auto& base = kv.second;

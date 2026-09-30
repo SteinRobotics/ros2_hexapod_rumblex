@@ -15,25 +15,25 @@ using leg_servo_conversion::servoAnglesMsgToLegAngles;
 using rumblex_interfaces::msg::ServoIndex;
 
 TEST(LegServoConversionTest, LegAnglesMapToServoTargets) {
-    std::map<ELegIndex, CLegAngles> legAngles;
-    legAngles[ELegIndex::RightFront] = CLegAngles(10.0, 20.0, 30.0);
-    legAngles[ELegIndex::LeftBack] = CLegAngles(-5.0, -10.0, -15.0);
+    std::map<ELegIndex, CLegAngles> leg_angles;
+    leg_angles[ELegIndex::RightFront] = CLegAngles(10.0, 20.0, 30.0);
+    leg_angles[ELegIndex::LeftBack] = CLegAngles(-5.0, -10.0, -15.0);
 
-    std::map<uint32_t, double> targetAngles;
-    appendLegServoTargets(legAngles, targetAngles);
+    std::map<uint32_t, double> target_angles;
+    appendLegServoTargets(leg_angles, target_angles);
 
-    ASSERT_NE(targetAngles.find(ServoIndex::LEG_RIGHT_FRONT_COXA), targetAngles.end());
-    EXPECT_DOUBLE_EQ(targetAngles.at(ServoIndex::LEG_RIGHT_FRONT_COXA), 10.0);
-    EXPECT_DOUBLE_EQ(targetAngles.at(ServoIndex::LEG_RIGHT_FRONT_FEMUR), 20.0);
-    EXPECT_DOUBLE_EQ(targetAngles.at(ServoIndex::LEG_RIGHT_FRONT_TIBIA), 30.0);
+    ASSERT_NE(target_angles.find(ServoIndex::LEG_RIGHT_FRONT_COXA), target_angles.end());
+    EXPECT_DOUBLE_EQ(target_angles.at(ServoIndex::LEG_RIGHT_FRONT_COXA), 10.0);
+    EXPECT_DOUBLE_EQ(target_angles.at(ServoIndex::LEG_RIGHT_FRONT_FEMUR), 20.0);
+    EXPECT_DOUBLE_EQ(target_angles.at(ServoIndex::LEG_RIGHT_FRONT_TIBIA), 30.0);
 
-    ASSERT_NE(targetAngles.find(ServoIndex::LEG_LEFT_BACK_COXA), targetAngles.end());
-    EXPECT_DOUBLE_EQ(targetAngles.at(ServoIndex::LEG_LEFT_BACK_COXA), -5.0);
-    EXPECT_DOUBLE_EQ(targetAngles.at(ServoIndex::LEG_LEFT_BACK_FEMUR), -10.0);
-    EXPECT_DOUBLE_EQ(targetAngles.at(ServoIndex::LEG_LEFT_BACK_TIBIA), -15.0);
+    ASSERT_NE(target_angles.find(ServoIndex::LEG_LEFT_BACK_COXA), target_angles.end());
+    EXPECT_DOUBLE_EQ(target_angles.at(ServoIndex::LEG_LEFT_BACK_COXA), -5.0);
+    EXPECT_DOUBLE_EQ(target_angles.at(ServoIndex::LEG_LEFT_BACK_FEMUR), -10.0);
+    EXPECT_DOUBLE_EQ(target_angles.at(ServoIndex::LEG_LEFT_BACK_TIBIA), -15.0);
 
     COrientation head(0.0, -7.5, 5.0);
-    auto combined = buildServoTargets(head, legAngles);
+    auto combined = buildServoTargets(head, leg_angles);
     EXPECT_DOUBLE_EQ(combined.at(ServoIndex::HEAD_YAW), 5.0);
     EXPECT_DOUBLE_EQ(combined.at(ServoIndex::HEAD_PITCH), -7.5);
 }

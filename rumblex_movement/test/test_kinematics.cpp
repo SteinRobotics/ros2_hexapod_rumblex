@@ -47,74 +47,74 @@ TEST_F(KinematicsTest, setLegAngles) {
 
     kin_->setLegAngles(ELegIndex::RightFront, angles);
 
-    CPosition toePosExpected;
-    toePosExpected.x = 0.201 * units::m;   // 0.092 + 0.109
-    toePosExpected.y = 0.160 * units::m;   // 0.092 + 0.068
-    toePosExpected.z = -0.050 * units::m;  // 0.045 - 0.095
+    CPosition toe_pos_expected;
+    toe_pos_expected.x = 0.201 * units::m;   // 0.092 + 0.109
+    toe_pos_expected.y = 0.160 * units::m;   // 0.092 + 0.068
+    toe_pos_expected.z = -0.050 * units::m;  // 0.045 - 0.095
 
     auto& leg = kin_->getLegs().at(ELegIndex::RightFront);
 
-    expectPositionNear(toePosExpected, leg.toe_pos_, "setLegAngles position mismatch");
-    expectAnglesNear(angles, leg.angles_, "setLegAngles angles mismatch");
+    expectPositionNear(toe_pos_expected, leg.toe_position, "setLegAngles position mismatch");
+    expectAnglesNear(angles, leg.angles, "setLegAngles angles mismatch");
 }
 
-TEST_F(KinematicsTest, checkStandingPosition) {
-    kin_->moveTorso(kin_->getLegsStandingPositions());
+TEST_F(KinematicsTest, check_standing_position) {
+    kin_->moveTorso(kin_->getStandingToePositions());
     auto& leg = kin_->getLegs().at(ELegIndex::RightFront);
 
-    CPosition toePosExpected;
-    toePosExpected.x = 0.201 * units::m;   // 0.092 + 0.109
-    toePosExpected.y = 0.160 * units::m;   // 0.092 + 0.068
-    toePosExpected.z = -0.050 * units::m;  // 0.045 - 0.095
+    CPosition toe_pos_expected;
+    toe_pos_expected.x = 0.201 * units::m;   // 0.092 + 0.109
+    toe_pos_expected.y = 0.160 * units::m;   // 0.092 + 0.068
+    toe_pos_expected.z = -0.050 * units::m;  // 0.045 - 0.095
 
-    CLegAngles anglesExpected;
-    anglesExpected.torso_coxa = 0.0 * units::deg;
-    anglesExpected.coxa_femur = 2.276 * units::deg;
-    anglesExpected.femur_tibia = 7.704 * units::deg;
+    CLegAngles angles_expected;
+    angles_expected.torso_coxa = 0.0 * units::deg;
+    angles_expected.coxa_femur = 2.276 * units::deg;
+    angles_expected.femur_tibia = 7.704 * units::deg;
 
-    expectPositionNear(toePosExpected, leg.toe_pos_, "standing position mismatch");
-    expectAnglesNear(anglesExpected, leg.angles_, "standing angles mismatch");
+    expectPositionNear(toe_pos_expected, leg.toe_position, "standing position mismatch");
+    expectAnglesNear(angles_expected, leg.angles, "standing angles mismatch");
 }
 
-TEST_F(KinematicsTest, checkLaydownPosition) {
-    kin_->moveTorso(kin_->getLegsLayDownPositions());
+TEST_F(KinematicsTest, check_laydown_position) {
+    kin_->moveTorso(kin_->getLaydownToePositions());
     auto& leg = kin_->getLegs().at(ELegIndex::RightFront);
 
-    CPosition toePosExpected;
-    toePosExpected.x = 0.180 * units::m;  // 0.071 + 0.109
-    toePosExpected.y = 0.139 * units::m;  // 0.071 + 0.068
-    toePosExpected.z = 0.010 * units::m;  // 0.045 - 0.035
+    CPosition toe_pos_expected;
+    toe_pos_expected.x = 0.180 * units::m;  // 0.071 + 0.109
+    toe_pos_expected.y = 0.139 * units::m;  // 0.071 + 0.068
+    toe_pos_expected.z = 0.010 * units::m;  // 0.045 - 0.035
 
-    CLegAngles anglesExpected;
-    anglesExpected.torso_coxa = 0.0 * units::deg;
-    anglesExpected.coxa_femur = 70.723 * units::deg;
-    anglesExpected.femur_tibia = -53.320 * units::deg;
+    CLegAngles angles_expected;
+    angles_expected.torso_coxa = 0.0 * units::deg;
+    angles_expected.coxa_femur = 70.723 * units::deg;
+    angles_expected.femur_tibia = -53.320 * units::deg;
 
-    expectPositionNear(toePosExpected, leg.toe_pos_, "laydown position mismatch");
-    expectAnglesNear(anglesExpected, leg.angles_, "laydown angles mismatch");
+    expectPositionNear(toe_pos_expected, leg.toe_position, "laydown position mismatch");
+    expectAnglesNear(angles_expected, leg.angles, "laydown angles mismatch");
 }
 
-TEST_F(KinematicsTest, checkSetToe) {
-    CPosition targetPos;
-    targetPos.x = 0.201 * units::m;   // 0.092 + 0.109
-    targetPos.y = 0.160 * units::m;   // 0.092 + 0.068
-    targetPos.z = -0.050 * units::m;  // 0.045 - 0.095
+TEST_F(KinematicsTest, check_set_toe) {
+    CPosition target_pos;
+    target_pos.x = 0.201 * units::m;   // 0.092 + 0.109
+    target_pos.y = 0.160 * units::m;   // 0.092 + 0.068
+    target_pos.z = -0.050 * units::m;  // 0.045 - 0.095
 
-    kin_->setSingleToe(ELegIndex::RightFront, targetPos);
+    kin_->setToePosition(ELegIndex::RightFront, target_pos);
     auto& leg = kin_->getLegs().at(ELegIndex::RightFront);
 
-    CLegAngles anglesExpected;
-    anglesExpected.torso_coxa = 0.0 * units::deg;
-    anglesExpected.coxa_femur = 2.276 * units::deg;
-    anglesExpected.femur_tibia = 7.704 * units::deg;
+    CLegAngles angles_expected;
+    angles_expected.torso_coxa = 0.0 * units::deg;
+    angles_expected.coxa_femur = 2.276 * units::deg;
+    angles_expected.femur_tibia = 7.704 * units::deg;
 
-    expectPositionNear(targetPos, leg.toe_pos_, "setToe position mismatch");
-    expectAnglesNear(anglesExpected, leg.angles_, "setToe angles mismatch");
+    expectPositionNear(target_pos, leg.toe_position, "setToe position mismatch");
+    expectAnglesNear(angles_expected, leg.angles, "setToe angles mismatch");
 }
 
 TEST_F(KinematicsTest, TorsoRotationPreservesLegLocalTarget) {
-    kin_->moveTorso(kin_->getLegsStandingPositions());
-    const auto standingAngles = kin_->getAngles(ELegIndex::RightFront);
+    kin_->moveTorso(kin_->getStandingToePositions());
+    const auto standing_angles = kin_->getLegAngles(ELegIndex::RightFront);
 
     // Rotate the coxa mount by 90 degrees about each axis and keep the same
     // leg-local toe target: (92, 92, -50) mm relative to the mount.
@@ -129,7 +129,7 @@ TEST_F(KinematicsTest, TorsoRotationPreservesLegLocalTarget) {
 
     for (const auto& [orientation, target] : cases) {
         kin_->moveTorso({{ELegIndex::RightFront, target}}, CPose(CPosition(), orientation));
-        expectAnglesNear(standingAngles, kin_->getAngles(ELegIndex::RightFront),
+        expectAnglesNear(standing_angles, kin_->getLegAngles(ELegIndex::RightFront),
                          "rotated mount changed the leg-local target");
     }
 }

@@ -3,18 +3,18 @@
 #include <memory>
 
 #include "rclcpp/rclcpp.hpp"
+#include "requester/gait_interfaces.hpp"
 #include "requester/gait_parameters.hpp"
-#include "requester/igaits.hpp"
 #include "requester/kinematics.hpp"
 #include "rumblex_interfaces/msg/movement_request.hpp"
 
 namespace rumblex_movement {
 
-class CGaitWatch : public ISequenceGait {
+class CWatchGait : public ISequenceGait {
    public:
-    CGaitWatch(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CKinematics> kinematics,
+    CWatchGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CKinematics> kinematics,
                Parameters::Watch& params);
-    ~CGaitWatch() override = default;
+    ~CWatchGait() override = default;
 
     void start(double duration_s, uint8_t direction) override;
     bool update() override;

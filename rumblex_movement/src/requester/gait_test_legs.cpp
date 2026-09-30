@@ -1,4 +1,4 @@
-#include "requester/gait_testlegs.hpp"
+#include "requester/gait_test_legs.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -75,7 +75,7 @@ void CTestLegsGait::cancelStop() {
 void CTestLegsGait::captureBaseAngles() {
     base_leg_angles_.clear();
     for (const auto& [index, leg] : kinematics_->getLegs()) {
-        base_leg_angles_[index] = leg.angles_;
+        base_leg_angles_[index] = leg.angles;
     }
 
     leg_order_.assign(kDefaultLegOrder.begin(), kDefaultLegOrder.end());

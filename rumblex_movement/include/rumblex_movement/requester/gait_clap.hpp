@@ -3,8 +3,8 @@
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 
+#include "requester/gait_interfaces.hpp"
 #include "requester/gait_parameters.hpp"
-#include "requester/igaits.hpp"
 #include "requester/kinematics.hpp"
 #include "requester/types.hpp"
 

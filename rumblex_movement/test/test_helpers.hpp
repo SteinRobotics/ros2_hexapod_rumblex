@@ -14,8 +14,8 @@ namespace rumblex_movement::test_helpers {
 
 inline std::vector<rclcpp::Parameter> defaultKinematicsParameters() {
     std::vector<rclcpp::Parameter> params = {
-        rclcpp::Parameter("COXA_LENGTH", 0.050), rclcpp::Parameter("FEMUR_LENGTH", 0.063),
-        rclcpp::Parameter("TIBIA_LENGTH", 0.099), rclcpp::Parameter("COXA_HEIGHT", 0.045)};
+        rclcpp::Parameter("coxa_length_m", 0.050), rclcpp::Parameter("femur_length_m", 0.063),
+        rclcpp::Parameter("tibia_length_m", 0.099), rclcpp::Parameter("coxa_height_m", 0.045)};
 
     struct LegConfig {
         const char* name;
@@ -31,50 +31,50 @@ inline std::vector<rclcpp::Parameter> defaultKinematicsParameters() {
     };
 
     constexpr std::array<LegConfig, 6> legs = {
-        {{"RightFront", 0.109, 0.068, 45.0, 0.201, 0.160, -0.050, 0.180, 0.139, 0.010},
-         {"RightMid", 0.000, 0.088, 90.0, 0.000, 0.218, -0.050, 0.000, 0.188, 0.010},
-         {"RightBack", -0.109, 0.068, 135.0, -0.201, 0.160, -0.050, -0.180, 0.139, 0.010},
-         {"LeftFront", 0.109, -0.068, -45.0, 0.201, -0.160, -0.050, 0.180, -0.139, 0.010},
-         {"LeftMid", 0.000, -0.088, -90.0, 0.000, -0.218, -0.050, 0.000, -0.188, 0.010},
-         {"LeftBack", -0.109, -0.068, -135.0, -0.201, -0.160, -0.050, -0.180, -0.139, 0.010}}};
+        {{"right_front", 0.109, 0.068, 45.0, 0.201, 0.160, -0.050, 0.180, 0.139, 0.010},
+         {"right_mid", 0.000, 0.088, 90.0, 0.000, 0.218, -0.050, 0.000, 0.188, 0.010},
+         {"right_back", -0.109, 0.068, 135.0, -0.201, 0.160, -0.050, -0.180, 0.139, 0.010},
+         {"left_front", 0.109, -0.068, -45.0, 0.201, -0.160, -0.050, 0.180, -0.139, 0.010},
+         {"left_mid", 0.000, -0.088, -90.0, 0.000, -0.218, -0.050, 0.000, -0.188, 0.010},
+         {"left_back", -0.109, -0.068, -135.0, -0.201, -0.160, -0.050, -0.180, -0.139, 0.010}}};
 
     for (const auto& leg : legs) {
         const std::string name(leg.name);
         params.emplace_back("leg_names." + name, name);
-        params.emplace_back("leg_offsets." + name + ".CENTER_TO_COXA_X", leg.offset_x);
-        params.emplace_back("leg_offsets." + name + ".CENTER_TO_COXA_Y", leg.offset_y);
-        params.emplace_back("leg_offsets." + name + ".OFFSET_COXA_ANGLE_DEG", leg.offset_psi);
+        params.emplace_back("leg_offsets." + name + ".x_m", leg.offset_x);
+        params.emplace_back("leg_offsets." + name + ".y_m", leg.offset_y);
+        params.emplace_back("leg_offsets." + name + ".yaw_deg", leg.offset_psi);
 
-        params.emplace_back("footPositions_standing." + name + ".x", leg.standing_x);
-        params.emplace_back("footPositions_standing." + name + ".y", leg.standing_y);
-        params.emplace_back("footPositions_standing." + name + ".z", leg.standing_z);
+        params.emplace_back("toe_positions_standing." + name + ".x", leg.standing_x);
+        params.emplace_back("toe_positions_standing." + name + ".y", leg.standing_y);
+        params.emplace_back("toe_positions_standing." + name + ".z", leg.standing_z);
 
-        params.emplace_back("footPositions_laydown." + name + ".x", leg.laydown_x);
-        params.emplace_back("footPositions_laydown." + name + ".y", leg.laydown_y);
-        params.emplace_back("footPositions_laydown." + name + ".z", leg.laydown_z);
+        params.emplace_back("toe_positions_laydown." + name + ".x", leg.laydown_x);
+        params.emplace_back("toe_positions_laydown." + name + ".y", leg.laydown_y);
+        params.emplace_back("toe_positions_laydown." + name + ".z", leg.laydown_z);
     }
 
     return params;
 }
 
 inline std::vector<rclcpp::Parameter> defaultGaitParameters() {
-    return {rclcpp::Parameter("GENERIC_BODY_MAX_ROLL", 12.0),
-            rclcpp::Parameter("GENERIC_BODY_MAX_PITCH", 12.0),
-            rclcpp::Parameter("GENERIC_HEAD_MAX_YAW", 30.0),
-            rclcpp::Parameter("GENERIC_HEAD_MAX_PITCH", 20.0),
-            rclcpp::Parameter("GENERIC_LEG_LIFT_HEIGHT", 0.025),
-            rclcpp::Parameter("GENERIC_STEP_LENGTH", 0.03),
-            rclcpp::Parameter("GAIT_TRIPOD_HEAD_MAX_YAW", 15.0),
-            rclcpp::Parameter("GAIT_TRIPOD_FACTOR_VELOCITY_TO_CYCLE_TIME", 40.0),
-            rclcpp::Parameter("GAIT_RUNNING_FACTOR_VELOCITY_TO_CYCLE_TIME", 60.0),
-            rclcpp::Parameter("GAIT_RUNNING_HEAD_MAX_YAW", 5.0),
-            rclcpp::Parameter("GAIT_LEG_WAVE_LEG_LIFT_HEIGHT", 0.03),
-            rclcpp::Parameter("GAIT_LOOK_BODY_MAX_YAW", 20.0),
-            rclcpp::Parameter("GAIT_LOOK_HEAD_MAX_YAW", 25.0),
-            rclcpp::Parameter("GAIT_WATCH_BODY_MAX_YAW", 10.0),
-            rclcpp::Parameter("TESTLEGS_COXA_DELTA_DEG", 10.0),
-            rclcpp::Parameter("TESTLEGS_FEMUR_DELTA_DEG", 15.0),
-            rclcpp::Parameter("TESTLEGS_TIBIA_DELTA_DEG", 20.0)};
+    return {rclcpp::Parameter("gait.generic.torso_max_roll_deg", 12.0),
+            rclcpp::Parameter("gait.generic.torso_max_pitch_deg", 12.0),
+            rclcpp::Parameter("gait.generic.head_max_yaw_deg", 30.0),
+            rclcpp::Parameter("gait.generic.head_max_pitch_deg", 20.0),
+            rclcpp::Parameter("gait.generic.leg_lift_height_m", 0.025),
+            rclcpp::Parameter("gait.generic.step_length_m", 0.03),
+            rclcpp::Parameter("gait.tripod.head_max_yaw_deg", 15.0),
+            rclcpp::Parameter("gait.tripod.velocity_to_phase_gain", 40.0),
+            rclcpp::Parameter("gait.running.velocity_to_phase_gain", 60.0),
+            rclcpp::Parameter("gait.running.head_max_yaw_deg", 5.0),
+            rclcpp::Parameter("gait.leg_wave.leg_lift_height_m", 0.03),
+            rclcpp::Parameter("gait.look.torso_max_yaw_deg", 20.0),
+            rclcpp::Parameter("gait.look.head_max_yaw_deg", 25.0),
+            rclcpp::Parameter("gait.watch.torso_max_yaw_deg", 10.0),
+            rclcpp::Parameter("gait.test_legs.torso_coxa_delta_deg", 10.0),
+            rclcpp::Parameter("gait.test_legs.coxa_femur_delta_deg", 15.0),
+            rclcpp::Parameter("gait.test_legs.femur_tibia_delta_deg", 20.0)};
 }
 
 inline std::vector<rclcpp::Parameter> defaultRobotParameters() {
@@ -129,8 +129,8 @@ inline void expectPoseNear(const CPose& expected, const CPose& actual, const std
 
 // Compare CLeg (angles + toe position)
 inline void expectLegNear(const CLeg& expected, const CLeg& actual, const std::string& msg = "") {
-    expectAnglesNear(expected.angles_, actual.angles_, msg);
-    expectPositionNear(expected.toe_pos_, actual.toe_pos_, msg);
+    expectAnglesNear(expected.angles, actual.angles, msg);
+    expectPositionNear(expected.toe_position, actual.toe_position, msg);
 }
 
 // Compare COrientation (roll, pitch, yaw) - for head, roll should be 0.0

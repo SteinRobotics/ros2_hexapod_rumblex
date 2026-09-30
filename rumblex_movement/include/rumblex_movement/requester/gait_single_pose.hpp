@@ -3,22 +3,23 @@
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 
-#include "rumblex_utils/linear_interpolation.hpp"
+#include "requester/gait_interfaces.hpp"
 #include "requester/gait_parameters.hpp"
-#include "requester/igaits.hpp"
 #include "requester/kinematics.hpp"
 #include "requester/types.hpp"
+#include "rumblex_utils/linear_interpolation.hpp"
 
 namespace rumblex_movement {
 
-class CLayDownGait : public ISequenceGait {
+class CSinglePoseGait : public IContinuousGait {
    public:
-    CLayDownGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CKinematics> kinematics,
-                 Parameters::LayDown& params);
-    ~CLayDownGait() override = default;
+    CSinglePoseGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CKinematics> kinematics,
+                    Parameters::SinglePose& params);
+    ~CSinglePoseGait() override = default;
 
     void start(double duration_s, uint8_t direction) override;
-    bool update() override;
+    bool update(const geometry_msgs::msg::Twist& velocity, const CPose& torso,
+                const COrientation& head) override;
     void requestStop() override;
     void cancelStop() override;
     EGaitState state() const override {
@@ -28,12 +29,13 @@ class CLayDownGait : public ISequenceGait {
    private:
     std::shared_ptr<rclcpp::Node> node_;
     std::shared_ptr<CKinematics> kinematics_;
-    Parameters::LayDown params_;
+    Parameters::SinglePose params_;
     EGaitState state_ = EGaitState::Stopped;
-    std::map<ELegIndex, CPosition> target_leg_positions_;
-    COrientation target_head_position_;
-    std::map<ELegIndex, CPosition> origin_leg_positions_;
-    COrientation origin_head_position_;
+
+    CPose torso_origin_ = CPose();
+    COrientation head_origin_ = COrientation();
+
+    double duration_s_ = 0.0;
     double phase_increment_ = 0.1;
     double phase_ = 0.0;
 };

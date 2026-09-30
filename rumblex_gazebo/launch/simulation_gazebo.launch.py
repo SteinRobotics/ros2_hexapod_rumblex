@@ -118,7 +118,7 @@ def _launch_robot(context):
         parameters=[
             os.path.join(movement_config_dir, 'anatomy.yaml'),
             os.path.join(movement_config_dir, 'servo_description.yaml'),
-            {'SERVO_CONTROLLER_OFFLINE': True, 'use_sim_time': True},
+            {'servo.offline': True, 'use_sim_time': True},
         ],
         remappings=[('joint_states', 'target_joint_states')],
     )

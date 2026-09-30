@@ -1,4 +1,4 @@
-#include "requester/gait_legwave.hpp"
+#include "requester/gait_leg_wave.hpp"
 
 #include <magic_enum.hpp>
 
@@ -6,19 +6,19 @@
 
 namespace rumblex_movement {
 
-CGaitLegWave::CGaitLegWave(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CKinematics> kinematics,
+CLegWaveGait::CLegWaveGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CKinematics> kinematics,
                            Parameters::LegWave& params)
     : node_(node), kinematics_(kinematics), params_(params) {
 }
 
-void CGaitLegWave::start(double /*duration_s*/, uint8_t direction) {
+void CLegWaveGait::start(double /*duration_s*/, uint8_t direction) {
     state_ = EGaitState::Running;
     phase_ = 0.0;
     direction_ = direction;
     active_leg_index_ = ELegIndex::RightFront;
 }
 
-bool CGaitLegWave::update() {
+bool CLegWaveGait::update() {
     if (state_ == EGaitState::Stopped) {
         return false;
     }
@@ -28,18 +28,18 @@ bool CGaitLegWave::update() {
 
     if (state_ == EGaitState::Stopping && utils::isSinValueNearZero(phase_, delta_phase)) {
         // Reset the active leg to standing position before stopping
-        const auto base_toe_pos = kinematics_->getLegsStandingPositions();
-        kinematics_->setSingleToe(active_leg_index_, base_toe_pos.at(active_leg_index_));
+        const auto base_toe_pos = kinematics_->getStandingToePositions();
+        kinematics_->setToePosition(active_leg_index_, base_toe_pos.at(active_leg_index_));
         state_ = EGaitState::Stopped;
         return false;
     }
 
-    // TODO better use kinematics_->getLegsPositions()
-    const auto base_toe_pos = kinematics_->getLegsStandingPositions();
+    // TODO better use kinematics_->getToePositions()
+    const auto base_toe_pos = kinematics_->getStandingToePositions();
 
     if (phase_ >= M_PI) {
         // reset last leg to neutral position
-        kinematics_->setSingleToe(active_leg_index_, base_toe_pos.at(active_leg_index_));
+        kinematics_->setToePosition(active_leg_index_, base_toe_pos.at(active_leg_index_));
 
         // advance to the next leg
         size_t step = 1;
@@ -59,17 +59,17 @@ bool CGaitLegWave::update() {
                                                << target_position.x << ", " << target_position.y << ", "
                                                << target_position.z << ") at phase " << phase_);
 
-    kinematics_->setSingleToe(active_leg_index_, target_position);
+    kinematics_->setToePosition(active_leg_index_, target_position);
     return true;
 }
 
-void CGaitLegWave::requestStop() {
+void CLegWaveGait::requestStop() {
     if (state_ == EGaitState::Running) {
         state_ = EGaitState::Stopping;
     }
 }
 
-void CGaitLegWave::cancelStop() {
+void CLegWaveGait::cancelStop() {
     if (state_ == EGaitState::Stopping) {
         state_ = EGaitState::Running;
     }

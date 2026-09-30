@@ -1,28 +1,28 @@
 # Presets and anchors for common poses
-# Always combine torso and footPositions OR use legAngles alone
+# Always combine torso and toe_positions OR use leg_angles alone
 
 presets:
-  legAngles_standing: &legAngles_standing
-    All: { coxa: 0.0, femur: 2.276, tibia: 7.704 }
+  leg_angles_standing: &leg_angles_standing
+    all: { torso_coxa: 0.0, coxa_femur: 2.276, femur_tibia: 7.704 }
 
-  footPositions_standing: &footPositions_standing
-    RightFront: { x:  0.201, y:  0.160, z: -0.050 }
-    RightMid:   { x:  0.000, y:  0.218, z: -0.050 }
-    RightBack:  { x: -0.201, y:  0.160, z: -0.050 }
-    LeftFront:  { x:  0.201, y: -0.160, z: -0.050 }
-    LeftMid:    { x:  0.000, y: -0.218, z: -0.050 }
-    LeftBack:   { x: -0.201, y: -0.160, z: -0.050 }
+  toe_positions_standing: &toe_positions_standing
+    right_front: { x:  0.201, y:  0.160, z: -0.050 }
+    right_mid:   { x:  0.000, y:  0.218, z: -0.050 }
+    right_back:  { x: -0.201, y:  0.160, z: -0.050 }
+    left_front:  { x:  0.201, y: -0.160, z: -0.050 }
+    left_mid:    { x:  0.000, y: -0.218, z: -0.050 }
+    left_back:   { x: -0.201, y: -0.160, z: -0.050 }
 
-  legAngles_laydown: &legAngles_laydown
-    All: { coxa: 0.0, femur: 70.723, tibia: -53.320 }
+  leg_angles_laydown: &leg_angles_laydown
+    all: { torso_coxa: 0.0, coxa_femur: 70.723, femur_tibia: -53.320 }
 
-  footPositions_laydown: &footPositions_laydown
-    RightFront: { x:  0.180, y:  0.139, z: 0.010 }
-    RightMid:   { x:  0.000, y:  0.188, z: 0.010 }
-    RightBack:  { x: -0.180, y:  0.139, z: 0.010 }
-    LeftFront:  { x:  0.180, y: -0.139, z: 0.010 }
-    LeftMid:    { x:  0.000, y: -0.188, z: 0.010 }
-    LeftBack:   { x: -0.180, y: -0.139, z: 0.010 }
+  toe_positions_laydown: &toe_positions_laydown
+    right_front: { x:  0.180, y:  0.139, z: 0.010 }
+    right_mid:   { x:  0.000, y:  0.188, z: 0.010 }
+    right_back:  { x: -0.180, y:  0.139, z: 0.010 }
+    left_front:  { x:  0.180, y: -0.139, z: 0.010 }
+    left_mid:    { x:  0.000, y: -0.188, z: 0.010 }
+    left_back:   { x: -0.180, y: -0.139, z: 0.010 }
 
   head_neutral: &head_neutral
     yaw: 0.0
@@ -40,99 +40,99 @@ presets:
     yaw: 30.0
     pitch: 0.0
 
-  body_neutral: &body_neutral
+  torso_neutral: &torso_neutral
     orientation: { roll: 0.0, pitch: 0.0, yaw: 0.0 }
     direction: { x: 0.0, y: 0.0, z: 0.0 }
 
 # Sequences
 EXAMPLE:
   - head: *head_look_left
-    body: *body_neutral
-    factorDuration: 0.5
+    torso: *torso_neutral
+    duration_factor: 0.5
 
   - head: *head_neutral
-    legAngles:
-      RightFront: { coxa: 0.0, femur: 0.0, tibia: 0.0 }
-      LeftFront: { coxa: 0.0, femur: 20.0, tibia: -40.0 }
-    factorDuration: 0.5
+    leg_angles:
+      right_front: { torso_coxa: 0.0, coxa_femur: 0.0, femur_tibia: 0.0 }
+      left_front: { torso_coxa: 0.0, coxa_femur: 20.0, femur_tibia: -40.0 }
+    duration_factor: 0.5
 
   - head: *head_neutral
-    footPositions:
-      RightFront: { x: 50.0, y: -50.0, z: 0.0 }
-      LeftFront: { x: 50.0, y: 50.0, z: 0.0 }
-    factorDuration: 0.5
+    toe_positions:
+      right_front: { x: 50.0, y: -50.0, z: 0.0 }
+      left_front: { x: 50.0, y: 50.0, z: 0.0 }
+    duration_factor: 0.5
 
   - head: *head_neutral
-    legAngles: *legAngles_standing
-    factorDuration: 0.5
+    leg_angles: *leg_angles_standing
+    duration_factor: 0.5
 
 HIGH_FIVE:
   - head: { yaw: 0.0, pitch: -20.0 }
-    legAngles: { RightFront: { coxa: 20.0, femur: 50.0, tibia: 60.0 } }
-    factorDuration: 0.33
+    leg_angles: { right_front: { torso_coxa: 20.0, coxa_femur: 50.0, femur_tibia: 60.0 } }
+    duration_factor: 0.33
 
-  - factorDuration: 0.33
+  - duration_factor: 0.33
 
   - head: *head_neutral
-    legAngles: *legAngles_standing
-    factorDuration: 0.33
+    leg_angles: *leg_angles_standing
+    duration_factor: 0.33
 
 WATCH:
   - head: { yaw: -40.0, pitch: 0.0 }
-    factorDuration: 0.25
+    duration_factor: 0.25
 
   - head: { yaw: 0.0, pitch: 0.0 }
-    factorDuration: 0.25
+    duration_factor: 0.25
 
   - head: { yaw: 40.0, pitch: 0.0 }
-    factorDuration: 0.25
+    duration_factor: 0.25
 
   - head: { yaw: 0.0, pitch: 0.0 }
-    factorDuration: 0.25
+    duration_factor: 0.25
 
 LOOK_RIGHT:
   - head: *head_look_right
-    body:
+    torso:
       orientation: { roll: 0.0, pitch: 0.0, yaw: 20.0 }
       direction: { x: 0.0, y: 0.0, z: 0.0 }
-    factorDuration: 0.33
+    duration_factor: 0.33
 
-  - factorDuration: 0.33
+  - duration_factor: 0.33
 
   - head: *head_neutral
-    body: *body_neutral
-    factorDuration: 0.33
+    torso: *torso_neutral
+    duration_factor: 0.33
 
 LOOK_LEFT:
   - head: *head_look_left
-    body:
+    torso:
       orientation: { roll: 0.0, pitch: 0.0, yaw: -20.0 }
       direction: { x: 0.0, y: 0.0, z: 0.0 }
-    factorDuration: 0.33
+    duration_factor: 0.33
 
-  - factorDuration: 0.33
+  - duration_factor: 0.33
 
   - head: *head_neutral
-    body: *body_neutral
-    factorDuration: 0.33
+    torso: *torso_neutral
+    duration_factor: 0.33
 
 CLAP:
   - head: { yaw: -20.0, pitch: 0.0 }
-    body: *body_neutral
-    factorDuration: 0.33
+    torso: *torso_neutral
+    duration_factor: 0.33
 
 STAND_UP:
   - head: *head_neutral
-    legAngles: *legAngles_standing
-    factorDuration: 1.0
+    leg_angles: *leg_angles_standing
+    duration_factor: 1.0
 
 # STAND_UP:
 #   - head: *head_neutral
 #     torso: *torso_neutral
-#     footPositions: *footPositions_standing
-#     factorDuration: 1.0
+#     toe_positions: *toe_positions_standing
+#     duration_factor: 1.0
 
 LAYDOWN:
   - head: *head_look_up
-    legAngles: *legAngles_laydown
-    factorDuration: 1.0
+    leg_angles: *leg_angles_laydown
+    duration_factor: 1.0

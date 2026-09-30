@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
 #include "rclcpp/rclcpp.hpp"
-#include "requester/gait_laydown.hpp"
-#include "requester/gait_standup.hpp"
+#include "requester/gait_lay_down.hpp"
+#include "requester/gait_stand_up.hpp"
 #include "requester/kinematics.hpp"
 #include "test_helpers.hpp"
 
@@ -40,14 +40,14 @@ class GaitLayDownTest : public ::testing::Test {
 };
 
 TEST_F(GaitLayDownTest, LayDownStopsAtLaydownHeight) {
-    const auto laydownTargets = kinematics_->getLegsLayDownPositions();
-    const auto standingTargets = kinematics_->getLegsStandingPositions();
+    const auto laydown_targets = kinematics_->getLaydownToePositions();
+    const auto standing_targets = kinematics_->getStandingToePositions();
 
     // Ensure we start from standing pose.
-    kinematics_->moveTorso(standingTargets, CPose());
-    const auto initialPositions = kinematics_->getLegsPositions();
+    kinematics_->moveTorso(standing_targets, CPose());
+    const auto initial_positions = kinematics_->getToePositions();
 
-    CLayDownGait gait(node_, kinematics_, params_.layDown);
+    CLayDownGait gait(node_, kinematics_, params_.lay_down);
     EXPECT_EQ(gait.state(), EGaitState::Stopped);
 
     gait.start(3.0, 0);
@@ -60,9 +60,9 @@ TEST_F(GaitLayDownTest, LayDownStopsAtLaydownHeight) {
     EXPECT_EQ(gait.state(), EGaitState::Stopped);
     EXPECT_LT(iterations, kMaxIterations);
 
-    const auto finalPositions = kinematics_->getLegsPositions();
-    for (const auto& [legIndex, target] : laydownTargets) {
-        const auto& actual = finalPositions.at(legIndex);
+    const auto final_positions = kinematics_->getToePositions();
+    for (const auto& [leg_index, target] : laydown_targets) {
+        const auto& actual = final_positions.at(leg_index);
         EXPECT_NEAR(actual.z.numerical_value_in(units::m), target.z.numerical_value_in(units::m),
                     kPositionTolerance);
     }

@@ -27,7 +27,7 @@ bool CWaitingGait::update() {
         return false;
     }
 
-    const auto base_toe_pos = kinematics_->getLegsStandingPositions();
+    const auto base_toe_pos = kinematics_->getStandingToePositions();
     auto torso_target = CPose();
 
     constexpr auto kTorsoLiftHeight = 0.05 * rumblex_movement::units::m;  // 5 cm torso lift for visual effect

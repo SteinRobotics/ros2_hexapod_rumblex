@@ -43,8 +43,8 @@ class ClapGaitTest : public ::testing::Test {
 
 TEST_F(ClapGaitTest, CompletesCycleAndReturnsToInitialPose) {
     CClapGait gait(node_, kinematics_, params_.clap);
-    const auto initialTorso = kinematics_->getTorso();
-    const auto initialPositions = kinematics_->getLegsPositions();
+    const auto initial_torso = kinematics_->getTorsoPose();
+    const auto initial_positions = kinematics_->getToePositions();
 
     gait.start(3.0, 0);
 
@@ -57,78 +57,79 @@ TEST_F(ClapGaitTest, CompletesCycleAndReturnsToInitialPose) {
     EXPECT_EQ(gait.state(), EGaitState::Stopped);
 
     // Verify torso position returned to initial state
-    const auto finalTorso = kinematics_->getTorso();
-    EXPECT_NEAR(finalTorso.position.x.numerical_value_in(units::m),
-                initialTorso.position.x.numerical_value_in(units::m), kPositionTolerance);
-    EXPECT_NEAR(finalTorso.position.y.numerical_value_in(units::m),
-                initialTorso.position.y.numerical_value_in(units::m), kPositionTolerance);
-    EXPECT_NEAR(finalTorso.position.z.numerical_value_in(units::m),
-                initialTorso.position.z.numerical_value_in(units::m), kPositionTolerance);
+    const auto final_torso = kinematics_->getTorsoPose();
+    EXPECT_NEAR(final_torso.position.x.numerical_value_in(units::m),
+                initial_torso.position.x.numerical_value_in(units::m), kPositionTolerance);
+    EXPECT_NEAR(final_torso.position.y.numerical_value_in(units::m),
+                initial_torso.position.y.numerical_value_in(units::m), kPositionTolerance);
+    EXPECT_NEAR(final_torso.position.z.numerical_value_in(units::m),
+                initial_torso.position.z.numerical_value_in(units::m), kPositionTolerance);
 }
 
 TEST_F(ClapGaitTest, BackLegsLiftDuringSequence) {
     CClapGait gait(node_, kinematics_, params_.clap);
-    const auto initialPositions = kinematics_->getLegsPositions();
+    const auto initial_positions = kinematics_->getToePositions();
 
     gait.start(3.0, 0);
 
-    bool rightBackLifted = false;
-    bool leftBackLifted = false;
+    bool right_back_lifted = false;
+    bool left_back_lifted = false;
 
     int iterations = 0;
     while (gait.state() != EGaitState::Stopped && iterations++ < kMaxIterations) {
         gait.update();
 
-        const auto currentPositions = kinematics_->getLegsPositions();
+        const auto current_positions = kinematics_->getToePositions();
 
         // Check if right back leg was lifted
-        if (currentPositions.at(ELegIndex::RightBack).z >
-            initialPositions.at(ELegIndex::RightBack).z + 0.01 * units::m) {
-            rightBackLifted = true;
+        if (current_positions.at(ELegIndex::RightBack).z >
+            initial_positions.at(ELegIndex::RightBack).z + 0.01 * units::m) {
+            right_back_lifted = true;
         }
 
         // Check if left back leg was lifted
-        if (currentPositions.at(ELegIndex::LeftBack).z >
-            initialPositions.at(ELegIndex::LeftBack).z + 0.01 * units::m) {
-            leftBackLifted = true;
+        if (current_positions.at(ELegIndex::LeftBack).z >
+            initial_positions.at(ELegIndex::LeftBack).z + 0.01 * units::m) {
+            left_back_lifted = true;
         }
     }
 
-    EXPECT_TRUE(rightBackLifted) << "Right back leg should lift during clap sequence";
-    EXPECT_TRUE(leftBackLifted) << "Left back leg should lift during clap sequence";
+    EXPECT_TRUE(right_back_lifted) << "Right back leg should lift during clap sequence";
+    EXPECT_TRUE(left_back_lifted) << "Left back leg should lift during clap sequence";
 }
 
 TEST_F(ClapGaitTest, FrontLegsPerformClapMovement) {
     CClapGait gait(node_, kinematics_, params_.clap);
-    const auto initialLeftAngles = kinematics_->getAngles(ELegIndex::LeftFront);
-    const auto initialRightAngles = kinematics_->getAngles(ELegIndex::RightFront);
+    const auto initial_left_angles = kinematics_->getLegAngles(ELegIndex::LeftFront);
+    const auto initial_right_angles = kinematics_->getLegAngles(ELegIndex::RightFront);
 
     gait.start(3.0, 0);
 
-    bool frontLegsMovedForClap = false;
+    bool front_legs_moved_for_clap = false;
 
     int iterations = 0;
     while (gait.state() != EGaitState::Stopped && iterations++ < kMaxIterations) {
         gait.update();
 
-        const auto currentLeftAngles = kinematics_->getAngles(ELegIndex::LeftFront);
-        const auto currentRightAngles = kinematics_->getAngles(ELegIndex::RightFront);
+        const auto current_left_angles = kinematics_->getLegAngles(ELegIndex::LeftFront);
+        const auto current_right_angles = kinematics_->getLegAngles(ELegIndex::RightFront);
 
         // Check if front legs moved their torso_coxa angles for clapping
-        const auto leftDiff = mp_units::abs(currentLeftAngles.torso_coxa - initialLeftAngles.torso_coxa);
-        const auto rightDiff = mp_units::abs(currentRightAngles.torso_coxa - initialRightAngles.torso_coxa);
+        const auto left_diff = mp_units::abs(current_left_angles.torso_coxa - initial_left_angles.torso_coxa);
+        const auto right_diff =
+            mp_units::abs(current_right_angles.torso_coxa - initial_right_angles.torso_coxa);
 
-        if (leftDiff > 5.0 * units::deg || rightDiff > 5.0 * units::deg) {
-            frontLegsMovedForClap = true;
+        if (left_diff > 5.0 * units::deg || right_diff > 5.0 * units::deg) {
+            front_legs_moved_for_clap = true;
         }
     }
 
-    EXPECT_TRUE(frontLegsMovedForClap) << "Front legs should move for clapping";
+    EXPECT_TRUE(front_legs_moved_for_clap) << "Front legs should move for clapping";
 }
 
 TEST_F(ClapGaitTest, RequestStopReturnsToInitialState) {
     CClapGait gait(node_, kinematics_, params_.clap);
-    const auto initialTorso = kinematics_->getTorso();
+    const auto initial_torso = kinematics_->getTorsoPose();
 
     gait.start(3.0, 0);
 
@@ -149,7 +150,7 @@ TEST_F(ClapGaitTest, RequestStopReturnsToInitialState) {
     EXPECT_EQ(gait.state(), EGaitState::Stopped);
 
     // Verify torso returned to initial position
-    const auto finalTorso = kinematics_->getTorso();
-    EXPECT_NEAR(finalTorso.position.x.numerical_value_in(units::m),
-                initialTorso.position.x.numerical_value_in(units::m), kPositionTolerance);
+    const auto final_torso = kinematics_->getTorsoPose();
+    EXPECT_NEAR(final_torso.position.x.numerical_value_in(units::m),
+                initial_torso.position.x.numerical_value_in(units::m), kPositionTolerance);
 }

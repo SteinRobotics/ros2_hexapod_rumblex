@@ -5,13 +5,13 @@
 using namespace rumblex_interfaces::msg;
 namespace rumblex_movement {
 
-CGaitWatch::CGaitWatch(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CKinematics> kinematics,
+CWatchGait::CWatchGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CKinematics> kinematics,
                        Parameters::Watch& params)
     : node_(node), kinematics_(kinematics), params_(params) {
 }
 
-void CGaitWatch::start(double duration_s, uint8_t direction) {
-    RCLCPP_INFO(node_->get_logger(), "Starting CGaitWatch");
+void CWatchGait::start(double duration_s, uint8_t direction) {
+    RCLCPP_INFO(node_->get_logger(), "Starting CWatchGait");
     state_ = EGaitState::Running;
     phase_ = 0.0;
 
@@ -24,20 +24,20 @@ void CGaitWatch::start(double duration_s, uint8_t direction) {
     delta_phase_ = (2.0 * M_PI) / (duration_s / 0.1);
 }
 
-bool CGaitWatch::update() {
+bool CWatchGait::update() {
     if (state_ == EGaitState::Stopped) return false;
 
     // set head yaw using sinusoidal oscillation
     phase_ += delta_phase_;
     if (phase_ > 2.0 * M_PI) {
         state_ = EGaitState::Stopped;
-        kinematics_->setHead(COrientation(0.0, 0.0, 0.0));
+        kinematics_->setHeadOrientation(COrientation(0.0, 0.0, 0.0));
         kinematics_->moveTorso(CPose());
         return true;
     }
     COrientation head_request;
     head_request.yaw = amplitude_head_ * std::sin(phase_);
-    kinematics_->setHead(head_request);
+    kinematics_->setHeadOrientation(head_request);
 
     // CPose torso_request;
     // torso_request.orientation.yaw = amplitude_torso_ * std::sin(phase_);
@@ -46,11 +46,11 @@ bool CGaitWatch::update() {
     return true;
 }
 
-void CGaitWatch::requestStop() {
+void CWatchGait::requestStop() {
     // gait is stopped automatically after completing the current cycle
 }
 
-void CGaitWatch::cancelStop() {
+void CWatchGait::cancelStop() {
     // this gait cannot be stopped nor the stop can be cancelled
 }
 

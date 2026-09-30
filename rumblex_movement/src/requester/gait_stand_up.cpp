@@ -1,4 +1,4 @@
-#include "requester/gait_standup.hpp"
+#include "requester/gait_stand_up.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -14,7 +14,7 @@ namespace rumblex_movement {
 CStandUpGait::CStandUpGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CKinematics> kinematics,
                            Parameters::StandUp& params)
     : node_(std::move(node)), kinematics_(std::move(kinematics)), params_(params) {
-    target_leg_positions_ = kinematics_->getLegsStandingPositions();
+    target_leg_positions_ = kinematics_->getStandingToePositions();
     target_head_position_ = COrientation(0.0, 0.0, 0.0);
 }
 
@@ -22,10 +22,10 @@ void CStandUpGait::start(double duration_s, uint8_t /*direction*/) {
     RCLCPP_INFO(node_->get_logger(), "CStandUpGait::start called, beginning standup gait.");
     phase_ = 0.0;
     phase_increment_ = kPhaseLimit / (duration_s / kUpdateIntervalS);
-    origin_leg_positions_ = kinematics_->getLegsPositions();
-    origin_head_position_ = kinematics_->getHead();
+    origin_leg_positions_ = kinematics_->getToePositions();
+    origin_head_orientation_ = kinematics_->getHeadOrientation();
 
-    if (origin_leg_positions_ == target_leg_positions_ && origin_head_position_ == target_head_position_) {
+    if (origin_leg_positions_ == target_leg_positions_ && origin_head_orientation_ == target_head_position_) {
         RCLCPP_INFO(
             node_->get_logger(),
             "CStandUpGait::start called, but robot is already in standing position. No action taken.");
@@ -53,17 +53,18 @@ bool CStandUpGait::update() {
     // progress 0 means origin position
     // progress 1 means standing position
     std::map<ELegIndex, CPosition> intermediate_positions;
-    for (const auto& [legIndex, target_position] : target_leg_positions_) {
-        auto origin_position = origin_leg_positions_.at(legIndex);
+    for (const auto& [leg_index, target_position] : target_leg_positions_) {
+        auto origin_position = origin_leg_positions_.at(leg_index);
         // use CPosition member interpolation instead of per-component scalar interpolation
         CPosition intermediate_position = origin_position.linearInterpolate(target_position, progress);
-        intermediate_positions[legIndex] = intermediate_position;
+        intermediate_positions[leg_index] = intermediate_position;
     }
     kinematics_->moveTorso(intermediate_positions);
 
     // Move head to neutral position
-    COrientation intermediate_head = origin_head_position_.linearInterpolate(target_head_position_, progress);
-    kinematics_->setHead(intermediate_head);
+    COrientation intermediate_head =
+        origin_head_orientation_.linearInterpolate(target_head_position_, progress);
+    kinematics_->setHeadOrientation(intermediate_head);
 
     return true;
 }

@@ -14,7 +14,7 @@ class ServoControllerTest : public ::testing::Test {
         if (!rclcpp::ok()) rclcpp::init(0, nullptr);
         rclcpp::NodeOptions options;
         // Only force offline mode; load real servo description from package config
-        options.parameter_overrides({rclcpp::Parameter("SERVO_CONTROLLER_OFFLINE", true)});
+        options.parameter_overrides({rclcpp::Parameter("servo.offline", true)});
         node_ = std::make_shared<rclcpp::Node>("test_servo_controller_node", rclcpp::NodeOptions(options));
         controller_ = std::make_unique<CServoController>(node_);
     }

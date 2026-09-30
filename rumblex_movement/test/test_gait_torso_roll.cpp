@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "rclcpp/rclcpp.hpp"
-#include "requester/gait_torsoroll.hpp"
+#include "requester/gait_torso_roll.hpp"
 #include "requester/kinematics.hpp"
 #include "test_helpers.hpp"
 
@@ -18,11 +18,11 @@ class TorsoRollGaitTest : public ::testing::Test {
         auto overrides = test_helpers::defaultRobotParameters();
         options.parameter_overrides(overrides);
 
-        node_ = std::make_shared<rclcpp::Node>("test_gait_torsoroll_node", options);
+        node_ = std::make_shared<rclcpp::Node>("test_gait_torso_roll_node", options);
 
         kinematics_ = std::make_shared<CKinematics>(node_);
         params_ = test_helpers::makeDeclaredParameters(node_);
-        gait_ = std::make_unique<CGaitTorsoRoll>(node_, kinematics_, params_.torsoRoll);
+        gait_ = std::make_unique<CTorsoRollGait>(node_, kinematics_, params_.torso_roll);
     }
 
     void TearDown() override {
@@ -33,7 +33,7 @@ class TorsoRollGaitTest : public ::testing::Test {
 
     std::shared_ptr<rclcpp::Node> node_;
     std::shared_ptr<CKinematics> kinematics_;
-    std::unique_ptr<CGaitTorsoRoll> gait_;
+    std::unique_ptr<CTorsoRollGait> gait_;
     Parameters params_;
 };
 

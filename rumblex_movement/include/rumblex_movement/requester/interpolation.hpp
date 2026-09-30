@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "rumblex_utils/linear_interpolation.hpp"
 #include "requester/types.hpp"
+#include "rumblex_utils/linear_interpolation.hpp"
 
 namespace rumblex_utils {
 

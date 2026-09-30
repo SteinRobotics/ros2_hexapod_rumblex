@@ -75,3 +75,12 @@ TEST(MovementTypesTest, PoseConvertsLengthsAndAngles) {
     EXPECT_DOUBLE_EQ(pose.orientation.pitch.numerical_value_in(units::deg), 90.0);
     EXPECT_NEAR(pose.orientation.yaw.numerical_value_in(units::deg), -180.0, 1e-12);
 }
+
+TEST(MovementTypesTest, LegNamesUseLowercaseSnakeCase) {
+    EXPECT_EQ(legNameToIndex("right_front"), ELegIndex::RightFront);
+    EXPECT_EQ(legNameToIndex("left_mid"), ELegIndex::LeftMid);
+    for (auto index : magic_enum::enum_values<ELegIndex>()) {
+        EXPECT_EQ(legNameToIndex(legIndexToName(index)), index);
+    }
+    EXPECT_FALSE(parseLegIndex("unknown_leg").has_value());
+}

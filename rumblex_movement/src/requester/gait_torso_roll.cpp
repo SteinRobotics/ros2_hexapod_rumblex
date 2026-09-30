@@ -1,24 +1,24 @@
-#include "requester/gait_torsoroll.hpp"
+#include "requester/gait_torso_roll.hpp"
 
 constexpr double kPhaseLimit = TWO_PI;
 constexpr double kUpdateIntervalS = 0.1;  // Update interval in seconds
 
 namespace rumblex_movement {
 
-CGaitTorsoRoll::CGaitTorsoRoll(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CKinematics> kinematics,
+CTorsoRollGait::CTorsoRollGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CKinematics> kinematics,
                                Parameters::TorsoRoll& params)
     : node_(node), kinematics_(kinematics), params_(params) {
 }
 
-void CGaitTorsoRoll::start(double duration_s, uint8_t /*direction*/) {
-    assert(duration_s > 0.0 && "CGaitTorsoRoll::start duration must be positive.");
+void CTorsoRollGait::start(double duration_s, uint8_t /*direction*/) {
+    assert(duration_s > 0.0 && "CTorsoRollGait::start duration must be positive.");
     state_ = EGaitState::Starting;
     phase_ = 0.0;
     phase_increment_ = kPhaseLimit / (duration_s / kUpdateIntervalS);
-    origin_leg_positions_ = kinematics_->getLegsPositions();
+    origin_leg_positions_ = kinematics_->getToePositions();
 }
 
-bool CGaitTorsoRoll::update() {
+bool CTorsoRollGait::update() {
     if (state_ == EGaitState::Stopped) {
         return false;
     }
@@ -27,14 +27,14 @@ bool CGaitTorsoRoll::update() {
 
     // phase_ == M_PI_4 is reached when the leg is moving upwards and the normal cycle goes downwards again
     if (state_ == EGaitState::Starting && phase_ > M_PI_4) {
-        RCLCPP_INFO(node_->get_logger(), "CGaitTorsoRoll change to Running.");
+        RCLCPP_INFO(node_->get_logger(), "CTorsoRollGait change to Running.");
         state_ = EGaitState::Running;
     }
     if (state_ == EGaitState::StopPending && utils::areSinCosValuesEqual(phase_, phase_increment_)) {
-        RCLCPP_INFO(node_->get_logger(), "CGaitTorsoRoll change to Stopping.");
+        RCLCPP_INFO(node_->get_logger(), "CTorsoRollGait change to Stopping.");
         state_ = EGaitState::Stopping;
     } else if (state_ == EGaitState::Stopping && utils::isSinValueNearZero(phase_, phase_increment_)) {
-        RCLCPP_INFO(node_->get_logger(), "CGaitTorsoRoll change to Stopped.");
+        RCLCPP_INFO(node_->get_logger(), "CTorsoRollGait change to Stopped.");
         phase_ = 0.0;
         state_ = EGaitState::Stopped;
     }
@@ -56,13 +56,13 @@ bool CGaitTorsoRoll::update() {
     return true;
 }
 
-void CGaitTorsoRoll::requestStop() {
+void CTorsoRollGait::requestStop() {
     if (state_ == EGaitState::Running) {
         state_ = EGaitState::StopPending;
     }
 }
 
-void CGaitTorsoRoll::cancelStop() {
+void CTorsoRollGait::cancelStop() {
     // if the state is not in state StopPending, cancel the transition to Stop is not possible
     if (state_ == EGaitState::StopPending) {
         state_ = EGaitState::Running;
