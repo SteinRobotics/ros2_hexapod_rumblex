@@ -1,5 +1,7 @@
 #include "requester/gait_move_combined.hpp"
 
+#include <mp-units/math.h>
+
 namespace rumblex_movement {
 
 constexpr double kCombinedTimeToWaitBeforeStopSec = 3.0;
@@ -27,7 +29,7 @@ void CMoveCombinedGait::start(double /*duration_s*/, uint8_t /*direction*/) {
     active_gait_type_ = EMoveCombinedGaitType::Wave;
     is_blending_ = false;
     blend_alpha_ = 1.0;
-    blend_start_head_yaw_deg_ = 0.0;
+    blend_start_head_yaw_ = 0.0 * units::deg;
     target_positions_ = kinematics_->getLegsStandingPositions();
     blend_start_positions_ = target_positions_;
 }
@@ -72,7 +74,7 @@ CMoveCombinedGait::LegMotion CMoveCombinedGait::computeWaveLegMotion(ELegIndex i
     } else {
         double t = (local_phase - kWaveTransferPhase) / kWaveSupportPhase;
         motion.step = std::cos(t * M_PI) * wave_params_.gait_step_length;
-        motion.lift = 0.0;
+        motion.lift = 0.0 * units::m;
     }
     return motion;
 }
@@ -97,7 +99,7 @@ CMoveCombinedGait::LegMotion CMoveCombinedGait::computeRippleLegMotion(ELegIndex
     } else {
         double t = (local_phase - kRippleTransferPhase) / kRippleSupportPhase;
         motion.step = std::cos(t * M_PI) * ripple_params_.gait_step_length;
-        motion.lift = 0.0;
+        motion.lift = 0.0 * units::m;
     }
     return motion;
 }
@@ -138,16 +140,16 @@ double CMoveCombinedGait::getFactorVelocityCycleTime(EMoveCombinedGaitType gait)
     return wave_params_.factor_velocity_to_gait_cycle_time;
 }
 
-double CMoveCombinedGait::getHeadAmplitudeYawDeg(EMoveCombinedGaitType gait) const {
+units::Angle CMoveCombinedGait::getHeadAmplitudeYaw(EMoveCombinedGaitType gait) const {
     switch (gait) {
         case EMoveCombinedGaitType::Wave:
-            return wave_params_.head_amplitude_yaw_deg;
+            return wave_params_.head_amplitude_yaw;
         case EMoveCombinedGaitType::Ripple:
-            return ripple_params_.head_amplitude_yaw_deg;
+            return ripple_params_.head_amplitude_yaw;
         case EMoveCombinedGaitType::Tripod:
-            return tripod_params_.head_amplitude_yaw_deg;
+            return tripod_params_.head_amplitude_yaw;
     }
-    return wave_params_.head_amplitude_yaw_deg;
+    return wave_params_.head_amplitude_yaw;
 }
 
 bool CMoveCombinedGait::update(const geometry_msgs::msg::Twist& velocity, const CPose& body,
@@ -215,7 +217,7 @@ bool CMoveCombinedGait::update(const geometry_msgs::msg::Twist& velocity, const 
 
             // Capture current positions and head for smooth blending
             blend_start_positions_ = target_positions_;
-            blend_start_head_yaw_deg_ = getHeadAmplitudeYawDeg(active_gait_type_) * std::sin(phase_);
+            blend_start_head_yaw_ = getHeadAmplitudeYaw(active_gait_type_) * std::sin(phase_);
 
             active_gait_type_ = new_gait;
             is_blending_ = true;
@@ -260,20 +262,20 @@ bool CMoveCombinedGait::update(const geometry_msgs::msg::Twist& velocity, const 
         auto motion = computeLegMotion(active_gait_type_, index, phase_);
 
         // Linear displacement
-        double delta_x = norm_x * motion.step;
-        double delta_y = norm_y * motion.step;
+        const auto delta_x = norm_x * motion.step;
+        const auto delta_y = norm_y * motion.step;
 
         // Rotational displacement
-        double leg_vec_x = base_foot_pos.x;
-        double leg_vec_y = base_foot_pos.y;
-        double len = std::sqrt(leg_vec_x * leg_vec_x + leg_vec_y * leg_vec_y);
+        const auto leg_vec_x = base_foot_pos.x;
+        const auto leg_vec_y = base_foot_pos.y;
+        const auto len = mp_units::hypot(leg_vec_x, leg_vec_y);
 
-        double rot_x = 0.0;
-        double rot_y = 0.0;
+        units::Length rot_x = 0.0 * units::m;
+        units::Length rot_y = 0.0 * units::m;
 
-        if (len > 1e-6) {
-            double dir_x = -leg_vec_y / len;
-            double dir_y = leg_vec_x / len;
+        if (len > 1e-6 * units::m) {
+            const auto dir_x = -leg_vec_y / len;
+            const auto dir_y = leg_vec_x / len;
             rot_x = dir_x * motion.step * norm_rot;
             rot_y = dir_y * motion.step * norm_rot;
         }
@@ -294,12 +296,12 @@ bool CMoveCombinedGait::update(const geometry_msgs::msg::Twist& velocity, const 
     kinematics_->moveBody(target_positions_, body);
 
     // Head movement with blending
-    double head_yaw_deg = getHeadAmplitudeYawDeg(active_gait_type_) * std::sin(phase_);
+    auto head_yaw = getHeadAmplitudeYaw(active_gait_type_) * std::sin(phase_);
     if (is_blending_) {
-        head_yaw_deg = blend_start_head_yaw_deg_ + smooth_alpha * (head_yaw_deg - blend_start_head_yaw_deg_);
+        head_yaw = blend_start_head_yaw_ + smooth_alpha * (head_yaw - blend_start_head_yaw_);
     }
     COrientation head_request;
-    head_request.yaw_deg = head_yaw_deg;
+    head_request.yaw = head_yaw;
     kinematics_->setHead(head_request);
     return true;
 }

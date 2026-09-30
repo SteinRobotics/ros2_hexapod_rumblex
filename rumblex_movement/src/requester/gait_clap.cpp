@@ -2,16 +2,16 @@
 
 #include <algorithm>
 
-#include "rumblex_utils/linear_interpolation.hpp"
 #include "requester/kinematics.hpp"
+#include "rumblex_utils/linear_interpolation.hpp"
 
 namespace {
 constexpr double kPhaseIncrement = 0.1;
-constexpr double kBodyShiftBack = -0.05;     // 5cm backward
-constexpr double kBackLegLiftHeight = 0.05;  // 5cm up
-constexpr double kFrontLegLiftHeight = 0.1;  // 10cm up
-constexpr double kClapAngle = 30.0;          // Degrees for clap movement
-constexpr int kClapRepetitions = 3;          // Number of clap cycles
+constexpr auto kBodyShiftBack = -0.05 * rumblex_movement::units::m;     // 5cm backward
+constexpr auto kBackLegLiftHeight = 0.05 * rumblex_movement::units::m;  // 5cm up
+constexpr auto kFrontLegLiftHeight = 0.1 * rumblex_movement::units::m;  // 10cm up
+constexpr auto kClapAngle = 30.0 * rumblex_movement::units::deg;        // Degrees for clap movement
+constexpr int kClapRepetitions = 3;                                     // Number of clap cycles
 
 }  // namespace
 
@@ -220,10 +220,10 @@ void CClapGait::applyFrontLegsClap(double alpha, [[maybe_unused]] bool closing) 
 
     // Adjust coxa angles to bring legs together (closing) or apart (opening)
     // Left leg rotates clockwise (positive), right leg rotates counter-clockwise (negative)
-    double angle_offset = kClapAngle * alpha;
+    const auto angle_offset = kClapAngle * alpha;
 
-    left_front_angles.coxa_deg += angle_offset;
-    right_front_angles.coxa_deg -= angle_offset;
+    left_front_angles.coxa += angle_offset;
+    right_front_angles.coxa -= angle_offset;
 
     kinematics_->setLegAngles(ELegIndex::LeftFront, left_front_angles);
     kinematics_->setLegAngles(ELegIndex::RightFront, right_front_angles);

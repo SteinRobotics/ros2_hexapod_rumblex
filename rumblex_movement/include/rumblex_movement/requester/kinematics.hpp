@@ -11,10 +11,11 @@
 #include <memory>
 #include <string>
 
-#include "rumblex_interfaces/msg/pose.hpp"
-#include "rumblex_utils/geometry.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "requester/types.hpp"
+#include "rumblex_interfaces/msg/pose.hpp"
+#include "rumblex_utils/geometry.hpp"
+#include "units.hpp"
 
 namespace rumblex_movement {
 
@@ -29,7 +30,7 @@ class CKinematics {
                   const CPose body = CPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0));
     void moveBody(const CPose body);
 
-    void setHead(double yaw_deg, double pitch_deg);
+    void setHead(units::Angle yaw, units::Angle pitch);
     void setHead(COrientation head);
 
     std::map<ELegIndex, CPosition> getLegsPositions() const;
@@ -62,12 +63,12 @@ class CKinematics {
     std::shared_ptr<rclcpp::Node> node_;
 
     // Parameters
-    const double COXA_LENGTH;
-    const double COXA_HEIGHT;
-    const double FEMUR_LENGTH;
-    const double TIBIA_LENGTH;
-    const double sq_femur_length_;
-    const double sq_tibia_length_;
+    const units::Length COXA_LENGTH;
+    const units::Length COXA_HEIGHT;
+    const units::Length FEMUR_LENGTH;
+    const units::Length TIBIA_LENGTH;
+    const units::Area sq_femur_length_;
+    const units::Area sq_tibia_length_;
 
     std::map<ELegIndex, CLeg> legs_;          // current values
     std::map<ELegIndex, CLeg> legsStanding_;  // change to shared pointer and make const

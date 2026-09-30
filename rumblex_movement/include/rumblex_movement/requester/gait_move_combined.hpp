@@ -5,14 +5,14 @@
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 
-#include "rumblex_utils/filters.hpp"
-#include "rumblex_utils/geometry.hpp"
-#include "rumblex_utils/msg_twist.hpp"
-#include "rumblex_utils/simpletimer.hpp"
 #include "requester/gait_parameters.hpp"
 #include "requester/igaits.hpp"
 #include "requester/kinematics.hpp"
 #include "requester/types.hpp"
+#include "rumblex_utils/filters.hpp"
+#include "rumblex_utils/geometry.hpp"
+#include "rumblex_utils/msg_twist.hpp"
+#include "rumblex_utils/simpletimer.hpp"
 
 namespace rumblex_movement {
 
@@ -36,8 +36,8 @@ class CMoveCombinedGait : public IContinuousGait {
 
    private:
     struct LegMotion {
-        double step{0.0};
-        double lift{0.0};
+        units::Length step = 0.0 * units::m;
+        units::Length lift = 0.0 * units::m;
     };
 
     struct LegPhaseInfo {
@@ -53,7 +53,7 @@ class CMoveCombinedGait : public IContinuousGait {
     LegMotion computeLegMotion(EMoveCombinedGaitType gait, ELegIndex index, double phase) const;
 
     double getFactorVelocityCycleTime(EMoveCombinedGaitType gait) const;
-    double getHeadAmplitudeYawDeg(EMoveCombinedGaitType gait) const;
+    units::Angle getHeadAmplitudeYaw(EMoveCombinedGaitType gait) const;
 
     // Wave: 6 individual legs, each offset by π/3
     static constexpr double kWaveTransferPhase = 2.0 * M_PI / 6.0;
@@ -98,7 +98,7 @@ class CMoveCombinedGait : public IContinuousGait {
     bool is_blending_ = false;
     double blend_alpha_ = 1.0;
     std::map<ELegIndex, CPosition> blend_start_positions_;
-    double blend_start_head_yaw_deg_ = 0.0;
+    units::Angle blend_start_head_yaw_ = 0.0 * units::deg;
 
     CSimpleTimer no_velocity_timer_;
     std::map<ELegIndex, CPosition> target_positions_;

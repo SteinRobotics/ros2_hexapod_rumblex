@@ -12,9 +12,9 @@
 #include <string>
 #include <string_view>
 
+#include "requester/types.hpp"
 #include "rumblex_interfaces/msg/servo_angles.hpp"
 #include "rumblex_interfaces/msg/servo_index.hpp"
-#include "requester/types.hpp"
 
 namespace rumblex_movement {
 
@@ -54,11 +54,11 @@ inline constexpr std::array<ServoMapping, 18> LEG_SERVO_MAP = {
 inline double getAxisAngle(const CLegAngles& legAngles, EJointAxis axis) {
     switch (axis) {
         case EJointAxis::Coxa:
-            return legAngles.coxa_deg;
+            return legAngles.coxa.numerical_value_in(units::deg);
         case EJointAxis::Femur:
-            return legAngles.femur_deg;
+            return legAngles.femur.numerical_value_in(units::deg);
         case EJointAxis::Tibia:
-            return legAngles.tibia_deg;
+            return legAngles.tibia.numerical_value_in(units::deg);
     }
     return 0.0;
 }
@@ -73,8 +73,8 @@ inline void appendLegServoTargets(const std::map<ELegIndex, CLegAngles>& legAngl
 }
 
 inline void appendHeadServoTargets(const COrientation& head, std::map<uint32_t, double>& targetAngles) {
-    targetAngles[ServoIndex::HEAD_YAW] = head.yaw_deg;
-    targetAngles[ServoIndex::HEAD_PITCH] = head.pitch_deg;
+    targetAngles[ServoIndex::HEAD_YAW] = head.yaw.numerical_value_in(units::deg);
+    targetAngles[ServoIndex::HEAD_PITCH] = head.pitch.numerical_value_in(units::deg);
 }
 
 inline std::map<uint32_t, double> buildServoTargets(const COrientation& head,
@@ -124,13 +124,13 @@ inline std::map<ELegIndex, CLegAngles> servoAnglesMsgToLegAngles(const ServoAngl
         CLegAngles& entry = legAngles[*leg];
         switch (*axis) {
             case EJointAxis::Coxa:
-                entry.coxa_deg = servo.angle_deg;
+                entry.coxa = servo.angle_deg * units::deg;
                 break;
             case EJointAxis::Femur:
-                entry.femur_deg = servo.angle_deg;
+                entry.femur = servo.angle_deg * units::deg;
                 break;
             case EJointAxis::Tibia:
-                entry.tibia_deg = servo.angle_deg;
+                entry.tibia = servo.angle_deg * units::deg;
                 break;
         }
     }

@@ -30,7 +30,7 @@ bool CWaitingGait::update() {
     const auto base_foot_pos = kinematics_->getLegsStandingPositions();
     auto body_target = CPose();
 
-    constexpr double kBodyLiftHeight = 0.05;                      // 5 cm body lift for visual effect
+    constexpr auto kBodyLiftHeight = 0.05 * rumblex_movement::units::m;  // 5 cm body lift for visual effect
     body_target.position.z = kBodyLiftHeight * std::sin(phase_);  // Small body bounce for visual effect
 
     kinematics_->moveBody(base_foot_pos, body_target);

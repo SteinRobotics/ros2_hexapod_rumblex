@@ -63,6 +63,7 @@ TEST_F(GaitStandUpTest, StandUpStopsAtStandingHeight) {
     const auto finalPositions = kinematics_->getLegsPositions();
     for (const auto& [legIndex, target] : standingTargets) {
         const auto& actual = finalPositions.at(legIndex);
-        EXPECT_NEAR(actual.z, target.z, kPositionTolerance);
+        EXPECT_NEAR(actual.z.numerical_value_in(units::m), target.z.numerical_value_in(units::m),
+                    kPositionTolerance);
     }
 }

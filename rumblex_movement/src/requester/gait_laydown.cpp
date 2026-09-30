@@ -15,7 +15,7 @@ CLayDownGait::CLayDownGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<C
                            Parameters::LayDown& params)
     : node_(node), kinematics_(kinematics), params_(params) {
     target_leg_positions_ = kinematics_->getLegsLayDownPositions();
-    target_head_position_ = COrientation(0.0, -params_.head_max_pitch_deg, 0.0);
+    target_head_position_ = COrientation(0.0 * units::deg, -params_.head_max_pitch, 0.0 * units::deg);
 }
 
 void CLayDownGait::start(double duration_s, uint8_t /*direction*/) {

@@ -43,9 +43,9 @@ TEST_F(ActionPackagesParserTest, legAngles_standingPosition) {
     const CPosition& position = it->second;
 
     CPosition expectedFootPos;
-    expectedFootPos.x = 0.092 + 0.109;  // CENTER_TO_COXA_X + STANDING_FOOT_POS_X
-    expectedFootPos.y = 0.092 + 0.068;  // CENTER_TO_COXA_Y + STANDING_FOOT_POS_Y
-    expectedFootPos.z = -0.050;         // STANDING_FOOT_POS_Z
+    expectedFootPos.x = 0.092 + 0.109;      // CENTER_TO_COXA_X + STANDING_FOOT_POS_X
+    expectedFootPos.y = 0.092 + 0.068;      // CENTER_TO_COXA_Y + STANDING_FOOT_POS_Y
+    expectedFootPos.z = -0.050 * units::m;  // STANDING_FOOT_POS_Z
     expectPositionNear(expectedFootPos, position, "Standing foot position mismatch");
 }
 
@@ -65,8 +65,8 @@ TEST_F(ActionPackagesParserTest, STAND_UP_PackageLoadsCorrectly) {
     EXPECT_DOUBLE_EQ(firstRequest.factorDuration, 1.0);
 
     const auto& head = firstRequest.head.value();
-    EXPECT_DOUBLE_EQ(head.yaw_deg, 0.0);
-    EXPECT_DOUBLE_EQ(head.pitch_deg, 0.0);
+    EXPECT_DOUBLE_EQ(head.yaw.numerical_value_in(units::deg), 0.0);
+    EXPECT_DOUBLE_EQ(head.pitch.numerical_value_in(units::deg), 0.0);
 
     const auto& legAngles = firstRequest.legAngles.value();
     // helper signature: expectAnglesNear(expected, actual)
@@ -89,8 +89,8 @@ TEST_F(ActionPackagesParserTest, LAYDOWN_PackagesLoadCorrectly) {
     EXPECT_FALSE(firstRequest.footPositions.has_value());
     EXPECT_DOUBLE_EQ(firstRequest.factorDuration, 1.0);
     const auto& head = firstRequest.head.value();
-    EXPECT_DOUBLE_EQ(head.yaw_deg, 0.0);
-    EXPECT_DOUBLE_EQ(head.pitch_deg, -20.0);
+    EXPECT_DOUBLE_EQ(head.yaw.numerical_value_in(units::deg), 0.0);
+    EXPECT_DOUBLE_EQ(head.pitch.numerical_value_in(units::deg), -20.0);
     // no body to check for LAYDOWN
     const auto& legAngles = firstRequest.legAngles.value();
     expectAnglesNear(CLegAngles(0.0, 70.723, -53.320), legAngles.at(ELegIndex::RightFront));
@@ -113,8 +113,8 @@ TEST_F(ActionPackagesParserTest, HIGH_FIVE_PackagesLoadCorrectly) {
     EXPECT_FALSE(firstRequest.footPositions.has_value());
     EXPECT_DOUBLE_EQ(firstRequest.factorDuration, 0.33);
     const auto& head = firstRequest.head.value();
-    EXPECT_DOUBLE_EQ(head.yaw_deg, 0.0);
-    EXPECT_DOUBLE_EQ(head.pitch_deg, -20.0);
+    EXPECT_DOUBLE_EQ(head.yaw.numerical_value_in(units::deg), 0.0);
+    EXPECT_DOUBLE_EQ(head.pitch.numerical_value_in(units::deg), -20.0);
     const auto& legAngles = firstRequest.legAngles.value();
     expectAnglesNear(CLegAngles(20.0, 50.0, 60.0), legAngles.at(ELegIndex::RightFront));
 
@@ -132,8 +132,8 @@ TEST_F(ActionPackagesParserTest, HIGH_FIVE_PackagesLoadCorrectly) {
     EXPECT_FALSE(thirdRequest.footPositions.has_value());
     EXPECT_DOUBLE_EQ(thirdRequest.factorDuration, 0.33);
     const auto& headThird = thirdRequest.head.value();
-    EXPECT_DOUBLE_EQ(headThird.yaw_deg, 0.0);
-    EXPECT_DOUBLE_EQ(headThird.pitch_deg, 0.0);
+    EXPECT_DOUBLE_EQ(headThird.yaw.numerical_value_in(units::deg), 0.0);
+    EXPECT_DOUBLE_EQ(headThird.pitch.numerical_value_in(units::deg), 0.0);
     const auto& legAnglesThird = thirdRequest.legAngles.value();
     expectAnglesNear(CLegAngles(0.0, 2.276, 7.704), legAnglesThird.at(ELegIndex::RightFront));
     expectAnglesNear(CLegAngles(0.0, 2.276, 7.704), legAnglesThird.at(ELegIndex::RightBack));

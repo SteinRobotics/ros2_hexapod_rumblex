@@ -4,6 +4,8 @@
 
 #include "requester/gait_running.hpp"
 
+#include <mp-units/math.h>
+
 namespace rumblex_movement {
 
 constexpr double kRunningTimeToWaitBeforeStopSec = 2.0;
@@ -57,7 +59,7 @@ CGaitRunning::LegMotion CGaitRunning::computeLegMotion(ELegIndex index, double p
             // Support: foot on ground, slides backward
             double t = local / support_end;                            // 0..1
             motion.step = params_.gait_step_length * (1.0 - 2.0 * t);  // +step → −step
-            motion.lift = 0.0;
+            motion.lift = 0.0 * units::m;
         } else {
             // Flight: foot in air, swings forward quickly
             double t = (local - support_end) / f;                       // 0..1
@@ -68,7 +70,7 @@ CGaitRunning::LegMotion CGaitRunning::computeLegMotion(ELegIndex index, double p
         // This group's passive half: foot on ground, support role
         double t = local / M_PI;  // 0..1 across the whole second half
         motion.step = params_.gait_step_length * (1.0 - 2.0 * t);
-        motion.lift = 0.0;
+        motion.lift = 0.0 * units::m;
     }
     return motion;
 }
@@ -141,19 +143,19 @@ bool CGaitRunning::update(const geometry_msgs::msg::Twist& velocity, const CPose
         auto motion = computeLegMotion(index, phase_);
 
         // Linear displacement
-        double delta_x = norm_x * motion.step;
-        double delta_y = norm_y * motion.step;
+        const auto delta_x = norm_x * motion.step;
+        const auto delta_y = norm_y * motion.step;
 
         // Rotational displacement
-        double leg_vec_x = base_foot_pos.x;
-        double leg_vec_y = base_foot_pos.y;
-        double len = std::sqrt(leg_vec_x * leg_vec_x + leg_vec_y * leg_vec_y);
+        const auto leg_vec_x = base_foot_pos.x;
+        const auto leg_vec_y = base_foot_pos.y;
+        const auto len = mp_units::hypot(leg_vec_x, leg_vec_y);
 
-        double rot_x = 0.0;
-        double rot_y = 0.0;
-        if (len > 1e-6) {
-            double dir_x = -leg_vec_y / len;
-            double dir_y = leg_vec_x / len;
+        units::Length rot_x = 0.0 * units::m;
+        units::Length rot_y = 0.0 * units::m;
+        if (len > 1e-6 * units::m) {
+            const auto dir_x = -leg_vec_y / len;
+            const auto dir_y = leg_vec_x / len;
             rot_x = dir_x * motion.step * norm_rot;
             rot_y = dir_y * motion.step * norm_rot;
         }
@@ -169,9 +171,9 @@ bool CGaitRunning::update(const geometry_msgs::msg::Twist& velocity, const CPose
     kinematics_->moveBody(target_positions_, body);
 
     // Head movement
-    double head_yaw_deg = params_.head_amplitude_yaw_deg * std::sin(phase_);
+    const auto head_yaw = params_.head_amplitude_yaw * std::sin(phase_);
     COrientation head_request;
-    head_request.yaw_deg = head_yaw_deg;
+    head_request.yaw = head_yaw;
     kinematics_->setHead(head_request);
     return true;
 }

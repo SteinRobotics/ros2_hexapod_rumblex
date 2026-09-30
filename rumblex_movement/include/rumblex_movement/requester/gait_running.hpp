@@ -14,14 +14,14 @@
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 
-#include "rumblex_utils/filters.hpp"
-#include "rumblex_utils/geometry.hpp"
-#include "rumblex_utils/msg_twist.hpp"
-#include "rumblex_utils/simpletimer.hpp"
 #include "requester/gait_parameters.hpp"
 #include "requester/igaits.hpp"
 #include "requester/kinematics.hpp"
 #include "requester/types.hpp"
+#include "rumblex_utils/filters.hpp"
+#include "rumblex_utils/geometry.hpp"
+#include "rumblex_utils/msg_twist.hpp"
+#include "rumblex_utils/simpletimer.hpp"
 
 namespace rumblex_movement {
 
@@ -42,8 +42,8 @@ class CGaitRunning : public IContinuousGait {
 
    private:
     struct LegMotion {
-        double step{0.0};
-        double lift{0.0};
+        units::Length step = 0.0 * units::m;
+        units::Length lift = 0.0 * units::m;
     };
 
     LegMotion computeLegMotion(ELegIndex index, double phase) const;

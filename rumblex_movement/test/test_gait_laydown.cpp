@@ -63,14 +63,15 @@ TEST_F(GaitLayDownTest, LayDownStopsAtLaydownHeight) {
     const auto finalPositions = kinematics_->getLegsPositions();
     for (const auto& [legIndex, target] : laydownTargets) {
         const auto& actual = finalPositions.at(legIndex);
-        EXPECT_NEAR(actual.z, target.z, kPositionTolerance);
+        EXPECT_NEAR(actual.z.numerical_value_in(units::m), target.z.numerical_value_in(units::m),
+                    kPositionTolerance);
     }
 
     /// manuall check forward kinematics by setting angles for front legs
     CLegAngles angles;
-    angles.coxa_deg = 0.0;
-    angles.femur_deg = 70.0;
-    angles.tibia_deg = -53.0;
+    angles.coxa = 0.0 * units::deg;
+    angles.femur = 70.0 * units::deg;
+    angles.tibia = -53.0 * units::deg;
     kinematics_->setLegAngles(ELegIndex::RightFront, angles);
     kinematics_->setLegAngles(ELegIndex::RightMid, angles);
 }

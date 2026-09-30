@@ -2,11 +2,11 @@
 
 #include <memory>
 
-#include "rumblex_interfaces/msg/movement_request.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "requester/gait_parameters.hpp"
 #include "requester/igaits.hpp"
 #include "requester/kinematics.hpp"
+#include "rumblex_interfaces/msg/movement_request.hpp"
 
 namespace rumblex_movement {
 
@@ -29,8 +29,8 @@ class CGaitLook : public ISequenceGait {
     std::shared_ptr<CKinematics> kinematics_;
     Parameters::Look params_;
 
-    double amplitude_head_deg_ = 0.0;
-    double amplitude_body_deg_ = 0.0;
+    units::Angle amplitude_head_ = 0.0 * units::deg;
+    units::Angle amplitude_body_ = 0.0 * units::deg;
     double delta_phase_ = 0.0;
     double phase_ = 0.0;
 

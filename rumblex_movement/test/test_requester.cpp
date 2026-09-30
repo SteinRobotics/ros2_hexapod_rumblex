@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <numbers>
 #include <thread>
 
 #include "handler/servohandler.hpp"
@@ -72,10 +73,14 @@ TEST_F(RequesterTest, PublishesInitialJointStatesWithoutMovementRequest) {
     ASSERT_NE(received, nullptr);
     EXPECT_EQ(received->name.size(), 20u);
     EXPECT_EQ(received->position.size(), received->name.size());
-    for (const auto* joint : {"right_front_coxa_joint", "right_front_femur_joint",
-                              "right_front_tibia_joint", "head_yaw_joint", "head_pitch_joint"}) {
+    for (const auto* joint : {"right_front_coxa_joint", "right_front_femur_joint", "right_front_tibia_joint",
+                              "head_yaw_joint", "head_pitch_joint"}) {
         EXPECT_NE(std::find(received->name.begin(), received->name.end(), joint), received->name.end());
     }
+    const auto femur = std::find(received->name.begin(), received->name.end(), "right_front_femur_joint");
+    ASSERT_NE(femur, received->name.end());
+    const auto index = std::distance(received->name.begin(), femur);
+    EXPECT_NEAR(received->position[index], 70.723 * std::numbers::pi / 180.0, 1e-4);
 }
 
 TEST_F(RequesterTest, HandleNoRequestMessage) {

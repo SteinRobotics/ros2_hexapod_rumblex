@@ -6,7 +6,7 @@
 
 #include <cmath>
 
-#include "rumblex_utils/geometry.hpp"
+#include "units.hpp"
 
 using namespace rumblex_interfaces::msg;
 using std::placeholders::_1;
@@ -65,17 +65,17 @@ void CRequester::publishJointStates(const std::map<ELegIndex, CLegAngles>& legs,
         if (it == legs.end()) continue;
         const auto& a = it->second;
         msg.name.push_back(prefix + "_coxa_joint");
-        msg.position.push_back(utils::deg2rad(a.coxa_deg));
+        msg.position.push_back(a.coxa.numerical_value_in(units::rad));
         msg.name.push_back(prefix + "_femur_joint");
-        msg.position.push_back(utils::deg2rad(a.femur_deg));
+        msg.position.push_back(a.femur.numerical_value_in(units::rad));
         msg.name.push_back(prefix + "_tibia_joint");
-        msg.position.push_back(utils::deg2rad(a.tibia_deg));
+        msg.position.push_back(a.tibia.numerical_value_in(units::rad));
     }
 
     msg.name.push_back("head_yaw_joint");
-    msg.position.push_back(utils::deg2rad(head.yaw_deg));
+    msg.position.push_back(head.yaw.numerical_value_in(units::rad));
     msg.name.push_back("head_pitch_joint");
-    msg.position.push_back(utils::deg2rad(head.pitch_deg));
+    msg.position.push_back(head.pitch.numerical_value_in(units::rad));
 
     pubJointStates_->publish(msg);
 }

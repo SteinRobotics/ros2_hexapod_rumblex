@@ -59,7 +59,7 @@ TEST_F(HighFiveGaitTest, RaisesRightFrontLegAndReturns) {
     while (gait.state() != EGaitState::Stopped && iterations++ < kMaxIterations) {
         gait.update();
         const auto currentAngles = kinematics_->getAngles(ELegIndex::RightFront);
-        if (currentAngles.femur_deg >= initialAngles.femur_deg + kLiftThresholdDegrees) {
+        if (currentAngles.femur >= initialAngles.femur + kLiftThresholdDegrees * units::deg) {
             raised = true;
         }
     }
@@ -68,13 +68,18 @@ TEST_F(HighFiveGaitTest, RaisesRightFrontLegAndReturns) {
     EXPECT_LT(iterations, kMaxIterations);
 
     const auto finalAngles = kinematics_->getAngles(ELegIndex::RightFront);
-    EXPECT_NEAR(finalAngles.coxa_deg, initialAngles.coxa_deg, kAngleTolerance);
-    EXPECT_NEAR(finalAngles.femur_deg, initialAngles.femur_deg, kAngleTolerance);
-    EXPECT_NEAR(finalAngles.tibia_deg, initialAngles.tibia_deg, kAngleTolerance);
+    EXPECT_NEAR(finalAngles.coxa.numerical_value_in(units::deg),
+                initialAngles.coxa.numerical_value_in(units::deg), kAngleTolerance);
+    EXPECT_NEAR(finalAngles.femur.numerical_value_in(units::deg),
+                initialAngles.femur.numerical_value_in(units::deg), kAngleTolerance);
+    EXPECT_NEAR(finalAngles.tibia.numerical_value_in(units::deg),
+                initialAngles.tibia.numerical_value_in(units::deg), kAngleTolerance);
 
     const auto finalHead = kinematics_->getHead();
-    EXPECT_NEAR(finalHead.pitch_deg, initialHead.pitch_deg, kHeadTolerance);
-    EXPECT_NEAR(finalHead.yaw_deg, initialHead.yaw_deg, kHeadTolerance);
+    EXPECT_NEAR(finalHead.pitch.numerical_value_in(units::deg),
+                initialHead.pitch.numerical_value_in(units::deg), kHeadTolerance);
+    EXPECT_NEAR(finalHead.yaw.numerical_value_in(units::deg), initialHead.yaw.numerical_value_in(units::deg),
+                kHeadTolerance);
 }
 
 TEST_F(HighFiveGaitTest, RequestStopReturnsToNeutralQuickly) {
@@ -98,7 +103,10 @@ TEST_F(HighFiveGaitTest, RequestStopReturnsToNeutralQuickly) {
     EXPECT_LT(iterations, kMaxIterations);
 
     const auto finalAngles = kinematics_->getAngles(ELegIndex::RightFront);
-    EXPECT_NEAR(finalAngles.coxa_deg, initialAngles.coxa_deg, kAngleTolerance);
-    EXPECT_NEAR(finalAngles.femur_deg, initialAngles.femur_deg, kAngleTolerance);
-    EXPECT_NEAR(finalAngles.tibia_deg, initialAngles.tibia_deg, kAngleTolerance);
+    EXPECT_NEAR(finalAngles.coxa.numerical_value_in(units::deg),
+                initialAngles.coxa.numerical_value_in(units::deg), kAngleTolerance);
+    EXPECT_NEAR(finalAngles.femur.numerical_value_in(units::deg),
+                initialAngles.femur.numerical_value_in(units::deg), kAngleTolerance);
+    EXPECT_NEAR(finalAngles.tibia.numerical_value_in(units::deg),
+                initialAngles.tibia.numerical_value_in(units::deg), kAngleTolerance);
 }

@@ -2,8 +2,8 @@
 
 #include <algorithm>
 
-#include "rumblex_utils/linear_interpolation.hpp"
 #include "requester/kinematics.hpp"
+#include "rumblex_utils/linear_interpolation.hpp"
 
 namespace {
 constexpr double kPhaseIncrement = 0.1;
@@ -58,7 +58,7 @@ bool CHighFiveGait::update() {
             applyInterpolatedPose(1.0 - phase_progress_);
             if (phase_progress_ >= 1.0 - 1e-6) {
                 kinematics_->setLegAngles(ELegIndex::RightFront, initial_leg_angles_);
-                kinematics_->setHead(initial_head_.yaw_deg, initial_head_.pitch_deg);
+                kinematics_->setHead(initial_head_.yaw, initial_head_.pitch);
                 phase_ = EPhase::Finished;
             }
             break;
@@ -104,10 +104,8 @@ void CHighFiveGait::applyInterpolatedPose(double alpha) {
     const auto legAngles = initial_leg_angles_.linearInterpolate(target_leg_angles_, alpha);
     kinematics_->setLegAngles(ELegIndex::RightFront, legAngles);
 
-    const double headYaw =
-        rumblex_utils::linearInterpolate(initial_head_.yaw_deg, target_head_yaw_deg_, alpha);
-    const double headPitch =
-        rumblex_utils::linearInterpolate(initial_head_.pitch_deg, target_head_pitch_deg_, alpha);
+    const auto headYaw = initial_head_.yaw + (target_head_yaw_ - initial_head_.yaw) * alpha;
+    const auto headPitch = initial_head_.pitch + (target_head_pitch_ - initial_head_.pitch) * alpha;
     kinematics_->setHead(headYaw, headPitch);
 }
 

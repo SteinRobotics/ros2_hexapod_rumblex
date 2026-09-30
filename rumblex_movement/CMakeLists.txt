@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.25)
 project(rumblex_movement)
 
 if(NOT CMAKE_CXX_STANDARD)
@@ -22,6 +22,22 @@ find_package(yaml-cpp REQUIRED)
 find_package(ament_cmake_gtest REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
 
+# Prefer an installed library; otherwise fetch a reproducible, header-only build.
+find_package(mp-units 2.5 CONFIG QUIET)
+if(NOT mp-units_FOUND)
+  include(FetchContent)
+  set(MP_UNITS_BUILD_INSTALL OFF CACHE BOOL "" FORCE)
+  set(MP_UNITS_API_CONTRACTS NONE CACHE STRING "" FORCE)
+  FetchContent_Declare(mp-units
+    URL https://github.com/mpusz/mp-units/archive/refs/tags/v2.5.0.tar.gz
+    URL_HASH SHA256=a6bd48bee699f11f0ed5b04b8c5006d15f76e6d898e058db3880554d2e47a400
+    SOURCE_SUBDIR src
+    SYSTEM
+  )
+  FetchContent_MakeAvailable(mp-units)
+  # Keep upstream header install rules out of the ROS package installation.
+  set_property(DIRECTORY "${mp-units_SOURCE_DIR}/src" PROPERTY EXCLUDE_FROM_ALL TRUE)
+endif()
 
 ## set sources
 set(SOURCES
@@ -72,6 +88,7 @@ target_link_libraries(rumblex_movement_core PUBLIC
   ${rumblex_utils_TARGETS}
   yaml-cpp::yaml-cpp
   magic_enum::magic_enum
+  mp-units::mp-units
 )
 
 add_executable(node_movement
@@ -100,6 +117,17 @@ install(DIRECTORY
 
 # Unit tests
 if(BUILD_TESTING)
+  ament_add_gtest(test_types test/test_types.cpp)
+  if(TARGET test_types)
+    target_link_libraries(test_types rumblex_movement_core)
+  endif()
+
+  ament_add_gtest(test_units test/test_units.cpp)
+  if(TARGET test_units)
+    target_include_directories(test_units PRIVATE include/rumblex_movement)
+    target_link_libraries(test_units mp-units::mp-units)
+  endif()
+
   ament_add_gtest(test_kinematics
     test/test_kinematics.cpp
   )

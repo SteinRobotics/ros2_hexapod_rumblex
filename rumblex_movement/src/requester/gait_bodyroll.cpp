@@ -42,14 +42,14 @@ bool CGaitBodyRoll::update() {
     auto body = CPose();
 
     // Roll is always a sine wave
-    body.orientation.roll_deg = params_.body_max_roll_deg * std::sin(phase_);
+    body.orientation.roll = params_.body_max_roll * std::sin(phase_);
 
     // Pitch behavior depends on state
     if (state_ == EGaitState::Running || state_ == EGaitState::StopPending) {
-        body.orientation.pitch_deg = params_.body_max_pitch_deg * std::cos(phase_);
+        body.orientation.pitch = params_.body_max_pitch * std::cos(phase_);
     } else {
         // phase_ == M_PI_4 is reached when the leg is moving upwards and the normal cycle goes downwards again
-        body.orientation.pitch_deg = params_.body_max_pitch_deg * std::sin(phase_);
+        body.orientation.pitch = params_.body_max_pitch * std::sin(phase_);
     }
 
     kinematics_->moveBody(origin_leg_positions_, body);

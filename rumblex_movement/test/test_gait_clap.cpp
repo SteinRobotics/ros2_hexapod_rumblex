@@ -58,9 +58,12 @@ TEST_F(ClapGaitTest, CompletesCycleAndReturnsToInitialPose) {
 
     // Verify body position returned to initial state
     const auto finalBody = kinematics_->getBody();
-    EXPECT_NEAR(finalBody.position.x, initialBody.position.x, kPositionTolerance);
-    EXPECT_NEAR(finalBody.position.y, initialBody.position.y, kPositionTolerance);
-    EXPECT_NEAR(finalBody.position.z, initialBody.position.z, kPositionTolerance);
+    EXPECT_NEAR(finalBody.position.x.numerical_value_in(units::m),
+                initialBody.position.x.numerical_value_in(units::m), kPositionTolerance);
+    EXPECT_NEAR(finalBody.position.y.numerical_value_in(units::m),
+                initialBody.position.y.numerical_value_in(units::m), kPositionTolerance);
+    EXPECT_NEAR(finalBody.position.z.numerical_value_in(units::m),
+                initialBody.position.z.numerical_value_in(units::m), kPositionTolerance);
 }
 
 TEST_F(ClapGaitTest, BackLegsLiftDuringSequence) {
@@ -80,12 +83,13 @@ TEST_F(ClapGaitTest, BackLegsLiftDuringSequence) {
 
         // Check if right back leg was lifted
         if (currentPositions.at(ELegIndex::RightBack).z >
-            initialPositions.at(ELegIndex::RightBack).z + 0.01) {
+            initialPositions.at(ELegIndex::RightBack).z + 0.01 * units::m) {
             rightBackLifted = true;
         }
 
         // Check if left back leg was lifted
-        if (currentPositions.at(ELegIndex::LeftBack).z > initialPositions.at(ELegIndex::LeftBack).z + 0.01) {
+        if (currentPositions.at(ELegIndex::LeftBack).z >
+            initialPositions.at(ELegIndex::LeftBack).z + 0.01 * units::m) {
             leftBackLifted = true;
         }
     }
@@ -111,10 +115,10 @@ TEST_F(ClapGaitTest, FrontLegsPerformClapMovement) {
         const auto currentRightAngles = kinematics_->getAngles(ELegIndex::RightFront);
 
         // Check if front legs moved their coxa angles for clapping
-        double leftDiff = std::abs(currentLeftAngles.coxa_deg - initialLeftAngles.coxa_deg);
-        double rightDiff = std::abs(currentRightAngles.coxa_deg - initialRightAngles.coxa_deg);
+        const auto leftDiff = mp_units::abs(currentLeftAngles.coxa - initialLeftAngles.coxa);
+        const auto rightDiff = mp_units::abs(currentRightAngles.coxa - initialRightAngles.coxa);
 
-        if (leftDiff > 5.0 || rightDiff > 5.0) {
+        if (leftDiff > 5.0 * units::deg || rightDiff > 5.0 * units::deg) {
             frontLegsMovedForClap = true;
         }
     }
@@ -146,5 +150,6 @@ TEST_F(ClapGaitTest, RequestStopReturnsToInitialState) {
 
     // Verify body returned to initial position
     const auto finalBody = kinematics_->getBody();
-    EXPECT_NEAR(finalBody.position.x, initialBody.position.x, kPositionTolerance);
+    EXPECT_NEAR(finalBody.position.x.numerical_value_in(units::m),
+                initialBody.position.x.numerical_value_in(units::m), kPositionTolerance);
 }

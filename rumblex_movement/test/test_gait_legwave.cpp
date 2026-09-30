@@ -61,7 +61,7 @@ TEST_F(LegWaveGaitTest, LiftOccursDuringRun) {
             const auto& idx = kv.first;
             const auto& base = kv.second;
             const auto& now = pos.at(idx);
-            if (now.z >= base.z + (0.5 * kLegLiftHeight)) {
+            if (now.z >= base.z + (0.5 * kLegLiftHeight * units::m)) {
                 seen_lift = true;
                 break;
             }
@@ -97,8 +97,9 @@ TEST_F(LegWaveGaitTest, StopRequestReturnsToNeutral) {
         const auto& idx = kv.first;
         const auto& base = kv.second;
         const auto& now = final_pos.at(idx);
-        EXPECT_NEAR(now.x, base.x, kTolerance);
-        EXPECT_NEAR(now.y, base.y, kTolerance);
-        EXPECT_NEAR(now.z, base.z, 1e-2);  // allow slightly larger tolerance for IK/clamping
+        EXPECT_NEAR(now.x.numerical_value_in(units::m), base.x.numerical_value_in(units::m), kTolerance);
+        EXPECT_NEAR(now.y.numerical_value_in(units::m), base.y.numerical_value_in(units::m), kTolerance);
+        EXPECT_NEAR(now.z.numerical_value_in(units::m), base.z.numerical_value_in(units::m),
+                    1e-2);  // allow slightly larger tolerance for IK/clamping
     }
 }
