@@ -27,13 +27,13 @@ bool CWaitingGait::update() {
         return false;
     }
 
-    const auto base_foot_pos = kinematics_->getLegsStandingPositions();
-    auto body_target = CPose();
+    const auto base_toe_pos = kinematics_->getLegsStandingPositions();
+    auto torso_target = CPose();
 
-    constexpr auto kBodyLiftHeight = 0.05 * rumblex_movement::units::m;  // 5 cm body lift for visual effect
-    body_target.position.z = kBodyLiftHeight * std::sin(phase_);  // Small body bounce for visual effect
+    constexpr auto kTorsoLiftHeight = 0.05 * rumblex_movement::units::m;  // 5 cm torso lift for visual effect
+    torso_target.position.z = kTorsoLiftHeight * std::sin(phase_);  // Small torso bounce for visual effect
 
-    kinematics_->moveBody(base_foot_pos, body_target);
+    kinematics_->moveTorso(base_toe_pos, torso_target);
     return true;
 }
 

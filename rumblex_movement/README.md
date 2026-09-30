@@ -6,19 +6,27 @@ the `Length`, `Area`, and `Angle` quantity types. For example, `units::Length le
 50.0 * units::mm` represents the same length as `0.050 * units::m`.
 Extract numbers explicitly with `.numerical_value_in(unit)` at existing interfaces.
 
-`CPosition` coordinates and `CBodyCenterOffset` coordinates are `Length`
+`CPosition` coordinates and `CTorsoCenterOffset` coordinates are `Length`
 quantities. `COrientation` members (`roll`, `pitch`, `yaw`), `CLegAngles`
-members (`coxa`, `femur`, `tibia`), and the body offset `psi` are `Angle`
-quantities. `CLeg` stores its joint angles in `angles_`. Arithmetic and
+members (`torso_coxa`, `coxa_femur`, `femur_tibia`), and the torso offset `psi` are `Angle`
+quantities. Existing YAML keys, ROS parameter names, servo IDs, and URDF joint
+names retain their `coxa`/`femur`/`tibia` naming at the interfaces.
+Torso poses and center offsets exclude the head, whose orientation is stored
+separately. Internal names use `torso`; existing ROS `body_pose` fields,
+`SEQUENCE_BODY_ROLL` IDs, body parameter keys, and YAML `body` keys remain compatible.
+Toe positions are stored in `toe_pos_`; methods use `Toe` in their names.
+Existing `footPositions` YAML keys and ROS parameter roots retain their names
+for compatibility.
+`CLeg` stores its joint angles in `angles_`. Arithmetic and
 interpolation preserve units, and assignments reject bare numbers or quantities
 of the wrong dimension. For example:
 
 ```cpp
-CPosition foot;
-foot.x = 50.0 * units::mm;
+CPosition toe;
+toe.x = 50.0 * units::mm;
 CLegAngles joints;
-joints.coxa = 1.0 * units::rad;
-auto degrees = joints.coxa.numerical_value_in(units::deg);
+joints.torso_coxa = 1.0 * units::rad;
+auto degrees = joints.torso_coxa.numerical_value_in(units::deg);
 ```
 
 Quantity constructors support mixed compatible units. The existing double

@@ -32,7 +32,7 @@ class CGaitRunning : public IContinuousGait {
     ~CGaitRunning() override = default;
 
     void start(double duration_s, uint8_t direction) override;
-    bool update(const geometry_msgs::msg::Twist& velocity, const CPose& body,
+    bool update(const geometry_msgs::msg::Twist& velocity, const CPose& torso,
                 const COrientation& head) override;
     void requestStop() override;
     void cancelStop() override;
@@ -61,7 +61,7 @@ class CGaitRunning : public IContinuousGait {
 
     CSimpleTimer no_velocity_timer_;
     std::map<ELegIndex, CPosition> target_positions_;
-    CPose body_old_;
+    CPose torso_old_;
 
     geometry_msgs::msg::Twist velocity_{geometry_msgs::msg::Twist()};
 };

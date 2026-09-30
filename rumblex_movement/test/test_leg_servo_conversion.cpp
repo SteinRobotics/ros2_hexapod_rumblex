@@ -50,9 +50,9 @@ TEST(LegServoConversionTest, ServoAnglesMessageMapsToLegAngles) {
     auto result = servoAnglesMsgToLegAngles(msg);
 
     ASSERT_NE(result.find(ELegIndex::RightFront), result.end());
-    EXPECT_DOUBLE_EQ(result.at(ELegIndex::RightFront).coxa.numerical_value_in(units::deg), 12.5);
-    EXPECT_DOUBLE_EQ(result.at(ELegIndex::RightFront).femur.numerical_value_in(units::deg), -4.0);
+    EXPECT_DOUBLE_EQ(result.at(ELegIndex::RightFront).torso_coxa.numerical_value_in(units::deg), 12.5);
+    EXPECT_DOUBLE_EQ(result.at(ELegIndex::RightFront).coxa_femur.numerical_value_in(units::deg), -4.0);
 
     ASSERT_NE(result.find(ELegIndex::LeftBack), result.end());
-    EXPECT_DOUBLE_EQ(result.at(ELegIndex::LeftBack).tibia.numerical_value_in(units::deg), 3.25);
+    EXPECT_DOUBLE_EQ(result.at(ELegIndex::LeftBack).femur_tibia.numerical_value_in(units::deg), 3.25);
 }

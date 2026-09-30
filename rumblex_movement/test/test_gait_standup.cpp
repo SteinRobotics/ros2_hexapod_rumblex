@@ -44,7 +44,7 @@ TEST_F(GaitStandUpTest, StandUpStopsAtStandingHeight) {
     const auto standingTargets = kinematics_->getLegsStandingPositions();
 
     // Ensure we start from laydown pose.
-    kinematics_->moveBody(laydownTargets, CPose());
+    kinematics_->moveTorso(laydownTargets, CPose());
     const auto initialPositions = kinematics_->getLegsPositions();
 
     CStandUpGait gait(node_, kinematics_, params_.standUp);

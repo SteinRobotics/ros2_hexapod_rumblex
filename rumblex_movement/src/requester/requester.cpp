@@ -65,11 +65,11 @@ void CRequester::publishJointStates(const std::map<ELegIndex, CLegAngles>& legs,
         if (it == legs.end()) continue;
         const auto& a = it->second;
         msg.name.push_back(prefix + "_coxa_joint");
-        msg.position.push_back(a.coxa.numerical_value_in(units::rad));
+        msg.position.push_back(a.torso_coxa.numerical_value_in(units::rad));
         msg.name.push_back(prefix + "_femur_joint");
-        msg.position.push_back(a.femur.numerical_value_in(units::rad));
+        msg.position.push_back(a.coxa_femur.numerical_value_in(units::rad));
         msg.name.push_back(prefix + "_tibia_joint");
-        msg.position.push_back(a.tibia.numerical_value_in(units::rad));
+        msg.position.push_back(a.femur_tibia.numerical_value_in(units::rad));
     }
 
     msg.name.push_back("head_yaw_joint");
@@ -89,12 +89,12 @@ void CRequester::onMovementRequest(const MovementRequest& msg) {
 
 void CRequester::onContinuousMovementUpdate(const ContinuousMovementUpdate& msg) {
     velocity_ = msg.velocity;
-    pose_body_ = msg.body_pose;
+    pose_torso_ = msg.body_pose;
     orientation_head_ = msg.head_orientation;
 }
 
 void CRequester::update(std::chrono::milliseconds timeslice) {
-    if (gait_controller_->updateSelectedGait(velocity_, pose_body_, orientation_head_)) {
+    if (gait_controller_->updateSelectedGait(velocity_, pose_torso_, orientation_head_)) {
         double duration_s = double(timeslice.count() / 1000.0);
         sendServoRequest(duration_s);
     }

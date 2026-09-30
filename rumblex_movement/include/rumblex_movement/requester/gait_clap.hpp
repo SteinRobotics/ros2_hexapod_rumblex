@@ -40,7 +40,7 @@ class CClapGait : public ISequenceGait {
         Finished
     };
 
-    void applyBodyShift(double alpha);
+    void applyTorsoShift(double alpha);
     void applyBackLegLift(ELegIndex leg, double alpha);
     void applyFrontLegsLift(double alpha);
     void applyFrontLegsClap(double alpha, bool closing);
@@ -53,8 +53,8 @@ class CClapGait : public ISequenceGait {
     EPhase phase_ = EPhase::Idle;
 
     // Store initial positions
-    std::map<ELegIndex, CPosition> initial_foot_positions_;
-    CPose initial_body_pose_;
+    std::map<ELegIndex, CPosition> initial_toe_positions_;
+    CPose initial_torso_pose_;
 
     double phase_progress_ = 0.0;
     int clap_iterations_remaining_ = 0;

@@ -15,7 +15,7 @@ package "rumblex_brain" {
           class RequestMusic
           class RequestListening
           class RequestMovementHead
-          class RequestMovementBody
+          class RequestMovementTorso
           void update()
         }
         IRequester <|-- OwnWill

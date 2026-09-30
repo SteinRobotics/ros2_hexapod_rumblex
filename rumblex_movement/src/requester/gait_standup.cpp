@@ -59,7 +59,7 @@ bool CStandUpGait::update() {
         CPosition intermediate_position = origin_position.linearInterpolate(target_position, progress);
         intermediate_positions[legIndex] = intermediate_position;
     }
-    kinematics_->moveBody(intermediate_positions);
+    kinematics_->moveTorso(intermediate_positions);
 
     // Move head to neutral position
     COrientation intermediate_head = origin_head_position_.linearInterpolate(target_head_position_, progress);

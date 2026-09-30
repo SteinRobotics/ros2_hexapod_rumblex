@@ -24,11 +24,11 @@ class CKinematics {
     explicit CKinematics(std::shared_ptr<rclcpp::Node> node);
     ~CKinematics() = default;
 
-    void setSingleFeet(const ELegIndex index, const CPosition& targetFeetPos);
+    void setSingleToe(const ELegIndex index, const CPosition& targetToePos);
     void setLegAngles(const ELegIndex index, const CLegAngles& angles);
-    void moveBody(const std::map<ELegIndex, CPosition>& footTargets,
-                  const CPose body = CPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0));
-    void moveBody(const CPose body);
+    void moveTorso(const std::map<ELegIndex, CPosition>& toeTargets,
+                   const CPose torso = CPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+    void moveTorso(const CPose torso);
 
     void setHead(units::Angle yaw, units::Angle pitch);
     void setHead(COrientation head);
@@ -45,18 +45,18 @@ class CKinematics {
         return head_;
     };
 
-    CPose& getBody() {
-        return body_;
+    CPose& getTorso() {
+        return torso_;
     };
 
    private:
-    void initializeLegs(const std::map<ELegIndex, CPosition>& footTargets, const CPose body,
+    void initializeLegs(const std::map<ELegIndex, CPosition>& toeTargets, const CPose torso,
                         std::map<ELegIndex, CLeg>& legs);
 
     void logLegsPositions(std::map<ELegIndex, CLeg>& legs);
     void logLegPosition(const ELegIndex index, const CLeg& leg);
     void logHeadPosition();
-    void calcLegInverseKinematics(const CPosition& targetFeetPos, CLeg& leg, const ELegIndex& legIndex);
+    void calcLegInverseKinematics(const CPosition& targetToePos, CLeg& leg, const ELegIndex& legIndex);
     void calcLegForwardKinematics(const CLegAngles target, CLeg& leg);
     CPosition rotate(const CPosition& point, const COrientation& rot);
 
@@ -73,9 +73,9 @@ class CKinematics {
     std::map<ELegIndex, CLeg> legs_;          // current values
     std::map<ELegIndex, CLeg> legsStanding_;  // change to shared pointer and make const
     std::map<ELegIndex, CLeg> legsLayDown_;   // change to shared pointer and make const
-    std::map<ELegIndex, CBodyCenterOffset> bodyCenterOffsets_;
+    std::map<ELegIndex, CTorsoCenterOffset> torsoCenterOffsets_;
 
-    CPose body_ = {};
+    CPose torso_ = {};
     COrientation head_ = {};
 };
 

@@ -30,7 +30,7 @@ class CGaitWatch : public ISequenceGait {
     Parameters::Watch params_;
 
     units::Angle amplitude_head_ = 0.0 * units::deg;
-    units::Angle amplitude_body_ = 0.0 * units::deg;
+    units::Angle amplitude_torso_ = 0.0 * units::deg;
     double delta_phase_ = 0.0;
     double phase_ = 0.0;
 

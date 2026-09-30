@@ -143,7 +143,7 @@ class CPose {
     }
 };
 
-class CBodyCenterOffset {
+class CTorsoCenterOffset {
    public:
     units::Length x = 0.0 * units::m;
     units::Length y = 0.0 * units::m;
@@ -152,33 +152,34 @@ class CBodyCenterOffset {
 
 class CLegAngles {
    public:
-    CLegAngles(double coxa_deg, double femur_deg, double tibia_deg)
-        : CLegAngles(coxa_deg * units::deg, femur_deg * units::deg, tibia_deg * units::deg) {
+    CLegAngles(double torso_coxa_deg, double coxa_femur_deg, double femur_tibia_deg)
+        : CLegAngles(torso_coxa_deg * units::deg, coxa_femur_deg * units::deg, femur_tibia_deg * units::deg) {
     }
-    CLegAngles(units::Angle coxa, units::Angle femur, units::Angle tibia)
-        : coxa(coxa), femur(femur), tibia(tibia) {
+    CLegAngles(units::Angle torso_coxa, units::Angle coxa_femur, units::Angle femur_tibia)
+        : torso_coxa(torso_coxa), coxa_femur(coxa_femur), femur_tibia(femur_tibia) {
     }
     CLegAngles() = default;
     ~CLegAngles() = default;
 
-    units::Angle coxa = 0.0 * units::deg;
-    units::Angle femur = 0.0 * units::deg;
-    units::Angle tibia = 0.0 * units::deg;
+    units::Angle torso_coxa = 0.0 * units::deg;
+    units::Angle coxa_femur = 0.0 * units::deg;
+    units::Angle femur_tibia = 0.0 * units::deg;
 
     // Linear interpolation member: interpolate each joint angle (degrees)
     inline CLegAngles linearInterpolate(const CLegAngles& target, double alpha) const {
-        return CLegAngles(coxa + (target.coxa - coxa) * alpha, femur + (target.femur - femur) * alpha,
-                          tibia + (target.tibia - tibia) * alpha);
+        return CLegAngles(torso_coxa + (target.torso_coxa - torso_coxa) * alpha,
+                          coxa_femur + (target.coxa_femur - coxa_femur) * alpha,
+                          femur_tibia + (target.femur_tibia - femur_tibia) * alpha);
     }
 };
 
 class CLeg {
    public:
     CLeg() = default;
-    CLeg(CLegAngles angles, CPosition foot_pos) : angles_(angles), foot_pos_(foot_pos) {};
+    CLeg(CLegAngles angles, CPosition toe_pos) : angles_(angles), toe_pos_(toe_pos) {};
 
     CLegAngles angles_;
-    CPosition foot_pos_;
+    CPosition toe_pos_;
 };
 
 // --------------------------------------------------------
@@ -211,10 +212,10 @@ class CLeg {
 //     CSegment tibia;
 // };
 
-// struct CBody {
+// struct CTorso {
 //     CPose pose;
 //     std::map<ELegIndex, CLegSegmentwise> legs;
-//     std::map<ELegIndex, CBodyCenterOffset> bodyCenterOffsets;
+//     std::map<ELegIndex, CTorsoCenterOffset> torsoCenterOffsets;
 // };
 
 }  // namespace rumblex_movement

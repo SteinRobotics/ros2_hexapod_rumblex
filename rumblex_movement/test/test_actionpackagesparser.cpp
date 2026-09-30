@@ -34,7 +34,7 @@ TEST_F(ActionPackagesParserTest, NonexistentPackageReturnsEmpty) {
 }
 
 TEST_F(ActionPackagesParserTest, legAngles_standingPosition) {
-    auto positions = parser_->getFootPositions("footPositions_standing");
+    auto positions = parser_->getToePositions("footPositions_standing");
     EXPECT_EQ(positions.size(), 6);
 
     // Check one leg's position as an example
@@ -42,11 +42,11 @@ TEST_F(ActionPackagesParserTest, legAngles_standingPosition) {
     ASSERT_NE(it, positions.end());
     const CPosition& position = it->second;
 
-    CPosition expectedFootPos;
-    expectedFootPos.x = 0.092 + 0.109;      // CENTER_TO_COXA_X + STANDING_FOOT_POS_X
-    expectedFootPos.y = 0.092 + 0.068;      // CENTER_TO_COXA_Y + STANDING_FOOT_POS_Y
-    expectedFootPos.z = -0.050 * units::m;  // STANDING_FOOT_POS_Z
-    expectPositionNear(expectedFootPos, position, "Standing foot position mismatch");
+    CPosition expectedToePos;
+    expectedToePos.x = 0.092 + 0.109;      // CENTER_TO_COXA_X + STANDING_TOE_POS_X
+    expectedToePos.y = 0.092 + 0.068;      // CENTER_TO_COXA_Y + STANDING_TOE_POS_Y
+    expectedToePos.z = -0.050 * units::m;  // STANDING_TOE_POS_Z
+    expectPositionNear(expectedToePos, position, "Standing toe position mismatch");
 }
 
 TEST_F(ActionPackagesParserTest, STAND_UP_PackageLoadsCorrectly) {
@@ -58,9 +58,9 @@ TEST_F(ActionPackagesParserTest, STAND_UP_PackageLoadsCorrectly) {
     EXPECT_TRUE(firstRequest.head.has_value());
 
     // The following checks depend on the YAML content for STAND_UP
-    EXPECT_FALSE(firstRequest.body.has_value());
+    EXPECT_FALSE(firstRequest.torso.has_value());
     EXPECT_TRUE(firstRequest.legAngles.has_value());
-    EXPECT_FALSE(firstRequest.footPositions.has_value());
+    EXPECT_FALSE(firstRequest.toePositions.has_value());
 
     EXPECT_DOUBLE_EQ(firstRequest.factorDuration, 1.0);
 
@@ -84,14 +84,14 @@ TEST_F(ActionPackagesParserTest, LAYDOWN_PackagesLoadCorrectly) {
     const auto& firstRequest = requests[0];
     EXPECT_TRUE(firstRequest.head.has_value());
     // YAML for LAYDOWN currently does not include an explicit body entry, so it should be empty
-    EXPECT_FALSE(firstRequest.body.has_value());
+    EXPECT_FALSE(firstRequest.torso.has_value());
     EXPECT_TRUE(firstRequest.legAngles.has_value());
-    EXPECT_FALSE(firstRequest.footPositions.has_value());
+    EXPECT_FALSE(firstRequest.toePositions.has_value());
     EXPECT_DOUBLE_EQ(firstRequest.factorDuration, 1.0);
     const auto& head = firstRequest.head.value();
     EXPECT_DOUBLE_EQ(head.yaw.numerical_value_in(units::deg), 0.0);
     EXPECT_DOUBLE_EQ(head.pitch.numerical_value_in(units::deg), -20.0);
-    // no body to check for LAYDOWN
+    // no torso to check for LAYDOWN
     const auto& legAngles = firstRequest.legAngles.value();
     expectAnglesNear(CLegAngles(0.0, 70.723, -53.320), legAngles.at(ELegIndex::RightFront));
     expectAnglesNear(CLegAngles(0.0, 70.723, -53.320), legAngles.at(ELegIndex::RightBack));
@@ -108,9 +108,9 @@ TEST_F(ActionPackagesParserTest, HIGH_FIVE_PackagesLoadCorrectly) {
 
     const auto& firstRequest = requests[0];
     EXPECT_TRUE(firstRequest.head.has_value());
-    EXPECT_FALSE(firstRequest.body.has_value());
+    EXPECT_FALSE(firstRequest.torso.has_value());
     EXPECT_TRUE(firstRequest.legAngles.has_value());
-    EXPECT_FALSE(firstRequest.footPositions.has_value());
+    EXPECT_FALSE(firstRequest.toePositions.has_value());
     EXPECT_DOUBLE_EQ(firstRequest.factorDuration, 0.33);
     const auto& head = firstRequest.head.value();
     EXPECT_DOUBLE_EQ(head.yaw.numerical_value_in(units::deg), 0.0);
@@ -120,16 +120,16 @@ TEST_F(ActionPackagesParserTest, HIGH_FIVE_PackagesLoadCorrectly) {
 
     const auto& secondRequest = requests[1];
     EXPECT_FALSE(secondRequest.head.has_value());
-    EXPECT_FALSE(secondRequest.body.has_value());
+    EXPECT_FALSE(secondRequest.torso.has_value());
     EXPECT_FALSE(secondRequest.legAngles.has_value());
-    EXPECT_FALSE(secondRequest.footPositions.has_value());
+    EXPECT_FALSE(secondRequest.toePositions.has_value());
     EXPECT_DOUBLE_EQ(secondRequest.factorDuration, 0.33);
 
     const auto& thirdRequest = requests[2];
     EXPECT_TRUE(thirdRequest.head.has_value());
-    EXPECT_FALSE(thirdRequest.body.has_value());
+    EXPECT_FALSE(thirdRequest.torso.has_value());
     EXPECT_TRUE(thirdRequest.legAngles.has_value());
-    EXPECT_FALSE(thirdRequest.footPositions.has_value());
+    EXPECT_FALSE(thirdRequest.toePositions.has_value());
     EXPECT_DOUBLE_EQ(thirdRequest.factorDuration, 0.33);
     const auto& headThird = thirdRequest.head.value();
     EXPECT_DOUBLE_EQ(headThird.yaw.numerical_value_in(units::deg), 0.0);

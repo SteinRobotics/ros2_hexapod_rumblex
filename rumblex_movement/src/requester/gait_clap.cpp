@@ -7,7 +7,7 @@
 
 namespace {
 constexpr double kPhaseIncrement = 0.1;
-constexpr auto kBodyShiftBack = -0.05 * rumblex_movement::units::m;     // 5cm backward
+constexpr auto kTorsoShiftBack = -0.05 * rumblex_movement::units::m;    // 5cm backward
 constexpr auto kBackLegLiftHeight = 0.05 * rumblex_movement::units::m;  // 5cm up
 constexpr auto kFrontLegLiftHeight = 0.1 * rumblex_movement::units::m;  // 10cm up
 constexpr auto kClapAngle = 30.0 * rumblex_movement::units::deg;        // Degrees for clap movement
@@ -24,8 +24,8 @@ CClapGait::CClapGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CKinema
 
 void CClapGait::start(double /*duration_s*/, uint8_t /*direction*/) {
     // Store initial positions
-    initial_foot_positions_ = kinematics_->getLegsPositions();
-    initial_body_pose_ = kinematics_->getBody();
+    initial_toe_positions_ = kinematics_->getLegsPositions();
+    initial_torso_pose_ = kinematics_->getTorso();
 
     phase_ = EPhase::ShiftingBack;
     state_ = EGaitState::Running;
@@ -43,7 +43,7 @@ bool CClapGait::update() {
     switch (phase_) {
         case EPhase::ShiftingBack: {
             phase_progress_ = std::min(phase_progress_ + kPhaseIncrement, 1.0);
-            applyBodyShift(phase_progress_);
+            applyTorsoShift(phase_progress_);
             if (phase_progress_ >= 1.0 - 1e-6) {
                 phase_ = EPhase::LiftRightBack;
                 phase_progress_ = 0.0;
@@ -130,7 +130,7 @@ bool CClapGait::update() {
         }
         case EPhase::ShiftingForward: {
             phase_progress_ = std::min(phase_progress_ + kPhaseIncrement, 1.0);
-            applyBodyShift(1.0 - phase_progress_);
+            applyTorsoShift(1.0 - phase_progress_);
             if (phase_progress_ >= 1.0 - 1e-6) {
                 phase_ = EPhase::Finished;
             }
@@ -172,15 +172,15 @@ void CClapGait::cancelStop() {
     }
 }
 
-void CClapGait::applyBodyShift(double alpha) {
+void CClapGait::applyTorsoShift(double alpha) {
     alpha = std::clamp(alpha, 0.0, 1.0);
 
-    // Shift body backward
-    CPose shifted_body = initial_body_pose_;
-    shifted_body.position.x += kBodyShiftBack * alpha;
+    // Shift torso backward
+    CPose shifted_torso = initial_torso_pose_;
+    shifted_torso.position.x += kTorsoShiftBack * alpha;
 
-    // Apply body shift while keeping legs in standing positions
-    kinematics_->moveBody(initial_foot_positions_, shifted_body);
+    // Apply torso shift while keeping legs in standing positions
+    kinematics_->moveTorso(initial_toe_positions_, shifted_torso);
 }
 
 void CClapGait::applyBackLegLift(ELegIndex leg, double alpha) {
@@ -188,27 +188,27 @@ void CClapGait::applyBackLegLift(ELegIndex leg, double alpha) {
 
     // Lift the specified back leg
     auto current_positions = kinematics_->getLegsPositions();
-    CPosition lifted_position = initial_foot_positions_.at(leg);
+    CPosition lifted_position = initial_toe_positions_.at(leg);
     lifted_position.z += kBackLegLiftHeight * alpha;
 
     current_positions[leg] = lifted_position;
 
     // Apply the lifted position
-    kinematics_->setSingleFeet(leg, lifted_position);
+    kinematics_->setSingleToe(leg, lifted_position);
 }
 
 void CClapGait::applyFrontLegsLift(double alpha) {
     alpha = std::clamp(alpha, 0.0, 1.0);
 
     // Lift both front legs
-    auto left_front_pos = initial_foot_positions_.at(ELegIndex::LeftFront);
-    auto right_front_pos = initial_foot_positions_.at(ELegIndex::RightFront);
+    auto left_front_pos = initial_toe_positions_.at(ELegIndex::LeftFront);
+    auto right_front_pos = initial_toe_positions_.at(ELegIndex::RightFront);
 
     left_front_pos.z += kFrontLegLiftHeight * alpha;
     right_front_pos.z += kFrontLegLiftHeight * alpha;
 
-    kinematics_->setSingleFeet(ELegIndex::LeftFront, left_front_pos);
-    kinematics_->setSingleFeet(ELegIndex::RightFront, right_front_pos);
+    kinematics_->setSingleToe(ELegIndex::LeftFront, left_front_pos);
+    kinematics_->setSingleToe(ELegIndex::RightFront, right_front_pos);
 }
 
 void CClapGait::applyFrontLegsClap(double alpha, [[maybe_unused]] bool closing) {
@@ -218,12 +218,12 @@ void CClapGait::applyFrontLegsClap(double alpha, [[maybe_unused]] bool closing) 
     auto left_front_angles = kinematics_->getAngles(ELegIndex::LeftFront);
     auto right_front_angles = kinematics_->getAngles(ELegIndex::RightFront);
 
-    // Adjust coxa angles to bring legs together (closing) or apart (opening)
+    // Adjust torso_coxa angles to bring legs together (closing) or apart (opening)
     // Left leg rotates clockwise (positive), right leg rotates counter-clockwise (negative)
     const auto angle_offset = kClapAngle * alpha;
 
-    left_front_angles.coxa += angle_offset;
-    right_front_angles.coxa -= angle_offset;
+    left_front_angles.torso_coxa += angle_offset;
+    right_front_angles.torso_coxa -= angle_offset;
 
     kinematics_->setLegAngles(ELegIndex::LeftFront, left_front_angles);
     kinematics_->setLegAngles(ELegIndex::RightFront, right_front_angles);

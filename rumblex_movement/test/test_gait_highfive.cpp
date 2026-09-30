@@ -31,7 +31,7 @@ class HighFiveGaitTest : public ::testing::Test {
 
         // Move legs from default laydown to standing (gaits assume robot is standing)
         for (const auto& [idx, pos] : kinematics_->getLegsStandingPositions()) {
-            kinematics_->setSingleFeet(idx, pos);
+            kinematics_->setSingleToe(idx, pos);
         }
     }
 
@@ -59,7 +59,7 @@ TEST_F(HighFiveGaitTest, RaisesRightFrontLegAndReturns) {
     while (gait.state() != EGaitState::Stopped && iterations++ < kMaxIterations) {
         gait.update();
         const auto currentAngles = kinematics_->getAngles(ELegIndex::RightFront);
-        if (currentAngles.femur >= initialAngles.femur + kLiftThresholdDegrees * units::deg) {
+        if (currentAngles.coxa_femur >= initialAngles.coxa_femur + kLiftThresholdDegrees * units::deg) {
             raised = true;
         }
     }
@@ -68,12 +68,12 @@ TEST_F(HighFiveGaitTest, RaisesRightFrontLegAndReturns) {
     EXPECT_LT(iterations, kMaxIterations);
 
     const auto finalAngles = kinematics_->getAngles(ELegIndex::RightFront);
-    EXPECT_NEAR(finalAngles.coxa.numerical_value_in(units::deg),
-                initialAngles.coxa.numerical_value_in(units::deg), kAngleTolerance);
-    EXPECT_NEAR(finalAngles.femur.numerical_value_in(units::deg),
-                initialAngles.femur.numerical_value_in(units::deg), kAngleTolerance);
-    EXPECT_NEAR(finalAngles.tibia.numerical_value_in(units::deg),
-                initialAngles.tibia.numerical_value_in(units::deg), kAngleTolerance);
+    EXPECT_NEAR(finalAngles.torso_coxa.numerical_value_in(units::deg),
+                initialAngles.torso_coxa.numerical_value_in(units::deg), kAngleTolerance);
+    EXPECT_NEAR(finalAngles.coxa_femur.numerical_value_in(units::deg),
+                initialAngles.coxa_femur.numerical_value_in(units::deg), kAngleTolerance);
+    EXPECT_NEAR(finalAngles.femur_tibia.numerical_value_in(units::deg),
+                initialAngles.femur_tibia.numerical_value_in(units::deg), kAngleTolerance);
 
     const auto finalHead = kinematics_->getHead();
     EXPECT_NEAR(finalHead.pitch.numerical_value_in(units::deg),
@@ -103,10 +103,10 @@ TEST_F(HighFiveGaitTest, RequestStopReturnsToNeutralQuickly) {
     EXPECT_LT(iterations, kMaxIterations);
 
     const auto finalAngles = kinematics_->getAngles(ELegIndex::RightFront);
-    EXPECT_NEAR(finalAngles.coxa.numerical_value_in(units::deg),
-                initialAngles.coxa.numerical_value_in(units::deg), kAngleTolerance);
-    EXPECT_NEAR(finalAngles.femur.numerical_value_in(units::deg),
-                initialAngles.femur.numerical_value_in(units::deg), kAngleTolerance);
-    EXPECT_NEAR(finalAngles.tibia.numerical_value_in(units::deg),
-                initialAngles.tibia.numerical_value_in(units::deg), kAngleTolerance);
+    EXPECT_NEAR(finalAngles.torso_coxa.numerical_value_in(units::deg),
+                initialAngles.torso_coxa.numerical_value_in(units::deg), kAngleTolerance);
+    EXPECT_NEAR(finalAngles.coxa_femur.numerical_value_in(units::deg),
+                initialAngles.coxa_femur.numerical_value_in(units::deg), kAngleTolerance);
+    EXPECT_NEAR(finalAngles.femur_tibia.numerical_value_in(units::deg),
+                initialAngles.femur_tibia.numerical_value_in(units::deg), kAngleTolerance);
 }

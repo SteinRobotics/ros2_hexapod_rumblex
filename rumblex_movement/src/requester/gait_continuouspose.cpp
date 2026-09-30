@@ -13,27 +13,27 @@ void CGaitContinuousPose::start(double /*duration_s*/, uint8_t /*direction*/) {
     RCLCPP_INFO(node_->get_logger(), "Starting CGaitContinuousPose");
     state_ = EGaitState::Running;
 
-    body_origin_ = kinematics_->getBody();
+    torso_origin_ = kinematics_->getTorso();
     head_origin_ = kinematics_->getHead();
-    body_target_ = body_origin_;
+    torso_target_ = torso_origin_;
     head_target_ = head_origin_;
 }
 
-bool CGaitContinuousPose::update(const geometry_msgs::msg::Twist& /*velocity*/, const CPose& body,
+bool CGaitContinuousPose::update(const geometry_msgs::msg::Twist& /*velocity*/, const CPose& torso,
                                  const COrientation& head) {
     if (state_ == EGaitState::Stopped) return false;
 
     if (state_ == EGaitState::Stopping) {
-        kinematics_->moveBody(body_origin_);
+        kinematics_->moveTorso(torso_origin_);
         kinematics_->setHead(head_origin_);
         state_ = EGaitState::Stopped;
         return true;
     }
 
-    body_target_ = body_target_.linearInterpolate(body, 0.2);
+    torso_target_ = torso_target_.linearInterpolate(torso, 0.2);
     head_target_ = head_target_.linearInterpolate(head, 0.5);
 
-    kinematics_->moveBody(body_target_);
+    kinematics_->moveTorso(torso_target_);
     kinematics_->setHead(head_target_);
     return true;
 }

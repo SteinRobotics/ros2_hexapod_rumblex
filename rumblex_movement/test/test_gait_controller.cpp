@@ -6,10 +6,10 @@
 
 #include <geometry_msgs/msg/twist.hpp>
 
-#include "rumblex_interfaces/msg/movement_request.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "requester/gaitcontroller.hpp"
 #include "requester/kinematics.hpp"
+#include "rumblex_interfaces/msg/movement_request.hpp"
 #include "test_helpers.hpp"
 
 using namespace rumblex_movement;
@@ -134,8 +134,8 @@ TEST_F(GaitControllerTest, SwitchFromWaitingToWatch) {
     EXPECT_EQ(controller_->currentGait(), MovementRequestMsg::SEQUENCE_WATCH);
 }
 
-// Test: Switch to BODY_ROLL
-TEST_F(GaitControllerTest, SwitchToBodyRoll) {
+// Test: Switch to TORSO_ROLL
+TEST_F(GaitControllerTest, SwitchToTorsoRoll) {
     auto vel = createZeroVelocity();
 
     controller_->requestStopSelectedGait();
@@ -149,8 +149,8 @@ TEST_F(GaitControllerTest, SwitchToBodyRoll) {
     EXPECT_EQ(controller_->currentGait(), MovementRequestMsg::SEQUENCE_BODY_ROLL);
 }
 
-// Test: Switch from BODY_ROLL to STAND_UP
-TEST_F(GaitControllerTest, SwitchFromBodyRollToStandUp) {
+// Test: Switch from TORSO_ROLL to STAND_UP
+TEST_F(GaitControllerTest, SwitchFromTorsoRollToStandUp) {
     auto vel = createZeroVelocity();
 
     // First stop current gait (LAYDOWN)
@@ -159,13 +159,13 @@ TEST_F(GaitControllerTest, SwitchFromBodyRollToStandUp) {
         controller_->updateSelectedGait(vel);
     }
 
-    // Switch to BODY_ROLL
+    // Switch to TORSO_ROLL
     rumblex_interfaces::msg::MovementRequest request;
     request.type = MovementRequestMsg::SEQUENCE_BODY_ROLL;
     controller_->setGait(request);
     EXPECT_EQ(controller_->currentGait(), MovementRequestMsg::SEQUENCE_BODY_ROLL);
 
-    // Stop BODY_ROLL before switching
+    // Stop TORSO_ROLL before switching
     controller_->requestStopSelectedGait();
     for (int i = 0; i < kMaxIterations; ++i) {
         controller_->updateSelectedGait(vel);

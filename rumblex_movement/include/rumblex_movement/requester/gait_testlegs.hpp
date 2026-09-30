@@ -46,9 +46,9 @@ class CTestLegsGait : public ISequenceGait {
     EGaitState state_ = EGaitState::Stopped;
     Stage stage_ = Stage::Raise;
 
-    double coxa_delta_deg_ = 10.0;
-    double femur_delta_deg_ = 10.0;
-    double tibia_delta_deg_ = 10.0;
+    double torso_coxa_delta_deg_ = 10.0;
+    double coxa_femur_delta_deg_ = 10.0;
+    double femur_tibia_delta_deg_ = 10.0;
     double default_stage_duration_ = 0.5;
     double min_stage_duration_ = 0.05;
     double stage_duration_ = 0.5;

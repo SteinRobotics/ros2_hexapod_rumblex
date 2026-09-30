@@ -1,5 +1,5 @@
 # Presets and anchors for common poses
-# Always combine body and footPositions OR use legAngles alone
+# Always combine torso and footPositions OR use legAngles alone
 
 presets:
   legAngles_standing: &legAngles_standing
@@ -128,7 +128,7 @@ STAND_UP:
 
 # STAND_UP:
 #   - head: *head_neutral
-#     body: *body_neutral
+#     torso: *torso_neutral
 #     footPositions: *footPositions_standing
 #     factorDuration: 1.0
 

@@ -9,7 +9,7 @@ using rumblex_interfaces::msg::MovementRequest;
 namespace rumblex_movement {
 
 rumblex_interfaces::msg::MovementRequest CGaitController::createMsg(std::string name,
-                                                                   MovementRequestType type) {
+                                                                    MovementRequestType type) {
     rumblex_interfaces::msg::MovementRequest msg;
     msg.name = name;
     msg.type = type;
@@ -27,7 +27,7 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
 
     // Create all gait instances
     gaits_[MovementRequest::SEQUENCE_BODY_ROLL] =
-        std::make_shared<CGaitBodyRoll>(node_, kinematics_, params_.bodyRoll);
+        std::make_shared<CGaitTorsoRoll>(node_, kinematics_, params_.torsoRoll);
     gaits_[MovementRequest::SEQUENCE_CLAP] = std::make_shared<CClapGait>(node_, kinematics_, params_.clap);
     gaits_[MovementRequest::SEQUENCE_HIGH_FIVE] =
         std::make_shared<CHighFiveGait>(node_, kinematics_, params_.highFive);
@@ -105,7 +105,7 @@ void CGaitController::switchGait(rumblex_interfaces::msg::MovementRequest reques
     movement_type_pub_->publish(request);
 }
 
-bool CGaitController::updateSelectedGait(const geometry_msgs::msg::Twist& velocity, CPose body,
+bool CGaitController::updateSelectedGait(const geometry_msgs::msg::Twist& velocity, CPose torso,
                                          COrientation head) {
     if (pending_request_.type != MovementRequest::NO_REQUEST &&
         active_gait_->state() == EGaitState::Stopped) {
@@ -113,7 +113,7 @@ bool CGaitController::updateSelectedGait(const geometry_msgs::msg::Twist& veloci
     }
 
     if (auto continuous = std::dynamic_pointer_cast<IContinuousGait>(active_gait_)) {
-        return continuous->update(velocity, body, head);
+        return continuous->update(velocity, torso, head);
     }
     if (auto sequence = std::dynamic_pointer_cast<ISequenceGait>(active_gait_)) {
         return sequence->update();

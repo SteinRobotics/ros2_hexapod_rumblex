@@ -28,18 +28,18 @@ bool CGaitLegWave::update() {
 
     if (state_ == EGaitState::Stopping && utils::isSinValueNearZero(phase_, delta_phase)) {
         // Reset the active leg to standing position before stopping
-        const auto base_foot_pos = kinematics_->getLegsStandingPositions();
-        kinematics_->setSingleFeet(active_leg_index_, base_foot_pos.at(active_leg_index_));
+        const auto base_toe_pos = kinematics_->getLegsStandingPositions();
+        kinematics_->setSingleToe(active_leg_index_, base_toe_pos.at(active_leg_index_));
         state_ = EGaitState::Stopped;
         return false;
     }
 
     // TODO better use kinematics_->getLegsPositions()
-    const auto base_foot_pos = kinematics_->getLegsStandingPositions();
+    const auto base_toe_pos = kinematics_->getLegsStandingPositions();
 
     if (phase_ >= M_PI) {
         // reset last leg to neutral position
-        kinematics_->setSingleFeet(active_leg_index_, base_foot_pos.at(active_leg_index_));
+        kinematics_->setSingleToe(active_leg_index_, base_toe_pos.at(active_leg_index_));
 
         // advance to the next leg
         size_t step = 1;
@@ -52,14 +52,14 @@ bool CGaitLegWave::update() {
         phase_ = 0.0;
     }
 
-    auto target_position = base_foot_pos.at(active_leg_index_);
-    target_position.z = base_foot_pos.at(active_leg_index_).z + params_.leg_lift_height * std::sin(phase_);
+    auto target_position = base_toe_pos.at(active_leg_index_);
+    target_position.z = base_toe_pos.at(active_leg_index_).z + params_.leg_lift_height * std::sin(phase_);
     RCLCPP_DEBUG_STREAM(node_->get_logger(),
                         "LegWave: Moving leg " << magic_enum::enum_name(active_leg_index_) << " to position ("
                                                << target_position.x << ", " << target_position.y << ", "
                                                << target_position.z << ") at phase " << phase_);
 
-    kinematics_->setSingleFeet(active_leg_index_, target_position);
+    kinematics_->setSingleToe(active_leg_index_, target_position);
     return true;
 }
 

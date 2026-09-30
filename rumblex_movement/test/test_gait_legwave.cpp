@@ -30,7 +30,7 @@ class LegWaveGaitTest : public ::testing::Test {
 
         // Move legs from default laydown to standing (gaits assume robot is standing)
         for (const auto& [idx, pos] : kinematics_->getLegsStandingPositions()) {
-            kinematics_->setSingleFeet(idx, pos);
+            kinematics_->setSingleToe(idx, pos);
         }
     }
 

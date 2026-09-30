@@ -17,8 +17,8 @@ void CGaitLook::start(double duration_s, uint8_t direction) {
 
     amplitude_head_ =
         (direction == MovementRequest::CLOCKWISE) ? params_.head_max_yaw : -params_.head_max_yaw;
-    amplitude_body_ =
-        (direction == MovementRequest::CLOCKWISE) ? params_.body_max_yaw : -params_.body_max_yaw;
+    amplitude_torso_ =
+        (direction == MovementRequest::CLOCKWISE) ? params_.torso_max_yaw : -params_.torso_max_yaw;
 
     // 100ms task update time, duration in seconds, 1 full cycle = 2pi
     delta_phase_ = (M_PI) / (duration_s / 0.1);
@@ -32,16 +32,16 @@ bool CGaitLook::update() {
     if (phase_ > M_PI) {
         state_ = EGaitState::Stopped;
         kinematics_->setHead(COrientation(0.0, 0.0, 0.0));
-        kinematics_->moveBody(CPose());
+        kinematics_->moveTorso(CPose());
         return true;
     }
     COrientation head_request;
     head_request.yaw = amplitude_head_ * std::sin(phase_);
     kinematics_->setHead(head_request);
 
-    CPose body_request;
-    body_request.orientation.yaw = amplitude_body_ * std::sin(phase_);
-    kinematics_->moveBody(body_request);
+    CPose torso_request;
+    torso_request.orientation.yaw = amplitude_torso_ * std::sin(phase_);
+    kinematics_->moveTorso(torso_request);
 
     return true;
 }

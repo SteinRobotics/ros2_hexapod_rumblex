@@ -12,9 +12,9 @@ static_assert(!std::is_constructible_v<CPosition, Angle, Angle, Angle>);
 static_assert(!std::is_constructible_v<COrientation, Length, Length, Length>);
 static_assert(!std::is_constructible_v<CLegAngles, Length, Length, Length>);
 static_assert(!std::is_assignable_v<decltype(CPosition::x)&, double>);
-static_assert(!std::is_assignable_v<decltype(CLegAngles::coxa)&, double>);
-static_assert(!std::is_assignable_v<decltype(CLegAngles::coxa)&, Length>);
-static_assert(!std::is_assignable_v<decltype(CBodyCenterOffset::psi)&, Length>);
+static_assert(!std::is_assignable_v<decltype(CLegAngles::torso_coxa)&, double>);
+static_assert(!std::is_assignable_v<decltype(CLegAngles::torso_coxa)&, Length>);
+static_assert(!std::is_assignable_v<decltype(CTorsoCenterOffset::psi)&, Length>);
 
 TEST(MovementTypesTest, MembersAcceptCompatibleUnits) {
     CPosition position;
@@ -22,13 +22,13 @@ TEST(MovementTypesTest, MembersAcceptCompatibleUnits) {
     EXPECT_DOUBLE_EQ(position.x.numerical_value_in(m), 0.125);
 
     CLegAngles angles;
-    angles.coxa = std::numbers::pi / 2.0 * rad;
-    angles.femur = 45.0 * deg;
+    angles.torso_coxa = std::numbers::pi / 2.0 * rad;
+    angles.coxa_femur = 45.0 * deg;
     const auto halfway = angles.linearInterpolate(CLegAngles(), 0.5);
-    EXPECT_NEAR(halfway.coxa.numerical_value_in(deg), 45.0, 1e-12);
-    EXPECT_DOUBLE_EQ(halfway.femur.numerical_value_in(deg), 22.5);
+    EXPECT_NEAR(halfway.torso_coxa.numerical_value_in(deg), 45.0, 1e-12);
+    EXPECT_DOUBLE_EQ(halfway.coxa_femur.numerical_value_in(deg), 22.5);
 
-    CBodyCenterOffset offset;
+    CTorsoCenterOffset offset;
     offset.x = 50.0 * mm;
     offset.psi = std::numbers::pi * rad;
     EXPECT_DOUBLE_EQ(offset.x.numerical_value_in(m), 0.050);
@@ -61,9 +61,9 @@ TEST(MovementTypesTest, OrientationAndLegAnglesAcceptMixedAngleUnits) {
     EXPECT_DOUBLE_EQ(orientation.yaw.numerical_value_in(units::deg), 0.0);
 
     const CLegAngles angles(-std::numbers::pi / 2.0 * rad, 45.0 * deg, std::numbers::pi * rad);
-    EXPECT_NEAR(angles.coxa.numerical_value_in(units::deg), -90.0, 1e-12);
-    EXPECT_DOUBLE_EQ(angles.femur.numerical_value_in(units::deg), 45.0);
-    EXPECT_NEAR(angles.tibia.numerical_value_in(units::deg), 180.0, 1e-12);
+    EXPECT_NEAR(angles.torso_coxa.numerical_value_in(units::deg), -90.0, 1e-12);
+    EXPECT_DOUBLE_EQ(angles.coxa_femur.numerical_value_in(units::deg), 45.0);
+    EXPECT_NEAR(angles.femur_tibia.numerical_value_in(units::deg), 180.0, 1e-12);
 }
 
 TEST(MovementTypesTest, PoseConvertsLengthsAndAngles) {

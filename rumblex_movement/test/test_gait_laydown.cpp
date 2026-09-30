@@ -44,7 +44,7 @@ TEST_F(GaitLayDownTest, LayDownStopsAtLaydownHeight) {
     const auto standingTargets = kinematics_->getLegsStandingPositions();
 
     // Ensure we start from standing pose.
-    kinematics_->moveBody(standingTargets, CPose());
+    kinematics_->moveTorso(standingTargets, CPose());
     const auto initialPositions = kinematics_->getLegsPositions();
 
     CLayDownGait gait(node_, kinematics_, params_.layDown);
@@ -69,9 +69,9 @@ TEST_F(GaitLayDownTest, LayDownStopsAtLaydownHeight) {
 
     /// manuall check forward kinematics by setting angles for front legs
     CLegAngles angles;
-    angles.coxa = 0.0 * units::deg;
-    angles.femur = 70.0 * units::deg;
-    angles.tibia = -53.0 * units::deg;
+    angles.torso_coxa = 0.0 * units::deg;
+    angles.coxa_femur = 70.0 * units::deg;
+    angles.femur_tibia = -53.0 * units::deg;
     kinematics_->setLegAngles(ELegIndex::RightFront, angles);
     kinematics_->setLegAngles(ELegIndex::RightMid, angles);
 }

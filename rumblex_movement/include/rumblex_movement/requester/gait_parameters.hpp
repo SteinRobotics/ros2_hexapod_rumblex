@@ -9,9 +9,9 @@
 namespace rumblex_movement {
 
 struct Parameters {
-    struct BodyRoll {
-        units::Angle body_max_roll = 0.0 * units::deg;
-        units::Angle body_max_pitch = 0.0 * units::deg;
+    struct TorsoRoll {
+        units::Angle torso_max_roll = 0.0 * units::deg;
+        units::Angle torso_max_pitch = 0.0 * units::deg;
     };
 
     struct Clap {};
@@ -46,7 +46,7 @@ struct Parameters {
     };
 
     struct Look {
-        units::Angle body_max_yaw = 0.0 * units::deg;
+        units::Angle torso_max_yaw = 0.0 * units::deg;
         units::Angle head_max_yaw = 0.0 * units::deg;
     };
 
@@ -55,9 +55,9 @@ struct Parameters {
     struct SinglePose {};
 
     struct TestLegs {
-        units::Angle coxa_delta = 0.0 * units::deg;
-        units::Angle femur_delta = 0.0 * units::deg;
-        units::Angle tibia_delta = 0.0 * units::deg;
+        units::Angle torso_coxa_delta = 0.0 * units::deg;
+        units::Angle coxa_femur_delta = 0.0 * units::deg;
+        units::Angle femur_tibia_delta = 0.0 * units::deg;
     };
 
     struct Tripod {
@@ -77,7 +77,7 @@ struct Parameters {
     };
 
     struct Watch {
-        units::Angle body_max_yaw = 0.0 * units::deg;
+        units::Angle torso_max_yaw = 0.0 * units::deg;
         units::Angle head_max_yaw = 0.0 * units::deg;
     };
 
@@ -92,7 +92,7 @@ struct Parameters {
         double max_velocity_rotation{0.01};
     };
 
-    BodyRoll bodyRoll;
+    TorsoRoll torsoRoll;
     Clap clap;
     ContinuousPose continuousPose;
     HighFive highFive;
@@ -117,17 +117,17 @@ inline Parameters Parameters::declare(std::shared_ptr<rclcpp::Node> node) {
     Parameters params;
 
     // Generic Parameters
-    const auto body_max_roll = node->declare_parameter<double>("GENERIC_BODY_MAX_ROLL") * units::deg;
-    const auto body_max_pitch = node->declare_parameter<double>("GENERIC_BODY_MAX_PITCH") * units::deg;
+    const auto torso_max_roll = node->declare_parameter<double>("GENERIC_BODY_MAX_ROLL") * units::deg;
+    const auto torso_max_pitch = node->declare_parameter<double>("GENERIC_BODY_MAX_PITCH") * units::deg;
     const auto head_max_yaw = node->declare_parameter<double>("GENERIC_HEAD_MAX_YAW") * units::deg;
     const auto head_max_pitch = node->declare_parameter<double>("GENERIC_HEAD_MAX_PITCH") * units::deg;
 
     const auto leg_lift_height = node->declare_parameter<double>("GENERIC_LEG_LIFT_HEIGHT") * units::m;
     const auto step_length = node->declare_parameter<double>("GENERIC_STEP_LENGTH") * units::m;
 
-    // Body Roll
-    params.bodyRoll.body_max_roll = body_max_roll;
-    params.bodyRoll.body_max_pitch = body_max_pitch;
+    // Torso Roll
+    params.torsoRoll.torso_max_roll = torso_max_roll;
+    params.torsoRoll.torso_max_pitch = torso_max_pitch;
 
     // Tripod
     params.tripod.head_amplitude_yaw =
@@ -173,13 +173,13 @@ inline Parameters Parameters::declare(std::shared_ptr<rclcpp::Node> node) {
         node->declare_parameter<double>("GAIT_LEG_WAVE_LEG_LIFT_HEIGHT") * units::m;
 
     // Look
-    params.look.body_max_yaw = node->declare_parameter<double>("GAIT_LOOK_BODY_MAX_YAW") * units::deg;
+    params.look.torso_max_yaw = node->declare_parameter<double>("GAIT_LOOK_BODY_MAX_YAW") * units::deg;
     params.look.head_max_yaw = node->declare_parameter<double>("GAIT_LOOK_HEAD_MAX_YAW") * units::deg;
 
     // StandUp
 
     // Watch
-    params.watch.body_max_yaw = node->declare_parameter<double>("GAIT_WATCH_BODY_MAX_YAW") * units::deg;
+    params.watch.torso_max_yaw = node->declare_parameter<double>("GAIT_WATCH_BODY_MAX_YAW") * units::deg;
     params.watch.head_max_yaw = head_max_yaw;
 
     // MoveCombined
@@ -201,9 +201,12 @@ inline Parameters Parameters::declare(std::shared_ptr<rclcpp::Node> node) {
         node->declare_parameter<double>("GAIT_MOVE_COMBINED_MAX_VELOCITY_ROTATION", 0.01);
 
     // Test Legs
-    params.testLegs.coxa_delta = node->declare_parameter<double>("TESTLEGS_COXA_DELTA_DEG") * units::deg;
-    params.testLegs.femur_delta = node->declare_parameter<double>("TESTLEGS_FEMUR_DELTA_DEG") * units::deg;
-    params.testLegs.tibia_delta = node->declare_parameter<double>("TESTLEGS_TIBIA_DELTA_DEG") * units::deg;
+    params.testLegs.torso_coxa_delta =
+        node->declare_parameter<double>("TESTLEGS_COXA_DELTA_DEG") * units::deg;
+    params.testLegs.coxa_femur_delta =
+        node->declare_parameter<double>("TESTLEGS_FEMUR_DELTA_DEG") * units::deg;
+    params.testLegs.femur_tibia_delta =
+        node->declare_parameter<double>("TESTLEGS_TIBIA_DELTA_DEG") * units::deg;
 
     return params;
 }

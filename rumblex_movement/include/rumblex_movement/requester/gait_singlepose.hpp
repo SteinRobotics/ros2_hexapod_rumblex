@@ -3,11 +3,11 @@
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 
-#include "rumblex_utils/linear_interpolation.hpp"
 #include "requester/gait_parameters.hpp"
 #include "requester/igaits.hpp"
 #include "requester/kinematics.hpp"
 #include "requester/types.hpp"
+#include "rumblex_utils/linear_interpolation.hpp"
 
 namespace rumblex_movement {
 
@@ -18,7 +18,7 @@ class CGaitSinglePose : public IContinuousGait {
     ~CGaitSinglePose() override = default;
 
     void start(double duration_s, uint8_t direction) override;
-    bool update(const geometry_msgs::msg::Twist& velocity, const CPose& body,
+    bool update(const geometry_msgs::msg::Twist& velocity, const CPose& torso,
                 const COrientation& head) override;
     void requestStop() override;
     void cancelStop() override;
@@ -32,7 +32,7 @@ class CGaitSinglePose : public IContinuousGait {
     Parameters::SinglePose params_;
     EGaitState state_ = EGaitState::Stopped;
 
-    CPose body_origin_ = CPose();
+    CPose torso_origin_ = CPose();
     COrientation head_origin_ = COrientation();
 
     double duration_s_ = 0.0;

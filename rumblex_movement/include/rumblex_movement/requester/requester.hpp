@@ -47,7 +47,7 @@ class CRequester {
     std::shared_ptr<CServoHandler> servo_handler_;
 
     geometry_msgs::msg::Twist velocity_;
-    rumblex_interfaces::msg::Pose pose_body_;
+    rumblex_interfaces::msg::Pose pose_torso_;
     rumblex_interfaces::msg::Orientation orientation_head_;
 
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr pubJointStates_;

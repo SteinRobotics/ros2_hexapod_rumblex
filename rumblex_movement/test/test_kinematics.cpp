@@ -41,83 +41,83 @@ class KinematicsTest : public ::testing::Test {
 TEST_F(KinematicsTest, setLegAngles) {
     // create target angles
     CLegAngles angles;
-    angles.coxa = 0.0 * units::deg;
-    angles.femur = 2.276 * units::deg;
-    angles.tibia = 7.704 * units::deg;
+    angles.torso_coxa = 0.0 * units::deg;
+    angles.coxa_femur = 2.276 * units::deg;
+    angles.femur_tibia = 7.704 * units::deg;
 
     kin_->setLegAngles(ELegIndex::RightFront, angles);
 
-    CPosition footPosExpected;
-    footPosExpected.x = 0.201 * units::m;   // 0.092 + 0.109
-    footPosExpected.y = 0.160 * units::m;   // 0.092 + 0.068
-    footPosExpected.z = -0.050 * units::m;  // 0.045 - 0.095
+    CPosition toePosExpected;
+    toePosExpected.x = 0.201 * units::m;   // 0.092 + 0.109
+    toePosExpected.y = 0.160 * units::m;   // 0.092 + 0.068
+    toePosExpected.z = -0.050 * units::m;  // 0.045 - 0.095
 
     auto& leg = kin_->getLegs().at(ELegIndex::RightFront);
 
-    expectPositionNear(footPosExpected, leg.foot_pos_, "setLegAngles position mismatch");
+    expectPositionNear(toePosExpected, leg.toe_pos_, "setLegAngles position mismatch");
     expectAnglesNear(angles, leg.angles_, "setLegAngles angles mismatch");
 }
 
 TEST_F(KinematicsTest, checkStandingPosition) {
-    kin_->moveBody(kin_->getLegsStandingPositions());
+    kin_->moveTorso(kin_->getLegsStandingPositions());
     auto& leg = kin_->getLegs().at(ELegIndex::RightFront);
 
-    CPosition footPosExpected;
-    footPosExpected.x = 0.201 * units::m;   // 0.092 + 0.109
-    footPosExpected.y = 0.160 * units::m;   // 0.092 + 0.068
-    footPosExpected.z = -0.050 * units::m;  // 0.045 - 0.095
+    CPosition toePosExpected;
+    toePosExpected.x = 0.201 * units::m;   // 0.092 + 0.109
+    toePosExpected.y = 0.160 * units::m;   // 0.092 + 0.068
+    toePosExpected.z = -0.050 * units::m;  // 0.045 - 0.095
 
     CLegAngles anglesExpected;
-    anglesExpected.coxa = 0.0 * units::deg;
-    anglesExpected.femur = 2.276 * units::deg;
-    anglesExpected.tibia = 7.704 * units::deg;
+    anglesExpected.torso_coxa = 0.0 * units::deg;
+    anglesExpected.coxa_femur = 2.276 * units::deg;
+    anglesExpected.femur_tibia = 7.704 * units::deg;
 
-    expectPositionNear(footPosExpected, leg.foot_pos_, "standing position mismatch");
+    expectPositionNear(toePosExpected, leg.toe_pos_, "standing position mismatch");
     expectAnglesNear(anglesExpected, leg.angles_, "standing angles mismatch");
 }
 
 TEST_F(KinematicsTest, checkLaydownPosition) {
-    kin_->moveBody(kin_->getLegsLayDownPositions());
+    kin_->moveTorso(kin_->getLegsLayDownPositions());
     auto& leg = kin_->getLegs().at(ELegIndex::RightFront);
 
-    CPosition footPosExpected;
-    footPosExpected.x = 0.180 * units::m;  // 0.071 + 0.109
-    footPosExpected.y = 0.139 * units::m;  // 0.071 + 0.068
-    footPosExpected.z = 0.010 * units::m;  // 0.045 - 0.035
+    CPosition toePosExpected;
+    toePosExpected.x = 0.180 * units::m;  // 0.071 + 0.109
+    toePosExpected.y = 0.139 * units::m;  // 0.071 + 0.068
+    toePosExpected.z = 0.010 * units::m;  // 0.045 - 0.035
 
     CLegAngles anglesExpected;
-    anglesExpected.coxa = 0.0 * units::deg;
-    anglesExpected.femur = 70.723 * units::deg;
-    anglesExpected.tibia = -53.320 * units::deg;
+    anglesExpected.torso_coxa = 0.0 * units::deg;
+    anglesExpected.coxa_femur = 70.723 * units::deg;
+    anglesExpected.femur_tibia = -53.320 * units::deg;
 
-    expectPositionNear(footPosExpected, leg.foot_pos_, "laydown position mismatch");
+    expectPositionNear(toePosExpected, leg.toe_pos_, "laydown position mismatch");
     expectAnglesNear(anglesExpected, leg.angles_, "laydown angles mismatch");
 }
 
-TEST_F(KinematicsTest, checkSetFeet) {
+TEST_F(KinematicsTest, checkSetToe) {
     CPosition targetPos;
     targetPos.x = 0.201 * units::m;   // 0.092 + 0.109
     targetPos.y = 0.160 * units::m;   // 0.092 + 0.068
     targetPos.z = -0.050 * units::m;  // 0.045 - 0.095
 
-    kin_->setSingleFeet(ELegIndex::RightFront, targetPos);
+    kin_->setSingleToe(ELegIndex::RightFront, targetPos);
     auto& leg = kin_->getLegs().at(ELegIndex::RightFront);
 
     CLegAngles anglesExpected;
-    anglesExpected.coxa = 0.0 * units::deg;
-    anglesExpected.femur = 2.276 * units::deg;
-    anglesExpected.tibia = 7.704 * units::deg;
+    anglesExpected.torso_coxa = 0.0 * units::deg;
+    anglesExpected.coxa_femur = 2.276 * units::deg;
+    anglesExpected.femur_tibia = 7.704 * units::deg;
 
-    expectPositionNear(targetPos, leg.foot_pos_, "setFeet position mismatch");
-    expectAnglesNear(anglesExpected, leg.angles_, "setFeet angles mismatch");
+    expectPositionNear(targetPos, leg.toe_pos_, "setToe position mismatch");
+    expectAnglesNear(anglesExpected, leg.angles_, "setToe angles mismatch");
 }
 
-TEST_F(KinematicsTest, BodyRotationPreservesLegLocalTarget) {
-    kin_->moveBody(kin_->getLegsStandingPositions());
+TEST_F(KinematicsTest, TorsoRotationPreservesLegLocalTarget) {
+    kin_->moveTorso(kin_->getLegsStandingPositions());
     const auto standingAngles = kin_->getAngles(ELegIndex::RightFront);
 
     // Rotate the coxa mount by 90 degrees about each axis and keep the same
-    // leg-local foot target: (92, 92, -50) mm relative to the mount.
+    // leg-local toe target: (92, 92, -50) mm relative to the mount.
     const std::array<std::pair<COrientation, CPosition>, 3> cases = {{
         {COrientation(90.0 * units::deg, 0.0 * units::rad, 0.0 * units::rad),
          CPosition(201.0 * units::mm, 92.0 * units::mm, 18.0 * units::mm)},
@@ -128,7 +128,7 @@ TEST_F(KinematicsTest, BodyRotationPreservesLegLocalTarget) {
     }};
 
     for (const auto& [orientation, target] : cases) {
-        kin_->moveBody({{ELegIndex::RightFront, target}}, CPose(CPosition(), orientation));
+        kin_->moveTorso({{ELegIndex::RightFront, target}}, CPose(CPosition(), orientation));
         expectAnglesNear(standingAngles, kin_->getAngles(ELegIndex::RightFront),
                          "rotated mount changed the leg-local target");
     }

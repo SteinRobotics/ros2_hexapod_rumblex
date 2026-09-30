@@ -13,10 +13,7 @@
 #include <string>
 
 #include "geometry_msgs/msg/twist.hpp"
-#include "rumblex_interfaces/msg/movement_request.hpp"
-#include "rumblex_utils/geometry.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "requester/gait_bodyroll.hpp"
 #include "requester/gait_clap.hpp"
 #include "requester/gait_continuouspose.hpp"
 #include "requester/gait_highfive.hpp"
@@ -29,11 +26,14 @@
 #include "requester/gait_singlepose.hpp"
 #include "requester/gait_standup.hpp"
 #include "requester/gait_testlegs.hpp"
+#include "requester/gait_torsoroll.hpp"
 #include "requester/gait_waiting.hpp"
 #include "requester/gait_watch.hpp"
 #include "requester/igaits.hpp"
 #include "requester/kinematics.hpp"
 #include "requester/types.hpp"
+#include "rumblex_interfaces/msg/movement_request.hpp"
+#include "rumblex_utils/geometry.hpp"
 
 namespace rumblex_movement {
 
@@ -50,7 +50,7 @@ class CGaitController {
     }
 
     bool updateSelectedGait(const geometry_msgs::msg::Twist& velocity,
-                            CPose body = CPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+                            CPose torso = CPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
                             COrientation head = COrientation(0.0, 0.0, 0.0));
     void requestStopSelectedGait();
 

@@ -50,7 +50,7 @@ set(SOURCES
   src/handler/feetech/SCSerial.cpp
   src/handler/feetech/SMS_STS.cpp
   src/handler/servohandler.cpp
-  src/requester/gait_bodyroll.cpp
+  src/requester/gait_torsoroll.cpp
   src/requester/gait_clap.cpp
   src/requester/gait_continuouspose.cpp
   src/requester/gait_highfive.cpp
@@ -143,11 +143,11 @@ if(BUILD_TESTING)
     target_link_libraries(test_requester rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp)
   endif()
 
-  ament_add_gtest(test_gait_bodyroll
-    test/test_gait_bodyroll.cpp
+  ament_add_gtest(test_gait_torsoroll
+    test/test_gait_torsoroll.cpp
   )
-  if(TARGET test_gait_bodyroll)
-    target_link_libraries(test_gait_bodyroll rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp)
+  if(TARGET test_gait_torsoroll)
+    target_link_libraries(test_gait_torsoroll rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp)
   endif()
 
   ament_add_gtest(test_gait_laydown

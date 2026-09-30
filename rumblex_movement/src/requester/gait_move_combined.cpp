@@ -17,7 +17,7 @@ CMoveCombinedGait::CMoveCombinedGait(std::shared_ptr<rclcpp::Node> node,
       tripod_params_(tripod_params),
       combined_params_(combined_params) {
     no_velocity_timer_.stop();
-    body_old_ = CPose();
+    torso_old_ = CPose();
     target_positions_ = kinematics_->getLegsStandingPositions();
     blend_start_positions_ = target_positions_;
 }
@@ -152,16 +152,16 @@ units::Angle CMoveCombinedGait::getHeadAmplitudeYaw(EMoveCombinedGaitType gait) 
     return wave_params_.head_amplitude_yaw;
 }
 
-bool CMoveCombinedGait::update(const geometry_msgs::msg::Twist& velocity, const CPose& body,
+bool CMoveCombinedGait::update(const geometry_msgs::msg::Twist& velocity, const CPose& torso,
                                const COrientation& /*head*/) {
     if (state_ == EGaitState::Stopped) {
         return false;
     }
 
-    if (utils::isTwistZero(velocity) && state_ == EGaitState::Running && body != body_old_) {
-        const auto base_foot_pos = kinematics_->getLegsStandingPositions();
-        kinematics_->moveBody(base_foot_pos, body);
-        body_old_ = body;
+    if (utils::isTwistZero(velocity) && state_ == EGaitState::Running && torso != torso_old_) {
+        const auto base_toe_pos = kinematics_->getLegsStandingPositions();
+        kinematics_->moveTorso(base_toe_pos, torso);
+        torso_old_ = torso;
         return true;
     }
 
@@ -238,7 +238,7 @@ bool CMoveCombinedGait::update(const geometry_msgs::msg::Twist& velocity, const 
                     phase_);
         phase_ = 0.0;
         state_ = EGaitState::Stopped;
-        kinematics_->moveBody(kinematics_->getLegsStandingPositions(), body);
+        kinematics_->moveTorso(kinematics_->getLegsStandingPositions(), torso);
         kinematics_->setHead(COrientation(0.0, 0.0, 0.0));
         return true;
     }
@@ -258,7 +258,7 @@ bool CMoveCombinedGait::update(const geometry_msgs::msg::Twist& velocity, const 
     const auto standing_positions = kinematics_->getLegsStandingPositions();
 
     for (auto& [index, leg] : kinematics_->getLegs()) {
-        const auto base_foot_pos = standing_positions.at(index);
+        const auto base_toe_pos = standing_positions.at(index);
         auto motion = computeLegMotion(active_gait_type_, index, phase_);
 
         // Linear displacement
@@ -266,8 +266,8 @@ bool CMoveCombinedGait::update(const geometry_msgs::msg::Twist& velocity, const 
         const auto delta_y = norm_y * motion.step;
 
         // Rotational displacement
-        const auto leg_vec_x = base_foot_pos.x;
-        const auto leg_vec_y = base_foot_pos.y;
+        const auto leg_vec_x = base_toe_pos.x;
+        const auto leg_vec_y = base_toe_pos.y;
         const auto len = mp_units::hypot(leg_vec_x, leg_vec_y);
 
         units::Length rot_x = 0.0 * units::m;
@@ -281,9 +281,9 @@ bool CMoveCombinedGait::update(const geometry_msgs::msg::Twist& velocity, const 
         }
 
         CPosition new_pos;
-        new_pos.x = base_foot_pos.x + delta_x + rot_x;
-        new_pos.y = base_foot_pos.y + delta_y + rot_y;
-        new_pos.z = base_foot_pos.z + motion.lift;
+        new_pos.x = base_toe_pos.x + delta_x + rot_x;
+        new_pos.y = base_toe_pos.y + delta_y + rot_y;
+        new_pos.z = base_toe_pos.z + motion.lift;
 
         if (is_blending_) {
             const auto& start_pos = blend_start_positions_.at(index);
@@ -293,7 +293,7 @@ bool CMoveCombinedGait::update(const geometry_msgs::msg::Twist& velocity, const 
         }
     }
 
-    kinematics_->moveBody(target_positions_, body);
+    kinematics_->moveTorso(target_positions_, torso);
 
     // Head movement with blending
     auto head_yaw = getHeadAmplitudeYaw(active_gait_type_) * std::sin(phase_);

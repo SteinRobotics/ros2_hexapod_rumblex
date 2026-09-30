@@ -14,7 +14,7 @@ CGaitRunning::CGaitRunning(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<C
                            Parameters::Running& params)
     : node_(node), kinematics_(kinematics), params_(params) {
     no_velocity_timer_.stop();
-    body_old_ = CPose();
+    torso_old_ = CPose();
     target_positions_ = kinematics_->getLegsStandingPositions();
 }
 
@@ -31,8 +31,8 @@ void CGaitRunning::start(double /*duration_s*/, uint8_t /*direction*/) {
 //   Group B:  [--flight--|--support--]  (phase 0 .. π, offset by π)
 //
 // Within each half-cycle the leg transitions through:
-//   support phase  : foot on ground, pushing backward   (0 .. π−f)
-//   flight phase   : foot in air, swinging forward      (π−f .. π)
+//   support phase  : toe on ground, pushing backward   (0 .. π−f)
+//   flight phase   : toe in air, swinging forward      (π−f .. π)
 //
 // where f = flight_fraction * π.
 //
@@ -56,18 +56,18 @@ CGaitRunning::LegMotion CGaitRunning::computeLegMotion(ELegIndex index, double p
     if (in_first_half) {
         // This group's active half: support then flight
         if (local < support_end) {
-            // Support: foot on ground, slides backward
+            // Support: toe on ground, slides backward
             double t = local / support_end;                            // 0..1
             motion.step = params_.gait_step_length * (1.0 - 2.0 * t);  // +step → −step
             motion.lift = 0.0 * units::m;
         } else {
-            // Flight: foot in air, swings forward quickly
+            // Flight: toe in air, swings forward quickly
             double t = (local - support_end) / f;                       // 0..1
             motion.step = params_.gait_step_length * (-1.0 + 2.0 * t);  // −step → +step
             motion.lift = params_.leg_lift_height * std::sin(t * M_PI);
         }
     } else {
-        // This group's passive half: foot on ground, support role
+        // This group's passive half: toe on ground, support role
         double t = local / M_PI;  // 0..1 across the whole second half
         motion.step = params_.gait_step_length * (1.0 - 2.0 * t);
         motion.lift = 0.0 * units::m;
@@ -75,17 +75,17 @@ CGaitRunning::LegMotion CGaitRunning::computeLegMotion(ELegIndex index, double p
     return motion;
 }
 
-bool CGaitRunning::update(const geometry_msgs::msg::Twist& velocity, const CPose& body,
+bool CGaitRunning::update(const geometry_msgs::msg::Twist& velocity, const CPose& torso,
                           const COrientation& /*head*/) {
     if (state_ == EGaitState::Stopped) {
         return false;
     }
 
-    // Body pose changes while stationary
-    if (utils::isTwistZero(velocity) && state_ == EGaitState::Running && body != body_old_) {
-        const auto base_foot_pos = kinematics_->getLegsStandingPositions();
-        kinematics_->moveBody(base_foot_pos, body);
-        body_old_ = body;
+    // Torso pose changes while stationary
+    if (utils::isTwistZero(velocity) && state_ == EGaitState::Running && torso != torso_old_) {
+        const auto base_toe_pos = kinematics_->getLegsStandingPositions();
+        kinematics_->moveTorso(base_toe_pos, torso);
+        torso_old_ = torso;
         return true;
     }
 
@@ -131,7 +131,7 @@ bool CGaitRunning::update(const geometry_msgs::msg::Twist& velocity, const CPose
         RCLCPP_INFO(node_->get_logger(), "CGaitRunning: Transitioning to Stopped, phase_: %.2f", phase_);
         phase_ = 0.0;
         state_ = EGaitState::Stopped;
-        kinematics_->moveBody(kinematics_->getLegsStandingPositions(), body);
+        kinematics_->moveTorso(kinematics_->getLegsStandingPositions(), torso);
         kinematics_->setHead(COrientation(0.0, 0.0, 0.0));
         return true;
     }
@@ -139,7 +139,7 @@ bool CGaitRunning::update(const geometry_msgs::msg::Twist& velocity, const CPose
     const auto standing_positions = kinematics_->getLegsStandingPositions();
 
     for (auto& [index, leg] : kinematics_->getLegs()) {
-        const auto base_foot_pos = standing_positions.at(index);
+        const auto base_toe_pos = standing_positions.at(index);
         auto motion = computeLegMotion(index, phase_);
 
         // Linear displacement
@@ -147,8 +147,8 @@ bool CGaitRunning::update(const geometry_msgs::msg::Twist& velocity, const CPose
         const auto delta_y = norm_y * motion.step;
 
         // Rotational displacement
-        const auto leg_vec_x = base_foot_pos.x;
-        const auto leg_vec_y = base_foot_pos.y;
+        const auto leg_vec_x = base_toe_pos.x;
+        const auto leg_vec_y = base_toe_pos.y;
         const auto len = mp_units::hypot(leg_vec_x, leg_vec_y);
 
         units::Length rot_x = 0.0 * units::m;
@@ -161,14 +161,14 @@ bool CGaitRunning::update(const geometry_msgs::msg::Twist& velocity, const CPose
         }
 
         CPosition new_pos;
-        new_pos.x = base_foot_pos.x + delta_x + rot_x;
-        new_pos.y = base_foot_pos.y + delta_y + rot_y;
-        new_pos.z = base_foot_pos.z + motion.lift;
+        new_pos.x = base_toe_pos.x + delta_x + rot_x;
+        new_pos.y = base_toe_pos.y + delta_y + rot_y;
+        new_pos.z = base_toe_pos.z + motion.lift;
 
         target_positions_[index] = new_pos;
     }
 
-    kinematics_->moveBody(target_positions_, body);
+    kinematics_->moveTorso(target_positions_, torso);
 
     // Head movement
     const auto head_yaw = params_.head_amplitude_yaw * std::sin(phase_);

@@ -1,13 +1,13 @@
 #include <gtest/gtest.h>
 
 #include "rclcpp/rclcpp.hpp"
-#include "requester/gait_bodyroll.hpp"
+#include "requester/gait_torsoroll.hpp"
 #include "requester/kinematics.hpp"
 #include "test_helpers.hpp"
 
 using namespace rumblex_movement;
 
-class BodyRollGaitTest : public ::testing::Test {
+class TorsoRollGaitTest : public ::testing::Test {
    protected:
     void SetUp() override {
         if (!rclcpp::ok()) {
@@ -18,11 +18,11 @@ class BodyRollGaitTest : public ::testing::Test {
         auto overrides = test_helpers::defaultRobotParameters();
         options.parameter_overrides(overrides);
 
-        node_ = std::make_shared<rclcpp::Node>("test_gait_bodyroll_node", options);
+        node_ = std::make_shared<rclcpp::Node>("test_gait_torsoroll_node", options);
 
         kinematics_ = std::make_shared<CKinematics>(node_);
         params_ = test_helpers::makeDeclaredParameters(node_);
-        gait_ = std::make_unique<CGaitBodyRoll>(node_, kinematics_, params_.bodyRoll);
+        gait_ = std::make_unique<CGaitTorsoRoll>(node_, kinematics_, params_.torsoRoll);
     }
 
     void TearDown() override {
@@ -33,11 +33,11 @@ class BodyRollGaitTest : public ::testing::Test {
 
     std::shared_ptr<rclcpp::Node> node_;
     std::shared_ptr<CKinematics> kinematics_;
-    std::unique_ptr<CGaitBodyRoll> gait_;
+    std::unique_ptr<CGaitTorsoRoll> gait_;
     Parameters params_;
 };
 
-TEST_F(BodyRollGaitTest, StateTransitionsCoverAllStates) {
+TEST_F(TorsoRollGaitTest, StateTransitionsCoverAllStates) {
     // Initial state should be Stopped
     EXPECT_EQ(gait_->state(), EGaitState::Stopped);
 

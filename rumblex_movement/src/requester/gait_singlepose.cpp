@@ -14,14 +14,14 @@ void CGaitSinglePose::start(double duration_s, uint8_t /*direction*/) {
     phase_ = 0.0;
     duration_s_ = duration_s;
 
-    body_origin_ = kinematics_->getBody();
+    torso_origin_ = kinematics_->getTorso();
     head_origin_ = kinematics_->getHead();
 
     // 100ms task update time, duration in seconds,
     phase_increment_ = duration_s_ * 0.1;
 }
 
-bool CGaitSinglePose::update(const geometry_msgs::msg::Twist& /*velocity*/, const CPose& body,
+bool CGaitSinglePose::update(const geometry_msgs::msg::Twist& /*velocity*/, const CPose& torso,
                              const COrientation& head) {
     if (state_ == EGaitState::Stopped) return false;
 
@@ -30,15 +30,15 @@ bool CGaitSinglePose::update(const geometry_msgs::msg::Twist& /*velocity*/, cons
     if (phase_ > duration_s_) {
         state_ = EGaitState::Stopped;
         kinematics_->setHead(head);
-        kinematics_->moveBody(body);
+        kinematics_->moveTorso(torso);
         return true;
     }
-    // interpolate body position from origin to target
+    // interpolate torso position from origin to target
     auto progress = phase_ / duration_s_;
-    CPose intermediate_pose = body_origin_.linearInterpolate(body, progress);
+    CPose intermediate_pose = torso_origin_.linearInterpolate(torso, progress);
     COrientation intermediate_head = head_origin_.linearInterpolate(head, progress);
 
-    kinematics_->moveBody(intermediate_pose);
+    kinematics_->moveTorso(intermediate_pose);
     kinematics_->setHead(intermediate_head);
 
     return true;

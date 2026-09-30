@@ -21,7 +21,7 @@ class IGait {
 
 class IContinuousGait : public IGait {
    public:
-    virtual bool update(const geometry_msgs::msg::Twist& velocity, const CPose& body,
+    virtual bool update(const geometry_msgs::msg::Twist& velocity, const CPose& torso,
                         const COrientation& head) = 0;
 };
 

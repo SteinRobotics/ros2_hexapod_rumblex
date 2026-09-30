@@ -104,15 +104,16 @@ void CTestLegsGait::applyStageForCurrentLeg() {
     auto target = it->second;
     switch (stage_) {
         case Stage::Raise:
-            target.coxa += params_.coxa_delta;
-            target.femur += params_.femur_delta;
-            target.tibia += params_.tibia_delta;
+            target.torso_coxa += params_.torso_coxa_delta;
+            target.coxa_femur += params_.coxa_femur_delta;
+            target.femur_tibia += params_.femur_tibia_delta;
             RCLCPP_INFO_STREAM(node_->get_logger(),
                                "CTestLegsGait: raising "
                                    << magic_enum::enum_name(index) << " by ("
-                                   << params_.coxa_delta.numerical_value_in(units::deg) << ", "
-                                   << params_.femur_delta.numerical_value_in(units::deg) << ", "
-                                   << params_.tibia_delta.numerical_value_in(units::deg) << ") degrees");
+                                   << params_.torso_coxa_delta.numerical_value_in(units::deg) << ", "
+                                   << params_.coxa_femur_delta.numerical_value_in(units::deg) << ", "
+                                   << params_.femur_tibia_delta.numerical_value_in(units::deg)
+                                   << ") degrees");
             kinematics_->setLegAngles(index, target);
             break;
         case Stage::Hold:
