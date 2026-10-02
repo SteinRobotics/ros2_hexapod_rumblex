@@ -16,7 +16,6 @@ namespace rumblex_movement {
 CRequester::CRequester(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CServoHandler> servo_handler)
     : node_(node) {
     kinematics_ = std::make_shared<CKinematics>(node);
-    gait_controller_ = std::make_shared<CGaitController>(node, kinematics_);
     if (servo_handler) {
         servo_handler_ = servo_handler;
     } else {
@@ -25,20 +24,20 @@ CRequester::CRequester(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CServ
 
     if (auto servo_controller = servo_handler_->getServoController()) {
         servo_controller->setInitialAnglesCallback(
-            [this](const std::map<ELegIndex, CLegAngles>& initial_angles) {
+            [this](const std::map<ELegIndex, CLegAngles>& initial_angles, const COrientation& head) {
                 RCLCPP_INFO_STREAM(node_->get_logger(),
                                    "on Callback: initial servo angles received, setting kinematics.");
+                kinematics_->setHeadOrientation(head);
                 for (const auto& [leg_index, leg_angles] : initial_angles) {
                     kinematics_->setLegAngles(leg_index, leg_angles);
                 }
             });
     }
 
-    sub_movement_request_ = node_->create_subscription<MovementRequest>(
-        "cmd_movement", 10, std::bind(&CRequester::onMovementRequest, this, _1));
-
-    sub_continuous_movement_update_ = node_->create_subscription<ContinuousMovementUpdate>(
-        "cmd_movement_update", 10, std::bind(&CRequester::onContinuousMovementUpdate, this, _1));
+    sub_body_pose_ = node_->create_subscription<BodyPose>("cmd_movement", rclcpp::QoS(1),
+                                                          std::bind(&CRequester::onBodyPose, this, _1));
+    pub_body_pose_ = node_->create_publisher<BodyPose>("body_pose_actual", rclcpp::QoS(1).transient_local());
+    pub_body_pose_->publish(bodyPose(*kinematics_));
 
     pub_joint_states_ = node_->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
 }
@@ -80,24 +79,23 @@ void CRequester::publishJointStates(const std::map<ELegIndex, CLegAngles>& legs,
     pub_joint_states_->publish(msg);
 }
 
-void CRequester::onMovementRequest(const MovementRequest& msg) {
-    if (msg.type != gait_controller_->currentGait()) {
-        RCLCPP_INFO_STREAM(node_->get_logger(), "CRequester::onMovementRequest: " << msg.name);
+void CRequester::onBodyPose(const BodyPose& msg) {
+    if (!validBodyPose(msg)) {
+        RCLCPP_WARN(node_->get_logger(), "Ignoring non-finite body pose");
+        return;
     }
-    gait_controller_->setGait(msg);
-}
-
-void CRequester::onContinuousMovementUpdate(const ContinuousMovementUpdate& msg) {
-    velocity_ = msg.velocity;
-    torso_pose_ = msg.body_pose;
-    head_orientation_ = msg.head_orientation;
+    kinematics_->moveTorso(toeTargets(msg), CPose(msg.torso_pose));
+    kinematics_->setHeadOrientation(COrientation(msg.head_pose));
+    pending_pose_ = true;
 }
 
 void CRequester::update(std::chrono::milliseconds timeslice) {
-    if (gait_controller_->updateSelectedGait(velocity_, torso_pose_, head_orientation_)) {
+    if (pending_pose_) {
+        pending_pose_ = false;
         double duration_s = double(timeslice.count() / 1000.0);
         sendServoRequest(duration_s);
     }
+    pub_body_pose_->publish(bodyPose(*kinematics_));
     publishJointStates(kinematics_->getLegAngles(), kinematics_->getHeadOrientation());
 }
 

@@ -63,7 +63,7 @@ def _launch_robot(context):
         executable='node_movement',
         output='screen',
         parameters=[
-            os.path.join(movement_config_dir, 'anatomy.yaml'),
+            os.path.join(get_package_share_directory('rumblex_description'), 'config', robot, 'anatomy.yaml'),
             os.path.join(movement_config_dir, 'servo_description.yaml'),
             {'servo.offline': True},
         ],
@@ -78,7 +78,7 @@ def _launch_robot(context):
         name='node_brain',
         executable='node_brain',
         output='screen',
-        parameters=[brain_config],
+        parameters=[os.path.join(get_package_share_directory('rumblex_description'), 'config', robot, 'anatomy.yaml'), os.path.join(pkg_brain, 'config', robot, 'gait.yaml'), brain_config],
     )
     
     communication_launch = IncludeLaunchDescription(

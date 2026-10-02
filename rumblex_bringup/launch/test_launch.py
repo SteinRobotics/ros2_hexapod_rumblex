@@ -12,6 +12,17 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     robot = LaunchConfiguration('robot')
 
+    teleop = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            FindPackageShare('rumblex_teleop'), '/launch/teleop_simulated_launch.py']),
+        condition=IfCondition(LaunchConfiguration('enable_simulated_teleop')),
+    )
+
+    hmi = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            FindPackageShare('rumblex_hmi'), '/launch/hmi_simulated_launch.py']),
+    )
+
     house_map = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             FindPackageShare('rumblex_navigation'), '/launch/map_launch.py']),
@@ -36,6 +47,7 @@ def generate_launch_description():
             FindPackageShare('rumblex_description'), '/launch/display_mesh.launch.py']),
         launch_arguments={
             'robot': robot, 'joint_state_publisher_gui': 'false', 'fixed_frame': 'map',
+            'joint_states_topic': 'visualization_joint_states',
         }.items(),
     )
     brain = launch.actions.TimerAction(
@@ -47,10 +59,16 @@ def generate_launch_description():
         )],
     )
 
+    anatomy = PathJoinSubstitution([
+        FindPackageShare('rumblex_description'), 'config', robot, 'anatomy.yaml'])
+
     return LaunchDescription([
         DeclareLaunchArgument(
             'robot', default_value='nox',
             description='Robot configuration profile (for example: nox or nira)'),
+        DeclareLaunchArgument(
+            'enable_simulated_teleop', default_value='true',
+            description='Launch the mouse and keyboard controller GUI'),
         DeclareLaunchArgument(
             'map', default_value=PathJoinSubstitution([
                 FindPackageShare('rumblex_navigation'), 'maps', 'house_contour.yaml']),
@@ -63,7 +81,7 @@ def generate_launch_description():
             description='Publish offline scan_1d readings from map walls; disable for a real lidar'),
         DeclareLaunchArgument(
             'publish_test_map_tf', default_value='true',
-            description='Simulate pose from active movement; disable when providing odometry/localization'),
+            description='Estimate pose from supporting feet; disable when providing odometry/localization'),
         house_map,
         Node(
             package='rumblex_navigation', executable='test_map_walls.py',
@@ -73,7 +91,7 @@ def generate_launch_description():
                 'simulate_lidar': ParameterValue(LaunchConfiguration('simulate_lidar'), value_type=bool),
             }],
         ),
-        # Offline commanded-motion estimate: map -> odom -> base_link.
+        # Offline supporting-foot estimate: map -> odom -> base_link.
         Node(
             package='tf2_ros', executable='static_transform_publisher',
             name='test_map_to_odom', output='screen',
@@ -83,10 +101,17 @@ def generate_launch_description():
         Node(
             package='rumblex_navigation', executable='offline_odometry.py',
             output='screen',
+            parameters=[anatomy],
             condition=IfCondition(LaunchConfiguration('publish_test_map_tf')),
         ),
         communication,
+        teleop,
+        hmi,
         movement,
+        Node(
+            package='rumblex_movement', executable='node_offline_visualization',
+            output='screen', parameters=[anatomy],
+        ),
         display_mesh,
         brain,
     ])

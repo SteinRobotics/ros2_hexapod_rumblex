@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.25)
 project(rumblex_utils)
 
 find_package(ament_cmake REQUIRED)
@@ -9,6 +9,14 @@ find_package(geometry_msgs REQUIRED)
 find_package(rumblex_interfaces REQUIRED)
 find_package(ament_cmake_gtest REQUIRED)
 
+include(cmake/geometry-dependencies.cmake)
+
+add_library(rumblex_geometry INTERFACE)
+target_compile_features(rumblex_geometry INTERFACE cxx_std_23)
+target_link_libraries(rumblex_geometry INTERFACE magic_enum::magic_enum rumblex_mp_units rclcpp::rclcpp ${rumblex_interfaces_TARGETS})
+target_include_directories(rumblex_geometry INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
+install(TARGETS rumblex_geometry EXPORT export_${PROJECT_NAME})
+ament_export_dependencies(rclcpp rumblex_interfaces magic_enum)
 add_library(${PROJECT_NAME} INTERFACE)
 
 target_include_directories(${PROJECT_NAME} INTERFACE
@@ -72,4 +80,4 @@ if(BUILD_TESTING)
 endif()
 
 
-ament_package()
+ament_package(CONFIG_EXTRAS cmake/geometry-dependencies.cmake)

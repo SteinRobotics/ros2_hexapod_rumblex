@@ -1,0 +1,50 @@
+################################
+# Coordinate system torso
+
+#    ▲ x
+#    │
+#    │
+#   (x)─────▶ y
+#      z
+
+/**:
+  ros__parameters:
+
+    #### KINEMATIC PARAMETERS ####
+    coxa_length_m: 0.050
+    femur_length_m: 0.063
+    tibia_length_m: 0.099
+    coxa_height_m: 0.045
+
+    leg_names: 
+      right_front: "right_front"
+      right_mid:   "right_mid"
+      right_back:  "right_back"
+      left_front:  "left_front"
+      left_mid:    "left_mid"
+      left_back:   "left_back"
+
+    leg_offsets:
+      right_front: { x_m:  0.109, y_m: 0.068, yaw_deg: 45.0}
+      right_mid:   { x_m:  0.000, y_m: 0.088, yaw_deg: 90.0 }
+      right_back:  { x_m: -0.109, y_m: 0.068, yaw_deg: 135.0 }
+      left_front:  { x_m:  0.109, y_m:  -0.068, yaw_deg: -45.0 }
+      left_mid:    { x_m:  0.000, y_m:  -0.088, yaw_deg: -90.0 }
+      left_back:   { x_m: -0.109, y_m:  -0.068, yaw_deg: -135.0 }
+
+    toe_positions_standing:
+      right_front: { x:  0.201, y: 0.160, z: -0.050 }
+      right_mid:   { x:  0.000, y: 0.218, z: -0.050 }
+      right_back:  { x: -0.201, y: 0.160, z: -0.050 }
+      left_front:  { x:  0.201, y:  -0.160, z: -0.050 }
+      left_mid:    { x:  0.000, y:  -0.218, z: -0.050 }
+      left_back:   { x: -0.201, y:  -0.160, z: -0.050 }
+
+    toe_positions_laydown:
+      right_front: { x:  0.180, y: 0.139, z: 0.010 }
+      right_mid:   { x:  0.000, y: 0.188, z: 0.010 }
+      right_back:  { x: -0.180, y: 0.139, z: 0.010 }
+      left_front:  { x:  0.180, y:  -0.139, z: 0.010 }
+      left_mid:    { x:  0.000, y:  -0.188, z: 0.010 }
+      left_back:   { x: -0.180, y:  -0.139, z: 0.010 }
+

@@ -1,84 +1,107 @@
 #!/usr/bin/env python3
-"""Estimate offline motion from the commands used by the movement node.
-
-Speech, joystick and cmd_vel inputs converge on cmd_movement_update in the brain.
-Integrate only while the movement node reports a walking or running gait.
-This node must not run alongside another odom -> base_link publisher.
-"""
+"""Estimate offline body motion from supporting toes; never run with another odom TF."""
 
 import math
 
 from geometry_msgs.msg import TransformStamped, Twist
 from nav_msgs.msg import Odometry
+from rumblex_interfaces.msg import BodyPose
+from std_msgs.msg import String
 import rclpy
 from rclpy.node import Node
-from rumblex_interfaces.msg import ContinuousMovementUpdate, MovementRequest
 from tf2_ros import TransformBroadcaster
 
-from planar_motion import integrate_pose
+from offline_motion import (
+    LEG_NAMES, LOCOMOTION, body_velocity, compose_torso, support_displacement,
+)
 
 
 class OfflineOdometry(Node):
-    def __init__(self):
-        super().__init__('offline_odometry')
+    def __init__(self, **kwargs):
+        super().__init__('offline_odometry', **kwargs)
+        self.heights = [self.declare_parameter(
+            f'toe_positions_standing.{name}.z', rclpy.Parameter.Type.DOUBLE).value
+            for name in LEG_NAMES]
+        self.tolerance = self.declare_parameter('support_tolerance_m', 0.001).value
+        if not all(math.isfinite(z) for z in self.heights) or not (
+                math.isfinite(self.tolerance) and self.tolerance > 0):
+            raise ValueError('Standing heights must be finite and support tolerance positive')
         self.pose = (0.0, 0.0, 0.0)
+        self.torso = BodyPose().torso_pose
         self.velocity = Twist()
-        self.moving = False
-        self.last_update = self.get_clock().now()
+        self.movement = ''
+        self.previous = None
+        self.last_update = None
         self.odom = self.create_publisher(Odometry, 'odom', 10)
         self.tf = TransformBroadcaster(self)
         self.subscription = self.create_subscription(
-            ContinuousMovementUpdate, 'cmd_movement_update', self.on_movement_update, 10)
-        self.gait_subscription = self.create_subscription(
-            MovementRequest, 'movement_type_actual', self.on_gait, 10)
+            BodyPose, 'body_pose_actual', self.on_body_pose,
+            rclpy.qos.QoSProfile(depth=1, durability=rclpy.qos.DurabilityPolicy.TRANSIENT_LOCAL))
+        self.movement_subscription = self.create_subscription(
+            String, 'movement_name', self.on_movement_name,
+            rclpy.qos.QoSProfile(depth=1, durability=rclpy.qos.DurabilityPolicy.TRANSIENT_LOCAL))
         self.timer = self.create_timer(0.02, self.publish_pose)
 
-    def advance(self, now):
-        dt = (now - self.last_update).nanoseconds / 1e9
-        self.last_update = now
-        if self.moving:
-            self.pose = integrate_pose(*self.pose, self.velocity.linear.x,
-                                       self.velocity.linear.y, self.velocity.angular.z, dt)
+    def on_movement_name(self, message):
+        if message.data != self.movement:
+            self.previous = None
+            self.velocity = Twist()
+        self.movement = message.data
 
-    def on_gait(self, gait):
-        self.advance(self.get_clock().now())
-        self.moving = gait.type in (MovementRequest.CONTINUOUS_MOVE,
-                                   MovementRequest.CONTINUOUS_RUNNING)
-
-    def on_movement_update(self, update):
-        command = update.velocity
+    def on_body_pose(self, message):
+        toes = [(p.x, p.y, p.z) for p in message.toe_positions]
+        p, r = message.torso_pose.position, message.torso_pose.orientation
         if not all(math.isfinite(v) for v in
-                   (command.linear.x, command.linear.y, command.angular.z)):
-            self.get_logger().warning('Ignoring non-finite movement velocity')
+                   [p.x, p.y, p.z, r.roll, r.pitch, r.yaw,
+                    message.head_pose.roll, message.head_pose.pitch, message.head_pose.yaw]
+                   + [v for toe in toes for v in toe]):
+            self.previous = None
+            self.last_update = None
+            self.velocity = Twist()
+            self.get_logger().warning('Ignoring non-finite offline body pose')
             return
-        # Account for the old velocity up to receipt of the new command.
-        self.advance(self.get_clock().now())
+        now = self.get_clock().now()
+        dt = (now - self.last_update).nanoseconds / 1e9 if self.last_update else 0.0
+        old_body = compose_torso(self.pose, self.torso)
         self.velocity = Twist()
-        self.velocity.linear.x = command.linear.x
-        self.velocity.linear.y = command.linear.y
-        self.velocity.angular.z = command.angular.z
+        if self.movement in LOCOMOTION and self.previous is not None and 0 < dt <= 0.5:
+            delta = support_displacement(self.previous, toes, self.heights, self.tolerance)
+            if delta is not None:
+                dx, dy, turn = delta
+                x, y, yaw = self.pose
+                c, s = math.cos(yaw), math.sin(yaw)
+                self.pose = (x + c * dx - s * dy, y + s * dx + c * dy,
+                             math.atan2(math.sin(yaw + turn), math.cos(yaw + turn)))
+        if self.last_update is not None and 0 < dt <= 0.5:
+            linear, angular = body_velocity(old_body, compose_torso(self.pose, message.torso_pose), dt)
+            self.velocity.linear.x, self.velocity.linear.y, self.velocity.linear.z = linear
+            self.velocity.angular.x, self.velocity.angular.y, self.velocity.angular.z = angular
+        self.previous = toes
+        self.last_update = now
+        self.torso = message.torso_pose
+        self.publish_pose()
 
     def publish_pose(self):
         now = self.get_clock().now()
-        self.advance(now)
-        x, y, yaw = self.pose
+        if self.last_update is None or (now - self.last_update).nanoseconds > 500_000_000:
+            self.velocity = Twist()
+        position, quaternion = compose_torso(self.pose, self.torso)
         transform = TransformStamped()
         transform.header.stamp = now.to_msg()
         transform.header.frame_id = 'odom'
         transform.child_frame_id = 'base_link'
-        transform.transform.translation.x = x
-        transform.transform.translation.y = y
-        transform.transform.rotation.z = math.sin(yaw / 2.0)
-        transform.transform.rotation.w = math.cos(yaw / 2.0)
+        translation = transform.transform.translation
+        translation.x, translation.y, translation.z = position
+        rotation = transform.transform.rotation
+        rotation.x, rotation.y, rotation.z, rotation.w = quaternion
         self.tf.sendTransform(transform)
-
         odom = Odometry()
         odom.header = transform.header
         odom.child_frame_id = transform.child_frame_id
-        odom.pose.pose.position.x = x
-        odom.pose.pose.position.y = y
-        odom.pose.pose.orientation = transform.transform.rotation
-        odom.twist.twist = self.velocity if self.moving else Twist()
+        odom_position = odom.pose.pose.position
+        odom_position.x, odom_position.y, odom_position.z = position
+        odom.pose.pose.orientation = rotation
+        odom.twist.twist = self.velocity
         self.odom.publish(odom)
 
 

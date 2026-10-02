@@ -17,13 +17,13 @@ launches accept the same argument. Each package stores only the settings it owns
 
 | Package | Profile files |
 | --- | --- |
-| `rumblex_brain` | `config/<robot>/parameter.yaml` |
+| `rumblex_brain` | `config/<robot>/parameter.yaml`, `gait.yaml` |
 | `rumblex_bringup` | `config/<robot>/bno055_params.yaml` |
 | `rumblex_communication` | `config/<robot>/params.yaml` |
-| `rumblex_movement` | `config/<robot>/anatomy.yaml`, `servo_description.yaml` |
+| `rumblex_movement` | `config/<robot>/servo_description.yaml` |
 | `rumblex_navigation` | `config/<robot>/navigation.yaml` |
 | `rumblex_gazebo` | `config/<robot>/joint_controllers.yaml` |
-| `rumblex_description` | `urdf/<robot>.urdf.xacro`, optionally `<robot>_mesh.urdf.xacro` |
+| `rumblex_description` | `config/<robot>/anatomy.yaml`, `urdf/<robot>.urdf.xacro`, optionally `<robot>_mesh.urdf.xacro` |
 
 To add Nira, create the corresponding `config/nira/` files and `nira.urdf.xacro`, then launch with
 `robot:=nira`. Profile names must start with a lowercase letter and contain only lowercase letters,

@@ -21,6 +21,8 @@
   <depend>nlohmann-json-dev</depend>
   <depend>rumblex_utils</depend>
 
+  <exec_depend>rumblex_description</exec_depend>
+
   <export>
     <build_type>ament_cmake</build_type>
   </export>

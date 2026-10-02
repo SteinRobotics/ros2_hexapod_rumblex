@@ -28,10 +28,12 @@ def _launch_robot(context):
             package='robot_state_publisher',
             executable='robot_state_publisher',
             parameters=[{'robot_description': description}],
+            remappings=[('joint_states', LaunchConfiguration('joint_states_topic'))],
         ),
         Node(
             package='joint_state_publisher_gui',
             executable='joint_state_publisher_gui',
+            remappings=[('joint_states', LaunchConfiguration('joint_states_topic'))],
             condition=IfCondition(LaunchConfiguration('joint_state_publisher_gui')),
         ),
         Node(
@@ -45,6 +47,9 @@ def _launch_robot(context):
 
 def generate_launch_description():
     return LaunchDescription([
+        DeclareLaunchArgument(
+            'joint_states_topic', default_value='joint_states',
+            description='Joint states used to display the robot'),
         DeclareLaunchArgument(
             'robot', default_value='nox',
             description='Robot model profile (for example: nox or nira)'),

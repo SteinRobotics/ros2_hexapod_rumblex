@@ -20,25 +20,6 @@ find_package(rumblex_interfaces REQUIRED)
 find_package(rumblex_utils REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(ament_cmake_gtest REQUIRED)
-find_package(magic_enum CONFIG REQUIRED)
-
-# Prefer an installed library; otherwise fetch a reproducible, header-only build.
-find_package(mp-units 2.5 CONFIG QUIET)
-if(NOT mp-units_FOUND)
-  include(FetchContent)
-  set(MP_UNITS_BUILD_INSTALL OFF CACHE BOOL "" FORCE)
-  set(MP_UNITS_API_CONTRACTS NONE CACHE STRING "" FORCE)
-  FetchContent_Declare(mp-units
-    URL https://github.com/mpusz/mp-units/archive/refs/tags/v2.5.0.tar.gz
-    URL_HASH SHA256=a6bd48bee699f11f0ed5b04b8c5006d15f76e6d898e058db3880554d2e47a400
-    SOURCE_SUBDIR src
-    SYSTEM
-  )
-  FetchContent_MakeAvailable(mp-units)
-  # Keep upstream header install rules out of the ROS package installation.
-  set_property(DIRECTORY "${mp-units_SOURCE_DIR}/src" PROPERTY EXCLUDE_FROM_ALL TRUE)
-endif()
-
 ## set sources
 set(SOURCES
   src/handler/servo_controller.cpp
@@ -50,21 +31,6 @@ set(SOURCES
   src/handler/feetech/SCSerial.cpp
   src/handler/feetech/SMS_STS.cpp
   src/handler/servo_handler.cpp
-  src/requester/gait_torso_roll.cpp
-  src/requester/gait_clap.cpp
-  src/requester/gait_continuous_pose.cpp
-  src/requester/gait_high_five.cpp
-  src/requester/gait_lay_down.cpp
-  src/requester/gait_leg_wave.cpp
-  src/requester/gait_look.cpp
-  src/requester/gait_move_combined.cpp
-  src/requester/gait_running.cpp
-  src/requester/gait_stand_up.cpp
-  src/requester/gait_single_pose.cpp
-  src/requester/gait_test_legs.cpp
-  src/requester/gait_waiting.cpp
-  src/requester/gait_watch.cpp
-  src/requester/gait_controller.cpp
   src/requester/kinematics.cpp
   src/requester/requester.cpp
 )
@@ -87,8 +53,7 @@ target_link_libraries(rumblex_movement_core PUBLIC
   ${rumblex_interfaces_TARGETS}
   ${rumblex_utils_TARGETS}
   yaml-cpp::yaml-cpp
-  magic_enum::magic_enum
-  mp-units::mp-units
+  rumblex_utils::rumblex_geometry
 )
 
 add_executable(node_movement
@@ -100,6 +65,9 @@ target_link_libraries(node_movement PRIVATE
   ${rumblex_utils_TARGETS}
 )
 
+add_executable(node_offline_visualization src/node_offline_visualization.cpp)
+target_link_libraries(node_offline_visualization PRIVATE rumblex_movement_core)
+
 include_directories(
   include/rumblex_movement/
   include/rumblex_movement/handler/feetech/
@@ -107,6 +75,7 @@ include_directories(
 
 install(TARGETS
   node_movement
+  node_offline_visualization
   DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY
@@ -117,11 +86,19 @@ install(DIRECTORY
 
 # Unit tests
 if(BUILD_TESTING)
+  ament_add_gtest(test_offline_visualization test/test_offline_visualization.cpp)
+  if(TARGET test_offline_visualization)
+    target_link_libraries(test_offline_visualization rumblex_movement_core)
+    target_compile_definitions(test_offline_visualization PRIVATE
+      RUMBLEX_ANATOMY_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../rumblex_description/config")
+  endif()
+
   ament_add_gtest(test_robot_configuration test/test_robot_configuration.cpp)
   if(TARGET test_robot_configuration)
     target_link_libraries(test_robot_configuration rumblex_movement_core)
     target_compile_definitions(test_robot_configuration PRIVATE
-      RUMBLEX_CONFIG_DIR="${CMAKE_CURRENT_SOURCE_DIR}/config")
+      RUMBLEX_CONFIG_DIR="${CMAKE_CURRENT_SOURCE_DIR}/config"
+      RUMBLEX_ANATOMY_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../rumblex_description/config")
   endif()
 
   ament_add_gtest(test_types test/test_types.cpp)
@@ -132,7 +109,7 @@ if(BUILD_TESTING)
   ament_add_gtest(test_units test/test_units.cpp)
   if(TARGET test_units)
     target_include_directories(test_units PRIVATE include/rumblex_movement)
-    target_link_libraries(test_units mp-units::mp-units)
+    target_link_libraries(test_units rumblex_utils::rumblex_geometry)
   endif()
 
   ament_add_gtest(test_kinematics
@@ -150,40 +127,10 @@ if(BUILD_TESTING)
     target_link_libraries(test_requester rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp)
   endif()
 
-  ament_add_gtest(test_gait_torso_roll
-    test/test_gait_torso_roll.cpp
-  )
-  if(TARGET test_gait_torso_roll)
-    target_link_libraries(test_gait_torso_roll rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp)
-  endif()
 
-  ament_add_gtest(test_gait_lay_down
-    test/test_gait_lay_down.cpp
-  )
-  if(TARGET test_gait_lay_down)
-    target_link_libraries(test_gait_lay_down rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp ${geometry_msgs_TARGETS})
-  endif()
 
-  ament_add_gtest(test_gait_stand_up
-    test/test_gait_stand_up.cpp
-  )
-  if(TARGET test_gait_stand_up)
-    target_link_libraries(test_gait_stand_up rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp ${geometry_msgs_TARGETS})
-  endif()
 
-  ament_add_gtest(test_gait_high_five
-    test/test_gait_high_five.cpp
-  )
-  if(TARGET test_gait_high_five)
-    target_link_libraries(test_gait_high_five rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp ${geometry_msgs_TARGETS})
-  endif()
 
-  ament_add_gtest(test_gait_clap
-    test/test_gait_clap.cpp
-  )
-  if(TARGET test_gait_clap)
-    target_link_libraries(test_gait_clap rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp ${geometry_msgs_TARGETS})
-  endif()
 
   ament_add_gtest(test_leg_servo_conversion
     test/test_leg_servo_conversion.cpp
@@ -193,19 +140,7 @@ if(BUILD_TESTING)
     target_link_libraries(test_leg_servo_conversion rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS})
   endif()
 
-  ament_add_gtest(test_gait_leg_wave
-    test/test_gait_leg_wave.cpp
-  )
-  if(TARGET test_gait_leg_wave)
-    target_link_libraries(test_gait_leg_wave rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp ${geometry_msgs_TARGETS})
-  endif()
 
-  ament_add_gtest(test_gait_controller
-    test/test_gait_controller.cpp
-  )
-  if(TARGET test_gait_controller)
-    target_link_libraries(test_gait_controller rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp ${geometry_msgs_TARGETS})
-  endif()
 
 
 endif()

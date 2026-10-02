@@ -8,11 +8,12 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/float32.hpp"
 //
+#include "movement_request.hpp"
 #include "rumblex_interfaces/msg/joystick_request.hpp"
-#include "rumblex_interfaces/msg/movement_request.hpp"
 #include "rumblex_interfaces/msg/servo_status.hpp"
 //
-#include <rumblex_utils/callback_timer.hpp>
+#include <chrono>
+#include <optional>
 #include <rumblex_utils/simpletimer.hpp>
 
 #include "action/action_planner.hpp"
@@ -36,9 +37,11 @@ class CCoordinator : public IRequester {
     void speechRecognized(std::string text);
     void supplyVoltageReceived(float voltage);
     void servoStatusReceived(const rumblex_interfaces::msg::ServoStatus& msg);
-    void movementTypeActualReceived(const rumblex_interfaces::msg::MovementRequest& msg);
+    void movementTypeActualReceived(const brain::MovementRequest& msg);
 
    private:
+    friend class CoordinatorTestAccess;
+
     void loadBehaviors();
     void executeBehavior(const Behavior& behavior, Prio prio = Prio::High);
     void submitRequest(std::shared_ptr<RequestBase> request, Prio prio);
@@ -72,19 +75,21 @@ class CCoordinator : public IRequester {
     std::shared_ptr<CBehaviorParser> behaviorParser_;
     std::shared_ptr<CSimpleTimer> timerErrorRequest_;
     std::shared_ptr<CSimpleTimer> timerNoRequest_;
-    std::shared_ptr<CCallbackTimer> timerMovementRequest_;
+    struct MovementDeadline {
+        std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<double>> time;
+        uint32_t movement_type;
+    };
+    std::optional<MovementDeadline> movement_deadline_;
 
-    std::atomic<bool> isNewMoveRequestLocked_{false};
-
-    uint32_t actualMovementType_ = rumblex_interfaces::msg::MovementRequest::NO_REQUEST;
+    uint32_t actualMovementType_ = brain::MovementRequest::NO_REQUEST;
     bool isStanding_ = false;
     bool isServoRelayOn_ = true;
 
     // Gait cycling: button_start iterates through these modes
     const std::vector<uint32_t> gaitModes_ = {
-        rumblex_interfaces::msg::MovementRequest::CONTINUOUS_MOVE,
-        rumblex_interfaces::msg::MovementRequest::CONTINUOUS_POSE,
-        rumblex_interfaces::msg::MovementRequest::CONTINUOUS_RUNNING,
+        brain::MovementRequest::CONTINUOUS_MOVE,
+        brain::MovementRequest::CONTINUOUS_POSE,
+        brain::MovementRequest::CONTINUOUS_RUNNING,
     };
     size_t activeGaitIndex_ = 0;
 

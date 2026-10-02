@@ -11,7 +11,7 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        (os.path.join('share', package_name, 'launch'), ['launch/teleop_launch.py']),
+        (os.path.join('share', package_name, 'launch'), glob.glob('launch/*.py')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -23,6 +23,7 @@ setup(
     entry_points={
         'console_scripts': [
             'node_teleop = rumblex_teleop.node_teleop:main',
+            'node_teleop_simulated = rumblex_teleop.node_teleop_simulated:main',
         ],
     },
 )

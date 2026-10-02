@@ -115,7 +115,8 @@ class CServoController {
     void onServoDirectRequestReceived(const rumblex_interfaces::msg::ServoDirectRequest& msg);
     void triggerConnection();
 
-    using InitialAnglesCallback = std::function<void(const std::map<ELegIndex, CLegAngles>&)>;
+    using InitialAnglesCallback =
+        std::function<void(const std::map<ELegIndex, CLegAngles>&, const COrientation&)>;
     void setInitialAnglesCallback(InitialAnglesCallback callback);
 
    private:

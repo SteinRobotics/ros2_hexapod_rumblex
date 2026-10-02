@@ -46,26 +46,35 @@ select `map` as the fixed frame and `/map` as the Map display topic. Align
 the robot's pose with this map before using it for navigation.
 
 The offline `test_launch.py` uses `map` as the RViz fixed frame and publishes an
-identity `map` to `odom` transform. Its `offline_odometry.py` node integrates
-the velocity in `/cmd_movement_update` into `/odom` and a dynamic `odom` to
-`base_link` transform, starting at the map origin. It follows the same commands
-as the legs, including speech, joystick, scripted behaviors, and `/cmd_vel`
-requests routed through the brain. Integration runs only when
-`/movement_type_actual` reports `CONTINUOUS_MOVE` or `CONTINUOUS_RUNNING`, so
-standing up and stationary poses do not translate the robot.
-Commands stay active until replaced; send a zero Twist to stop:
+identity `map` to `odom` transform. Its `offline_odometry.py` node estimates
+planar motion from supporting toe targets in `/body_pose_actual` during
+`CONTINUOUS_MOVE` and `CONTINUOUS_RUNNING`, selected through `/movement_name`.
+Standing toe heights come from the selected robot's anatomy profile; the default
+`support_tolerance_m` is 0.001 m. At least two distinct feet must support in both
+successive samples. Missing support or a feedback gap over 0.5 s holds the planar
+pose and reanchors the next sample.
+
+The node composes this planar estimate with the torso translation and rotation
+for `/odom` and the dynamic `odom` to `base_link` transform. Stationary torso
+gestures rotate or translate the body without accumulating locomotion.
+`node_offline_visualization` publishes `/visualization_joint_states`, applying
+full inverse torso transforms to toe targets before display-only inverse
+kinematics. RViz uses these states; hardware `/joint_states` and servo commands
+remain unchanged.
+
+Commands routed through the brain continue to drive the legs. Send a zero Twist
+to stop:
 
 ```bash
-ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist '{linear: {x: 0.1}}'
+ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist '{linear: {x: 0.02}}'
 ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist '{}'
 ```
 
-Speech commands such as `fahr nach vorne` use the brain's current speed of
-0.005 m/s (5 mm/s), so translation will be slow. A direct `/cmd_vel` command
-can request a higher speed for visualization checks.
-
-This is an offline commanded-motion estimate, without foot-contact feedback,
-collision physics, or localization.
+This estimates contact from gait targets, without measured foot-contact feedback,
+collision physics, or localization. The body's displayed speed follows the actual
+gait stride rather than `/movement_velocity`; it can differ from requested speed.
+Inconsistent support trajectories and CAD versus kinematic geometry can leave
+some visible foot sliding. Use Gazebo for physics-based validation.
 Disable both test transforms and offline odometry with
 `publish_test_map_tf:=false` when providing an actual odometry/localization
 transform tree; two publishers must not own the robot's pose.

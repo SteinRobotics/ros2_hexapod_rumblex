@@ -1,4 +1,49 @@
-# new
+# Simulated controller
+
+Build `rumblex_teleop` and source the workspace, then launch the PS3-style GUI:
+
+```bash
+ros2 launch rumblex_teleop teleop_simulated_launch.py
+```
+
+It also starts by default with `ros2 launch rumblex_bringup test_launch.py`.
+For headless test bringup, add `enable_simulated_teleop:=false`.
+The GUI requires a desktop display and uses the existing Pygame dependency;
+no physical joystick is needed.
+
+Click and hold buttons, or drag either stick. Sticks return to center when
+released. Keyboard and mouse inputs can be combined; dragging overrides the
+keyboard for that stick until release. Keyboard directions use full deflection,
+and opposite directions cancel.
+
+| Control | Keyboard |
+| --- | --- |
+| Left stick | WASD |
+| Right stick | IJKL |
+| D-pad | Arrow keys |
+| Cross (A), circle (B), square (X), triangle (Y) | Z, C, V, B |
+| L1, R1, L2, R2 | Q, E, 1, 3 |
+| Select, Start, Home | Backspace, Enter, Space |
+
+The GUI publishes `rumblex_interfaces/msg/JoystickRequest` on `joystick_request`
+with the same queue depth (10), 0.004 stick deadzone, and two-second long-press
+threshold as the hardware node. A short press is emitted on release; holding a
+button for two seconds activates its long-press field without a short press.
+Changed states are published at approximately 100 ms intervals, including cleared
+button pulses and centered sticks. Focus loss and closing the window clear all
+controls immediately without creating button actions.
+
+Upward stick movement is positive, matching `node_teleop.py` (the current message
+comment describes the opposite vertical sign). Rightward movement is positive.
+The existing `teleop_launch.py` continues to launch the physical joystick node.
+
+Run the focused input tests with:
+
+```bash
+python3 -m pytest rumblex_teleop/test
+```
+
+# Hardware experiments
 
 https://index.ros.org/p/joy/
 ros2 run joy joy_enumerate_devices

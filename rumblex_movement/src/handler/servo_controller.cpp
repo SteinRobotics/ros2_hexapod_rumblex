@@ -32,6 +32,7 @@ using namespace std::chrono_literals;
 using rumblex_interfaces::msg::ServoAngle;
 using rumblex_interfaces::msg::ServoAngles;
 using rumblex_interfaces::msg::ServoDirectRequest;
+using rumblex_interfaces::msg::ServoIndex;
 using rumblex_interfaces::msg::ServoStatus;
 using std::placeholders::_1;
 
@@ -205,7 +206,10 @@ void CServoController::initServos() {
     if (initial_angles_callback_) {
         RCLCPP_INFO_STREAM(node_->get_logger(), "initial servo angles received, invoking callback.");
         auto initial_leg_angles_deg = leg_servo_conversion::servoAnglesMsgToLegAngles(msg_angles);
-        initial_angles_callback_(initial_leg_angles_deg);
+        initial_angles_callback_(
+            initial_leg_angles_deg,
+            COrientation(0.0, msg_angles.current_angles[ServoIndex::HEAD_PITCH].angle_deg,
+                         msg_angles.current_angles[ServoIndex::HEAD_YAW].angle_deg));
     }
 
     if (pub_angles_) {

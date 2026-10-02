@@ -16,7 +16,9 @@ def generate_launch_description():
         name='node_brain',
         executable='node_brain',
         output='screen',
-        parameters=[config],
+        parameters=[config,
+            PathJoinSubstitution([get_package_share_directory('rumblex_brain'), 'config', robot, 'gait.yaml']),
+            PathJoinSubstitution([get_package_share_directory('rumblex_description'), 'config', robot, 'anatomy.yaml'])],
     )
     return LaunchDescription([
         DeclareLaunchArgument(

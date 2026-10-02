@@ -7,9 +7,9 @@
 #include <string>
 
 #include "geometry_msgs/msg/twist.hpp"
-#include "rumblex_interfaces/msg/movement_request.hpp"
-#include "rumblex_interfaces/msg/pose.hpp"
+#include "movement_request.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "rumblex_interfaces/msg/pose.hpp"
 
 namespace brain {
 
@@ -54,7 +54,7 @@ struct RequestListening : RequestBase {
 };
 
 struct RequestMovementType : RequestBase {
-    rumblex_interfaces::msg::MovementRequest movementRequest;
+    brain::MovementRequest movementRequest;
 };
 
 struct RequestSinglePose : RequestBase {

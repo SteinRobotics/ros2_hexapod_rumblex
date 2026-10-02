@@ -8,7 +8,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
     robot = LaunchConfiguration('robot')
     config_dir = [get_package_share_directory('rumblex_movement'), 'config', robot]
-    anatomy = PathJoinSubstitution(config_dir + ['anatomy.yaml'])
+    anatomy = PathJoinSubstitution([get_package_share_directory('rumblex_description'), 'config', robot, 'anatomy.yaml'])
     servo_description = PathJoinSubstitution(config_dir + ['servo_description.yaml'])
 
     node = Node(

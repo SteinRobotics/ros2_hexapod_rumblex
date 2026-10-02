@@ -67,7 +67,7 @@ Follow [README_SETUP.md](README_SETUP.md) to install dependencies, create the RO
 3. **Interact & Hack**
    - Send movement commands:
      ```bash
-     ros2 topic pub --once /cmd_movement rumblex_interfaces/msg/MovementRequest "..."
+     ros2 topic pub --once /cmd_movement rumblex_interfaces/msg/BodyPose "..."
      ```
    - Monitor topics:
      ```bash

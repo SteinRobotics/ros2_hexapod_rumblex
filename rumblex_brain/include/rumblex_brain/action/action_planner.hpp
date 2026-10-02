@@ -21,6 +21,9 @@ class CActionPlanner {
     CActionPlanner(std::shared_ptr<rclcpp::Node> node);
     virtual ~CActionPlanner() = default;
 
+    void setMovementCallback(std::function<void(const MovementRequest&)> callback) {
+        handler_movement_->on_gait_changed = std::move(callback);
+    }
     void update();
     void request(std::vector<std::shared_ptr<RequestBase>> requests_v, Prio prio);
     void execute(std::vector<std::shared_ptr<RequestBase>>& requests_v);

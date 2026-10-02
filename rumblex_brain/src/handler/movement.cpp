@@ -1,65 +1,91 @@
-/*******************************************************************************
- * Copyright (c) 2023 Christian Stein
- ******************************************************************************/
-
 #include "handler/movement.hpp"
 
-using namespace std::chrono_literals;
-using namespace rumblex_interfaces::msg;
-
 namespace brain {
-
-CMovement::CMovement(std::shared_ptr<rclcpp::Node> node) : node_(node) {
-    callback_timer_ = std::make_unique<CCallbackTimer>();
-    pub_cmd_movement_ = node_->create_publisher<MovementRequest>("cmd_movement", 10);
-    pub_cmd_movement_update_ = node_->create_publisher<ContinuousMovementUpdate>("cmd_movement_update", 10);
+CMovement::CMovement(std::shared_ptr<rclcpp::Node> node) : node_(std::move(node)) {
+    pose_model_ = std::make_shared<CPoseModel>(node_);
+    gait_controller_ = std::make_unique<CGaitController>(node_, pose_model_);
+    pub_body_pose_ =
+        node_->create_publisher<rumblex_interfaces::msg::BodyPose>("cmd_movement", rclcpp::QoS(1));
+    pub_movement_name_ =
+        node_->create_publisher<std_msgs::msg::String>("movement_name", rclcpp::QoS(1).transient_local());
+    pub_movement_velocity_ = node_->create_publisher<geometry_msgs::msg::Twist>("movement_velocity", 10);
+    sub_body_pose_ = node_->create_subscription<rumblex_interfaces::msg::BodyPose>(
+        "body_pose_actual", rclcpp::QoS(1).transient_local(),
+        [this](const rumblex_interfaces::msg::BodyPose& pose) { onInitialPose(pose); });
+    gait_controller_->on_gait_changed = [this](const MovementRequest& request) {
+        std_msgs::msg::String name;
+        name.data = request.name;
+        pub_movement_name_->publish(name);
+        if (on_gait_changed) on_gait_changed(request);
+    };
+    std_msgs::msg::String name;
+    name.data = "SEQUENCE_LAYDOWN";
+    pub_movement_name_->publish(name);
+    setDone(true);
 }
 
-void CMovement::publishMovementRequest() {
-    current_request_.header.stamp = node_->get_clock()->now();
-    pub_cmd_movement_->publish(current_request_);
+void CMovement::onInitialPose(const rumblex_interfaces::msg::BodyPose& pose) {
+    if (initialized_ || !validBodyPose(pose)) return;
+    pose_model_->moveTorso(toeTargets(pose), CPose(pose.torso_pose));
+    pose_model_->setHeadOrientation(COrientation(pose.head_pose));
+    last_pose_ = bodyPose(*pose_model_);
+    initialized_ = true;
+    if (pending_request_) {
+        const auto request = *pending_request_;
+        pending_request_.reset();
+        startRequest(request);
+    }
 }
 
-void CMovement::publishContinuousUpdate() {
-    current_continuous_update_.header.stamp = node_->get_clock()->now();
-    pub_cmd_movement_update_->publish(current_continuous_update_);
+void CMovement::startRequest(const MovementRequest& request) {
+    gait_controller_->setGait(request);
+    completion_time_ = node_->now() + rclcpp::Duration::from_seconds(std::max(0.0, request.duration_s));
 }
 
 void CMovement::run(std::shared_ptr<RequestMovementType> request) {
     setDone(false);
-    current_request_.type = request->movementRequest.type;
-    current_request_.name = request->movementRequest.name;
-    current_request_.direction = request->movementRequest.direction;
-    current_request_.duration_s = request->movementRequest.duration_s;
-    publishMovementRequest();
-    callback_timer_->waitSecondsNonBlocking(request->movementRequest.duration_s,
-                                            std::bind(&CMovement::timerCallback, this));
+    if (initialized_)
+        startRequest(request->movementRequest);
+    else
+        pending_request_ = request->movementRequest;
 }
-
 void CMovement::run(std::shared_ptr<RequestSinglePose> request) {
-    current_continuous_update_.body_pose = request->pose;
-    publishContinuousUpdate();
+    torso_ = CPose(request->pose);
 }
-
 void CMovement::run(std::shared_ptr<RequestHeadOrientation> request) {
-    current_continuous_update_.head_orientation = request->orientation;
-    publishContinuousUpdate();
+    head_ = COrientation(request->orientation);
 }
-
 void CMovement::run(std::shared_ptr<RequestVelocity> request) {
-    current_continuous_update_.velocity = request->velocity;
-    publishContinuousUpdate();
-}
-
-void CMovement::timerCallback() {
-    // TODO better trigger callback to request_executor::execute
-    setDone(true);
+    velocity_ = request->velocity;
 }
 
 void CMovement::cancel() {
+    pending_request_.reset();
+    completion_time_.reset();
+    gait_controller_->requestStopSelectedGait();
+    setDone(true);
 }
 
 void CMovement::update() {
+    if (completion_time_ && node_->now() >= *completion_time_) {
+        completion_time_.reset();
+        setDone(true);
+    }
+    const auto now = std::chrono::steady_clock::now();
+    if (now < next_update_) return;
+    next_update_ += std::chrono::milliseconds(100);
+    if (next_update_ <= now) next_update_ = now + std::chrono::milliseconds(100);
+    geometry_msgs::msg::Twist effective_velocity;
+    if (initialized_) {
+        const bool progressed = gait_controller_->updateSelectedGait(velocity_, torso_, head_);
+        auto pose = bodyPose(*pose_model_);
+        // Some sequences restore their final pose while returning false on completion.
+        if ((progressed || pose != last_pose_) && validBodyPose(pose)) {
+            pub_body_pose_->publish(pose);
+            last_pose_ = pose;
+        }
+        if (gait_controller_->moving()) effective_velocity = velocity_;
+    }
+    pub_movement_velocity_->publish(effective_velocity);
 }
-
 }  // namespace brain

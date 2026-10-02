@@ -1,0 +1,243 @@
+/*******************************************************************************
+ * Copyright (c) 2025 Christian Stein
+ ******************************************************************************/
+
+#pragma once
+
+#include <mp-units/math.h>
+
+#include <algorithm>
+#include <cmath>
+#include <magic_enum.hpp>
+#include <map>
+#include <memory>
+#include <optional>
+#include <string>
+
+#include "rclcpp/rclcpp.hpp"
+#include "rumblex_interfaces/msg/orientation.hpp"
+#include "rumblex_interfaces/msg/pose.hpp"
+#include "rumblex_utils/units.hpp"
+
+namespace rumblex_geometry {
+
+enum class ELegIndex {
+    RightFront,
+    RightMid,
+    RightBack,
+    LeftFront,
+    LeftMid,
+    LeftBack,
+};
+
+inline std::string legIndexToName(ELegIndex index) {
+    switch (index) {
+        case ELegIndex::RightFront:
+            return "right_front";
+        case ELegIndex::RightMid:
+            return "right_mid";
+        case ELegIndex::RightBack:
+            return "right_back";
+        case ELegIndex::LeftFront:
+            return "left_front";
+        case ELegIndex::LeftMid:
+            return "left_mid";
+        case ELegIndex::LeftBack:
+            return "left_back";
+    }
+    return {};
+}
+
+inline std::optional<ELegIndex> parseLegIndex(std::string_view name) {
+    for (auto index : magic_enum::enum_values<ELegIndex>()) {
+        if (legIndexToName(index) == name) return index;
+    }
+    return std::nullopt;
+}
+
+inline ELegIndex legNameToIndex(std::string_view name) {
+    return parseLegIndex(name).value();
+}
+
+class CPosition {
+   public:
+    CPosition() = default;
+    CPosition(double x_m, double y_m, double z_m)
+        : CPosition(x_m * units::m, y_m * units::m, z_m * units::m) {
+    }
+    CPosition(units::Length x, units::Length y, units::Length z) : x(x), y(y), z(z) {
+    }
+    ~CPosition() = default;
+    CPosition operator+(const CPosition& rhs) const {
+        return {x + rhs.x, y + rhs.y, z + rhs.z};
+    }
+    CPosition operator-(const CPosition& rhs) const {
+        return {x - rhs.x, y - rhs.y, z - rhs.z};
+    }
+
+    bool operator==(const CPosition& rhs) const {
+        return x == rhs.x && y == rhs.y && z == rhs.z;
+    }
+    bool operator!=(const CPosition& rhs) const {
+        return !(*this == rhs);
+    }
+
+    static inline bool almostEqual(const CPosition& a, const CPosition& b, units::Length tol) {
+        return (mp_units::abs(a.x - b.x) <= tol) && (mp_units::abs(a.y - b.y) <= tol) &&
+               (mp_units::abs(a.z - b.z) <= tol);
+    }
+
+    // Lengths are stored in metres; assignments may use any compatible unit.
+    units::Length x = 0.0 * units::m;
+    units::Length y = 0.0 * units::m;
+    units::Length z = 0.0 * units::m;
+
+    // Linear interpolation member: returns a point between this and 'target' at parameter alpha in [0,1]
+    inline CPosition linearInterpolate(const CPosition& target, double alpha) const {
+        return CPosition(x + (target.x - x) * alpha, y + (target.y - y) * alpha, z + (target.z - z) * alpha);
+    }
+};
+
+class COrientation {
+   public:
+    COrientation() = default;
+    COrientation(double roll_deg, double pitch_deg, double yaw_deg)
+        : COrientation(roll_deg * units::deg, pitch_deg * units::deg, yaw_deg * units::deg) {
+    }
+    COrientation(units::Angle roll, units::Angle pitch, units::Angle yaw)
+        : roll(roll), pitch(pitch), yaw(yaw) {
+    }
+
+    COrientation(const rumblex_interfaces::msg::Orientation& orientation)
+        : COrientation(orientation.roll, orientation.pitch, orientation.yaw) {
+    }
+
+    ~COrientation() = default;
+
+    bool operator==(const COrientation& rhs) const {
+        return roll == rhs.roll && pitch == rhs.pitch && yaw == rhs.yaw;
+    }
+    bool operator!=(const COrientation& rhs) const {
+        return !(*this == rhs);
+    }
+
+    units::Angle roll = 0.0 * units::deg;
+    units::Angle pitch = 0.0 * units::deg;
+    units::Angle yaw = 0.0 * units::deg;
+
+    // Linear interpolation member: returns an orientation between this and 'target' at parameter alpha in [0,1]
+    inline COrientation linearInterpolate(const COrientation& target, double alpha) const {
+        return COrientation(roll + (target.roll - roll) * alpha, pitch + (target.pitch - pitch) * alpha,
+                            yaw + (target.yaw - yaw) * alpha);
+    }
+};
+
+class CPose {
+   public:
+    CPose() = default;
+    CPose(double x, double y, double z, double roll, double pitch, double yaw)
+        : position(x, y, z), orientation(roll, pitch, yaw) {};
+    CPose(units::Length x, units::Length y, units::Length z, units::Angle roll, units::Angle pitch,
+          units::Angle yaw)
+        : position(x, y, z), orientation(roll, pitch, yaw) {
+    }
+    CPose(CPosition position, COrientation orientation) : position(position), orientation(orientation) {};
+
+    CPose(const rumblex_interfaces::msg::Pose& pose)
+        : position(pose.position.x, pose.position.y, pose.position.z),
+          orientation(pose.orientation.roll, pose.orientation.pitch, pose.orientation.yaw) {};
+
+    ~CPose() = default;
+
+    bool operator==(const CPose& rhs) const {
+        return position == rhs.position && orientation == rhs.orientation;
+    }
+
+    CPosition position;
+    COrientation orientation;
+
+    // Linear interpolation member
+    inline CPose linearInterpolate(const CPose& target, double alpha) const {
+        CPose out;
+        out.position = position.linearInterpolate(target.position, alpha);
+        out.orientation = orientation.linearInterpolate(target.orientation, alpha);
+        return out;
+    }
+};
+
+class CTorsoCenterOffset {
+   public:
+    units::Length x = 0.0 * units::m;
+    units::Length y = 0.0 * units::m;
+    units::Angle psi = 0.0 * units::deg;
+};
+
+class CLegAngles {
+   public:
+    CLegAngles(double torso_coxa_deg, double coxa_femur_deg, double femur_tibia_deg)
+        : CLegAngles(torso_coxa_deg * units::deg, coxa_femur_deg * units::deg, femur_tibia_deg * units::deg) {
+    }
+    CLegAngles(units::Angle torso_coxa, units::Angle coxa_femur, units::Angle femur_tibia)
+        : torso_coxa(torso_coxa), coxa_femur(coxa_femur), femur_tibia(femur_tibia) {
+    }
+    CLegAngles() = default;
+    ~CLegAngles() = default;
+
+    units::Angle torso_coxa = 0.0 * units::deg;
+    units::Angle coxa_femur = 0.0 * units::deg;
+    units::Angle femur_tibia = 0.0 * units::deg;
+
+    // Linear interpolation member: interpolate each joint angle (degrees)
+    inline CLegAngles linearInterpolate(const CLegAngles& target, double alpha) const {
+        return CLegAngles(torso_coxa + (target.torso_coxa - torso_coxa) * alpha,
+                          coxa_femur + (target.coxa_femur - coxa_femur) * alpha,
+                          femur_tibia + (target.femur_tibia - femur_tibia) * alpha);
+    }
+};
+
+class CLeg {
+   public:
+    CLeg() = default;
+    CLeg(CLegAngles angles, CPosition toe_position) : angles(angles), toe_position(toe_position) {};
+
+    CLegAngles angles;
+    CPosition toe_position;
+};
+
+// --------------------------------------------------------
+// ------------------  for future usage ------------------
+// struct CJointDesc {
+//     double offset_rad = 0.0;
+//     double limit_min_rad = -M_PI_2;
+//     double limit_max_rad = M_PI_2;
+//     // axis info if needed later
+// };
+
+// struct CJointState {
+//     double angle_rad = 0.0;
+//     bool dirty = true;
+// };
+
+// struct CLink {
+//     double length_m = 0.0;
+// };
+
+// struct CSegment {
+//     CLink link;         // geometry: length
+//     CJointDesc desc;    // geometry/limit/offset
+//     CJointState state;  // runtime
+// };
+
+// struct CLegSegmentwise {
+//     CSegment coxa;
+//     CSegment femur;
+//     CSegment tibia;
+// };
+
+// struct CTorso {
+//     CPose pose;
+//     std::map<ELegIndex, CLegSegmentwise> legs;
+//     std::map<ELegIndex, CTorsoCenterOffset> torsoCenterOffsets;
+// };
+
+}  // namespace rumblex_geometry

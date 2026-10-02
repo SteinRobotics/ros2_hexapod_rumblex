@@ -19,6 +19,8 @@
   <depend>magic_enum</depend>   # sudo apt install libmagicenum-dev
   <depend>sensor_msgs</depend>
 
+  <exec_depend>rumblex_description</exec_depend>
+
   <export>
     <build_type>ament_cmake</build_type>
   </export>

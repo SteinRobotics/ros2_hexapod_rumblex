@@ -1,5 +1,7 @@
 # Movement units
 
+See [the body-pose pipeline](../rumblex_brain/MOVEMENT.md) for the brain/movement interface and configuration migration.
+
 Kinematics uses [mp-units](https://mpusz.github.io/mp-units/2.5/) for link lengths,
 squared lengths, and angles. `units.hpp` exposes `m`, `mm`, `deg`, and `rad` plus
 the `Length`, `Area`, and `Angle` quantity types. For example, `units::Length length =
@@ -54,7 +56,7 @@ For an offline build, install mp-units first and add its prefix to
 `CMAKE_PREFIX_PATH`, or supply a local release checkout:
 
 ```bash
-colcon build --packages-select rumblex_movement \
+colcon build --packages-up-to rumblex_movement \
   --cmake-args -DFETCHCONTENT_SOURCE_DIR_MP-UNITS=/path/to/mp-units-2.5.0
 colcon test --packages-select rumblex_movement --event-handlers console_direct+
 colcon test-result --verbose

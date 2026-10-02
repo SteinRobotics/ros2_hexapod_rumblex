@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.25)
 project(rumblex_brain)
 
 if(NOT CMAKE_CXX_STANDARD)
@@ -24,6 +24,21 @@ find_package(GTest REQUIRED)
 
 ## set sources
 set(SOURCES
+src/gait/gait_clap.cpp
+src/gait/gait_continuous_pose.cpp
+src/gait/gait_controller.cpp
+src/gait/gait_high_five.cpp
+src/gait/gait_lay_down.cpp
+src/gait/gait_leg_wave.cpp
+src/gait/gait_look.cpp
+src/gait/gait_move_combined.cpp
+src/gait/gait_running.cpp
+src/gait/gait_single_pose.cpp
+src/gait/gait_stand_up.cpp
+src/gait/gait_test_legs.cpp
+src/gait/gait_torso_roll.cpp
+src/gait/gait_waiting.cpp
+src/gait/gait_watch.cpp
 src/requester/coordinator.cpp
 src/action/action_planner.cpp
 src/requester/recognition.cpp
@@ -40,6 +55,7 @@ target_include_directories(rumblex_brain_lib PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(rumblex_brain_lib PUBLIC
+  rumblex_utils::rumblex_geometry
   rclcpp::rclcpp
   ament_index_cpp::ament_index_cpp
   ${rumblex_interfaces_TARGETS}
@@ -102,6 +118,31 @@ install(DIRECTORY
 
 # Unit tests
 if(BUILD_TESTING)
+  ament_add_gtest(test_coordinator test/test_coordinator.cpp)
+  target_link_libraries(test_coordinator rumblex_brain_lib)
+  ament_add_gtest(test_locomotion_transitions test/test_locomotion_transitions.cpp)
+  target_link_libraries(test_locomotion_transitions rumblex_brain_lib)
+  ament_add_gtest(test_robot_configuration test/test_robot_configuration.cpp)
+  target_link_libraries(test_robot_configuration rumblex_brain_lib)
+  target_compile_definitions(test_robot_configuration PRIVATE RUMBLEX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/..")
+  ament_add_gtest(test_movement_handler test/test_movement_handler.cpp)
+  target_link_libraries(test_movement_handler rumblex_brain_lib)
+  ament_add_gtest(test_body_pose test/test_body_pose.cpp)
+  target_link_libraries(test_body_pose rumblex_brain_lib)
+  ament_add_gtest(test_gait_clap test/test_gait_clap.cpp)
+  target_link_libraries(test_gait_clap rumblex_brain_lib)
+  ament_add_gtest(test_gait_controller test/test_gait_controller.cpp)
+  target_link_libraries(test_gait_controller rumblex_brain_lib)
+  ament_add_gtest(test_gait_high_five test/test_gait_high_five.cpp)
+  target_link_libraries(test_gait_high_five rumblex_brain_lib)
+  ament_add_gtest(test_gait_lay_down test/test_gait_lay_down.cpp)
+  target_link_libraries(test_gait_lay_down rumblex_brain_lib)
+  ament_add_gtest(test_gait_leg_wave test/test_gait_leg_wave.cpp)
+  target_link_libraries(test_gait_leg_wave rumblex_brain_lib)
+  ament_add_gtest(test_gait_stand_up test/test_gait_stand_up.cpp)
+  target_link_libraries(test_gait_stand_up rumblex_brain_lib)
+  ament_add_gtest(test_gait_torso_roll test/test_gait_torso_roll.cpp)
+  target_link_libraries(test_gait_torso_roll rumblex_brain_lib)
   ament_add_gtest(test_text_interpreter 
     test/test_text_interpreter.cpp
   )

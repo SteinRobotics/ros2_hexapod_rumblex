@@ -324,7 +324,7 @@ std::shared_ptr<RequestSystem> CBehaviorParser::createRequestSystem(const json& 
 std::shared_ptr<RequestMovementType> CBehaviorParser::createRequestMovementType(const json& jsonValue) {
     try {
         if (jsonValue.is_object()) {
-            rumblex_interfaces::msg::MovementRequest movementRequest;
+            brain::MovementRequest movementRequest;
 
             // Parse movement type from "name" field (or fallback to "type" for backward compatibility)
             std::string typeStr = "";
@@ -349,9 +349,9 @@ std::shared_ptr<RequestMovementType> CBehaviorParser::createRequestMovementType(
             if (jsonValue.contains("direction") && jsonValue["direction"].is_string()) {
                 std::string directionStr = jsonValue["direction"].get<std::string>();
                 if (directionStr == "CLOCKWISE") {
-                    movementRequest.direction = rumblex_interfaces::msg::MovementRequest::CLOCKWISE;
+                    movementRequest.direction = brain::MovementRequest::CLOCKWISE;
                 } else if (directionStr == "ANTICLOCKWISE") {
-                    movementRequest.direction = rumblex_interfaces::msg::MovementRequest::ANTICLOCKWISE;
+                    movementRequest.direction = brain::MovementRequest::ANTICLOCKWISE;
                 } else {
                     RCLCPP_WARN(node_->get_logger(), "Unknown direction: %s", directionStr.c_str());
                 }

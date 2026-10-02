@@ -7,6 +7,7 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <cmath>
 #include <format>
+#include <stdexcept>
 
 using namespace rumblex_interfaces::msg;
 using namespace std::chrono_literals;
@@ -15,19 +16,32 @@ namespace brain {
 
 CCoordinator::CCoordinator(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CActionPlanner> actionPlanner)
     : node_(node), actionPlanner_(actionPlanner) {
+    const auto required = [&node](const char* name) {
+        const double value = node->declare_parameter<double>(name);
+        if (!std::isfinite(value)) {
+            throw std::invalid_argument(std::string(name) + " must be finite");
+        }
+        return value;
+    };
+    kMaxVelocityLinear_ = required("max_velocity_linear");
+    kMaxVelocityRotation_ = required("max_velocity_rotation");
+    kBodyFactorHeight_ = required("body_factor_height");
+    kJoystickDeadzone_ = required("joystick_deadzone");
+    kMinBodyHeight_ = required("min_body_height");
+    kMaxBodyHeight_ = required("max_body_height");
+
+    if (kMaxVelocityLinear_ <= 0.0) throw std::invalid_argument("max_velocity_linear must be positive");
+    if (kMaxVelocityRotation_ <= 0.0) throw std::invalid_argument("max_velocity_rotation must be positive");
+    if (kBodyFactorHeight_ < 0.0) throw std::invalid_argument("body_factor_height must be nonnegative");
+    if (kJoystickDeadzone_ < 0.0 || kJoystickDeadzone_ >= 1.0) {
+        throw std::invalid_argument("joystick_deadzone must be in [0, 1)");
+    }
+    if (kMinBodyHeight_ > 0.0) throw std::invalid_argument("min_body_height must be <= 0");
+    if (kMaxBodyHeight_ < 0.0) throw std::invalid_argument("max_body_height must be >= 0");
+
     textInterpreter_ = std::make_shared<CTextInterpreter>(node_);
     errorManagement_ = std::make_shared<CErrorManagement>(node_);
     behaviorParser_ = std::make_shared<CBehaviorParser>(node_);
-
-    kMaxVelocityLinear_ = node->declare_parameter<double>("max_velocity_linear", rclcpp::PARAMETER_DOUBLE);
-    kMaxVelocityRotation_ =
-        node->declare_parameter<double>("max_velocity_rotation", rclcpp::PARAMETER_DOUBLE);
-    kBodyFactorHeight_ = node->declare_parameter<double>("body_factor_height", rclcpp::PARAMETER_DOUBLE);
-    kJoystickDeadzone_ = node->declare_parameter<double>("joystick_deadzone", rclcpp::PARAMETER_DOUBLE);
-    kMinBodyHeight_ =
-        node->declare_parameter<double>("min_body_height", rclcpp::PARAMETER_DOUBLE);  // negative value
-    kMaxBodyHeight_ =
-        node->declare_parameter<double>("max_body_height", rclcpp::PARAMETER_DOUBLE);  // positive value
 
     if (node->declare_parameter<bool>("autostart_listening")) {
         auto request = std::make_shared<RequestListening>();
@@ -39,7 +53,6 @@ CCoordinator::CCoordinator(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<C
 
     loadBehaviors();
 
-    timerMovementRequest_ = std::make_shared<CCallbackTimer>();
     timerErrorRequest_ = std::make_shared<CSimpleTimer>();
     timerNoRequest_ = std::make_shared<CSimpleTimer>(kActivateMovementWaiting_);
 }
@@ -178,12 +191,13 @@ void CCoordinator::joystickRequestReceived(const JoystickRequest& msg) {
         body.position.z = 0.0;
     }
 
-    if (isNewMoveRequestLocked_ && actualMovementType_ == newMovementType) {
-        RCLCPP_WARN_STREAM(node_->get_logger(), "isNewMoveRequestLocked is true, ignoring joystick request");
+    if (movement_deadline_ && actualMovementType_ == newMovementType) {
+        RCLCPP_WARN_STREAM(node_->get_logger(), "movement request is locked, ignoring joystick request");
         return;
     }
 
-    if ((actualMovementType_ == MovementRequest::CONTINUOUS_MOVE) && newMovementType == MovementRequest::NO_REQUEST) {
+    if ((actualMovementType_ == MovementRequest::CONTINUOUS_MOVE) &&
+        newMovementType == MovementRequest::NO_REQUEST) {
         RCLCPP_INFO_STREAM(node_->get_logger(), "end move request");
         auto request = std::make_shared<RequestVelocity>();
         request->velocity = velocity;
@@ -226,13 +240,13 @@ void CCoordinator::speechRecognized(std::string text) {
             velocity.linear.y = -kVelocityLinear_;
         }
         RCLCPP_INFO_STREAM(node_->get_logger(), "submit move request");
-        submitRequestMove(MovementRequest::CONTINUOUS_MOVE, 0, "ich laufe los", Prio::High, std::nullopt, std::nullopt,
-                          velocity);
+        submitRequestMove(MovementRequest::CONTINUOUS_MOVE, 0, "ich laufe los", Prio::High, std::nullopt,
+                          std::nullopt, velocity);
     } else if (command == "commandStopMove") {
         RCLCPP_INFO_STREAM(node_->get_logger(), "submit stop move request");
         geometry_msgs::msg::Twist velocity;
-        submitRequestMove(MovementRequest::CONTINUOUS_MOVE, 0, "ich halte an", Prio::High, std::nullopt, std::nullopt,
-                          velocity);
+        submitRequestMove(MovementRequest::CONTINUOUS_MOVE, 0, "ich halte an", Prio::High, std::nullopt,
+                          std::nullopt, velocity);
 
     } else if (command == "tellMeSupplyVoltage") {
         requestTellSupplyVoltage(Prio::High);
@@ -384,6 +398,9 @@ void CCoordinator::submitRequestMove(uint32_t movementType, double duration_s, s
                                      std::optional<rumblex_interfaces::msg::Orientation> head,
                                      std::optional<geometry_msgs::msg::Twist> velocity,
                                      std::optional<uint8_t> direction) {
+    if (!std::isfinite(duration_s)) {
+        throw std::invalid_argument("movement duration_s must be finite");
+    }
     std::vector<std::shared_ptr<RequestBase>> request_v;
     if (!comment.empty()) {
         auto talkRequest = std::make_shared<RequestTalking>();
@@ -425,17 +442,14 @@ void CCoordinator::submitRequestMove(uint32_t movementType, double duration_s, s
     }
     actionPlanner_->request(request_v, prio);
 
-    // Lock the new move request for the given duration except for move gait requests
-    if (MovementRequest::CONTINUOUS_MOVE == movementType) {
+    if (movementType == MovementRequest::CONTINUOUS_MOVE ||
+        movementType == MovementRequest::CONTINUOUS_RUNNING) {
+        movement_deadline_.reset();
         return;
     }
-    isNewMoveRequestLocked_ = true;
-    // RCLCPP_INFO_STREAM(node_->get_logger(), "isNewMoveRequestLocked_ locked");
-    timerMovementRequest_->waitSecondsNonBlocking(duration_s, [this]() {
-        isNewMoveRequestLocked_ = false;
-        actualMovementType_ = MovementRequest::NO_REQUEST;
-        // RCLCPP_INFO_STREAM(node_->get_logger(), "isNewMoveRequestLocked_ released");
-    });
+    movement_deadline_ = MovementDeadline{
+        std::chrono::steady_clock::now() + std::chrono::duration<double>(std::max(0.0, duration_s)),
+        movementType};
 }
 
 void CCoordinator::requestTellSupplyVoltage(Prio prio) {
@@ -466,6 +480,12 @@ void CCoordinator::requestTellServoTemperature(Prio prio) {
 //  update
 // ---------------------------------------------------------------------------
 void CCoordinator::update() {
+    if (movement_deadline_ && std::chrono::steady_clock::now() >= movement_deadline_->time) {
+        if (actualMovementType_ == movement_deadline_->movement_type) {
+            actualMovementType_ = MovementRequest::NO_REQUEST;
+        }
+        movement_deadline_.reset();
+    }
     if (kActivateMovementWaiting_ && actualMovementType_ == MovementRequest::NO_REQUEST) {
         if (!timerNoRequest_->isRunning()) {
             timerNoRequest_->start();
@@ -473,9 +493,9 @@ void CCoordinator::update() {
 
         // If no request is received for 30 seconds, we request a default move
         if (timerNoRequest_->haveSecondsElapsed(30.0)) {
-            if (isNewMoveRequestLocked_) {
+            if (movement_deadline_) {
                 RCLCPP_WARN_STREAM(node_->get_logger(),
-                                   "No request received for 30 seconds, but isNewMoveRequestLocked_ is true");
+                                   "No request received for 30 seconds, but movement request is locked");
                 return;
             }
             RCLCPP_INFO_STREAM(node_->get_logger(), "No request received for 30 seconds, requesting default");

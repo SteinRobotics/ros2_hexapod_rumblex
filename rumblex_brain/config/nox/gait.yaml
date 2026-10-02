@@ -1,0 +1,50 @@
+node_brain:
+  ros__parameters:
+    #### GENERIC GAIT PARAMETERS ####
+    gait.generic.torso_max_roll_deg: 12.0  # deg
+    gait.generic.torso_max_pitch_deg: 12.0 # deg
+    gait.generic.head_max_yaw_deg: 30.0
+    gait.generic.head_max_pitch_deg: 20.0
+    gait.generic.leg_lift_height_m: 0.025      # [m]   // -0.05 + 0.025 = -0.025
+    gait.generic.step_length_m: 0.03     # [m]
+
+    #### GAIT TRIPOD PARAMETERS ####
+    gait.tripod.velocity_to_phase_gain: 40.0      # [s²/m] ??
+    gait.tripod.head_max_yaw_deg: 15.0 # deg
+
+    #### GAIT RUNNING PARAMETERS ####
+    gait.running.velocity_to_phase_gain: 60.0  # faster cycle than tripod
+    gait.running.head_max_yaw_deg: 5.0                    # deg, minimal head sway at high speed
+    gait.running.velocity_filter_alpha: 0.05
+    gait.running.rotation_weight: 0.7
+    gait.running.flight_fraction: 0.15                # fraction of half-cycle where both groups are airborne
+
+    #### GAIT RIPPLE PARAMETERS ####
+    gait.ripple.velocity_to_phase_gain: 40.0  # [s²/m]
+    gait.ripple.head_max_yaw_deg: 10.0                   # deg
+
+    #### GAIT WAVE PARAMETERS ####
+    gait.wave.velocity_to_phase_gain: 40.0    # [s²/m]
+    gait.wave.head_max_yaw_deg: 8.0                      # deg
+
+    #### GAIT MOVE COMBINED PARAMETERS ####
+    gait.move_combined.velocity_threshold_wave_ripple: 0.3
+    gait.move_combined.velocity_threshold_ripple_tripod: 0.6
+    gait.move_combined.hysteresis_margin: 0.04
+    gait.move_combined.max_linear_velocity_m_s: 0.02   # must match brain max_velocity_linear
+    gait.move_combined.max_angular_velocity_rad_s: 0.02 # must match brain max_velocity_rotation
+
+    #### GAIT LEG WAVE PARAMETERS ####
+    gait.leg_wave.leg_lift_height_m: 0.03 # m
+
+    #### GAIT LOOK PARAMETERS ####
+    gait.look.torso_max_yaw_deg: 20.0 # degree
+    gait.look.head_max_yaw_deg: 25.0     # degree
+
+    #### GAIT WATCH PARAMETERS ####
+    gait.watch.torso_max_yaw_deg: 10.0     # degree
+
+    #### GAIT TEST LEGS PARAMETERS ####
+    gait.test_legs.torso_coxa_delta_deg: 10.0
+    gait.test_legs.coxa_femur_delta_deg: 15.0
+    gait.test_legs.femur_tibia_delta_deg: 20.0
