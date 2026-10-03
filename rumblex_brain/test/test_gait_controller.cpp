@@ -478,3 +478,24 @@ TEST_F(GaitControllerTest, SinglePoseHonorsDurationAndCompletesZeroDuration) {
         EXPECT_EQ(kinematics_->getHeadOrientation(), head);
     }
 }
+
+TEST_F(GaitControllerTest, ReselectingContinuousPoseCancelsPendingSwitchAndKeepsMoving) {
+    MovementRequest request;
+    request.type = MovementRequest::CONTINUOUS_POSE;
+    controller_->setGait(request);
+    const CPose target(0.01, 0.0, 0.0, 0.0, 0.0, 0.0);
+    const COrientation head(0.0, 5.0, 0.0);
+    ASSERT_TRUE(controller_->updateSelectedGait(createZeroVelocity(), target, head));
+    const auto previous_x = kinematics_->getTorsoPose().position.x;
+    request.type = MovementRequest::SEQUENCE_STAND_UP;
+    controller_->setGait(request);
+    ASSERT_TRUE(controller_->hasPendingGait());
+    request.type = MovementRequest::CONTINUOUS_POSE;
+    controller_->setGait(request);
+    EXPECT_FALSE(controller_->hasPendingGait());
+    EXPECT_TRUE(controller_->updateSelectedGait(createZeroVelocity(), target, head));
+    EXPECT_FALSE(controller_->stopped());
+    EXPECT_GT(kinematics_->getTorsoPose().position.x, previous_x);
+    EXPECT_TRUE(controller_->updateSelectedGait(createZeroVelocity(), target, head));
+    EXPECT_EQ(controller_->currentGait(), MovementRequest::CONTINUOUS_POSE);
+}

@@ -47,7 +47,14 @@ class CGaitController {
                 currentGait() == MovementRequest::CONTINUOUS_RUNNING) &&
                active_gait_->state() != EGaitState::Stopped;
     }
-    void setGait(brain::MovementRequest request);
+    bool setGait(brain::MovementRequest request);
+    bool hasPendingGait() const {
+        return pending_request_.type != MovementRequest::NO_REQUEST;
+    }
+    bool stopped() const {
+        return active_gait_->state() == EGaitState::Stopped;
+    }
+    bool finishesAutomatically() const;
     MovementRequestType currentGait() const {
         return active_request_.type;
     }

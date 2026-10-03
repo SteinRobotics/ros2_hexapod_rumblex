@@ -38,8 +38,14 @@ void CMovement::onInitialPose(const rumblex_interfaces::msg::BodyPose& pose) {
 }
 
 void CMovement::startRequest(const MovementRequest& request) {
-    gait_controller_->setGait(request);
-    completion_time_ = node_->now() + rclcpp::Duration::from_seconds(std::max(0.0, request.duration_s));
+    completion_time_.reset();
+    completion_request_.reset();
+    if (!gait_controller_->setGait(request)) {
+        setDone(true);
+        return;
+    }
+    completion_request_ = request;
+    updateCompletion();
 }
 
 void CMovement::run(std::shared_ptr<RequestMovementType> request) {
@@ -62,15 +68,33 @@ void CMovement::run(std::shared_ptr<RequestVelocity> request) {
 void CMovement::cancel() {
     pending_request_.reset();
     completion_time_.reset();
+    completion_request_.reset();
     gait_controller_->requestStopSelectedGait();
     setDone(true);
 }
 
-void CMovement::update() {
-    if (completion_time_ && node_->now() >= *completion_time_) {
-        completion_time_.reset();
-        setDone(true);
+void CMovement::updateCompletion() {
+    if (!completion_request_ || gait_controller_->hasPendingGait() ||
+        gait_controller_->currentGait() != completion_request_->type) {
+        return;
     }
+    if (gait_controller_->finishesAutomatically()) {
+        if (!gait_controller_->stopped()) return;
+    } else {
+        // Repeating gaits retain their requested dwell time, measured from activation.
+        if (!completion_time_) {
+            completion_time_ =
+                node_->now() + rclcpp::Duration::from_seconds(std::max(0.0, completion_request_->duration_s));
+        }
+        if (node_->now() < *completion_time_) return;
+    }
+    completion_request_.reset();
+    completion_time_.reset();
+    setDone(true);
+}
+
+void CMovement::update() {
+    updateCompletion();
     const auto now = std::chrono::steady_clock::now();
     if (now < next_update_) return;
     next_update_ += std::chrono::milliseconds(100);
@@ -78,6 +102,7 @@ void CMovement::update() {
     geometry_msgs::msg::Twist effective_velocity;
     if (initialized_) {
         const bool progressed = gait_controller_->updateSelectedGait(velocity_, torso_, head_);
+        updateCompletion();
         auto pose = bodyPose(*pose_model_);
         // Some sequences restore their final pose while returning false on completion.
         if ((progressed || pose != last_pose_) && validBodyPose(pose)) {

@@ -45,7 +45,9 @@ void CContinuousPoseGait::requestStop() {
 }
 
 void CContinuousPoseGait::cancelStop() {
-    // this gait cannot be stopped nor the stop can be cancelled
+    if (state_ == EGaitState::Stopping) {
+        state_ = EGaitState::Running;
+    }
 }
 
 }  // namespace brain

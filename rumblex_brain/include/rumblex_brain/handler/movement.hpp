@@ -25,6 +25,7 @@ class CMovement : public IHandler {
    private:
     void onInitialPose(const rumblex_interfaces::msg::BodyPose& pose);
     void startRequest(const MovementRequest& request);
+    void updateCompletion();
     std::shared_ptr<rclcpp::Node> node_;
     std::shared_ptr<CPoseModel> pose_model_;
     std::unique_ptr<CGaitController> gait_controller_;
@@ -37,6 +38,7 @@ class CMovement : public IHandler {
     COrientation head_;
     bool initialized_ = false;
     std::optional<MovementRequest> pending_request_;
+    std::optional<MovementRequest> completion_request_;
     std::optional<rclcpp::Time> completion_time_;
     rumblex_interfaces::msg::BodyPose last_pose_;
     std::chrono::steady_clock::time_point next_update_{};

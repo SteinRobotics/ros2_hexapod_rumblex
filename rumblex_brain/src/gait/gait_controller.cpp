@@ -59,14 +59,14 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
 
 CGaitController::~CGaitController() = default;
 
-void CGaitController::setGait(brain::MovementRequest request) {
+bool CGaitController::setGait(brain::MovementRequest request) {
     if (request.type != MovementRequest::NO_REQUEST && !gaits_.contains(request.type)) {
         RCLCPP_WARN(node_->get_logger(), "Unsupported gait: %u", request.type);
-        return;
+        return false;
     }
     if (request.type == MovementRequest::NO_REQUEST) {
         RCLCPP_DEBUG(node_->get_logger(), "CGaitController::setGait ignoring NO_REQUEST message");
-        return;
+        return false;
     }
 
     pending_request_ = createMsg("NO_REQUEST", MovementRequest::NO_REQUEST);
@@ -82,18 +82,19 @@ void CGaitController::setGait(brain::MovementRequest request) {
             active_gait_->state() == EGaitState::Stopping) {
             active_gait_->cancelStop();
         }
-        return;
+        return true;
     }
 
     // If the active gait is not yet stopped, request stop and set pending type
     if (active_gait_->state() != EGaitState::Stopped) {
         pending_request_ = request;
         active_gait_->requestStop();
-        return;
+        return true;
     }
 
     // Otherwise, switch immediately
     switchGait(request);
+    return true;
 }
 
 void CGaitController::switchGait(brain::MovementRequest request) {
@@ -123,6 +124,22 @@ bool CGaitController::updateSelectedGait(const geometry_msgs::msg::Twist& veloci
         return sequence->update();
     }
     return false;
+}
+
+bool CGaitController::finishesAutomatically() const {
+    switch (currentGait()) {
+        case MovementRequest::SINGLE_POSE:
+        case MovementRequest::SEQUENCE_LAYDOWN:
+        case MovementRequest::SEQUENCE_STAND_UP:
+        case MovementRequest::SEQUENCE_LOOK:
+        case MovementRequest::SEQUENCE_WATCH:
+        case MovementRequest::SEQUENCE_CLAP:
+        case MovementRequest::SEQUENCE_HIGH_FIVE:
+        case MovementRequest::SEQUENCE_TESTLEGS:
+            return true;
+        default:
+            return false;
+    }
 }
 
 void CGaitController::requestStopSelectedGait() {

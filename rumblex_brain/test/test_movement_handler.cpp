@@ -115,3 +115,85 @@ TEST_F(MovementHandlerTest, VelocityIsZeroDuringNonWalkingGait) {
     pump(1500ms);
     EXPECT_DOUBLE_EQ(velocities.back().linear.x, 0.0);
 }
+
+TEST_F(MovementHandlerTest, PendingRepeatingGaitGetsFullDurationAfterActivation) {
+    feedback->publish(initialPose());
+    pump(150ms);
+    request(MovementRequest::SEQUENCE_STAND_UP, 1.0);
+    pump(150ms);
+    bool activated = false;
+    handler->on_gait_changed = [&](const MovementRequest& request) {
+        if (request.type == MovementRequest::CONTINUOUS_POSE) activated = true;
+    };
+    request(MovementRequest::CONTINUOUS_POSE, 0.5);
+    pump(600ms);
+    EXPECT_FALSE(activated);
+    EXPECT_FALSE(handler->done());
+    for (int i = 0; i < 20 && !activated; ++i) pump(50ms);
+    ASSERT_TRUE(activated);
+    EXPECT_FALSE(handler->done());
+    pump(200ms);
+    EXPECT_FALSE(handler->done());
+    pump(400ms);
+    EXPECT_TRUE(handler->done());
+}
+
+TEST_F(MovementHandlerTest, FiniteGaitWaitsForActualCompletion) {
+    feedback->publish(initialPose());
+    pump(150ms);
+    request(MovementRequest::SEQUENCE_HIGH_FIVE, 0.1);
+    pump(300ms);
+    EXPECT_FALSE(handler->done());
+    pump(4200ms);
+    EXPECT_TRUE(handler->done());
+}
+
+TEST_F(MovementHandlerTest, RepeatedTimedRequestRestartsCompletionTimer) {
+    feedback->publish(initialPose());
+    pump(150ms);
+    request(MovementRequest::CONTINUOUS_POSE, 0.2);
+    pump(300ms);
+    ASSERT_TRUE(handler->done());
+    request(MovementRequest::CONTINUOUS_POSE, 0.3);
+    EXPECT_FALSE(handler->done());
+    pump(100ms);
+    EXPECT_FALSE(handler->done());
+    pump(300ms);
+    EXPECT_TRUE(handler->done());
+}
+
+TEST_F(MovementHandlerTest, CancelledPendingRequestDoesNotRestartCompletionTracking) {
+    feedback->publish(initialPose());
+    pump(150ms);
+    request(MovementRequest::SEQUENCE_STAND_UP, 0.5);
+    pump(100ms);
+    request(MovementRequest::CONTINUOUS_POSE, 1.0);
+    handler->cancel();
+    pump(700ms);
+    EXPECT_TRUE(handler->done());
+}
+
+TEST_F(MovementHandlerTest, PendingFiniteGaitWaitsForItsOwnCompletion) {
+    feedback->publish(initialPose());
+    pump(150ms);
+    request(MovementRequest::SEQUENCE_STAND_UP, 0.8);
+    pump(100ms);
+    request(MovementRequest::SEQUENCE_LAYDOWN, 0.2);
+    pump(350ms);
+    EXPECT_FALSE(handler->done());
+    pump(800ms);
+    EXPECT_TRUE(handler->done());
+}
+
+TEST_F(MovementHandlerTest, SameTypeFiniteRequestCompletesAndInvalidRequestDoesNotBlock) {
+    feedback->publish(initialPose());
+    pump(150ms);
+    // Laydown is already selected when the controller is constructed.
+    request(MovementRequest::SEQUENCE_LAYDOWN, 0.2);
+    pump(350ms);
+    EXPECT_TRUE(handler->done());
+    request(MovementRequest::NO_REQUEST);
+    EXPECT_TRUE(handler->done());
+    request(MovementRequest::SEQUENCE_DANCE);
+    EXPECT_TRUE(handler->done());
+}
