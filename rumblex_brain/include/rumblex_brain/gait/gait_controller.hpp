@@ -7,7 +7,7 @@
 #include <cmath>
 #include <cstdint>
 #include <functional>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <map>
 #include <memory>
 #include <string>

@@ -4,6 +4,8 @@ project(rumblex_movement)
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 23)
 endif()
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic -Werror)
@@ -19,7 +21,6 @@ find_package(std_srvs REQUIRED)
 find_package(rumblex_interfaces REQUIRED)
 find_package(rumblex_utils REQUIRED)
 find_package(yaml-cpp REQUIRED)
-find_package(ament_cmake_gtest REQUIRED)
 ## set sources
 set(SOURCES
   src/handler/servo_controller.cpp
@@ -38,6 +39,7 @@ set(SOURCES
 add_library(rumblex_movement_core
   ${SOURCES}
 )
+target_compile_features(rumblex_movement_core PUBLIC cxx_std_23)
 target_include_directories(rumblex_movement_core PUBLIC
   include/rumblex_movement
   include/rumblex_movement/requester
@@ -86,6 +88,12 @@ install(DIRECTORY
 
 # Unit tests
 if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_scserial test/test_scserial.cpp)
+  if(TARGET test_scserial)
+    target_link_libraries(test_scserial rumblex_movement_core util)
+  endif()
+
   ament_add_gtest(test_offline_visualization test/test_offline_visualization.cpp)
   if(TARGET test_offline_visualization)
     target_link_libraries(test_offline_visualization rumblex_movement_core)

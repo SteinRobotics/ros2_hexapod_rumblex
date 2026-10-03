@@ -4,7 +4,7 @@
 
 #include "requester/coordinator.hpp"
 
-#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <ament_index_cpp/get_package_share_path.hpp>
 #include <cmath>
 #include <format>
 #include <stdexcept>
@@ -58,8 +58,8 @@ CCoordinator::CCoordinator(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<C
 }
 
 void CCoordinator::loadBehaviors() {
-    std::string package_share_directory = ament_index_cpp::get_package_share_directory("rumblex_brain");
-    std::string file_path = package_share_directory + "/config/behaviors.json";
+    const auto package_share_path = ament_index_cpp::get_package_share_path("rumblex_brain");
+    const auto file_path = (package_share_path / "config" / "behaviors.json").string();
 
     if (!behaviorParser_->parseFile(file_path)) {
         RCLCPP_ERROR(node_->get_logger(), "Failed to parse behaviors from: %s", file_path.c_str());

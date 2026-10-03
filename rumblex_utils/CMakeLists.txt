@@ -7,7 +7,6 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rumblex_interfaces REQUIRED)
-find_package(ament_cmake_gtest REQUIRED)
 
 include(cmake/geometry-dependencies.cmake)
 
@@ -18,6 +17,7 @@ target_include_directories(rumblex_geometry INTERFACE $<BUILD_INTERFACE:${CMAKE_
 install(TARGETS rumblex_geometry EXPORT export_${PROJECT_NAME})
 ament_export_dependencies(rclcpp rumblex_interfaces magic_enum)
 add_library(${PROJECT_NAME} INTERFACE)
+target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_23)
 
 target_include_directories(${PROJECT_NAME} INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -33,6 +33,7 @@ ament_export_targets(export_${PROJECT_NAME})
 
 # Unit tests
 if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
   set(TEST_BASE_DEPS rumblex_utils rclcpp::rclcpp ament_index_cpp::ament_index_cpp)
   set(TEST_MSG_DEPS
     geometry_msgs::geometry_msgs__rosidl_generator_cpp geometry_msgs::geometry_msgs__rosidl_typesupport_cpp

@@ -35,99 +35,13 @@ needed to add Nira.
 - `rumblex_doc/`           — Documentation, diagrams, and hardware info
 - `rumblex_utils/`         — Shared utilities, math helpers, and tests
 - `rumblex_description/`   — URDF/XACRO robot model for visualization and simulation
-- `rumblex_gazebo/`        — Gazebo Harmonic simulation (gz-sim 8.x)
+- `rumblex_gazebo/`        — Gazebo simulation through ROS 2 integration
 
-## Quick Start (for Makers)
+## Getting Started
 
-Follow [README_SETUP.md](README_SETUP.md) to install dependencies, create the ROS 2 Python virtual environment, and build the workspace on either a headless Raspberry Pi 5 or a developer PC. Activate the environment as described there before running these examples.
+Follow [README_SETUP.md](README_SETUP.md) to install dependencies, create the ROS 2 Python virtual environment, and build the workspace on a Raspberry Pi 5 or developer PC.
 
-1. **Launch the Robot**
-   ```bash
-   ros2 launch rumblex_bringup target_launch.py robot:=nox
-   # with navigation enabled
-   ros2 launch rumblex_bringup target_launch.py robot:=nox enable_navigation:=true
-   # or for testing
-   ros2 launch rumblex_bringup test_launch.py robot:=nox
-   ```
-2. **Launch Individual Components**
-   ```bash
-   ros2 launch rumblex_brain brain_launch.py
-   ros2 launch rumblex_communication communication_launch.py
-   ros2 launch rumblex_movement movement_launch.py
-   ros2 launch rumblex_teleop teleop_launch.py
-   ros2 launch rumblex_lidar lidar_launch.py
-   ros2 launch rumblex_navigation navigation_launch.py
-
-   ros2 launch rumblex_description display.launch.py robot:=nira
-   ros2 launch rumblex_description display_mesh.launch.py robot:=nira
-
-   # with map server
-   ros2 launch rumblex_navigation navigation_launch.py enable_map:=true
-   ```
-3. **Interact & Hack**
-   - Send movement commands:
-     ```bash
-     ros2 topic pub --once /cmd_movement rumblex_interfaces/msg/BodyPose "..."
-     ```
-   - Monitor topics:
-     ```bash
-     ros2 topic list
-     ros2 topic echo /servos_status
-     ```
-   - Speech commands:
-     ```bash
-     ros2 topic pub --once /speech_recognition_online std_msgs/msg/String "{data: 'steh auf'}"
-     ```
-   - Joystick/teleop:
-     ```bash
-     ros2 topic pub --once /joystick_request rumblex_interfaces/msg/JoystickRequest "..."
-     ```
-
-## Simulation & Visualization
-
-### Preview the Robot Model in RViz
-Visualize the URDF model with interactive joint sliders — no Gazebo or hardware needed:
-```bash
-ros2 launch rumblex_description display.launch.py
-```
-
-To preview the CAD/STL-based model instead, use its separate launch file:
-```bash
-ros2 launch rumblex_description display_mesh.launch.py
-```
-The original primitive model remains available through `display.launch.py`.
-
-Nox's STL assets are stored in `rumblex_description/meshes/nox/`. Each robot's
-mesh Xacro sets `mesh_directory`, which is also used by the shared leg macro.
-The future Nira mesh model should point to `rumblex_description/meshes/nira/`
-and will be selected with `robot:=nira` once its model and assets are added.
-
-### Gazebo Simulation
-After the developer PC setup in [README_SETUP.md](README_SETUP.md#developer-pc-visualization-and-simulation), run the full hexapod simulation in Gazebo Harmonic:
-```bash
-ros2 launch rumblex_gazebo simulation_gazebo.launch.py robot:=nox
-
-# Launch with the simple room world and navigation
-ros2 launch rumblex_gazebo simulation_gazebo.launch.py \
-  world:=$(ros2 pkg prefix rumblex_gazebo)/share/rumblex_gazebo/worlds/simple_room.sdf \
-  enable_navigation:=true
-```
-
-### Mesh Model in Gazebo
-The mesh model has its own launch file and does not change the existing primitive-model simulation:
-```bash
-ros2 launch rumblex_gazebo simulation_mesh.launch.py
-```
-This starts Gazebo Harmonic, spawns the STL-based robot, loads the existing 20-joint
-controller configuration, and starts the joint-state broadcaster. The mesh model omits
-head visuals but retains invisible head yaw and pitch joints for controller compatibility.
-
-Command joints in the simulation (all 20 joints, values in radians):
-```bash
-ros2 topic pub /forward_position_controller/commands std_msgs/msg/Float64MultiArray \
-  "{data: [0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0]}"
-```
-
+See [README_LAUNCH.md](README_LAUNCH.md) for physical robot bringup, offline tests, individual components, RViz previews, Gazebo simulation, and example ROS commands. It includes the terminal environment and venv interpreter checks needed for Python nodes.
 
 ## Raspberry Pi 5 Pin Layout
 The Raspberry Pi 5 inside Nox hosts most of the human-machine interface hardware that lives in `rumblex_hmi/`. The table follows the standard 40-pin header (odd numbers on the left when the USB ports face you). Pins with descriptions are currently wired up; empty cells are free for experiments.
@@ -164,10 +78,6 @@ The Raspberry Pi 5 inside Nox hosts most of the human-machine interface hardware
 | INA228 Power Monitor | 0x40    |
 | Garmin Lidar Lite    | 0x62    |
 
-
-
-## Systemd Service (Optional)
-For automatic ROS 2 startup on the Pi, follow the boot-service instructions in [README_SETUP.md](README_SETUP.md#raspberry-pi-5-headless-robot).
 
 
 ## Documentation

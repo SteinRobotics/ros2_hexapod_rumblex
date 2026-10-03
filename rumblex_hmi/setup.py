@@ -19,7 +19,7 @@ setup(
     maintainer_email='stein.robotics@gmail.com',
     description='Human-machine interface (OLED display, relay control, power monitoring) for the RumbleX hexapod platform',
     license='TODO: License declaration',
-    tests_require=['pytest'],
+    extras_require={'test': ['pytest']},
     entry_points={
         'console_scripts': [
             'node_hmi = rumblex_hmi.node_hmi:main',

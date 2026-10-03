@@ -13,8 +13,8 @@ CActionPackagesParser::CActionPackagesParser(std::shared_ptr<rclcpp::Node> node)
 }
 
 void CActionPackagesParser::readYaml() {
-    std::string package_share_directory = ament_index_cpp::get_package_share_directory("rumblex_movement");
-    std::string yaml_path = package_share_directory + "/config/actionpackages.yaml";
+    const auto package_share_path = ament_index_cpp::get_package_share_path("rumblex_movement");
+    const auto yaml_path = (package_share_path / "config" / "actionpackages.yaml").string();
 
     try {
         YAML::Node yaml_data = YAML::LoadFile(yaml_path);

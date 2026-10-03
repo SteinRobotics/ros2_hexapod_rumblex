@@ -19,7 +19,7 @@ setup(
     maintainer_email='stein.robotics@gmail.com',
     description='Teleoperation (joystick, remote control) for the RumbleX hexapod platform',
     license='MIT',
-    tests_require=['pytest'],
+    extras_require={'test': ['pytest']},
     entry_points={
         'console_scripts': [
             'node_teleop = rumblex_teleop.node_teleop:main',

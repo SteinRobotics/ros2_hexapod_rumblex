@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <limits>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 #include "gait/pose_model.hpp"
 

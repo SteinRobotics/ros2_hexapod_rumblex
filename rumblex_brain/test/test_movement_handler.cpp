@@ -14,6 +14,8 @@ class MovementHandlerTest : public ::testing::Test {
         rclcpp::NodeOptions options;
         options.parameter_overrides(test_helpers::defaultRobotParameters());
         node = std::make_shared<rclcpp::Node>("movement_handler_test", options);
+        executor = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
+        executor->add_node(node);
         handler = std::make_unique<CMovement>(node);
         feedback = node->create_publisher<rumblex_interfaces::msg::BodyPose>(
             "body_pose_actual", rclcpp::QoS(1).transient_local());
@@ -25,17 +27,18 @@ class MovementHandlerTest : public ::testing::Test {
             [this](const geometry_msgs::msg::Twist& msg) { velocities.push_back(msg); });
     }
     void TearDown() override {
+        executor.reset();
         handler.reset();
         rclcpp::shutdown();
     }
     void pump(std::chrono::milliseconds duration) {
         const auto until = std::chrono::steady_clock::now() + duration;
         do {
-            rclcpp::spin_some(node);
+            executor->spin_some();
             handler->update();
             std::this_thread::sleep_for(10ms);
         } while (std::chrono::steady_clock::now() < until);
-        rclcpp::spin_some(node);
+        executor->spin_some();
     }
     rumblex_interfaces::msg::BodyPose initialPose() {
         rclcpp::NodeOptions options;
@@ -53,6 +56,7 @@ class MovementHandlerTest : public ::testing::Test {
         handler->run(r);
     }
     std::shared_ptr<rclcpp::Node> node;
+    std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> executor;
     std::unique_ptr<CMovement> handler;
     rclcpp::Publisher<rumblex_interfaces::msg::BodyPose>::SharedPtr feedback;
     rclcpp::Subscription<rumblex_interfaces::msg::BodyPose>::SharedPtr commands;

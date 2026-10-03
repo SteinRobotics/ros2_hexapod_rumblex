@@ -22,11 +22,14 @@ int main(int argc, char** argv) {
         });
     auto recognition = std::make_shared<brain::CRecognition>(node, coordinator);
 
+    rclcpp::executors::SingleThreadedExecutor executor;
+    executor.add_node(node);
+
     rclcpp::Rate loop_rate(REFRESH_RATE_HZ);
     while (rclcpp::ok()) {
         coordinator->update();
         actionPlanner->update();
-        rclcpp::spin_some(node);
+        executor.spin_some();
         loop_rate.sleep();
     }
     return 0;

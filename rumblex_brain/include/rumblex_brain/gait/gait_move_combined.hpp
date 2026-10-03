@@ -1,7 +1,7 @@
 #pragma once
 
 #include <array>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 

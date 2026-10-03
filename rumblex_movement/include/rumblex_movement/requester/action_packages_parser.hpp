@@ -6,7 +6,7 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <ament_index_cpp/get_package_share_path.hpp>
 #include <fstream>
 #include <map>
 #include <sstream>

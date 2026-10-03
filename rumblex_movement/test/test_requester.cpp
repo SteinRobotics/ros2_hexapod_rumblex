@@ -24,11 +24,14 @@ class RequesterTest : public ::testing::Test {
         overrides.emplace_back("servo.offline", true);
         options.parameter_overrides(overrides);
         node_ = std::make_shared<rclcpp::Node>("test_requester_node", options);
+        executor_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
+        executor_->add_node(node_);
         servo_handler_mock_ = std::make_shared<CServoHandlerMock>(node_);
         requester_ = std::make_unique<CRequester>(node_, servo_handler_mock_);
     }
 
     void TearDown() override {
+        executor_.reset();
         requester_.reset();
         if (rclcpp::ok()) {
             rclcpp::shutdown();
@@ -36,6 +39,7 @@ class RequesterTest : public ::testing::Test {
     }
 
     std::shared_ptr<rclcpp::Node> node_;
+    std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> executor_;
     std::unique_ptr<CRequester> requester_;
     std::shared_ptr<CServoHandlerMock> servo_handler_mock_;
 };
@@ -54,7 +58,7 @@ TEST_F(RequesterTest, PublishesInitialJointStatesWithoutMovementRequest) {
     const auto deadline = std::chrono::steady_clock::now() + 3s;
     while (!received && std::chrono::steady_clock::now() < deadline) {
         requester_->update(100ms);
-        rclcpp::spin_some(node_);
+        executor_->spin_some();
         std::this_thread::sleep_for(10ms);
     }
 

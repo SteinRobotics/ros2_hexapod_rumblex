@@ -124,7 +124,7 @@ int SCSerial::setBaudRate(int baudRate)
         CR_BAUDRATE = B500000;
         break;
     default:
-        break;
+        return -1;
     }
     cfsetispeed(&curopt, CR_BAUDRATE);
     cfsetospeed(&curopt, CR_BAUDRATE);

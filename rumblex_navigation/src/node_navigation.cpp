@@ -21,13 +21,12 @@
  *              TF: odom → base_link
  ******************************************************************************/
 
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/utils.h>
-
 #include <algorithm>
 #include <cmath>
 #include <numbers>
 #include <optional>
+#include <tf2/LinearMath/Quaternion.hpp>
+#include <tf2/utils.hpp>
 
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
@@ -37,7 +36,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
-#include "tf2_ros/transform_broadcaster.h"
+#include "tf2_ros/transform_broadcaster.hpp"
 
 using namespace std::chrono_literals;
 

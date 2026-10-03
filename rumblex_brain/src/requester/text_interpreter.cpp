@@ -4,7 +4,7 @@
 
 #include "requester/text_interpreter.hpp"
 
-#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <ament_index_cpp/get_package_share_path.hpp>
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <sstream>
@@ -18,8 +18,8 @@ CTextInterpreter::CTextInterpreter(std::shared_ptr<rclcpp::Node> node) : node_(n
 }
 
 void CTextInterpreter::readInterpretation() {
-    std::string package_share_directory = ament_index_cpp::get_package_share_directory("rumblex_brain");
-    std::string file_path = package_share_directory + "/config/interpretation.json";
+    const auto package_share_path = ament_index_cpp::get_package_share_path("rumblex_brain");
+    const auto file_path = (package_share_path / "config" / "interpretation.json").string();
     json json_data;
     std::ifstream json_file(file_path);
 

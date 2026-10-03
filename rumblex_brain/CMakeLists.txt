@@ -4,6 +4,8 @@ project(rumblex_brain)
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 23)
 endif()
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic -Werror)
@@ -18,9 +20,6 @@ find_package(std_srvs REQUIRED)
 find_package(rumblex_interfaces REQUIRED)
 find_package(rumblex_utils REQUIRED)
 find_package(nlohmann_json REQUIRED) # nlohmann_json -> sudo apt install nlohmann-json3-dev
-find_package(ament_cmake_gtest REQUIRED)
-find_package(ament_cmake_gmock REQUIRED)
-find_package(GTest REQUIRED)
 
 ## set sources
 set(SOURCES
@@ -50,6 +49,7 @@ src/handler/movement.cpp
 src/parser/behavior_parser.cpp
 )
 add_library(rumblex_brain_lib ${SOURCES})
+target_compile_features(rumblex_brain_lib PUBLIC cxx_std_23)
 target_include_directories(rumblex_brain_lib PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
@@ -118,6 +118,12 @@ install(DIRECTORY
 
 # Unit tests
 if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_movement_types
+    test/test_movement_types.cpp
+    test/test_movement_types_other_translation_unit.cpp
+  )
+  target_link_libraries(test_movement_types rumblex_brain_lib)
   ament_add_gtest(test_coordinator test/test_coordinator.cpp)
   target_link_libraries(test_coordinator rumblex_brain_lib)
   ament_add_gtest(test_locomotion_transitions test/test_locomotion_transitions.cpp)

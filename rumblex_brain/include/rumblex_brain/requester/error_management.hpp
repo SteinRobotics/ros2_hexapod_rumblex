@@ -4,11 +4,12 @@
 
 #pragma once
 
-#include "magic_enum.hpp"
-#include "rumblex_interfaces/msg/servo_status.hpp"
-#include "rumblex_utils/filters.hpp"
+#include <magic_enum/magic_enum.hpp>
+
 #include "rclcpp/rclcpp.hpp"
 #include "requester/utility.hpp"
+#include "rumblex_interfaces/msg/servo_status.hpp"
+#include "rumblex_utils/filters.hpp"
 
 namespace brain {
 

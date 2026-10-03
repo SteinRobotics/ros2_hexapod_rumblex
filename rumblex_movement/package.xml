@@ -8,9 +8,11 @@
   <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
 
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
   <depend>geometry_msgs</depend>
   <depend>ament_index_cpp</depend>
   <depend>rumblex_interfaces</depend>
@@ -18,6 +20,7 @@
   <depend>nlohmann-json-dev</depend>
   <depend>magic_enum</depend>   # sudo apt install libmagicenum-dev
   <depend>sensor_msgs</depend>
+  <depend>yaml-cpp</depend>
 
   <exec_depend>rumblex_description</exec_depend>
 
