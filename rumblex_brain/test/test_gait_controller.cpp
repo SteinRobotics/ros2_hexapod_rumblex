@@ -435,3 +435,46 @@ int main(int argc, char** argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
+
+TEST_F(GaitControllerTest, FixedPosesPreserveRequestsAndIgnoreLivePoseTargets) {
+    for (const auto type : {MovementRequestMsg::SEQUENCE_STAND_UP, MovementRequestMsg::SEQUENCE_LAYDOWN}) {
+        MovementRequest request;
+        request.type = type;
+        request.duration_s = 0.2;
+        controller_->setGait(request);
+        EXPECT_EQ(controller_->currentGait(), type);
+        const CPose unrelated_pose(0.01, 0.02, 0.03, 0.0, 0.0, 0.0);
+        const COrientation unrelated_head(0.1, 0.2, 0.3);
+        EXPECT_TRUE(controller_->updateSelectedGait(createZeroVelocity(), unrelated_pose, unrelated_head));
+        EXPECT_TRUE(controller_->updateSelectedGait(createZeroVelocity(), unrelated_pose, unrelated_head));
+        EXPECT_FALSE(controller_->updateSelectedGait(createZeroVelocity(), unrelated_pose, unrelated_head));
+        const auto expected = type == MovementRequestMsg::SEQUENCE_STAND_UP
+                                  ? kinematics_->getStandingToePositions()
+                                  : kinematics_->getLaydownToePositions();
+        EXPECT_EQ(kinematics_->getToePositions(), expected);
+        EXPECT_EQ(kinematics_->getTorsoPose(), CPose());
+        const double pitch = type == MovementRequestMsg::SEQUENCE_STAND_UP
+                                 ? 0.0
+                                 : -node_->get_parameter("gait.generic.head_max_pitch_deg").as_double();
+        EXPECT_EQ(kinematics_->getHeadOrientation(),
+                  COrientation(0.0 * units::deg, pitch * units::deg, 0.0 * units::deg));
+    }
+}
+
+TEST_F(GaitControllerTest, SinglePoseHonorsDurationAndCompletesZeroDuration) {
+    for (const double duration : {0.0, 0.2, 0.5}) {
+        MovementRequest request;
+        request.type = MovementRequestMsg::SINGLE_POSE;
+        request.duration_s = duration;
+        controller_->setGait(request);
+        const CPose target(0.01, 0.0, 0.0, 0.0, 0.0, 0.0);
+        const COrientation head(0.0, 0.1, 0.0);
+        int updates = 0;
+        while (controller_->updateSelectedGait(createZeroVelocity(), target, head) && updates < 20) {
+            ++updates;
+        }
+        EXPECT_EQ(updates, duration > 0.0 ? static_cast<int>(duration * 10) : 1);
+        EXPECT_EQ(kinematics_->getTorsoPose(), target);
+        EXPECT_EQ(kinematics_->getHeadOrientation(), head);
+    }
+}

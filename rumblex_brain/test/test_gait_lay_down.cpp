@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "gait/gait_lay_down.hpp"
-#include "gait/gait_stand_up.hpp"
+#include "gait/gait_single_pose.hpp"
 #include "gait/pose_model.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "test_helpers.hpp"
@@ -9,7 +8,7 @@
 using namespace brain;
 
 namespace {
-constexpr double kPositionTolerance = 0.06;
+constexpr double kPositionTolerance = 1e-9;
 constexpr int kMaxIterations = 500;
 }  // namespace
 
@@ -45,20 +44,25 @@ TEST_F(GaitLayDownTest, LayDownStopsAtLaydownHeight) {
 
     // Ensure we start from standing pose.
     kinematics_->moveTorso(standing_targets, CPose());
-    const auto initial_positions = kinematics_->getToePositions();
 
-    CLayDownGait gait(node_, kinematics_, params_.lay_down);
+    CSinglePoseGait gait(
+        node_, kinematics_, params_.single_pose,
+        CSinglePoseGait::Target{
+            kinematics_->getLaydownToePositions(), CPose(),
+            COrientation(0.0 * units::deg, -params_.single_pose.head_max_pitch, 0.0 * units::deg)});
     EXPECT_EQ(gait.state(), EGaitState::Stopped);
 
     gait.start(3.0, 0);
 
     int iterations = 0;
     while (gait.state() != EGaitState::Stopped && iterations++ < kMaxIterations) {
-        gait.update();
+        gait.update(geometry_msgs::msg::Twist(), CPose(), COrientation());
     }
 
     EXPECT_EQ(gait.state(), EGaitState::Stopped);
-    EXPECT_LT(iterations, kMaxIterations);
+    EXPECT_EQ(iterations, 30);
+    EXPECT_EQ(kinematics_->getHeadOrientation(),
+              COrientation(0.0 * units::deg, -params_.single_pose.head_max_pitch, 0.0 * units::deg));
 
     const auto final_positions = kinematics_->getToePositions();
     for (const auto& [leg_index, target] : laydown_targets) {
@@ -66,12 +70,4 @@ TEST_F(GaitLayDownTest, LayDownStopsAtLaydownHeight) {
         EXPECT_NEAR(actual.z.numerical_value_in(units::m), target.z.numerical_value_in(units::m),
                     kPositionTolerance);
     }
-
-    /// manuall check forward kinematics by setting angles for front legs
-    CLegAngles angles;
-    angles.torso_coxa = 0.0 * units::deg;
-    angles.coxa_femur = 70.0 * units::deg;
-    angles.femur_tibia = -53.0 * units::deg;
-    kinematics_->setLegAngles(ELegIndex::RightFront, angles);
-    kinematics_->setLegAngles(ELegIndex::RightMid, angles);
 }

@@ -11,11 +11,12 @@
 import logging
 import re
 import subprocess
+import tempfile
+from pathlib import Path
 
 from gtts import gTTS
 
 from rumblex_communication import package_resource_path
-from rumblex_communication.music_player import MusicPlayer
 
 class TextToSpeech():
     def __init__(self, music_player, language, logger=None):
@@ -30,9 +31,16 @@ class TextToSpeech():
         filename = self.tts_cache / text_file
 
         try:
-            if not filename.exists():
+            self.tts_cache.mkdir(parents=True, exist_ok=True)
+            if not filename.exists() or filename.stat().st_size == 0:
                 tts = gTTS(text=text, lang=self.language)
-                tts.save(str(filename))
+                # Publish a cache entry only after the download succeeds. gTTS
+                # opens its output before making the request, so a failed
+                # request would otherwise leave a partial or empty MP3.
+                with tempfile.TemporaryDirectory(prefix='.tts-', dir=self.tts_cache) as temp_dir:
+                    download = Path(temp_dir) / text_file
+                    tts.save(str(download))
+                    download.replace(filename)
 
             self.music_player.play_file(str(filename))
 
@@ -45,8 +53,9 @@ class TextToSpeech():
             cb()
 
 if __name__=="__main__":
+    from rumblex_communication.music_player import MusicPlayer
+
     music_player = MusicPlayer()
     tts = TextToSpeech(music_player, "de")
     tts.run("Hallo wie geht es dir")
-
 

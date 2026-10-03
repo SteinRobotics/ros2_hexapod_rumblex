@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "gait/gait_lay_down.hpp"
-#include "gait/gait_stand_up.hpp"
+#include "gait/gait_single_pose.hpp"
 #include "gait/pose_model.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "test_helpers.hpp"
@@ -9,7 +8,7 @@
 using namespace brain;
 
 namespace {
-constexpr double kPositionTolerance = 0.06;
+constexpr double kPositionTolerance = 1e-9;
 constexpr int kMaxIterations = 500;
 }  // namespace
 
@@ -45,20 +44,22 @@ TEST_F(GaitStandUpTest, StandUpStopsAtStandingHeight) {
 
     // Ensure we start from laydown pose.
     kinematics_->moveTorso(laydown_targets, CPose());
-    const auto initial_positions = kinematics_->getToePositions();
 
-    CStandUpGait gait(node_, kinematics_, params_.stand_up);
+    CSinglePoseGait gait(
+        node_, kinematics_, params_.single_pose,
+        CSinglePoseGait::Target{kinematics_->getStandingToePositions(), CPose(), COrientation()});
     EXPECT_EQ(gait.state(), EGaitState::Stopped);
 
     gait.start(3.0, 0);
 
     int iterations = 0;
     while (gait.state() != EGaitState::Stopped && iterations++ < kMaxIterations) {
-        gait.update();
+        gait.update(geometry_msgs::msg::Twist(), CPose(), COrientation());
     }
 
     EXPECT_EQ(gait.state(), EGaitState::Stopped);
-    EXPECT_LT(iterations, kMaxIterations);
+    EXPECT_EQ(iterations, 30);
+    EXPECT_EQ(kinematics_->getHeadOrientation(), COrientation());
 
     const auto final_positions = kinematics_->getToePositions();
     for (const auto& [leg_index, target] : standing_targets) {

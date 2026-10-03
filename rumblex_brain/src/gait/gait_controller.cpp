@@ -26,8 +26,11 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
     gaits_[MovementRequest::SEQUENCE_CLAP] = std::make_shared<CClapGait>(node_, kinematics_, params_.clap);
     gaits_[MovementRequest::SEQUENCE_HIGH_FIVE] =
         std::make_shared<CHighFiveGait>(node_, kinematics_, params_.high_five);
-    gaits_[MovementRequest::SEQUENCE_LAYDOWN] =
-        std::make_shared<CLayDownGait>(node_, kinematics_, params_.lay_down);
+    gaits_[MovementRequest::SEQUENCE_LAYDOWN] = std::make_shared<CSinglePoseGait>(
+        node_, kinematics_, params_.single_pose,
+        CSinglePoseGait::Target{
+            kinematics_->getLaydownToePositions(), CPose(),
+            COrientation(0.0 * units::deg, -params_.single_pose.head_max_pitch, 0.0 * units::deg)});
     gaits_[MovementRequest::SEQUENCE_LEGS_WAVE] =
         std::make_shared<CLegWaveGait>(node_, kinematics_, params_.leg_wave);
     gaits_[MovementRequest::SEQUENCE_LOOK] = std::make_shared<CLookGait>(node_, kinematics_, params_.look);
@@ -35,8 +38,9 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
         node_, kinematics_, params_.wave, params_.ripple, params_.tripod, params_.move_combined);
     gaits_[MovementRequest::CONTINUOUS_RUNNING] =
         std::make_shared<CRunningGait>(node_, kinematics_, params_.running);
-    gaits_[MovementRequest::SEQUENCE_STAND_UP] =
-        std::make_shared<CStandUpGait>(node_, kinematics_, params_.stand_up);
+    gaits_[MovementRequest::SEQUENCE_STAND_UP] = std::make_shared<CSinglePoseGait>(
+        node_, kinematics_, params_.single_pose,
+        CSinglePoseGait::Target{kinematics_->getStandingToePositions(), CPose(), COrientation()});
     gaits_[MovementRequest::SEQUENCE_TESTLEGS] =
         std::make_shared<CTestLegsGait>(node_, kinematics_, params_.test_legs);
     gaits_[MovementRequest::SINGLE_POSE] =

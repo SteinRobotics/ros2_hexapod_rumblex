@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <rclcpp/rclcpp.hpp>
 
 #include "gait/gait_interfaces.hpp"
@@ -12,8 +13,14 @@ namespace brain {
 
 class CSinglePoseGait : public IContinuousGait {
    public:
+    struct Target {
+        std::map<ELegIndex, CPosition> toes;
+        CPose torso;
+        COrientation head;
+    };
+
     CSinglePoseGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics,
-                    Parameters::SinglePose& params);
+                    Parameters::SinglePose& params, std::optional<Target> target = std::nullopt);
     ~CSinglePoseGait() override = default;
 
     void start(double duration_s, uint8_t direction) override;
@@ -28,14 +35,14 @@ class CSinglePoseGait : public IContinuousGait {
    private:
     std::shared_ptr<rclcpp::Node> node_;
     std::shared_ptr<CPoseModel> kinematics_;
-    Parameters::SinglePose params_;
+    std::optional<Target> target_;
+    std::map<ELegIndex, CPosition> toe_origins_;
     EGaitState state_ = EGaitState::Stopped;
 
     CPose torso_origin_ = CPose();
     COrientation head_origin_ = COrientation();
 
     double duration_s_ = 0.0;
-    double phase_increment_ = 0.1;
     double phase_ = 0.0;
 };
 
