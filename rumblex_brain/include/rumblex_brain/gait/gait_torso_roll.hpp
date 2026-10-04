@@ -34,6 +34,7 @@ class CTorsoRollGait : public ISequenceGait {
     EGaitState resume_state_ = EGaitState::Starting;
     Parameters::TorsoRoll params_;
     std::map<ELegIndex, CPosition> origin_leg_positions_;
+    CPose torso_origin_;
     double phase_increment_ = 0.1;
     double phase_ = double(0);
 };

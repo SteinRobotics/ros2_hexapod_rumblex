@@ -72,3 +72,58 @@ colcon build --packages-up-to rumblex_brain rumblex_movement
 colcon test --packages-select rumblex_utils rumblex_brain rumblex_movement rumblex_navigation --event-handlers console_direct+
 colcon test-result --verbose
 ```
+
+## Motion trajectory and handoff contract
+
+Every gait captures the current command-frame pose on entry. `start`,
+`requestStop`, and `cancelStop` do not move the model. A gait only reports
+`Stopped` at a rest endpoint. The controller finishes the outgoing trajectory,
+then starts the incoming gait from that endpoint. Fixed poses and gestures use
+`trajectoryProgress(t) = 10t³ - 15t⁴ + 6t⁵`, with zero velocity and acceleration
+at both ends. Pose requests are captured once per finite segment; changing a
+request cannot move an existing segment's destination. Pose transitions have a
+minimum duration of one second at the 10 Hz command rate.
+
+Walking and running share `CStridePlanner`. Patterns specify ordered swing
+leg groups, step length, lift height, head amplitude, and phase gain. A segment
+captures the actual current planned toe, torso, and head poses, then generates
+a complete swing/support trajectory. Swing lift is `64t³(1-t)³`, also with zero
+endpoint velocity and acceleration. Torso and head targets follow the same
+segment time law. No motion-command filter or output blending is used.
+
+Speed, direction, and pattern changes are accepted at touchdown. The scheduler
+retains its cycle phase when changing the number of groups. Thus an airborne
+leg completes its trajectory before a new pattern starts; rapid requests cannot
+repeatedly restart an entry blend. A stop completes the current swing, then
+places each group at standing through finite swings while other toes retain
+their current positions. Cancellation finishes any segment already in progress.
+Zero velocity triggers settlement and new velocity resumes locomotion; an
+explicit behavior stop cannot be undone by a stale velocity command.
+
+There is a deliberate timing tradeoff: segments start and end at rest, and take
+at least ten updates (one second). This bounds sampling resolution and produces
+C2 position trajectories, but limits top speed and adds request latency. Phase
+gains retain their per-update units; increasing them cannot bypass the minimum
+segment duration. Running uses the same contact-preserving alternating tripod
+planner with its own parameters; the previous discontinuous flight-overlap
+formula is removed. It is no longer an aerial running gait.
+
+Clap and high-five finish their current sequence/raise before returning;
+leg-wave, waiting, and torso-roll finish their closed cycle. Look and watch
+return to their captured origins. Diagnostic leg motions now interpolate their
+joint targets rather than issuing instantaneous steps. Continuous pose finishes
+its current segment and holds the endpoint on stop instead of snapping back.
+Stop requests are graceful motion requests, not emergency actuator stops.
+
+The obsolete `gait.running.velocity_filter_alpha`, `gait.running.flight_fraction`,
+`gait.move_combined.velocity_filter_alpha`, and
+`gait.move_combined.transition_phase_span_rad` keys remain accepted for older
+configuration files but are unused. No new dependencies or required parameters
+are introduced.
+
+Continuity refers to the planned kinematic state, initialized from
+`body_pose_actual`, not continuously measured foot positions. Contact, servo
+tracking, and balance require simulation/hardware validation. The test suite
+covers trajectory derivatives, displaced startup poses, every behavior pair,
+every walking-pattern pair, direction reversal during swing, settlement,
+resumption, and gesture cancellation regressions.

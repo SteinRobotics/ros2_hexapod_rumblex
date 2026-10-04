@@ -445,8 +445,9 @@ TEST_F(GaitControllerTest, FixedPosesPreserveRequestsAndIgnoreLivePoseTargets) {
         EXPECT_EQ(controller_->currentGait(), type);
         const CPose unrelated_pose(0.01, 0.02, 0.03, 0.0, 0.0, 0.0);
         const COrientation unrelated_head(0.1, 0.2, 0.3);
-        EXPECT_TRUE(controller_->updateSelectedGait(createZeroVelocity(), unrelated_pose, unrelated_head));
-        EXPECT_TRUE(controller_->updateSelectedGait(createZeroVelocity(), unrelated_pose, unrelated_head));
+        for (int i = 0; i < 10; ++i)
+            EXPECT_TRUE(
+                controller_->updateSelectedGait(createZeroVelocity(), unrelated_pose, unrelated_head));
         EXPECT_FALSE(controller_->updateSelectedGait(createZeroVelocity(), unrelated_pose, unrelated_head));
         const auto expected = type == MovementRequestMsg::SEQUENCE_STAND_UP
                                   ? kinematics_->getStandingToePositions()
@@ -461,7 +462,7 @@ TEST_F(GaitControllerTest, FixedPosesPreserveRequestsAndIgnoreLivePoseTargets) {
     }
 }
 
-TEST_F(GaitControllerTest, SinglePoseHonorsDurationAndCompletesZeroDuration) {
+TEST_F(GaitControllerTest, SinglePoseEnforcesMinimumTrajectoryDuration) {
     for (const double duration : {0.0, 0.2, 0.5}) {
         MovementRequest request;
         request.type = MovementRequestMsg::SINGLE_POSE;
@@ -473,7 +474,7 @@ TEST_F(GaitControllerTest, SinglePoseHonorsDurationAndCompletesZeroDuration) {
         while (controller_->updateSelectedGait(createZeroVelocity(), target, head) && updates < 20) {
             ++updates;
         }
-        EXPECT_EQ(updates, duration > 0.0 ? static_cast<int>(duration * 10) : 1);
+        EXPECT_EQ(updates, 10);
         EXPECT_EQ(kinematics_->getTorsoPose(), target);
         EXPECT_EQ(kinematics_->getHeadOrientation(), head);
     }

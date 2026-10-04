@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "gait/trajectory.hpp"
+
 using namespace rumblex_interfaces::msg;
 namespace brain {
 
@@ -15,7 +17,7 @@ void CSinglePoseGait::start(double duration_s, uint8_t /*direction*/) {
     RCLCPP_INFO(node_->get_logger(), "Starting CSinglePoseGait");
     state_ = EGaitState::Running;
     phase_ = 0.0;
-    duration_s_ = duration_s;
+    duration_s_ = std::max(duration_s, 1.0);
 
     torso_origin_ = kinematics_->getTorsoPose();
     head_origin_ = kinematics_->getHeadOrientation();
@@ -31,18 +33,18 @@ bool CSinglePoseGait::update(const geometry_msgs::msg::Twist& /*velocity*/, cons
                              const COrientation& head) {
     if (state_ == EGaitState::Stopped) return false;
 
+    if (phase_ == 0.0) {
+        torso_target_ = target_ ? target_->torso : torso;
+        head_target_ = target_ ? target_->head : head;
+    }
     // The movement handler updates gaits every 100 ms.
     phase_ += 0.1;
     const double fraction = duration_s_ > 0.0 ? std::min(phase_ / duration_s_, 1.0) : 1.0;
     if (fraction >= 1.0 - 1e-12) state_ = EGaitState::Stopped;
     double progress = state_ == EGaitState::Stopped ? 1.0 : fraction;
-    if (target_) {
-        // Preserve the smooth easing of fixed pose transitions.
-        const double sine = std::sin(progress * M_PI_2);
-        progress = sine * sine;
-    }
-    const auto& target_torso = target_ ? target_->torso : torso;
-    const auto& target_head = target_ ? target_->head : head;
+    progress = trajectoryProgress(progress);
+    const auto& target_torso = torso_target_;
+    const auto& target_head = head_target_;
     const CPose intermediate_pose = state_ == EGaitState::Stopped
                                         ? target_torso
                                         : torso_origin_.linearInterpolate(target_torso, progress);
@@ -55,7 +57,7 @@ bool CSinglePoseGait::update(const geometry_msgs::msg::Twist& /*velocity*/, cons
         }
         kinematics_->moveTorso(toes, intermediate_pose);
     } else {
-        kinematics_->moveTorso(intermediate_pose);
+        kinematics_->moveTorso(toe_origins_, intermediate_pose);
     }
     kinematics_->setHeadOrientation(
         state_ == EGaitState::Stopped ? target_head : head_origin_.linearInterpolate(target_head, progress));

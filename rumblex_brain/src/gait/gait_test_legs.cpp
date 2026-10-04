@@ -5,6 +5,7 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include "gait/pose_model.hpp"
+#include "gait/trajectory.hpp"
 
 namespace brain {
 CTestLegsGait::CTestLegsGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics,
@@ -17,11 +18,10 @@ void CTestLegsGait::start(double duration_s, uint8_t /*direction*/) {
 
     current_leg_index_ = 0;
     stage_ = Stage::Raise;
-    stage_action_applied_ = false;
     stage_start_time_ = node_->now();
 
     const double requested = duration_s > 0.0 ? duration_s / 3.0 : default_stage_duration_;
-    stage_duration_ = std::max(requested, min_stage_duration_);
+    stage_duration_ = std::max(requested, 1.0);
 
     state_ = hasCurrentLeg() ? EGaitState::Running : EGaitState::Stopped;
 }
@@ -32,43 +32,31 @@ bool CTestLegsGait::update() {
     }
 
     const auto now = node_->get_clock()->now();
-
-    if (!stage_action_applied_) {
-        applyStageForCurrentLeg();
-        stage_action_applied_ = true;
+    const double elapsed = std::max(0.0, (now - stage_start_time_).seconds());
+    const double progress = trajectoryProgress(elapsed / stage_duration_);
+    const auto index = currentLeg();
+    auto raised = base_leg_angles_.at(index);
+    raised.torso_coxa += params_.torso_coxa_delta;
+    raised.coxa_femur += params_.coxa_femur_delta;
+    raised.femur_tibia += params_.femur_tibia_delta;
+    const double alpha = stage_ == Stage::Raise ? progress : stage_ == Stage::Hold ? 1.0 : 1.0 - progress;
+    kinematics_->setLegAngles(index, base_leg_angles_.at(index).linearInterpolate(raised, alpha));
+    if (elapsed >= stage_duration_) {
+        const bool finished_leg = stage_ == Stage::Lower;
+        advanceStage();
         stage_start_time_ = now;
-    } else {
-        const auto elapsed = (now - stage_start_time_).seconds();
-        if (elapsed >= stage_duration_) {
-            advanceStage();
-            stage_start_time_ = now;
-            stage_action_applied_ = false;
-            if (state_ == EGaitState::Stopped) {
-                // The last stage finished in this update call. Signal success so callers know
-                // the gait progressed, even though it is now stopped.
-                return true;
-            }
-            applyStageForCurrentLeg();
-            stage_action_applied_ = true;
-        }
+        if (finished_leg && state_ == EGaitState::Stopping) state_ = EGaitState::Stopped;
     }
-
     return true;
 }
 
 void CTestLegsGait::requestStop() {
-    if (state_ == EGaitState::Stopped) {
-        return;
-    }
-    restoreAllLegs();
-    state_ = EGaitState::Stopped;
+    if (state_ == EGaitState::Running) state_ = EGaitState::Stopping;
 }
 
 void CTestLegsGait::cancelStop() {
     if (state_ == EGaitState::Stopping) {
         state_ = EGaitState::Running;
-        stage_start_time_ = node_->now();
-        stage_action_applied_ = false;
     }
 }
 
@@ -85,46 +73,6 @@ void CTestLegsGait::captureBaseAngles() {
         for (const auto& [index, _] : base_leg_angles_) {
             leg_order_.push_back(index);
         }
-    }
-}
-
-void CTestLegsGait::applyStageForCurrentLeg() {
-    if (!hasCurrentLeg()) {
-        state_ = EGaitState::Stopped;
-        return;
-    }
-
-    const auto index = currentLeg();
-    const auto it = base_leg_angles_.find(index);
-    if (it == base_leg_angles_.end()) {
-        state_ = EGaitState::Stopped;
-        return;
-    }
-
-    auto target = it->second;
-    switch (stage_) {
-        case Stage::Raise:
-            target.torso_coxa += params_.torso_coxa_delta;
-            target.coxa_femur += params_.coxa_femur_delta;
-            target.femur_tibia += params_.femur_tibia_delta;
-            RCLCPP_INFO_STREAM(node_->get_logger(),
-                               "CTestLegsGait: raising "
-                                   << magic_enum::enum_name(index) << " by ("
-                                   << params_.torso_coxa_delta.numerical_value_in(units::deg) << ", "
-                                   << params_.coxa_femur_delta.numerical_value_in(units::deg) << ", "
-                                   << params_.femur_tibia_delta.numerical_value_in(units::deg)
-                                   << ") degrees");
-            kinematics_->setLegAngles(index, target);
-            break;
-        case Stage::Hold:
-            RCLCPP_DEBUG_STREAM(node_->get_logger(),
-                                "CTestLegsGait: holding " << magic_enum::enum_name(index));
-            break;
-        case Stage::Lower:
-            RCLCPP_INFO_STREAM(node_->get_logger(),
-                               "CTestLegsGait: lowering " << magic_enum::enum_name(index));
-            kinematics_->setLegAngles(index, it->second);
-            break;
     }
 }
 
@@ -157,22 +105,6 @@ bool CTestLegsGait::hasCurrentLeg() const {
 
 ELegIndex CTestLegsGait::currentLeg() const {
     return leg_order_.at(current_leg_index_);
-}
-
-void CTestLegsGait::restoreLeg(ELegIndex index) {
-    const auto it = base_leg_angles_.find(index);
-    if (it != base_leg_angles_.end()) {
-        kinematics_->setLegAngles(index, it->second);
-    }
-}
-
-void CTestLegsGait::restoreAllLegs() {
-    for (const auto& [index, angles] : base_leg_angles_) {
-        kinematics_->setLegAngles(index, angles);
-    }
-    stage_action_applied_ = false;
-    current_leg_index_ = 0;
-    stage_ = Stage::Raise;
 }
 
 }  // namespace brain

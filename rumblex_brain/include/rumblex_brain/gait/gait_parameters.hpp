@@ -7,6 +7,7 @@
 #include "rumblex_utils/units.hpp"
 
 namespace brain {
+namespace units = rumblex_geometry::units;
 
 struct Parameters {
     struct TorsoRoll {
@@ -36,9 +37,7 @@ struct Parameters {
         double velocity_to_phase_gain{60.0};
         units::Length gait_step_length = 0.0 * units::m;
         units::Length leg_lift_height = 0.0 * units::m;
-        double velocity_filter_alpha{0.01};
         double rotation_weight{0.7};
-        double flight_fraction{0.15};  // fraction of half-cycle where both groups are airborne
     };
 
     struct Look {
@@ -81,8 +80,6 @@ struct Parameters {
         double velocity_threshold_wave_ripple{0.3};
         double velocity_threshold_ripple_tripod{0.6};
         double hysteresis_margin{0.05};
-        double transition_phase_span{M_PI};
-        double velocity_filter_alpha{0.01};
         double rotation_weight{0.7};
         double max_linear_velocity{0.01};
         double max_angular_velocity{0.01};
@@ -141,10 +138,10 @@ inline Parameters Parameters::declare(std::shared_ptr<rclcpp::Node> node) {
         node->declare_parameter<double>("gait.running.velocity_to_phase_gain", 60.0);
     params.running.gait_step_length = step_length;
     params.running.leg_lift_height = leg_lift_height;
-    params.running.velocity_filter_alpha =
-        node->declare_parameter<double>("gait.running.velocity_filter_alpha", 0.01);
+    // Legacy configuration keys remain accepted; trajectory planning does not use filters.
+    node->declare_parameter<double>("gait.running.velocity_filter_alpha", 0.01);
     params.running.rotation_weight = node->declare_parameter<double>("gait.running.rotation_weight", 0.7);
-    params.running.flight_fraction = node->declare_parameter<double>("gait.running.flight_fraction", 0.15);
+    node->declare_parameter<double>("gait.running.flight_fraction", 0.15);
 
     // Ripple
     params.ripple.head_yaw_amplitude =
@@ -184,10 +181,8 @@ inline Parameters Parameters::declare(std::shared_ptr<rclcpp::Node> node) {
         node->declare_parameter<double>("gait.move_combined.velocity_threshold_ripple_tripod", 0.6);
     params.move_combined.hysteresis_margin =
         node->declare_parameter<double>("gait.move_combined.hysteresis_margin", 0.05);
-    params.move_combined.transition_phase_span =
-        node->declare_parameter<double>("gait.move_combined.transition_phase_span_rad", M_PI);
-    params.move_combined.velocity_filter_alpha =
-        node->declare_parameter<double>("gait.move_combined.velocity_filter_alpha", 0.1);
+    node->declare_parameter<double>("gait.move_combined.transition_phase_span_rad", M_PI);
+    node->declare_parameter<double>("gait.move_combined.velocity_filter_alpha", 0.1);
     params.move_combined.rotation_weight =
         node->declare_parameter<double>("gait.move_combined.rotation_weight", 0.7);
     params.move_combined.max_linear_velocity =

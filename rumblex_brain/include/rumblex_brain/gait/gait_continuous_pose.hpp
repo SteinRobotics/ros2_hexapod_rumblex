@@ -6,7 +6,6 @@
 #include "gait/gait_interfaces.hpp"
 #include "gait/gait_parameters.hpp"
 #include "gait/pose_model.hpp"
-#include "rumblex_utils/filters.hpp"
 #include "rumblex_utils/linear_interpolation.hpp"
 
 namespace brain {
@@ -32,6 +31,8 @@ class CContinuousPoseGait : public IContinuousGait {
     Parameters::ContinuousPose params_;
     EGaitState state_ = EGaitState::Stopped;
 
+    int tick_ = 10;
+    std::map<ELegIndex, CPosition> toe_origins_;
     CPose torso_origin_ = CPose();
     COrientation head_origin_ = COrientation();
     CPose torso_target_ = CPose();

@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "gait/pose_model.hpp"
+#include "gait/trajectory.hpp"
 #include "rumblex_utils/linear_interpolation.hpp"
 
 namespace {
@@ -90,6 +91,7 @@ bool CClapGait::update() {
             phase_progress_ = std::min(phase_progress_ + kPhaseIncrement, 1.0);
             applyFrontLegsLift(phase_progress_);
             if (phase_progress_ >= 1.0 - 1e-6) {
+                clap_origin_angles_ = kinematics_->getLegAngles();
                 phase_ = EPhase::ClapClosing;
                 phase_progress_ = 0.0;
             }
@@ -144,19 +146,6 @@ bool CClapGait::update() {
         }
     }
 
-    if (state_ == EGaitState::Stopping && phase_ != EPhase::ShiftingForward && phase_ != EPhase::Finished) {
-        // Transition to return to initial position
-        if (phase_ >= EPhase::LiftFrontLegs && phase_ <= EPhase::ClapOpening) {
-            // If front legs are up or in clap, lower them first
-            phase_ = EPhase::LowerFrontLegs;
-            phase_progress_ = 0.0;
-        } else {
-            // Go straight to shifting forward
-            phase_ = EPhase::ShiftingForward;
-            phase_progress_ = 0.0;
-        }
-    }
-
     return true;
 }
 
@@ -173,7 +162,7 @@ void CClapGait::cancelStop() {
 }
 
 void CClapGait::applyTorsoShift(double alpha) {
-    alpha = std::clamp(alpha, 0.0, 1.0);
+    alpha = trajectoryProgress(alpha);
 
     // Shift torso backward
     CPose shifted_torso = initial_torso_pose_;
@@ -184,7 +173,7 @@ void CClapGait::applyTorsoShift(double alpha) {
 }
 
 void CClapGait::applyBackLegLift(ELegIndex leg, double alpha) {
-    alpha = std::clamp(alpha, 0.0, 1.0);
+    alpha = trajectoryProgress(alpha);
 
     // Lift the specified back leg
     auto current_positions = kinematics_->getToePositions();
@@ -198,7 +187,7 @@ void CClapGait::applyBackLegLift(ELegIndex leg, double alpha) {
 }
 
 void CClapGait::applyFrontLegsLift(double alpha) {
-    alpha = std::clamp(alpha, 0.0, 1.0);
+    alpha = trajectoryProgress(alpha);
 
     // Lift both front legs
     auto left_front_pos = initial_toe_positions_.at(ELegIndex::LeftFront);
@@ -212,11 +201,11 @@ void CClapGait::applyFrontLegsLift(double alpha) {
 }
 
 void CClapGait::applyFrontLegsClap(double alpha, [[maybe_unused]] bool closing) {
-    alpha = std::clamp(alpha, 0.0, 1.0);
+    alpha = trajectoryProgress(alpha);
 
     // Get current leg angles
-    auto left_front_angles = kinematics_->getLegAngles(ELegIndex::LeftFront);
-    auto right_front_angles = kinematics_->getLegAngles(ELegIndex::RightFront);
+    auto left_front_angles = clap_origin_angles_.at(ELegIndex::LeftFront);
+    auto right_front_angles = clap_origin_angles_.at(ELegIndex::RightFront);
 
     // Adjust torso_coxa angles to bring legs together (closing) or apart (opening)
     // Left leg rotates clockwise (positive), right leg rotates counter-clockwise (negative)

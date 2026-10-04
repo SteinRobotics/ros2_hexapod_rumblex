@@ -66,14 +66,6 @@ TEST_F(TorsoRollGaitTest, StateTransitionsCoverAllStates) {
     gait_->requestStop();
     EXPECT_EQ(gait_->state(), EGaitState::StopPending);
 
-    // advance until Stopping
-    iters = 0;
-    while (gait_->state() != EGaitState::Stopping && ++iters < max_iters) {
-        gait_->update();
-    }
-    EXPECT_EQ(gait_->state(), EGaitState::Stopping);
-    EXPECT_LT(iters, max_iters);
-
     // advance until final Stopped
     iters = 0;
     while (gait_->state() != EGaitState::Stopped && ++iters < max_iters) {
@@ -102,11 +94,13 @@ TEST_F(TorsoRollGaitTest, StopDuringStartupFinishesAtNeutralTorso) {
     EXPECT_EQ(kinematics_->getTorsoPose(), CPose());
 }
 
-TEST_F(TorsoRollGaitTest, FinalStoppingPhaseCannotBeCancelled) {
-    gait_->start(1.0, 0);
+TEST_F(TorsoRollGaitTest, StopWaitsForClosedCycleWithoutChangingPoseOnRequest) {
+    gait_->start(2.0, 0);
+    gait_->update();
+    const auto before = kinematics_->getTorsoPose();
     gait_->requestStop();
-    for (int i = 0; i < 1000 && gait_->state() != EGaitState::Stopping; ++i) gait_->update();
-    ASSERT_EQ(gait_->state(), EGaitState::Stopping);
-    gait_->cancelStop();
-    EXPECT_EQ(gait_->state(), EGaitState::Stopping);
+    EXPECT_EQ(kinematics_->getTorsoPose(), before);
+    for (int i = 0; i < 100 && gait_->state() != EGaitState::Stopped; ++i) gait_->update();
+    EXPECT_EQ(gait_->state(), EGaitState::Stopped);
+    EXPECT_EQ(kinematics_->getTorsoPose(), CPose());
 }

@@ -1,6 +1,7 @@
 #include "gait/gait_waiting.hpp"
 
 #include "gait/pose_model.hpp"
+#include "gait/trajectory.hpp"
 
 namespace brain {
 CWaitingGait::CWaitingGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics,
@@ -12,28 +13,24 @@ void CWaitingGait::start(double /*duration_s*/, uint8_t /*direction*/) {
     // Directly enter Running; no distinct Starting phase needed.
     state_ = EGaitState::Running;
     phase_ = 0.0;
+    torso_origin_ = kinematics_->getTorsoPose();
+    toe_origins_ = kinematics_->getToePositions();
 }
 
 bool CWaitingGait::update() {
     if (state_ == EGaitState::Stopped) {
         return false;
     }
-    constexpr double kDeltaPhase = 0.1;
-    phase_ += kDeltaPhase;
-
-    // When stopping, finish current lift cycle cleanly.
-    if (state_ == EGaitState::Stopping && utils::isSinValueNearZero(phase_, kDeltaPhase)) {
-        state_ = EGaitState::Stopped;
-        return false;
+    phase_ = std::min(phase_ + 0.1, 2.0 * M_PI);
+    auto torso_target = torso_origin_;
+    const double excursion =
+        phase_ >= 2.0 * M_PI ? 0.0 : std::sin(2.0 * M_PI * trajectoryProgress(phase_ / (2.0 * M_PI)));
+    torso_target.position.z += 0.05 * units::m * excursion;
+    kinematics_->moveTorso(toe_origins_, torso_target);
+    if (phase_ >= 2.0 * M_PI) {
+        phase_ = 0.0;
+        if (state_ == EGaitState::Stopping) state_ = EGaitState::Stopped;
     }
-
-    const auto base_toe_pos = kinematics_->getStandingToePositions();
-    auto torso_target = CPose();
-
-    constexpr auto kTorsoLiftHeight = 0.05 * brain::units::m;       // 5 cm torso lift for visual effect
-    torso_target.position.z = kTorsoLiftHeight * std::sin(phase_);  // Small torso bounce for visual effect
-
-    kinematics_->moveTorso(base_toe_pos, torso_target);
     return true;
 }
 

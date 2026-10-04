@@ -31,6 +31,7 @@ class CLegWaveGait : public ISequenceGait {
     EGaitState state_ = EGaitState::Stopped;
     uint8_t direction_ = 0;
 
+    std::map<ELegIndex, CPosition> origins_;
     double phase_ = double(0);
     ELegIndex active_leg_index_ = ELegIndex::RightFront;
 

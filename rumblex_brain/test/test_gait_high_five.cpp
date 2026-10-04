@@ -110,3 +110,22 @@ TEST_F(HighFiveGaitTest, RequestStopReturnsToNeutralQuickly) {
     EXPECT_NEAR(final_angles.femur_tibia.numerical_value_in(units::deg),
                 initial_angles.femur_tibia.numerical_value_in(units::deg), kAngleTolerance);
 }
+
+TEST_F(HighFiveGaitTest, EarlyStopCompletesRaiseWithoutJumpingToRaisedPose) {
+    CHighFiveGait gait(node_, kinematics_, params_.high_five);
+    auto reference_model = std::make_shared<CPoseModel>(*kinematics_);
+    CHighFiveGait reference(node_, reference_model, params_.high_five);
+    gait.start(2.0, 0);
+    reference.start(2.0, 0);
+    for (int i = 0; i < 3; ++i) {
+        gait.update();
+        reference.update();
+    }
+    gait.requestStop();
+    for (int i = 0; i < 7; ++i) {
+        gait.update();
+        reference.update();
+        EXPECT_EQ(kinematics_->getToePositions(), reference_model->getToePositions());
+        EXPECT_EQ(kinematics_->getHeadOrientation(), reference_model->getHeadOrientation());
+    }
+}

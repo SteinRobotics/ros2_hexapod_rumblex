@@ -39,6 +39,8 @@ class CSinglePoseGait : public IContinuousGait {
     std::map<ELegIndex, CPosition> toe_origins_;
     EGaitState state_ = EGaitState::Stopped;
 
+    CPose torso_target_;
+    COrientation head_target_;
     CPose torso_origin_ = CPose();
     COrientation head_origin_ = COrientation();
 

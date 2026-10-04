@@ -33,6 +33,9 @@ class CLookGait : public ISequenceGait {
     units::Angle amplitude_torso_ = 0.0 * units::deg;
     double delta_phase_ = 0.0;
     double phase_ = 0.0;
+    CPose torso_origin_;
+    COrientation head_origin_;
+    std::map<ELegIndex, CPosition> toe_origins_;
 
     EGaitState state_ = EGaitState::Stopped;
 };

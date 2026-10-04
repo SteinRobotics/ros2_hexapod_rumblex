@@ -1,5 +1,7 @@
 #include "gait/gait_torso_roll.hpp"
 
+#include "gait/trajectory.hpp"
+
 constexpr double kPhaseLimit = TWO_PI;
 constexpr double kUpdateIntervalS = 0.1;  // Update interval in seconds
 
@@ -11,10 +13,11 @@ CTorsoRollGait::CTorsoRollGait(std::shared_ptr<rclcpp::Node> node, std::shared_p
 }
 
 void CTorsoRollGait::start(double duration_s, uint8_t /*direction*/) {
-    assert(duration_s > 0.0 && "CTorsoRollGait::start duration must be positive.");
+    duration_s = std::max(duration_s, 1.0);
     state_ = EGaitState::Starting;
     phase_ = 0.0;
     phase_increment_ = kPhaseLimit / (duration_s / kUpdateIntervalS);
+    torso_origin_ = kinematics_->getTorsoPose();
     origin_leg_positions_ = kinematics_->getToePositions();
 }
 
@@ -22,37 +25,19 @@ bool CTorsoRollGait::update() {
     if (state_ == EGaitState::Stopped) {
         return false;
     }
-    phase_ += phase_increment_;
-    phase_ = std::fmod(phase_, kPhaseLimit);
-
-    // phase_ == M_PI_4 is reached when the leg is moving upwards and the normal cycle goes downwards again
-    if (state_ == EGaitState::Starting && phase_ > M_PI_4) {
-        RCLCPP_INFO(node_->get_logger(), "CTorsoRollGait change to Running.");
-        state_ = EGaitState::Running;
+    phase_ = std::min(phase_ + phase_increment_, kPhaseLimit);
+    const double angle = kPhaseLimit * trajectoryProgress(phase_ / kPhaseLimit);
+    auto torso = torso_origin_;
+    if (phase_ < kPhaseLimit) {
+        torso.orientation.roll += params_.torso_max_roll * std::sin(angle);
+        torso.orientation.pitch += params_.torso_max_pitch * (1.0 - std::cos(angle)) * 0.5;
     }
-    if (state_ == EGaitState::StopPending && utils::areSinCosValuesEqual(phase_, phase_increment_)) {
-        RCLCPP_INFO(node_->get_logger(), "CTorsoRollGait change to Stopping.");
-        state_ = EGaitState::Stopping;
-    } else if (state_ == EGaitState::Stopping && utils::isSinValueNearZero(phase_, phase_increment_)) {
-        RCLCPP_INFO(node_->get_logger(), "CTorsoRollGait change to Stopped.");
-        phase_ = 0.0;
-        state_ = EGaitState::Stopped;
-    }
-
-    auto torso = CPose();
-
-    // Roll is always a sine wave
-    torso.orientation.roll = params_.torso_max_roll * std::sin(phase_);
-
-    // Pitch behavior depends on state
-    if (state_ == EGaitState::Running || state_ == EGaitState::StopPending) {
-        torso.orientation.pitch = params_.torso_max_pitch * std::cos(phase_);
-    } else {
-        // phase_ == M_PI_4 is reached when the leg is moving upwards and the normal cycle goes downwards again
-        torso.orientation.pitch = params_.torso_max_pitch * std::sin(phase_);
-    }
-
     kinematics_->moveTorso(origin_leg_positions_, torso);
+    if (state_ == EGaitState::Starting) state_ = EGaitState::Running;
+    if (phase_ >= kPhaseLimit) {
+        phase_ = 0.0;
+        if (state_ == EGaitState::StopPending) state_ = EGaitState::Stopped;
+    }
     return true;
 }
 

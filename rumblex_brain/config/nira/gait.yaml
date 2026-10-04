@@ -15,9 +15,7 @@ node_brain:
     #### GAIT RUNNING PARAMETERS ####
     gait.running.velocity_to_phase_gain: 60.0  # faster cycle than tripod
     gait.running.head_max_yaw_deg: 5.0                    # deg, minimal head sway at high speed
-    gait.running.velocity_filter_alpha: 0.05
     gait.running.rotation_weight: 0.7
-    gait.running.flight_fraction: 0.15                # fraction of half-cycle where both groups are airborne
 
     #### GAIT RIPPLE PARAMETERS ####
     gait.ripple.velocity_to_phase_gain: 40.0  # [s²/m]

@@ -31,6 +31,7 @@ src/gait/gait_leg_wave.cpp
 src/gait/gait_look.cpp
 src/gait/gait_move_combined.cpp
 src/gait/gait_running.cpp
+src/gait/stride_planner.cpp
 src/gait/gait_single_pose.cpp
 src/gait/gait_test_legs.cpp
 src/gait/gait_torso_roll.cpp
@@ -124,6 +125,8 @@ if(BUILD_TESTING)
   target_link_libraries(test_movement_types rumblex_brain_lib)
   ament_add_gtest(test_coordinator test/test_coordinator.cpp)
   target_link_libraries(test_coordinator rumblex_brain_lib)
+  ament_add_gtest(test_trajectory_transitions test/test_trajectory_transitions.cpp)
+  target_link_libraries(test_trajectory_transitions rumblex_brain_lib)
   ament_add_gtest(test_locomotion_transitions test/test_locomotion_transitions.cpp)
   target_link_libraries(test_locomotion_transitions rumblex_brain_lib)
   ament_add_gtest(test_robot_configuration test/test_robot_configuration.cpp)

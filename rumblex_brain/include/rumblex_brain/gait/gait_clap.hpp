@@ -54,6 +54,7 @@ class CClapGait : public ISequenceGait {
     // Store initial positions
     std::map<ELegIndex, CPosition> initial_toe_positions_;
     CPose initial_torso_pose_;
+    std::map<ELegIndex, CLegAngles> clap_origin_angles_;
 
     double phase_progress_ = 0.0;
     int clap_iterations_remaining_ = 0;

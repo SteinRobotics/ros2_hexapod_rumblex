@@ -154,3 +154,23 @@ TEST_F(ClapGaitTest, RequestStopReturnsToInitialState) {
     EXPECT_NEAR(final_torso.position.x.numerical_value_in(units::m),
                 initial_torso.position.x.numerical_value_in(units::m), kPositionTolerance);
 }
+
+TEST_F(ClapGaitTest, ClapExcursionDoesNotAccumulateBetweenSamplesOrCycles) {
+    kinematics_->moveTorso(kinematics_->getStandingToePositions());
+    CClapGait gait(node_, kinematics_, params_.clap);
+    gait.start(3.0, 0);
+    for (int i = 0; i < 60; ++i) gait.update();
+    const auto origin = kinematics_->getLegAngles(ELegIndex::LeftFront).torso_coxa;
+    for (int cycle = 0; cycle < 3; ++cycle) {
+        for (int i = 0; i < 5; ++i) {
+            gait.update();
+            const auto offset = kinematics_->getLegAngles(ELegIndex::LeftFront).torso_coxa - origin;
+            EXPECT_GE(offset, 0.0 * units::deg);
+            EXPECT_LE(offset, 30.0 * units::deg);
+        }
+        for (int i = 0; i < 5; ++i) gait.update();
+        EXPECT_NEAR((kinematics_->getLegAngles(ELegIndex::LeftFront).torso_coxa - origin)
+                        .numerical_value_in(units::deg),
+                    0.0, 1e-9);
+    }
+}

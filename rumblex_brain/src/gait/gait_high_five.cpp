@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "gait/pose_model.hpp"
+#include "gait/trajectory.hpp"
 #include "rumblex_utils/linear_interpolation.hpp"
 
 namespace {
@@ -73,13 +74,7 @@ bool CHighFiveGait::update() {
     if (phase_ == EPhase::Finished) {
         state_ = EGaitState::Stopped;
         RCLCPP_INFO(node_->get_logger(), "CHighFiveGait::update completed, high five finished.");
-        return false;
-    }
-
-    if (state_ == EGaitState::Stopping && phase_ != EPhase::Lowering) {
-        transitionToLowering();
-    } else if (phase_ != EPhase::Finished) {
-        state_ = EGaitState::Running;
+        return true;
     }
 
     return true;
@@ -88,7 +83,6 @@ bool CHighFiveGait::update() {
 void CHighFiveGait::requestStop() {
     if (state_ == EGaitState::Running) {
         state_ = EGaitState::Stopping;
-        transitionToLowering();
     }
 }
 
@@ -99,7 +93,7 @@ void CHighFiveGait::cancelStop() {
 }
 
 void CHighFiveGait::applyInterpolatedPose(double alpha) {
-    alpha = std::clamp(alpha, 0.0, 1.0);
+    alpha = trajectoryProgress(alpha);
     // use CLegAngles member interpolation
     const auto leg_angles = initial_leg_angles_.linearInterpolate(target_leg_angles_, alpha);
     kinematics_->setLegAngles(ELegIndex::RightFront, leg_angles);

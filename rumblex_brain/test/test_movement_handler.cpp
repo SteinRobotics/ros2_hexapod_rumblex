@@ -71,6 +71,8 @@ TEST_F(MovementHandlerTest, WaitsForFeedbackAndDoesNotStartDurationEarly) {
     EXPECT_FALSE(handler->done());
     feedback->publish(initialPose());
     pump(400ms);
+    EXPECT_FALSE(handler->done());
+    pump(800ms);
     EXPECT_TRUE(handler->done());
     ASSERT_FALSE(poses.empty());
     EXPECT_TRUE(validBodyPose(poses.back()));
@@ -111,8 +113,15 @@ TEST_F(MovementHandlerTest, VelocityIsZeroDuringNonWalkingGait) {
     pump(300ms);
     ASSERT_FALSE(velocities.empty());
     EXPECT_DOUBLE_EQ(velocities.back().linear.x, 0.01);
+    bool activated = false;
+    handler->on_gait_changed = [&](const MovementRequest& request) {
+        if (request.type == MovementRequest::SEQUENCE_STAND_UP) activated = true;
+    };
     request(MovementRequest::SEQUENCE_STAND_UP);
-    pump(1500ms);
+    // A graceful walking stop completes its swing and places each foot group.
+    for (int i = 0; i < 160 && !activated; ++i) pump(50ms);
+    ASSERT_TRUE(activated);
+    pump(150ms);
     EXPECT_DOUBLE_EQ(velocities.back().linear.x, 0.0);
 }
 
@@ -181,7 +190,7 @@ TEST_F(MovementHandlerTest, PendingFiniteGaitWaitsForItsOwnCompletion) {
     request(MovementRequest::SEQUENCE_LAYDOWN, 0.2);
     pump(350ms);
     EXPECT_FALSE(handler->done());
-    pump(800ms);
+    pump(1800ms);
     EXPECT_TRUE(handler->done());
 }
 
@@ -190,7 +199,7 @@ TEST_F(MovementHandlerTest, SameTypeFiniteRequestCompletesAndInvalidRequestDoesN
     pump(150ms);
     // Laydown is already selected when the controller is constructed.
     request(MovementRequest::SEQUENCE_LAYDOWN, 0.2);
-    pump(350ms);
+    pump(1200ms);
     EXPECT_TRUE(handler->done());
     request(MovementRequest::NO_REQUEST);
     EXPECT_TRUE(handler->done());

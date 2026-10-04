@@ -33,6 +33,8 @@ class CWaitingGait : public ISequenceGait {
 
     EGaitState state_ = EGaitState::Stopped;
 
+    CPose torso_origin_;
+    std::map<ELegIndex, CPosition> toe_origins_;
     double phase_ = double(0);
 };
 

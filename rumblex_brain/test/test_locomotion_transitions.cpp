@@ -52,15 +52,19 @@ class LocomotionTransitionTest : public ::testing::TestWithParam<MovementRequest
     geometry_msgs::msg::Twist forward_;
 };
 
-TEST_P(LocomotionTransitionTest, StopsStartupWithoutVelocityAndRestoresPose) {
+TEST_P(LocomotionTransitionTest, StoppingBeforeFirstSegmentHoldsActualPose) {
     model_->setHeadOrientation(COrientation(5.0, 10.0, 15.0));
+    const auto before = model_->getToePositions();
+    const auto head = model_->getHeadOrientation();
     gait_->start(0.0, MovementRequest::CLOCKWISE);
     gait_->requestStop();
     ASSERT_EQ(gait_->state(), EGaitState::StopPending);
     const CPose torso(0.0, 0.0, 0.01, 0.0, 0.0, 0.0);
-    EXPECT_TRUE(gait_->update(geometry_msgs::msg::Twist(), torso, COrientation()));
+    EXPECT_FALSE(gait_->update(geometry_msgs::msg::Twist(), torso, COrientation()));
     EXPECT_EQ(gait_->state(), EGaitState::Stopped);
-    expectStanding(torso);
+    EXPECT_EQ(model_->getToePositions(), before);
+    EXPECT_EQ(model_->getHeadOrientation(), head);
+    EXPECT_EQ(model_->getTorsoPose(), CPose());
     EXPECT_FALSE(gait_->update(forward_, torso, COrientation()));
 }
 
@@ -77,6 +81,8 @@ TEST_P(LocomotionTransitionTest, RunningStopCanBeCancelledWithoutRestartingTraje
     startRunning();
     ASSERT_EQ(gait_->state(), EGaitState::Running);
     auto control_model = std::make_shared<CPoseModel>(*model_);
+    control_model->moveTorso(control_model->getStandingToePositions());
+    control_model->setHeadOrientation(COrientation());
     auto control = makeGait(control_model);
     control->start(0.0, MovementRequest::CLOCKWISE);
     for (int i = 0; i < 1000 && control->state() != EGaitState::Running; ++i) {
@@ -119,7 +125,7 @@ TEST_P(LocomotionTransitionTest, RestartAfterStopWaitsForNewVelocity) {
     EXPECT_FALSE(gait_->update(geometry_msgs::msg::Twist(), CPose(), COrientation()));
     EXPECT_EQ(gait_->state(), EGaitState::Starting);
     gait_->requestStop();
-    EXPECT_TRUE(gait_->update(geometry_msgs::msg::Twist(), CPose(), COrientation()));
+    gait_->update(geometry_msgs::msg::Twist(), CPose(), COrientation());
     expectStanding();
 }
 
