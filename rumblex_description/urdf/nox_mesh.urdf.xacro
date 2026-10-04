@@ -32,7 +32,8 @@
     <parent link="base_link"/>
     <child link="head_yaw_link"/>
     <origin xyz="0.140175 0 0.0525" rpy="${pi} 0 0"/>
-    <axis xyz="0 0 1"/>
+    <!-- The flipped joint frame needs -Z for positive yaw about torso +Z. -->
+    <axis xyz="0 0 -1"/>
     <limit lower="${-30*pi/180}" upper="${30*pi/180}" effort="1.5" velocity="4.0"/>
   </joint>
   <link name="head_yaw_link">

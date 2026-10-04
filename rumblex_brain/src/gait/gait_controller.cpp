@@ -33,7 +33,9 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
             COrientation(0.0 * units::deg, -params_.single_pose.head_max_pitch, 0.0 * units::deg)});
     gaits_[MovementRequest::SEQUENCE_LEGS_WAVE] =
         std::make_shared<CLegWaveGait>(node_, kinematics_, params_.leg_wave);
-    gaits_[MovementRequest::SEQUENCE_LOOK] = std::make_shared<CLookGait>(node_, kinematics_, params_.look);
+    gaits_[MovementRequest::SEQUENCE_LOOK] =
+        std::make_shared<CYawSequenceGait>(node_, kinematics_, CYawSequenceGait::Sweep::OneSide,
+                                           params_.look.head_max_yaw, params_.look.torso_max_yaw);
     gaits_[MovementRequest::CONTINUOUS_MOVE] = std::make_shared<CMoveCombinedGait>(
         node_, kinematics_, params_.wave, params_.ripple, params_.tripod, params_.move_combined);
     gaits_[MovementRequest::CONTINUOUS_RUNNING] =
@@ -49,7 +51,8 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
         std::make_shared<CContinuousPoseGait>(node_, kinematics_, params_.continuous_pose);
     gaits_[MovementRequest::SEQUENCE_WAITING] =
         std::make_shared<CWaitingGait>(node_, kinematics_, params_.waiting);
-    gaits_[MovementRequest::SEQUENCE_WATCH] = std::make_shared<CWatchGait>(node_, kinematics_, params_.watch);
+    gaits_[MovementRequest::SEQUENCE_WATCH] = std::make_shared<CYawSequenceGait>(
+        node_, kinematics_, CYawSequenceGait::Sweep::BothSides, params_.watch.head_max_yaw, 0.0 * units::deg);
 
     // Default active gait (robot starts laying down)
     active_gait_ = gaits_[MovementRequest::SEQUENCE_LAYDOWN];

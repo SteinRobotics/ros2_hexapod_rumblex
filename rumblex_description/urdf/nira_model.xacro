@@ -99,8 +99,9 @@
     <xacro:nira_leg prefix="left_mid" xyz="0 -0.095175 0.0525" rpy="3.14159265359 0 -1.57079632679" meshes="${meshes}"/>
     <xacro:nira_leg prefix="left_back" xyz="-0.11476587931 -0.0697658793104 0.0525" rpy="-3.14159265359 0 -2.35619449019" meshes="${meshes}"/>
 
+    <!-- The flipped joint frame needs -Z for positive yaw about torso +Z. -->
     <xacro:nira_joint name="head_yaw_joint" parent="base_link" child="head_yaw_link"
-                      xyz="0.140175 0 0.0525" rpy="3.14159265359 0 0" axis="0 0 1" lower="-30" upper="30"/>
+                      xyz="0.140175 0 0.0525" rpy="3.14159265359 0 0" axis="0 0 -1" lower="-30" upper="30"/>
     <xacro:nira_link name="head_yaw_link" mesh="assembly_coxa"
                      xyz="0.0295 0 0.0185" rpy="-1.57079632679 0 1.57079632679"
                      center="0.0265656926794 0 0.0170032120995" size="0.0781313853589 0.041 0.043993575801"

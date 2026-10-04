@@ -28,7 +28,6 @@ src/gait/gait_continuous_pose.cpp
 src/gait/gait_controller.cpp
 src/gait/gait_high_five.cpp
 src/gait/gait_leg_wave.cpp
-src/gait/gait_look.cpp
 src/gait/gait_move_combined.cpp
 src/gait/gait_running.cpp
 src/gait/stride_planner.cpp
@@ -36,7 +35,7 @@ src/gait/gait_single_pose.cpp
 src/gait/gait_test_legs.cpp
 src/gait/gait_torso_roll.cpp
 src/gait/gait_waiting.cpp
-src/gait/gait_watch.cpp
+src/gait/gait_yaw_sequence.cpp
 src/requester/coordinator.cpp
 src/action/action_planner.cpp
 src/requester/recognition.cpp
@@ -138,6 +137,8 @@ if(BUILD_TESTING)
   target_link_libraries(test_body_pose rumblex_brain_lib)
   ament_add_gtest(test_gait_clap test/test_gait_clap.cpp)
   target_link_libraries(test_gait_clap rumblex_brain_lib)
+  ament_add_gtest(test_gait_yaw_sequence test/test_gait_yaw_sequence.cpp)
+  target_link_libraries(test_gait_yaw_sequence rumblex_brain_lib)
   ament_add_gtest(test_gait_controller test/test_gait_controller.cpp)
   target_link_libraries(test_gait_controller rumblex_brain_lib)
   ament_add_gtest(test_gait_high_five test/test_gait_high_five.cpp)

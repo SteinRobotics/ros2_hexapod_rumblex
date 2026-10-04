@@ -1,5 +1,6 @@
 """Headless description checks; run with the ROS environment sourced."""
 from pathlib import Path
+import math
 import unittest
 from unittest.mock import patch
 import xml.etree.ElementTree as ET
@@ -37,6 +38,22 @@ class NiraDescriptionTests(unittest.TestCase):
         for element in mesh.findall('.//mesh'):
             self.assertTrue((ROOT / element.get('filename').removeprefix('package://')).is_file())
             self.assertEqual(element.get('scale'), '0.001 0.001 0.001')
+
+    def test_head_yaw_rotates_about_positive_torso_z(self):
+        for mesh in (False, True):
+            joint = expand(mesh).find("joint[@name='head_yaw_joint']")
+            self.assertEqual(joint.find('parent').get('link'), 'base_link')
+            roll, pitch, yaw = map(float, joint.find('origin').get('rpy').split())
+            ax, ay, az = map(float, joint.find('axis').get('xyz').split())
+            # Rotate the local axis by the joint's ZYX mounting rotation.
+            x = ax
+            y = math.cos(roll) * ay - math.sin(roll) * az
+            z = math.sin(roll) * ay + math.cos(roll) * az
+            x, z = math.cos(pitch) * x + math.sin(pitch) * z, -math.sin(pitch) * x + math.cos(pitch) * z
+            x, y = math.cos(yaw) * x - math.sin(yaw) * y, math.sin(yaw) * x + math.cos(yaw) * y
+            self.assertAlmostEqual(x, 0.0)
+            self.assertAlmostEqual(y, 0.0)
+            self.assertAlmostEqual(z, 1.0)
 
     def test_simulation_uses_nira_controller_and_all_moving_joints(self):
         for mesh in (False, True):

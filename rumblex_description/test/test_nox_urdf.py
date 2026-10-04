@@ -1,5 +1,6 @@
 """Check Nox mesh resources, joint tree and simulation configuration."""
 from pathlib import Path
+import math
 import unittest
 from unittest.mock import patch
 import xml.etree.ElementTree as ET
@@ -10,8 +11,8 @@ import xacro.substitution_args
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def expand(sim=False):
-    path = ROOT / 'rumblex_description/urdf/nox_mesh.urdf.xacro'
+def expand(mesh=True, sim=False):
+    path = ROOT / 'rumblex_description/urdf' / ('nox_mesh.urdf.xacro' if mesh else 'nox.urdf.xacro')
     with patch('xacro.substitution_args._eval_find', side_effect=lambda name: str(ROOT / name)):
         return ET.fromstring(xacro.process_file(str(path), mappings={'use_sim': str(sim).lower()}).toxml())
 
@@ -34,9 +35,25 @@ class NoxDescriptionTests(unittest.TestCase):
                            if j.find('parent').get('link') in reached)
         self.assertEqual(reached, links)
 
+    def test_head_yaw_rotates_about_positive_torso_z(self):
+        for mesh in (False, True):
+            joint = expand(mesh).find("joint[@name='head_yaw_joint']")
+            self.assertEqual(joint.find('parent').get('link'), 'base_link')
+            roll, pitch, yaw = map(float, joint.find('origin').get('rpy').split())
+            ax, ay, az = map(float, joint.find('axis').get('xyz').split())
+            # Rotate the local axis by the joint's ZYX mounting rotation.
+            x = ax
+            y = math.cos(roll) * ay - math.sin(roll) * az
+            z = math.sin(roll) * ay + math.cos(roll) * az
+            x, z = math.cos(pitch) * x + math.sin(pitch) * z, -math.sin(pitch) * x + math.cos(pitch) * z
+            x, y = math.cos(yaw) * x - math.sin(yaw) * y, math.sin(yaw) * x + math.cos(yaw) * y
+            self.assertAlmostEqual(x, 0.0)
+            self.assertAlmostEqual(y, 0.0)
+            self.assertAlmostEqual(z, 1.0)
+
     def test_simulation_configuration(self):
         self.assertIsNone(expand().find('ros2_control'))
-        model = expand(True)
+        model = expand(sim=True)
         self.assertEqual({j.get('name') for j in model.findall('ros2_control/joint')},
                          {j.get('name') for j in model.findall('joint') if j.get('type') == 'revolute'})
         controller = Path(model.find('gazebo/plugin/parameters').text)
