@@ -12,11 +12,11 @@
 
 #include "handler/servo_protocol.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "requester/types.hpp"
 #include "rumblex_interfaces/msg/servo_angle.hpp"
 #include "rumblex_interfaces/msg/servo_angles.hpp"
 #include "rumblex_interfaces/msg/servo_direct_request.hpp"
 #include "rumblex_interfaces/msg/servo_status.hpp"
+#include "rumblex_utils/body_types.hpp"
 #include "std_msgs/msg/header.hpp"
 
 namespace rumblex_movement {
@@ -116,7 +116,8 @@ class CServoController {
     void triggerConnection();
 
     using InitialAnglesCallback =
-        std::function<void(const std::map<ELegIndex, CLegAngles>&, const COrientation&)>;
+        std::function<void(const std::map<rumblex_geometry::ELegIndex, rumblex_geometry::CLegAngles>&,
+                           const rumblex_geometry::COrientation&)>;
     void setInitialAnglesCallback(InitialAnglesCallback callback);
 
    private:

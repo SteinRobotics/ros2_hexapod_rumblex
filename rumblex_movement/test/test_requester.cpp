@@ -84,20 +84,21 @@ TEST_F(RequesterTest, BodyPoseForwardsAllTargetsAndOnlySendsLatestCommand) {
     rclcpp::NodeOptions options;
     options.parameter_overrides(test_helpers::defaultKinematicsParameters());
     auto reference_node = std::make_shared<rclcpp::Node>("reference", options);
-    CKinematics reference(reference_node);
-    reference.moveTorso(reference.getStandingToePositions(), CPose(0.005, 0.0, 0.0, 1.0, 2.0, 3.0));
-    reference.setHeadOrientation(COrientation(0.0, 12.0, -23.0));
-    auto msg = bodyPose(reference);
+    rumblex_geometry::CBodyModel reference(reference_node);
+    reference.moveTorso(reference.getStandingToePositions(),
+                        rumblex_geometry::CPose(0.005, 0.0, 0.0, 1.0, 2.0, 3.0));
+    reference.setHeadOrientation(rumblex_geometry::COrientation(0.0, 12.0, -23.0));
+    auto msg = rumblex_geometry::bodyPose(reference);
     requester_->onBodyPose(msg);
-    reference.setHeadOrientation(COrientation(0.0, 15.0, -20.0));
-    msg = bodyPose(reference);
+    reference.setHeadOrientation(rumblex_geometry::COrientation(0.0, 15.0, -20.0));
+    msg = rumblex_geometry::bodyPose(reference);
     requester_->onBodyPose(msg);
     requester_->update(100ms);
     auto requests = servo_handler_mock_->getRequests();
     ASSERT_EQ(requests.size(), 1u);
     EXPECT_DOUBLE_EQ(requests.back()->duration(), 0.1);
     expectHeadNear(reference.getHeadOrientation(), requests.back()->getHeadOrientation());
-    for (auto leg : bodyLegOrder)
+    for (auto leg : rumblex_geometry::bodyLegOrder)
         expectAnglesNear(reference.getLegAngles(leg), requests.back()->getLegAngles().at(leg));
     requester_->update(100ms);
     EXPECT_EQ(servo_handler_mock_->getRequests().size(), 1u);

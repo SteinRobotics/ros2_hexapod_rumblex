@@ -3,9 +3,9 @@
 #include <numbers>
 #include <type_traits>
 
-#include "units.hpp"
+#include "rumblex_utils/units.hpp"
 
-using namespace rumblex_movement::units;
+using namespace rumblex_geometry::units;
 
 static_assert(!std::is_constructible_v<Length, decltype(1.0 * deg)>);
 static_assert(!std::is_constructible_v<decltype(1.0 * rad), double>);

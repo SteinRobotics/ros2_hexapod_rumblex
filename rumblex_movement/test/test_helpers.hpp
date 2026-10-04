@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
-#include "requester/kinematics.hpp"
+#include "rumblex_utils/body_types.hpp"
 
 namespace rumblex_movement::test_helpers {
 
@@ -60,60 +60,69 @@ inline std::vector<rclcpp::Parameter> defaultRobotParameters() {
     return defaultKinematicsParameters();
 }
 
-// Reusable helper to compare CPosition
-inline void expectPositionNear(const CPosition& expected, const CPosition& actual,
-                               const std::string& msg = "", double tolerance = 1e-3) {
-    EXPECT_NEAR(expected.x.numerical_value_in(units::m), actual.x.numerical_value_in(units::m), tolerance)
+// Reusable helper to compare rumblex_geometry::CPosition
+inline void expectPositionNear(const rumblex_geometry::CPosition& expected,
+                               const rumblex_geometry::CPosition& actual, const std::string& msg = "",
+                               double tolerance = 1e-3) {
+    EXPECT_NEAR(expected.x.numerical_value_in(rumblex_geometry::units::m),
+                actual.x.numerical_value_in(rumblex_geometry::units::m), tolerance)
         << msg;
-    EXPECT_NEAR(expected.y.numerical_value_in(units::m), actual.y.numerical_value_in(units::m), tolerance)
+    EXPECT_NEAR(expected.y.numerical_value_in(rumblex_geometry::units::m),
+                actual.y.numerical_value_in(rumblex_geometry::units::m), tolerance)
         << msg;
-    EXPECT_NEAR(expected.z.numerical_value_in(units::m), actual.z.numerical_value_in(units::m), tolerance)
-        << msg;
-}
-
-// Reusable helper to compare CLegAngles
-inline void expectAnglesNear(const CLegAngles& expected, const CLegAngles& actual,
-                             const std::string& msg = "", double tolerance = 1e-3) {
-    EXPECT_NEAR(expected.torso_coxa.numerical_value_in(units::deg),
-                actual.torso_coxa.numerical_value_in(units::deg), tolerance)
-        << msg;
-    EXPECT_NEAR(expected.coxa_femur.numerical_value_in(units::deg),
-                actual.coxa_femur.numerical_value_in(units::deg), tolerance)
-        << msg;
-    EXPECT_NEAR(expected.femur_tibia.numerical_value_in(units::deg),
-                actual.femur_tibia.numerical_value_in(units::deg), tolerance)
+    EXPECT_NEAR(expected.z.numerical_value_in(rumblex_geometry::units::m),
+                actual.z.numerical_value_in(rumblex_geometry::units::m), tolerance)
         << msg;
 }
 
-// Compare CPose component-wise (position + orientation)
-inline void expectPoseNear(const CPose& expected, const CPose& actual, const std::string& msg = "") {
+// Reusable helper to compare rumblex_geometry::CLegAngles
+inline void expectAnglesNear(const rumblex_geometry::CLegAngles& expected,
+                             const rumblex_geometry::CLegAngles& actual, const std::string& msg = "",
+                             double tolerance = 1e-3) {
+    EXPECT_NEAR(expected.torso_coxa.numerical_value_in(rumblex_geometry::units::deg),
+                actual.torso_coxa.numerical_value_in(rumblex_geometry::units::deg), tolerance)
+        << msg;
+    EXPECT_NEAR(expected.coxa_femur.numerical_value_in(rumblex_geometry::units::deg),
+                actual.coxa_femur.numerical_value_in(rumblex_geometry::units::deg), tolerance)
+        << msg;
+    EXPECT_NEAR(expected.femur_tibia.numerical_value_in(rumblex_geometry::units::deg),
+                actual.femur_tibia.numerical_value_in(rumblex_geometry::units::deg), tolerance)
+        << msg;
+}
+
+// Compare rumblex_geometry::CPose component-wise (position + orientation)
+inline void expectPoseNear(const rumblex_geometry::CPose& expected, const rumblex_geometry::CPose& actual,
+                           const std::string& msg = "") {
     expectPositionNear(expected.position, actual.position, msg);
-    EXPECT_DOUBLE_EQ(expected.orientation.roll.numerical_value_in(units::deg),
-                     actual.orientation.roll.numerical_value_in(units::deg))
+    EXPECT_DOUBLE_EQ(expected.orientation.roll.numerical_value_in(rumblex_geometry::units::deg),
+                     actual.orientation.roll.numerical_value_in(rumblex_geometry::units::deg))
         << msg;
-    EXPECT_DOUBLE_EQ(expected.orientation.pitch.numerical_value_in(units::deg),
-                     actual.orientation.pitch.numerical_value_in(units::deg))
+    EXPECT_DOUBLE_EQ(expected.orientation.pitch.numerical_value_in(rumblex_geometry::units::deg),
+                     actual.orientation.pitch.numerical_value_in(rumblex_geometry::units::deg))
         << msg;
-    EXPECT_DOUBLE_EQ(expected.orientation.yaw.numerical_value_in(units::deg),
-                     actual.orientation.yaw.numerical_value_in(units::deg))
+    EXPECT_DOUBLE_EQ(expected.orientation.yaw.numerical_value_in(rumblex_geometry::units::deg),
+                     actual.orientation.yaw.numerical_value_in(rumblex_geometry::units::deg))
         << msg;
 }
 
-// Compare CLeg (angles + toe position)
-inline void expectLegNear(const CLeg& expected, const CLeg& actual, const std::string& msg = "") {
+// Compare rumblex_geometry::CLeg (angles + toe position)
+inline void expectLegNear(const rumblex_geometry::CLeg& expected, const rumblex_geometry::CLeg& actual,
+                          const std::string& msg = "") {
     expectAnglesNear(expected.angles, actual.angles, msg);
     expectPositionNear(expected.toe_position, actual.toe_position, msg);
 }
 
-// Compare COrientation (roll, pitch, yaw) - for head, roll should be 0.0
-inline void expectHeadNear(const COrientation& expected, const COrientation& actual,
-                           const std::string& msg = "") {
-    EXPECT_DOUBLE_EQ(expected.roll.numerical_value_in(units::deg), actual.roll.numerical_value_in(units::deg))
+// Compare rumblex_geometry::COrientation (roll, pitch, yaw) - for head, roll should be 0.0
+inline void expectHeadNear(const rumblex_geometry::COrientation& expected,
+                           const rumblex_geometry::COrientation& actual, const std::string& msg = "") {
+    EXPECT_DOUBLE_EQ(expected.roll.numerical_value_in(rumblex_geometry::units::deg),
+                     actual.roll.numerical_value_in(rumblex_geometry::units::deg))
         << msg;
-    EXPECT_DOUBLE_EQ(expected.pitch.numerical_value_in(units::deg),
-                     actual.pitch.numerical_value_in(units::deg))
+    EXPECT_DOUBLE_EQ(expected.pitch.numerical_value_in(rumblex_geometry::units::deg),
+                     actual.pitch.numerical_value_in(rumblex_geometry::units::deg))
         << msg;
-    EXPECT_DOUBLE_EQ(expected.yaw.numerical_value_in(units::deg), actual.yaw.numerical_value_in(units::deg))
+    EXPECT_DOUBLE_EQ(expected.yaw.numerical_value_in(rumblex_geometry::units::deg),
+                     actual.yaw.numerical_value_in(rumblex_geometry::units::deg))
         << msg;
 }
 

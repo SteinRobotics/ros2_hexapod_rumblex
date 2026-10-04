@@ -18,7 +18,7 @@
 //
 
 #include "handler/servo_handler.hpp"
-#include "kinematics.hpp"
+#include "rumblex_utils/body_model.hpp"
 
 namespace rumblex_movement {
 
@@ -39,10 +39,11 @@ class CRequester {
     void sendServoRequest(const double duration_s);
 
     std::shared_ptr<rclcpp::Node> node_;
-    std::shared_ptr<CKinematics> kinematics_;
+    std::shared_ptr<rumblex_geometry::CBodyModel> kinematics_;
     std::shared_ptr<CServoHandler> servo_handler_;
 
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr pub_joint_states_;
-    void publishJointStates(const std::map<ELegIndex, CLegAngles>& legs, const COrientation& head);
+    void publishJointStates(const std::map<rumblex_geometry::ELegIndex, rumblex_geometry::CLegAngles>& legs,
+                            const rumblex_geometry::COrientation& head);
 };
 }  // namespace rumblex_movement

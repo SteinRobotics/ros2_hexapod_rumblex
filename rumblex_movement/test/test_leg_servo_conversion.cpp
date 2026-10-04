@@ -15,9 +15,9 @@ using leg_servo_conversion::servoAnglesMsgToLegAngles;
 using rumblex_interfaces::msg::ServoIndex;
 
 TEST(LegServoConversionTest, LegAnglesMapToServoTargets) {
-    std::map<ELegIndex, CLegAngles> leg_angles;
-    leg_angles[ELegIndex::RightFront] = CLegAngles(10.0, 20.0, 30.0);
-    leg_angles[ELegIndex::LeftBack] = CLegAngles(-5.0, -10.0, -15.0);
+    std::map<rumblex_geometry::ELegIndex, rumblex_geometry::CLegAngles> leg_angles;
+    leg_angles[rumblex_geometry::ELegIndex::RightFront] = rumblex_geometry::CLegAngles(10.0, 20.0, 30.0);
+    leg_angles[rumblex_geometry::ELegIndex::LeftBack] = rumblex_geometry::CLegAngles(-5.0, -10.0, -15.0);
 
     std::map<uint32_t, double> target_angles;
     appendLegServoTargets(leg_angles, target_angles);
@@ -32,7 +32,7 @@ TEST(LegServoConversionTest, LegAnglesMapToServoTargets) {
     EXPECT_DOUBLE_EQ(target_angles.at(ServoIndex::LEG_LEFT_BACK_FEMUR), -10.0);
     EXPECT_DOUBLE_EQ(target_angles.at(ServoIndex::LEG_LEFT_BACK_TIBIA), -15.0);
 
-    COrientation head(0.0, -7.5, 5.0);
+    rumblex_geometry::COrientation head(0.0, -7.5, 5.0);
     auto combined = buildServoTargets(head, leg_angles);
     EXPECT_DOUBLE_EQ(combined.at(ServoIndex::HEAD_YAW), 5.0);
     EXPECT_DOUBLE_EQ(combined.at(ServoIndex::HEAD_PITCH), -7.5);
@@ -49,10 +49,16 @@ TEST(LegServoConversionTest, ServoAnglesMessageMapsToLegAngles) {
 
     auto result = servoAnglesMsgToLegAngles(msg);
 
-    ASSERT_NE(result.find(ELegIndex::RightFront), result.end());
-    EXPECT_DOUBLE_EQ(result.at(ELegIndex::RightFront).torso_coxa.numerical_value_in(units::deg), 12.5);
-    EXPECT_DOUBLE_EQ(result.at(ELegIndex::RightFront).coxa_femur.numerical_value_in(units::deg), -4.0);
+    ASSERT_NE(result.find(rumblex_geometry::ELegIndex::RightFront), result.end());
+    EXPECT_DOUBLE_EQ(result.at(rumblex_geometry::ELegIndex::RightFront)
+                         .torso_coxa.numerical_value_in(rumblex_geometry::units::deg),
+                     12.5);
+    EXPECT_DOUBLE_EQ(result.at(rumblex_geometry::ELegIndex::RightFront)
+                         .coxa_femur.numerical_value_in(rumblex_geometry::units::deg),
+                     -4.0);
 
-    ASSERT_NE(result.find(ELegIndex::LeftBack), result.end());
-    EXPECT_DOUBLE_EQ(result.at(ELegIndex::LeftBack).femur_tibia.numerical_value_in(units::deg), 3.25);
+    ASSERT_NE(result.find(rumblex_geometry::ELegIndex::LeftBack), result.end());
+    EXPECT_DOUBLE_EQ(result.at(rumblex_geometry::ELegIndex::LeftBack)
+                         .femur_tibia.numerical_value_in(rumblex_geometry::units::deg),
+                     3.25);
 }

@@ -3,7 +3,7 @@
 See [the body-pose pipeline](../rumblex_brain/MOVEMENT.md) for the brain/movement interface and configuration migration.
 
 Kinematics uses [mp-units](https://mpusz.github.io/mp-units/2.5/) for link lengths,
-squared lengths, and angles. `units.hpp` exposes `m`, `mm`, `deg`, and `rad` plus
+squared lengths, and angles. `rumblex_utils/units.hpp` exposes `m`, `mm`, `deg`, and `rad` plus
 the `Length`, `Area`, and `Angle` quantity types. For example, `units::Length length =
 50.0 * units::mm` represents the same length as `0.050 * units::m`.
 Extract numbers explicitly with `.numerical_value_in(unit)` at existing interfaces.
@@ -23,9 +23,19 @@ rename list. Custom configurations must migrate to the new keys.
 
 `CLeg` stores its joint angles in `angles`. Arithmetic and
 interpolation preserve units, and assignments reject bare numbers or quantities
-of the wrong dimension. For example:
+of the wrong dimension.
+
+The geometry types are defined in `rumblex_utils/body_types.hpp` under
+`rumblex_geometry`. Movement uses `rumblex_geometry::CBodyModel` directly from
+`rumblex_utils/body_model.hpp`. For example:
 
 ```cpp
+#include "rumblex_utils/body_types.hpp"
+
+namespace units = rumblex_geometry::units;
+using rumblex_geometry::CPosition;
+using rumblex_geometry::CLegAngles;
+
 CPosition toe;
 toe.x = 50.0 * units::mm;
 CLegAngles joints;

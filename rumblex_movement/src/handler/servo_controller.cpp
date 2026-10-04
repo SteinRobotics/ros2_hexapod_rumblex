@@ -208,8 +208,8 @@ void CServoController::initServos() {
         auto initial_leg_angles_deg = leg_servo_conversion::servoAnglesMsgToLegAngles(msg_angles);
         initial_angles_callback_(
             initial_leg_angles_deg,
-            COrientation(0.0, msg_angles.current_angles[ServoIndex::HEAD_PITCH].angle_deg,
-                         msg_angles.current_angles[ServoIndex::HEAD_YAW].angle_deg));
+            rumblex_geometry::COrientation(0.0, msg_angles.current_angles[ServoIndex::HEAD_PITCH].angle_deg,
+                                           msg_angles.current_angles[ServoIndex::HEAD_YAW].angle_deg));
     }
 
     if (pub_angles_) {

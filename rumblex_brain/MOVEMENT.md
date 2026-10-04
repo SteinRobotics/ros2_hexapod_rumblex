@@ -6,8 +6,8 @@ behavior IDs. The coordinator receives gait changes through a local callback.
 Gait updates run at 10 Hz; the coordinator continues to run at 20 Hz.
 
 Movement subscribes to `cmd_movement` (`rumblex_interfaces/msg/BodyPose`) and
-forwards all six toe targets and the torso pose to `CKinematics::moveTorso`, and
-the head orientation to `CKinematics::setHeadOrientation`. Its 10 Hz update sends
+forwards all six toe targets and the torso pose to `rumblex_geometry::CBodyModel::moveTorso`, and
+the head orientation to `rumblex_geometry::CBodyModel::setHeadOrientation`. Its 10 Hz update sends
 the latest target to the servos with a 100 ms duration. Without a new command it
 publishes state but does not initiate motion.
 

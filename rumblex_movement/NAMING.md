@@ -80,10 +80,3 @@ describe the torso center to coxa mount offset.
 | `TIBIA_LENGTH` | `tibia_length_m` |
 | `footPositions_standing` | `toe_positions_standing` |
 | `footPositions_laydown` | `toe_positions_laydown` |
-
-Legacy action-package YAML follows the same naming: `body` becomes `torso`,
-`legAngles` becomes `leg_angles`, `footPositions` becomes `toe_positions`,
-`factorDuration` becomes `duration_factor`, and `All` becomes `all`.
-Leg-angle keys are `torso_coxa`, `coxa_femur`, and `femur_tibia`.
-Shared ROS message fields, gait IDs, servo names/IDs, and URDF joint names
-retain their existing protocol names.

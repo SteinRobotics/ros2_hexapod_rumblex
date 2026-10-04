@@ -32,7 +32,6 @@ set(SOURCES
   src/handler/feetech/SCSerial.cpp
   src/handler/feetech/SMS_STS.cpp
   src/handler/servo_handler.cpp
-  src/requester/kinematics.cpp
   src/requester/requester.cpp
 )
 
@@ -42,7 +41,6 @@ add_library(rumblex_movement_core
 target_compile_features(rumblex_movement_core PUBLIC cxx_std_23)
 target_include_directories(rumblex_movement_core PUBLIC
   include/rumblex_movement
-  include/rumblex_movement/requester
   include/rumblex_movement/handler/feetech
 )
 target_link_libraries(rumblex_movement_core PUBLIC
@@ -69,11 +67,6 @@ target_link_libraries(node_movement PRIVATE
 
 add_executable(node_offline_visualization src/node_offline_visualization.cpp)
 target_link_libraries(node_offline_visualization PRIVATE rumblex_movement_core)
-
-include_directories(
-  include/rumblex_movement/
-  include/rumblex_movement/handler/feetech/
-)
 
 install(TARGETS
   node_movement
@@ -116,7 +109,6 @@ if(BUILD_TESTING)
 
   ament_add_gtest(test_units test/test_units.cpp)
   if(TARGET test_units)
-    target_include_directories(test_units PRIVATE include/rumblex_movement)
     target_link_libraries(test_units rumblex_utils::rumblex_geometry)
   endif()
 
@@ -124,7 +116,6 @@ if(BUILD_TESTING)
     test/test_kinematics.cpp
   )
   if(TARGET test_kinematics)
-    target_include_directories(test_kinematics PRIVATE include)
     target_link_libraries(test_kinematics rumblex_movement_core rclcpp::rclcpp ament_index_cpp::ament_index_cpp ${rumblex_interfaces_TARGETS})
   endif()
 
@@ -135,21 +126,12 @@ if(BUILD_TESTING)
     target_link_libraries(test_requester rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS} ament_index_cpp::ament_index_cpp)
   endif()
 
-
-
-
-
-
   ament_add_gtest(test_leg_servo_conversion
     test/test_leg_servo_conversion.cpp
   )
   if(TARGET test_leg_servo_conversion)
-    target_include_directories(test_leg_servo_conversion PRIVATE include)
     target_link_libraries(test_leg_servo_conversion rumblex_movement_core rclcpp::rclcpp ${rumblex_interfaces_TARGETS})
   endif()
-
-
-
 
 endif()
 
