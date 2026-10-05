@@ -17,9 +17,9 @@ servo fields under `servo`. Bare numeric parameters include unit suffixes where
 applicable: `_m`, `_deg`, `_rad`, `_m_s`, and `_rad_s`. Typed C++ quantities
 already carry their units.
 
-`velocity_to_phase_gain` scales the phase increment per update; it is not a
-cycle duration. `transition_phase_span` is an angular span in radians.
-The numeric values and update formulas are unchanged.
+`velocity_to_phase_gain`, rotation weights, and transition-phase settings are
+legacy compatibility keys. Physical locomotion now uses foot displacement and
+elapsed seconds; these keys do not scale requested m/s or rad/s.
 
 # Configuration migration
 

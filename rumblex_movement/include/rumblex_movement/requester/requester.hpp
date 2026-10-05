@@ -8,6 +8,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -34,6 +35,8 @@ class CRequester {
    private:
     rclcpp::Subscription<rumblex_interfaces::msg::BodyPose>::SharedPtr sub_body_pose_;
     rclcpp::Publisher<rumblex_interfaces::msg::BodyPose>::SharedPtr pub_body_pose_;
+    std::optional<std::chrono::steady_clock::time_point> last_pose_received_;
+    std::optional<double> pending_duration_s_;
     bool pending_pose_ = false;
 
     void sendServoRequest(const double duration_s);

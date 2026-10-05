@@ -10,6 +10,13 @@
 namespace brain {
 
 // Exercise request timing without sleeps or exposing coordinator state to callers.
+class ActionPlannerTestAccess {
+   public:
+    static const auto& latestHighRequest(const CActionPlanner& planner) {
+        return planner.requests_high_prio_.back();
+    }
+};
+
 class CoordinatorTestAccess {
    public:
     static void submit(CCoordinator& coordinator, uint32_t type, double seconds) {
@@ -41,6 +48,7 @@ class CoordinatorTest : public ::testing::Test {
         coordinator_.reset();
         planner_.reset();
         auto robot = test_helpers::defaultRobotParameters();
+        std::erase_if(robot, [](const auto& p) { return p.get_name().starts_with("max_velocity_"); });
         parameters.insert(parameters.end(), robot.begin(), robot.end());
         rclcpp::NodeOptions options;
         options.parameter_overrides(parameters);
@@ -57,6 +65,34 @@ class CoordinatorTest : public ::testing::Test {
     std::shared_ptr<CActionPlanner> planner_;
     std::unique_ptr<CCoordinator> coordinator_;
 };
+
+TEST_F(CoordinatorTest, JoystickPoseModeActivatesGaitAndGroupsOrientationTargets) {
+    create();
+    rumblex_interfaces::msg::JoystickRequest request;
+    request.button_start = true;
+    coordinator_->joystickRequestReceived(request);
+    request.button_start = false;
+    request.left_stick_horizontal = 0.5;
+    request.right_stick_horizontal = 0.7;
+    coordinator_->joystickRequestReceived(request);
+    const auto& group = ActionPlannerTestAccess::latestHighRequest(*planner_);
+    ASSERT_EQ(group.size(), 3u);
+    const auto gait = std::dynamic_pointer_cast<RequestMovementType>(group[0]);
+    const auto body = std::dynamic_pointer_cast<RequestSinglePose>(group[1]);
+    const auto head = std::dynamic_pointer_cast<RequestHeadOrientation>(group[2]);
+    ASSERT_TRUE(gait);
+    ASSERT_TRUE(body);
+    ASSERT_TRUE(head);
+    EXPECT_EQ(gait->movementRequest.type, MovementRequest::CONTINUOUS_POSE);
+    EXPECT_NEAR(body->pose.position.y, 0.025, 1e-8);
+    EXPECT_NEAR(head->orientation.yaw, 14.0, 1e-6);
+    EXPECT_FALSE(CoordinatorTestAccess::locked(*coordinator_));
+    request.left_stick_horizontal = 0.0;
+    request.right_stick_horizontal = 0.0;
+    coordinator_->joystickRequestReceived(request);
+    // Releasing the sticks preserves the existing pose targets.
+    EXPECT_EQ(ActionPlannerTestAccess::latestHighRequest(*planner_).size(), 1u);
+}
 
 TEST_F(CoordinatorTest, ReleasesExpiredLockAndMatchingMovement) {
     create();

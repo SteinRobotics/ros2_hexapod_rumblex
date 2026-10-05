@@ -114,17 +114,17 @@ void CGaitController::switchGait(brain::MovementRequest request) {
 }
 
 bool CGaitController::updateSelectedGait(const geometry_msgs::msg::Twist& velocity, CPose torso,
-                                         COrientation head) {
+                                         COrientation head, double elapsed_s) {
     if (pending_request_.type != MovementRequest::NO_REQUEST &&
         active_gait_->state() == EGaitState::Stopped) {
         switchGait(pending_request_);
     }
 
     if (auto continuous = std::dynamic_pointer_cast<IContinuousGait>(active_gait_)) {
-        return continuous->update(velocity, torso, head);
+        return continuous->updateTimed(velocity, torso, head, elapsed_s);
     }
     if (auto sequence = std::dynamic_pointer_cast<ISequenceGait>(active_gait_)) {
-        return sequence->update();
+        return sequence->updateTimed(elapsed_s);
     }
     return false;
 }

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Estimate offline body motion from supporting toes; never run with another odom TF."""
+"""Estimate body motion from applied toe targets, assuming no foot slip."""
 
 import math
 
-from geometry_msgs.msg import TransformStamped, Twist
+from geometry_msgs.msg import TransformStamped, Twist, TwistStamped
 from nav_msgs.msg import Odometry
 from rumblex_interfaces.msg import BodyPose
 from std_msgs.msg import String
@@ -22,7 +22,7 @@ class OfflineOdometry(Node):
         self.heights = [self.declare_parameter(
             f'toe_positions_standing.{name}.z', rclpy.Parameter.Type.DOUBLE).value
             for name in LEG_NAMES]
-        self.tolerance = self.declare_parameter('support_tolerance_m', 0.001).value
+        self.tolerance = self.declare_parameter('support_tolerance_m', 0.000001).value
         if not all(math.isfinite(z) for z in self.heights) or not (
                 math.isfinite(self.tolerance) and self.tolerance > 0):
             raise ValueError('Standing heights must be finite and support tolerance positive')
@@ -33,6 +33,8 @@ class OfflineOdometry(Node):
         self.previous = None
         self.last_update = None
         self.odom = self.create_publisher(Odometry, 'odom', 10)
+        self.estimated_velocity = self.create_publisher(
+            TwistStamped, 'movement_velocity_estimated', 10)
         self.tf = TransformBroadcaster(self)
         self.subscription = self.create_subscription(
             BodyPose, 'body_pose_actual', self.on_body_pose,
@@ -83,7 +85,7 @@ class OfflineOdometry(Node):
 
     def publish_pose(self):
         now = self.get_clock().now()
-        if self.last_update is None or (now - self.last_update).nanoseconds > 500_000_000:
+        if self.last_update is None or not (0 <= (now - self.last_update).nanoseconds <= 500_000_000):
             self.velocity = Twist()
         position, quaternion = compose_torso(self.pose, self.torso)
         transform = TransformStamped()
@@ -103,6 +105,11 @@ class OfflineOdometry(Node):
         odom.pose.pose.orientation = rotation
         odom.twist.twist = self.velocity
         self.odom.publish(odom)
+        estimated = TwistStamped()
+        estimated.header.stamp = now.to_msg()
+        estimated.header.frame_id = 'base_link'
+        estimated.twist = self.velocity
+        self.estimated_velocity.publish(estimated)
 
 
 def main(args=None):

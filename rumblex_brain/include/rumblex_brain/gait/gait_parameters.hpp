@@ -5,6 +5,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include "rumblex_utils/units.hpp"
+#include "velocity.hpp"
 
 namespace brain {
 namespace units = rumblex_geometry::units;
@@ -119,6 +120,11 @@ inline Parameters Parameters::declare(std::shared_ptr<rclcpp::Node> node) {
     const auto leg_lift_height = node->declare_parameter<double>("gait.generic.leg_lift_height_m") * units::m;
     const auto step_length = node->declare_parameter<double>("gait.generic.step_length_m") * units::m;
 
+    if (!std::isfinite(step_length.numerical_value_in(units::m)) || step_length <= 0.0 * units::m)
+        throw std::invalid_argument("gait.generic.step_length_m must be finite and positive");
+    if (!std::isfinite(leg_lift_height.numerical_value_in(units::m)) || leg_lift_height < 0.0 * units::m)
+        throw std::invalid_argument("gait.generic.leg_lift_height_m must be finite and nonnegative");
+
     // Torso Roll
     params.torso_roll.torso_max_roll = torso_max_roll;
     params.torso_roll.torso_max_pitch = torso_max_pitch;
@@ -127,7 +133,7 @@ inline Parameters Parameters::declare(std::shared_ptr<rclcpp::Node> node) {
     params.tripod.head_yaw_amplitude =
         node->declare_parameter<double>("gait.tripod.head_max_yaw_deg") * units::deg;
     params.tripod.velocity_to_phase_gain =
-        node->declare_parameter<double>("gait.tripod.velocity_to_phase_gain");
+        node->declare_parameter<double>("gait.tripod.velocity_to_phase_gain", 40.0);
     params.tripod.gait_step_length = step_length;
     params.tripod.leg_lift_height = leg_lift_height;
 
@@ -185,10 +191,25 @@ inline Parameters Parameters::declare(std::shared_ptr<rclcpp::Node> node) {
     node->declare_parameter<double>("gait.move_combined.velocity_filter_alpha", 0.1);
     params.move_combined.rotation_weight =
         node->declare_parameter<double>("gait.move_combined.rotation_weight", 0.7);
-    params.move_combined.max_linear_velocity =
-        node->declare_parameter<double>("gait.move_combined.max_linear_velocity_m_s", 0.01);
-    params.move_combined.max_angular_velocity =
-        node->declare_parameter<double>("gait.move_combined.max_angular_velocity_rad_s", 0.01);
+    params.move_combined.max_linear_velocity = velocityLimit(node, "max_velocity_linear");
+    params.move_combined.max_angular_velocity = velocityLimit(node, "max_velocity_rotation");
+    for (const auto& [name, limit] :
+         {std::pair{"gait.move_combined.max_linear_velocity_m_s", params.move_combined.max_linear_velocity},
+          std::pair{"gait.move_combined.max_angular_velocity_rad_s",
+                    params.move_combined.max_angular_velocity}}) {
+        const double alias = node->declare_parameter<double>(name, limit);
+        if (!std::isfinite(alias) || std::abs(alias - limit) > 1e-12)
+            throw std::invalid_argument(std::string(name) + " must match the authoritative velocity limit");
+    }
+    const auto& combined = params.move_combined;
+    if (!(std::isfinite(combined.velocity_threshold_wave_ripple) &&
+          std::isfinite(combined.velocity_threshold_ripple_tripod) &&
+          std::isfinite(combined.hysteresis_margin) && combined.hysteresis_margin >= 0.0 &&
+          combined.velocity_threshold_wave_ripple > combined.hysteresis_margin &&
+          combined.velocity_threshold_ripple_tripod >
+              combined.velocity_threshold_wave_ripple + 2.0 * combined.hysteresis_margin &&
+          combined.velocity_threshold_ripple_tripod + combined.hysteresis_margin < 1.0))
+        throw std::invalid_argument("Invalid combined gait thresholds or hysteresis");
 
     // Test Legs
     params.test_legs.torso_coxa_delta =

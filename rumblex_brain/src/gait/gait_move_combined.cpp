@@ -29,33 +29,30 @@ EMoveCombinedGaitType CMoveCombinedGait::selectGait(double combined_mag) const {
     const double thresh_wr = combined_params_.velocity_threshold_wave_ripple;
     const double thresh_rt = combined_params_.velocity_threshold_ripple_tripod;
 
-    switch (active_gait_type_) {
-        case EMoveCombinedGaitType::Wave:
-            if (combined_mag > thresh_wr + hyst) return EMoveCombinedGaitType::Ripple;
-            return EMoveCombinedGaitType::Wave;
-        case EMoveCombinedGaitType::Ripple:
-            if (combined_mag < thresh_wr - hyst) return EMoveCombinedGaitType::Wave;
-            if (combined_mag > thresh_rt + hyst) return EMoveCombinedGaitType::Tripod;
-            return EMoveCombinedGaitType::Ripple;
-        case EMoveCombinedGaitType::Tripod:
-            if (combined_mag < thresh_rt - hyst) return EMoveCombinedGaitType::Ripple;
-            return EMoveCombinedGaitType::Tripod;
-    }
-    return active_gait_type_;
+    // Large demand changes can cross both thresholds at one contact boundary.
+    if (combined_mag >= thresh_rt + hyst) return EMoveCombinedGaitType::Tripod;
+    if (combined_mag <= thresh_wr - hyst) return EMoveCombinedGaitType::Wave;
+    if (active_gait_type_ == EMoveCombinedGaitType::Wave && combined_mag <= thresh_wr + hyst)
+        return EMoveCombinedGaitType::Wave;
+    if (active_gait_type_ == EMoveCombinedGaitType::Tripod && combined_mag >= thresh_rt - hyst)
+        return EMoveCombinedGaitType::Tripod;
+    return EMoveCombinedGaitType::Ripple;
 }
 
 bool CMoveCombinedGait::update(const geometry_msgs::msg::Twist& velocity, const CPose& torso,
-                               const COrientation&) {
+                               const COrientation& head) {
+    return updateTimed(velocity, torso, head, 0.1);
+}
+
+bool CMoveCombinedGait::updateTimed(const geometry_msgs::msg::Twist& velocity, const CPose& torso,
+                                    const COrientation&, double elapsed_s) {
     if (planner_.atBoundary() && (state() == EGaitState::Running || state() == EGaitState::Starting)) {
-        const double magnitude =
-            std::sqrt(velocity.linear.x * velocity.linear.x + velocity.linear.y * velocity.linear.y +
-                      combined_params_.rotation_weight * velocity.angular.z * velocity.angular.z);
-        const double maximum =
-            std::sqrt(2.0 * std::pow(combined_params_.max_linear_velocity, 2) +
-                      combined_params_.rotation_weight * std::pow(combined_params_.max_angular_velocity, 2));
-        active_gait_type_ = selectGait(maximum > 1e-6 ? std::clamp(magnitude / maximum, 0.0, 1.0) : 0.0);
+        const double demand =
+            std::max(std::hypot(velocity.linear.x, velocity.linear.y) / combined_params_.max_linear_velocity,
+                     std::abs(velocity.angular.z) / combined_params_.max_angular_velocity);
+        active_gait_type_ = selectGait(std::clamp(demand, 0.0, 1.0));
     }
-    return planner_.update(patterns_.at(active_gait_type_), velocity, combined_params_.rotation_weight,
-                           torso);
+    return planner_.update(patterns_.at(active_gait_type_), velocity, combined_params_.rotation_weight, torso,
+                           elapsed_s);
 }
 }  // namespace brain

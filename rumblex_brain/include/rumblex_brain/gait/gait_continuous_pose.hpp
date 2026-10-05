@@ -19,6 +19,8 @@ class CContinuousPoseGait : public IContinuousGait {
     void start(double duration_s, uint8_t direction) override;
     bool update(const geometry_msgs::msg::Twist& velocity, const CPose& torso,
                 const COrientation& head) override;
+    bool updateTimed(const geometry_msgs::msg::Twist& velocity, const CPose& torso, const COrientation& head,
+                     double elapsed_s) override;
     void requestStop() override;
     void cancelStop() override;
     EGaitState state() const override {
@@ -31,7 +33,7 @@ class CContinuousPoseGait : public IContinuousGait {
     Parameters::ContinuousPose params_;
     EGaitState state_ = EGaitState::Stopped;
 
-    int tick_ = 10;
+    double elapsed_s_ = 1.0;
     std::map<ELegIndex, CPosition> toe_origins_;
     CPose torso_origin_ = CPose();
     COrientation head_origin_ = COrientation();

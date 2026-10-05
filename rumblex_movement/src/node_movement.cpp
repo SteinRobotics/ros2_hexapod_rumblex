@@ -9,7 +9,7 @@
 //
 #include "requester/requester.hpp"
 
-constexpr double REFRESH_RATE_HZ = 10;
+constexpr double REFRESH_RATE_HZ = 50;
 
 int main(int argc, char** argv) {
     rclcpp::init(argc, argv);

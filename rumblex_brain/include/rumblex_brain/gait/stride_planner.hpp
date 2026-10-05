@@ -23,14 +23,14 @@ class CStridePlanner {
     }
     void start();
     bool update(const StridePattern& pattern, const geometry_msgs::msg::Twist& velocity,
-                double rotation_weight, const CPose& torso);
+                double rotation_weight, const CPose& torso, double elapsed_s = 0.1);
     void requestStop();
     void cancelStop();
     EGaitState state() const {
         return state_;
     }
     bool atBoundary() const {
-        return tick_ == ticks_;
+        return elapsed_s_ >= duration_s_ - 1e-12;
     }
 
    private:
@@ -43,9 +43,13 @@ class CStridePlanner {
     std::vector<ELegIndex> swing_;
     // Unwrapped cycle phase carries scheduling progress between patterns.
     bool idle_stop_ = false;
-    double phase_delta_ = 0.4;
+    double duration_s_ = 0.0;
+    double elapsed_s_ = 0.0;
+    double carry_s_ = 0.0;
+    bool settling_segment_ = false;
+    geometry_msgs::msg::Twist segment_velocity_;
     double cycle_ = 0.0;
-    int tick_ = 0, ticks_ = 0;
+
     units::Length lift_ = 0.0 * units::m;
     CPose torso_origin_, torso_target_;
     COrientation head_origin_, head_target_;

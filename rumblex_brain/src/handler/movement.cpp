@@ -62,7 +62,13 @@ void CMovement::run(std::shared_ptr<RequestHeadOrientation> request) {
     head_ = COrientation(request->orientation);
 }
 void CMovement::run(std::shared_ptr<RequestVelocity> request) {
-    velocity_ = request->velocity;
+    geometry_msgs::msg::Twist limited;
+    if (!limitVelocity(request->velocity, velocityLimit(node_, "max_velocity_linear"),
+                       velocityLimit(node_, "max_velocity_rotation"), limited)) {
+        RCLCPP_WARN(node_->get_logger(), "Ignoring non-finite velocity request");
+        return;
+    }
+    velocity_ = limited;
 }
 
 void CMovement::cancel() {
@@ -97,11 +103,25 @@ void CMovement::update() {
     updateCompletion();
     const auto now = std::chrono::steady_clock::now();
     if (now < next_update_) return;
-    next_update_ += std::chrono::milliseconds(100);
-    if (next_update_ <= now) next_update_ = now + std::chrono::milliseconds(100);
+    const auto gait = gait_controller_->currentGait();
+    const bool frequent =
+        gait == MovementRequest::CONTINUOUS_MOVE || gait == MovementRequest::CONTINUOUS_RUNNING ||
+        gait == MovementRequest::CONTINUOUS_POSE || gait == MovementRequest::SINGLE_POSE ||
+        gait == MovementRequest::SEQUENCE_STAND_UP || gait == MovementRequest::SEQUENCE_LAYDOWN ||
+        gait == MovementRequest::SEQUENCE_LOOK || gait == MovementRequest::SEQUENCE_WATCH ||
+        gait == MovementRequest::SEQUENCE_BODY_ROLL;
+    const auto period = std::chrono::milliseconds(frequent ? 20 : 100);
+    const double elapsed_s = last_update_ ? std::chrono::duration<double>(now - *last_update_).count()
+                                          : std::chrono::duration<double>(period).count();
+    last_update_ = now;
+    // Keep a fixed deadline: scheduling from now can turn a 50 Hz loop into 25 Hz
+    // when the next iteration arrives fractionally before the previous deadline.
+    if (next_update_.time_since_epoch().count() == 0) next_update_ = now;
+    next_update_ += period;
+    if (next_update_ <= now) next_update_ = now + period;
     geometry_msgs::msg::Twist effective_velocity;
     if (initialized_) {
-        const bool progressed = gait_controller_->updateSelectedGait(velocity_, torso_, head_);
+        const bool progressed = gait_controller_->updateSelectedGait(velocity_, torso_, head_, elapsed_s);
         updateCompletion();
         auto pose = bodyPose(*pose_model_);
         // Some sequences restore their final pose while returning false on completion.

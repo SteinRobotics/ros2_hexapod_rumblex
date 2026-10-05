@@ -5,20 +5,17 @@
  *
  * Accepts 2D goal poses from RViz ("2D Nav Goal" → /goal_pose) and drives the
  * robot toward the goal while avoiding obstacles detected by the head-sweep
- * LaserScan.  Dead-reckoning odometry is maintained by integrating the
- * commanded velocities and published as both nav_msgs/Odometry and a
- * TF odom → base_link transform.
+ * LaserScan. Position and heading come from an external /odom publisher,
+ * normally the supporting-foot kinematic estimator.
  *
- * The BNO055 IMU provides fused orientation (used for heading correction in
- * dead-reckoning odometry) and linear acceleration (used for tilt-safety).
+ * The BNO055 IMU provides orientation for tilt safety.
  *
  * Subscribes:  /goal_pose    (geometry_msgs/PoseStamped)
  *              /scan         (sensor_msgs/LaserScan)
  *              /bno055/imu   (sensor_msgs/Imu)
  *              /map          (nav_msgs/OccupancyGrid)  – optional static map
- * Publishes:   /cmd_vel    (geometry_msgs/Twist)
- *              /odom       (nav_msgs/Odometry)
- *              TF: odom → base_link
+ *              /odom        (nav_msgs/Odometry)
+ * Publishes:   /cmd_vel     (geometry_msgs/Twist)
  ******************************************************************************/
 
 #include <algorithm>
@@ -29,14 +26,12 @@
 #include <tf2/utils.hpp>
 
 #include "geometry_msgs/msg/pose_stamped.hpp"
-#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
-#include "tf2_ros/transform_broadcaster.hpp"
 
 using namespace std::chrono_literals;
 
@@ -70,8 +65,22 @@ class NodeNavigation : public rclcpp::Node {
 
         // --- Publishers ---
         cmd_vel_pub_ = create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
-        odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom", 10);
-        tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+        odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
+            "odom", 10, [this](nav_msgs::msg::Odometry::ConstSharedPtr msg) {
+                const auto& p = msg->pose.pose.position;
+                const auto& q = msg->pose.pose.orientation;
+                tf2::Quaternion orientation(q.x, q.y, q.z, q.w);
+                if (!std::isfinite(orientation.length2()) || orientation.length2() < 1e-12) return;
+                orientation.normalize();
+                const double yaw = tf2::getYaw(orientation);
+                if (msg->header.frame_id != "odom" || msg->child_frame_id != "base_link" ||
+                    !std::isfinite(p.x) || !std::isfinite(p.y) || !std::isfinite(yaw))
+                    return;
+                odom_x_ = p.x;
+                odom_y_ = p.y;
+                odom_theta_ = yaw;
+                odom_time_ = now();
+            });
 
         // --- Subscribers ---
         goal_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>(
@@ -86,13 +95,7 @@ class NodeNavigation : public rclcpp::Node {
             "scan", 10, [this](sensor_msgs::msg::LaserScan::ConstSharedPtr msg) { latest_scan_ = msg; });
 
         imu_sub_ = create_subscription<sensor_msgs::msg::Imu>(
-            "bno055/imu", 10, [this](sensor_msgs::msg::Imu::ConstSharedPtr msg) {
-                latest_imu_ = msg;
-                // Extract yaw from orientation quaternion
-                tf2::Quaternion q(msg->orientation.x, msg->orientation.y, msg->orientation.z,
-                                  msg->orientation.w);
-                imu_yaw_ = tf2::getYaw(q);
-            });
+            "bno055/imu", 10, [this](sensor_msgs::msg::Imu::ConstSharedPtr msg) { latest_imu_ = msg; });
 
         map_sub_ = create_subscription<nav_msgs::msg::OccupancyGrid>(
             "map", rclcpp::QoS(1).transient_local(),
@@ -106,7 +109,6 @@ class NodeNavigation : public rclcpp::Node {
         odom_x_ = 0.0;
         odom_y_ = 0.0;
         odom_theta_ = 0.0;
-        last_time_ = now();
 
         // 10 Hz control loop
         control_timer_ = create_wall_timer(100ms, std::bind(&NodeNavigation::controlTick, this));
@@ -120,15 +122,13 @@ class NodeNavigation : public rclcpp::Node {
     // -----------------------------------------------------------------------
     void controlTick() {
         const auto current_time = now();
-        const double dt = (current_time - last_time_).seconds();
-        last_time_ = current_time;
-
-        // 1. Update odometry (fuse dead-reckoning with IMU heading when available)
-        updateOdometry(dt);
-        publishOdometry();
-
         // 2. Tilt safety check
         if (isTilted()) {
+            publishStop();
+            return;
+        }
+
+        if (!odom_time_ || (now() - *odom_time_).seconds() < 0.0 || (now() - *odom_time_).seconds() > 0.5) {
             publishStop();
             return;
         }
@@ -183,54 +183,7 @@ class NodeNavigation : public rclcpp::Node {
             cmd.angular.z = std::clamp(heading_error * 2.0, -max_angular_vel_, max_angular_vel_);
         }
 
-        last_cmd_ = cmd;
         cmd_vel_pub_->publish(cmd);
-    }
-
-    // -----------------------------------------------------------------------
-    // Dead-reckoning odometry
-    // -----------------------------------------------------------------------
-    void updateOdometry(double dt) {
-        if (dt <= 0.0 || dt > 1.0) return;  // skip bogus intervals
-
-        // Use IMU yaw for heading when available, otherwise dead-reckon
-        if (latest_imu_) {
-            odom_theta_ = imu_yaw_;
-        } else {
-            odom_theta_ = normalizeAngle(odom_theta_ + last_cmd_.angular.z * dt);
-        }
-        odom_x_ += last_cmd_.linear.x * std::cos(odom_theta_) * dt;
-        odom_y_ += last_cmd_.linear.x * std::sin(odom_theta_) * dt;
-    }
-
-    void publishOdometry() {
-        tf2::Quaternion q;
-        q.setRPY(0.0, 0.0, odom_theta_);
-
-        // TF: odom → base_link
-        geometry_msgs::msg::TransformStamped tf;
-        tf.header.stamp = now();
-        tf.header.frame_id = "odom";
-        tf.child_frame_id = "base_link";
-        tf.transform.translation.x = odom_x_;
-        tf.transform.translation.y = odom_y_;
-        tf.transform.translation.z = 0.0;
-        tf.transform.rotation.x = q.x();
-        tf.transform.rotation.y = q.y();
-        tf.transform.rotation.z = q.z();
-        tf.transform.rotation.w = q.w();
-        tf_broadcaster_->sendTransform(tf);
-
-        // nav_msgs/Odometry
-        nav_msgs::msg::Odometry odom;
-        odom.header.stamp = now();
-        odom.header.frame_id = "odom";
-        odom.child_frame_id = "base_link";
-        odom.pose.pose.position.x = odom_x_;
-        odom.pose.pose.position.y = odom_y_;
-        odom.pose.pose.orientation = tf.transform.rotation;
-        odom.twist.twist = last_cmd_;
-        odom_pub_->publish(odom);
     }
 
     // -----------------------------------------------------------------------
@@ -322,7 +275,6 @@ class NodeNavigation : public rclcpp::Node {
     // -----------------------------------------------------------------------
     void publishStop() {
         geometry_msgs::msg::Twist stop;
-        last_cmd_ = stop;
         cmd_vel_pub_->publish(stop);
     }
 
@@ -340,8 +292,7 @@ class NodeNavigation : public rclcpp::Node {
     double odom_x_{0.0};
     double odom_y_{0.0};
     double odom_theta_{0.0};
-    rclcpp::Time last_time_;
-    geometry_msgs::msg::Twist last_cmd_{};
+    std::optional<rclcpp::Time> odom_time_;
 
     // Latest sensor data
     std::optional<geometry_msgs::msg::PoseStamped> goal_;
@@ -349,12 +300,10 @@ class NodeNavigation : public rclcpp::Node {
     sensor_msgs::msg::LaserScan::ConstSharedPtr latest_scan_;
     sensor_msgs::msg::Imu::ConstSharedPtr latest_imu_;
     nav_msgs::msg::OccupancyGrid::ConstSharedPtr latest_map_;
-    double imu_yaw_{0.0};
 
     // ROS interfaces
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
-    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
-    std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_sub_;
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_sub_;
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
@@ -362,9 +311,12 @@ class NodeNavigation : public rclcpp::Node {
     rclcpp::TimerBase::SharedPtr control_timer_;
 };
 
+#ifndef RUMBLEX_NAVIGATION_NO_MAIN
 int main(int argc, char* argv[]) {
     rclcpp::init(argc, argv);
     rclcpp::spin(std::make_shared<NodeNavigation>());
     rclcpp::shutdown();
     return 0;
 }
+
+#endif

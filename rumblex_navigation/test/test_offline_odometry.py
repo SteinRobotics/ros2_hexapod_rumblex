@@ -36,6 +36,7 @@ class OfflineOdometryTest(unittest.TestCase):
         self.clock_patch.start()
         self.node.odom = Mock()
         self.node.tf = Mock()
+        self.node.estimated_velocity = Mock()
         self.node.on_movement_name(String(data='CONTINUOUS_MOVE'))
 
     def tearDown(self):
@@ -150,6 +151,35 @@ class OfflineOdometryTest(unittest.TestCase):
                                                 for name in LEG_NAMES])
             finally:
                 node.destroy_node()
+
+    def test_estimated_velocity_is_stamped_and_in_body_frame(self):
+        self.send(self.sample())
+        odom = self.send(self.sample(dx=0.002, dy=-0.001, yaw=0.0004), dt=0.02)
+        estimate = self.node.estimated_velocity.publish.call_args.args[0]
+        self.assertEqual(estimate.header.frame_id, 'base_link')
+        self.assertEqual(estimate.header.stamp, self.now.to_msg())
+        self.assertEqual(estimate.twist, odom.twist.twist)
+        self.assertAlmostEqual(estimate.twist.angular.z, 0.02)
+
+    def test_near_touchdown_swing_feet_do_not_bias_support_fit(self):
+        a, b = self.sample(), self.sample(dx=0.002)
+        for i in (0, 2, 4):
+            b.toe_positions[i].z += 0.00005
+            b.toe_positions[i].x += 0.0001
+        self.send(a)
+        odom = self.send(b, dt=0.02)
+        self.assertAlmostEqual(odom.pose.pose.position.x, 0.002)
+        self.assertAlmostEqual(odom.twist.twist.linear.x, 0.1)
+
+    def test_clock_reversal_resets_twist_and_reanchors(self):
+        self.send(self.sample())
+        self.send(self.sample(dx=0.002), dt=0.02)
+        self.now = Time(seconds=10)
+        self.node.publish_pose()
+        self.assertEqual(self.node.odom.publish.call_args.args[0].twist.twist.linear.x, 0.0)
+        odom = self.send(self.sample(dx=0.02))
+        self.assertAlmostEqual(odom.pose.pose.position.x, 0.002)
+        self.assertEqual(odom.twist.twist.linear.x, 0.0)
 
     def test_distinct_support_required(self):
         points = [(0.0, 0.0, -0.05)] * 6

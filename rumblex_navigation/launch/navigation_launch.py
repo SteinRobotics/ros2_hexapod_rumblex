@@ -5,7 +5,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.conditions import IfCondition
+from launch.conditions import IfCondition, UnlessCondition
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 
@@ -14,6 +14,8 @@ def generate_launch_description():
     pkg_nav = get_package_share_directory('rumblex_navigation')
     robot = LaunchConfiguration('robot')
     config = PathJoinSubstitution([pkg_nav, 'config', robot, 'navigation.yaml'])
+    anatomy = PathJoinSubstitution([
+        get_package_share_directory('rumblex_description'), 'config', robot, 'anatomy.yaml'])
     map_file = os.path.join(pkg_nav, 'maps', 'simple_room.yaml')
 
     enable_map_arg = DeclareLaunchArgument(
@@ -66,7 +68,15 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'robot', default_value='nox',
             description='Robot configuration profile (for example: nox or nira)'),
+        DeclareLaunchArgument(
+            'use_external_odometry', default_value='false',
+            description='Use an existing odom publisher instead of the supporting-foot estimator'),
         enable_map_arg,
+        Node(
+            package='rumblex_navigation', executable='offline_odometry.py',
+            output='screen', parameters=[anatomy],
+            condition=UnlessCondition(LaunchConfiguration('use_external_odometry')),
+        ),
         head_scan,
         navigation,
         map_server,

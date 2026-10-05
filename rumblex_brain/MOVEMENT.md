@@ -3,12 +3,15 @@
 Brain owns gait selection, trajectories, velocity/head/torso inputs, and gait
 transitions. `MovementRequest` is now an internal C++ request with the existing
 behavior IDs. The coordinator receives gait changes through a local callback.
-Gait updates run at 10 Hz; the coordinator continues to run at 20 Hz.
+Locomotion, pose/orientation trajectories, and the coordinator run at 50 Hz.
+Other gestures retain their 10 Hz cadence. Pose, yaw and torso-roll trajectories
+use elapsed seconds, so finer sampling preserves their duration.
 
 Movement subscribes to `cmd_movement` (`rumblex_interfaces/msg/BodyPose`) and
 forwards all six toe targets and the torso pose to `rumblex_geometry::CBodyModel::moveTorso`, and
-the head orientation to `rumblex_geometry::CBodyModel::setHeadOrientation`. Its 10 Hz update sends
-the latest target to the servos with a 100 ms duration. Without a new command it
+the head orientation to `rumblex_geometry::CBodyModel::setHeadOrientation`. Its 50 Hz update sends
+the latest target with a duration based on the pose delivery interval (normally 20 ms
+for locomotion/orientation and 100 ms for other gestures). Without a new command it
 publishes state but does not initiate motion.
 
 ## Message contract
@@ -54,8 +57,15 @@ previous deadline; walking and running clear it.
 
 Brain publishes `movement_name` (`std_msgs/String`) for HMI and
 `movement_velocity` (`geometry_msgs/Twist`) as commanded-velocity telemetry.
-Offline odometry instead estimates motion from supporting toes in `body_pose_actual`. Velocity is zero
-outside walking/running. Movement types no longer cross the ROS boundary.
+The supporting-foot estimator publishes `/odom`, `odom → base_link`, and
+`movement_velocity_estimated` (`geometry_msgs/TwistStamped`, in `base_link`). It
+uses applied kinematic targets in `body_pose_actual` and receive timestamps,
+assuming supporting feet do not slip. This is an estimate, not sensor-measured
+robot speed. Torso changes contribute body-frame twist, including outside walking.
+Invalid samples, clock discontinuities and gaps over 0.5 seconds clear twist.
+Navigation consumes `/odom`; it never integrates its own commands. Its launch
+starts the estimator unless `use_external_odometry:=true`. When using the test
+bringup estimator, pass that option to navigation to keep one odometry publisher. Movement types no longer cross the ROS boundary.
 `MovementRequest.msg`, `ContinuousMovementUpdate.msg`, `cmd_movement_update`, and
 `movement_type_actual` have been removed. Rebuild and restart all consumers
 together; external publishers must migrate to the complete BodyPose contract.
@@ -81,11 +91,12 @@ Every gait captures the current command-frame pose on entry. `start`,
 then starts the incoming gait from that endpoint. Fixed poses and gestures use
 `trajectoryProgress(t) = 10t³ - 15t⁴ + 6t⁵`, with zero velocity and acceleration
 at both ends. Pose requests are captured once per finite segment; changing a
-request cannot move an existing segment's destination. Pose transitions have a
-minimum duration of one second at the 10 Hz command rate.
+request cannot move an existing segment's destination. Pose transitions retain
+their minimum duration of one second, sampled at 50 Hz.
 
 Walking and running share `CStridePlanner`. Patterns specify ordered swing
-leg groups, step length, lift height, head amplitude, and phase gain. A segment
+leg groups, step reach, lift height, and head amplitude. The legacy phase-gain
+field is retained for compatibility and is unused. A segment
 captures the actual current planned toe, torso, and head poses, then generates
 a complete swing/support trajectory. Swing lift is `64t³(1-t)³`, also with zero
 endpoint velocity and acceleration. Torso and head targets follow the same
@@ -100,13 +111,34 @@ their current positions. Cancellation finishes any segment already in progress.
 Zero velocity triggers settlement and new velocity resumes locomotion; an
 explicit behavior stop cannot be undone by a stale velocity command.
 
-There is a deliberate timing tradeoff: segments start and end at rest, and take
-at least ten updates (one second). This bounds sampling resolution and produces
-C2 position trajectories, but limits top speed and adds request latency. Phase
-gains retain their per-update units; increasing them cannot bypass the minimum
-segment duration. Running uses the same contact-preserving alternating tripod
-planner with its own parameters; the previous discontinuous flight-overlap
-formula is removed. It is no longer an aerial running gait.
+Velocity inputs use metres/second for planar translation and radians/second for
+yaw. Joystick inputs are normalized; full stick maps to `max_velocity_linear`
+(default 0.10 m/s in both robot profiles) or `max_velocity_rotation` (0.40 rad/s,
+about 23 degrees/s).
+All velocity requests are limited by planar vector magnitude and yaw magnitude;
+non-finite requests are rejected. Linear direction is preserved when limiting.
+The authoritative limits also drive gait selection. Legacy
+`gait.move_combined.max_*_velocity_*` aliases must match them when supplied.
+
+Gait demand is the larger of normalized planar speed and normalized yaw speed.
+The wave/ripple and ripple/tripod thresholds remain 0.3 and 0.6, with hysteresis.
+A full single-axis input selects tripod directly at the next contact boundary.
+Running also uses the physical velocity contract and alternating tripod support.
+
+Each stance follows a planar rigid-body transform derived from the requested
+twist and segment duration. Rotational foot speed uses the foot radius in metres.
+Segment duration is derived from step reach and foot speed, bounded to 0.2–1.0 s;
+slow commands shorten stride length rather than prolonging command latency.
+Elapsed time drives the trajectory; sampling overshoot carries into the next
+segment while retaining an explicit touchdown sample. Normal commands change at
+the next contact boundary, within one second. Gait transitions can temporarily
+limit foot reach before all legs enter their new schedule.
+
+Segments start and end at rest. Requested speed matches the average over complete
+settled cycles; instantaneous twist varies within each segment. Phase gains and
+rotation weights remain accepted for compatibility but no longer scale physical
+locomotion speed. Hardware servo speed limits and slip can reduce realized speed;
+validate those with measured distance/time before claiming hardware accuracy.
 
 Clap and high-five finish their current sequence/raise before returning;
 leg-wave, waiting, and torso-roll finish their closed cycle. Look and watch
@@ -119,7 +151,7 @@ The obsolete `gait.running.velocity_filter_alpha`, `gait.running.flight_fraction
 `gait.move_combined.velocity_filter_alpha`, and
 `gait.move_combined.transition_phase_span_rad` keys remain accepted for older
 configuration files but are unused. No new dependencies or required parameters
-are introduced.
+are introduced beyond the existing brain velocity limits.
 
 Continuity refers to the planned kinematic state, initialized from
 `body_pose_actual`, not continuously measured foot positions. Contact, servo
@@ -127,3 +159,41 @@ tracking, and balance require simulation/hardware validation. The test suite
 covers trajectory derivatives, displaced startup poses, every behavior pair,
 every walking-pattern pair, direction reversal during swing, settlement,
 resumption, and gesture cancellation regressions.
+
+## Velocity validation
+
+Validated on ROS 2 Lyrical with offline servo output on 2026-10-05. The full
+brain → movement → supporting-foot odometry pipeline was warmed up before each
+six-second measurement. Both cases used tripod (three airborne feet).
+
+| Input | Requested speed | Estimated distance/time speed |
+| --- | --- | --- |
+| Teleop left stick horizontal = 1.0 | 0.1000 m/s sideways | 0.1002 m/s |
+| `cmd_vel.linear.x = 0.1` | 0.1000 m/s forward | 0.1004 m/s |
+
+Focused tests cover translation, rotation, mixed commands, hysteresis, contact
+boundaries, and update jitter. Supporting-foot displacement matches settled
+commands within 2% across walking and running. This validates commanded
+kinematics, not hardware tracking. For hardware acceptance, measure travelled
+distance over timed settled cycles at low, medium and maximum commands in both
+linear directions, and measure yaw over time for rotation. Compare those results
+with `/movement_velocity_estimated`; servo limits or slip require hardware
+calibration rather than treating target-based odometry as a sensor measurement.
+
+Orientation trajectories now publish at 50 Hz without shortening their requested
+durations. The brain uses a fixed scheduling deadline and processes incoming
+commands before planning. Servo output rounds to the nearest 0.24-degree tick
+and suppresses only unchanged tick targets, replacing the previous 0.49-degree
+deadband. One-tick changes remain eligible at every sample; idle targets do not
+restart actions. The existing actuator speed limit remains enforced.
+
+Joystick pose mode activates `CONTINUOUS_POSE` and submits body/head targets in
+one request group. A neutral stick preserves the existing target, as before;
+orientation targets no longer leave the previous walking gait selected.
+
+Follow-up offline validation after raising the turning limit: a full right-stick
+command requested 0.4000 rad/s and supporting-foot odometry estimated 0.4012 rad/s
+(22.99 degrees/s), using tripod. Joystick pose-mode activation produced 51 samples
+for a one-second head trajectory to 14 degrees, with a largest adjacent yaw step
+of 0.535 degrees. All 197 package tests passed, including elapsed-time orientation
+checks, one-tick servo commands, and pose-mode request grouping.

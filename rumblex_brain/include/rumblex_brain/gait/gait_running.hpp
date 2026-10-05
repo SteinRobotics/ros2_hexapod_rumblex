@@ -22,6 +22,11 @@ class CRunningGait : public IContinuousGait {
         return planner_.update(pattern_, velocity, rotation_weight_, torso);
     }
 
+    bool updateTimed(const geometry_msgs::msg::Twist& velocity, const CPose& torso, const COrientation&,
+                     double elapsed_s) override {
+        return planner_.update(pattern_, velocity, rotation_weight_, torso, elapsed_s);
+    }
+
    private:
     CStridePlanner planner_;
     StridePattern pattern_;

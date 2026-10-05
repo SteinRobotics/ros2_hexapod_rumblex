@@ -26,14 +26,18 @@ void CYawSequenceGait::start(double duration_s, uint8_t direction) {
     head_origin_ = kinematics_->getHeadOrientation();
     toe_origins_ = kinematics_->getToePositions();
     direction_sign_ = direction == MovementRequest::CLOCKWISE ? 1.0 : -1.0;
-    // The movement handler updates every 100 ms.
-    delta_phase_ = phase_limit_ / (std::max(duration_s, 1.0) / 0.1);
+    phase_rate_ = phase_limit_ / std::max(duration_s, 1.0);
 }
 
 bool CYawSequenceGait::update() {
+    return updateTimed(0.1);
+}
+
+bool CYawSequenceGait::updateTimed(double elapsed_s) {
+    if (!std::isfinite(elapsed_s) || elapsed_s <= 0.0 || elapsed_s > 0.5) return false;
     if (state_ == EGaitState::Stopped) return false;
 
-    phase_ = std::min(phase_ + delta_phase_, phase_limit_);
+    phase_ = std::min(phase_ + phase_rate_ * elapsed_s, phase_limit_);
     if (phase_ / phase_limit_ >= 1.0 - 1e-12) phase_ = phase_limit_;
     const double angle = phase_limit_ * trajectoryProgress(phase_ / phase_limit_);
     const double excursion = phase_ >= phase_limit_ ? 0.0 : direction_sign_ * std::sin(angle);

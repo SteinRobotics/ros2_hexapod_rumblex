@@ -16,6 +16,7 @@ class CYawSequenceGait : public ISequenceGait {
 
     void start(double duration_s, uint8_t direction) override;
     bool update() override;
+    bool updateTimed(double elapsed_s) override;
     // Stop requests do not interrupt these finite excursions.
     void requestStop() override {
     }
@@ -32,7 +33,7 @@ class CYawSequenceGait : public ISequenceGait {
     units::Angle head_amplitude_;
     units::Angle torso_amplitude_;
     double direction_sign_ = 1.0;
-    double delta_phase_ = 0.0;
+    double phase_rate_ = 0.0;
     double phase_ = 0.0;
     CPose torso_origin_;
     COrientation head_origin_;

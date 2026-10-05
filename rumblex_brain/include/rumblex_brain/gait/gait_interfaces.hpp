@@ -27,11 +27,18 @@ class IContinuousGait : public IGait {
    public:
     virtual bool update(const geometry_msgs::msg::Twist& velocity, const CPose& torso,
                         const COrientation& head) = 0;
+    virtual bool updateTimed(const geometry_msgs::msg::Twist& velocity, const CPose& torso,
+                             const COrientation& head, double /*elapsed_s*/) {
+        return update(velocity, torso, head);
+    }
 };
 
 class ISequenceGait : public IGait {
    public:
     virtual bool update() = 0;
+    virtual bool updateTimed(double /*elapsed_s*/) {
+        return update();
+    }
 };
 
 }  // namespace brain

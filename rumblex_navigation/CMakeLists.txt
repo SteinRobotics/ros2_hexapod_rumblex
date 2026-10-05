@@ -59,6 +59,18 @@ install(FILES scripts/wall_geometry.py scripts/planar_motion.py scripts/offline_
 
 if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_navigation test/test_navigation.cpp)
+  target_link_libraries(test_navigation
+    rclcpp::rclcpp
+    sensor_msgs::sensor_msgs__rosidl_generator_cpp
+    sensor_msgs::sensor_msgs__rosidl_typesupport_cpp
+    geometry_msgs::geometry_msgs__rosidl_generator_cpp
+    geometry_msgs::geometry_msgs__rosidl_typesupport_cpp
+    nav_msgs::nav_msgs__rosidl_generator_cpp
+    nav_msgs::nav_msgs__rosidl_typesupport_cpp
+    tf2::tf2
+  )
   ament_add_pytest_test(test_wall_geometry test/test_wall_geometry.py)
   ament_add_pytest_test(test_planar_motion test/test_planar_motion.py)
   ament_add_pytest_test(test_offline_odometry test/test_offline_odometry.py)

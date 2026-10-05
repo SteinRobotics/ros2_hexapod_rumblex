@@ -13,7 +13,7 @@ class MovementHandlerTest : public ::testing::Test {
         rclcpp::init(0, nullptr);
         rclcpp::NodeOptions options;
         options.parameter_overrides(test_helpers::defaultRobotParameters());
-        node = std::make_shared<rclcpp::Node>("movement_handler_test", options);
+        node = std::make_shared<rclcpp::Node>("movement_handler_test", "/movement_handler_test", options);
         executor = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
         executor->add_node(node);
         handler = std::make_unique<CMovement>(node);
@@ -205,4 +205,23 @@ TEST_F(MovementHandlerTest, SameTypeFiniteRequestCompletesAndInvalidRequestDoesN
     EXPECT_TRUE(handler->done());
     request(MovementRequest::SEQUENCE_DANCE);
     EXPECT_TRUE(handler->done());
+}
+
+TEST_F(MovementHandlerTest, OrientationPublishesFrequentSamplesWithoutCompressingDuration) {
+    const auto seed = initialPose();
+    feedback->publish(seed);
+    pump(200ms);
+    request(MovementRequest::CONTINUOUS_POSE);
+    auto head = std::make_shared<RequestHeadOrientation>();
+    head->orientation = seed.head_pose;
+    head->orientation.yaw = 23.0;
+    handler->run(head);
+    poses.clear();
+    pump(250ms);
+    EXPECT_GE(poses.size(), 10u);
+    ASSERT_FALSE(poses.empty());
+    EXPECT_GT(poses.back().head_pose.yaw, seed.head_pose.yaw);
+    EXPECT_LT(poses.back().head_pose.yaw, 20.0);
+    pump(1100ms);
+    EXPECT_DOUBLE_EQ(poses.back().head_pose.yaw, 23.0);
 }

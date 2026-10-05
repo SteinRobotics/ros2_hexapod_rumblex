@@ -26,6 +26,8 @@ class CSinglePoseGait : public IContinuousGait {
     void start(double duration_s, uint8_t direction) override;
     bool update(const geometry_msgs::msg::Twist& velocity, const CPose& torso,
                 const COrientation& head) override;
+    bool updateTimed(const geometry_msgs::msg::Twist& velocity, const CPose& torso, const COrientation& head,
+                     double elapsed_s) override;
     void requestStop() override;
     void cancelStop() override;
     EGaitState state() const override {

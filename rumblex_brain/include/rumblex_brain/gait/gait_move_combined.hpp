@@ -24,6 +24,12 @@ class CMoveCombinedGait : public IContinuousGait {
     bool update(const geometry_msgs::msg::Twist& velocity, const CPose& torso,
                 const COrientation& head) override;
 
+    bool updateTimed(const geometry_msgs::msg::Twist& velocity, const CPose& torso, const COrientation& head,
+                     double elapsed_s) override;
+    EMoveCombinedGaitType activeGaitType() const {
+        return active_gait_type_;
+    }
+
    private:
     EMoveCombinedGaitType selectGait(double magnitude) const;
     CStridePlanner planner_;

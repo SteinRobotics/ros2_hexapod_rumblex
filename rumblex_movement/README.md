@@ -71,3 +71,11 @@ colcon build --packages-up-to rumblex_movement \
 colcon test --packages-select rumblex_movement --event-handlers console_direct+
 colcon test-result --verbose
 ```
+
+Velocity commands use m/s and rad/s. Movement consumes poses at 50 Hz and sends
+servo durations matching pose delivery intervals. Servo targets are rounded to
+the nearest 0.24-degree tick; small tick changes are sent without a separate
+half-degree deadband. `body_pose_actual` and
+`joint_states` describe applied kinematic targets initialized from servo angles,
+not continuous measured joint feedback. See the pipeline document for command
+limits, gait selection, and supporting-foot velocity estimation.

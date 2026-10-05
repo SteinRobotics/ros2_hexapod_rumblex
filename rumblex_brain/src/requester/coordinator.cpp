@@ -17,7 +17,8 @@ namespace brain {
 CCoordinator::CCoordinator(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CActionPlanner> actionPlanner)
     : node_(node), actionPlanner_(actionPlanner) {
     const auto required = [&node](const char* name) {
-        const double value = node->declare_parameter<double>(name);
+        const double value = node->has_parameter(name) ? node->get_parameter(name).as_double()
+                                                       : node->declare_parameter<double>(name);
         if (!std::isfinite(value)) {
             throw std::invalid_argument(std::string(name) + " must be finite");
         }
@@ -151,16 +152,13 @@ void CCoordinator::joystickRequestReceived(const JoystickRequest& msg) {
         if (std::abs(msg.right_stick_vertical) > kJoystickDeadzone_) {
             head.pitch = msg.right_stick_vertical * max_displacement_deg;
         }
-        if (body.position.x != 0.0 || body.position.y != 0.0) {
-            auto request_body = std::make_shared<RequestSinglePose>();
-            request_body->pose = body;
-            submitRequest(request_body, Prio::High);
-        }
-        if (head.yaw != 0.0 || head.pitch != 0.0) {
-            auto request_head = std::make_shared<RequestHeadOrientation>();
-            request_head->orientation = head;
-            submitRequest(request_head, Prio::High);
-        }
+        // Activate the pose gait and deliver body/head targets together. Updating
+        // targets alone leaves the previous walking gait selected and ignores head input.
+        const bool body_changed = body.position.x != 0.0 || body.position.y != 0.0;
+        const bool head_changed = head.yaw != 0.0 || head.pitch != 0.0;
+        submitRequestMove(MovementRequest::CONTINUOUS_POSE, 0.0, "", Prio::High,
+                          body_changed ? std::optional(body) : std::nullopt,
+                          head_changed ? std::optional(head) : std::nullopt);
         return;
     }
 
@@ -443,7 +441,8 @@ void CCoordinator::submitRequestMove(uint32_t movementType, double duration_s, s
     actionPlanner_->request(request_v, prio);
 
     if (movementType == MovementRequest::CONTINUOUS_MOVE ||
-        movementType == MovementRequest::CONTINUOUS_RUNNING) {
+        movementType == MovementRequest::CONTINUOUS_RUNNING ||
+        (movementType == MovementRequest::CONTINUOUS_POSE && duration_s <= 0.0)) {
         movement_deadline_.reset();
         return;
     }

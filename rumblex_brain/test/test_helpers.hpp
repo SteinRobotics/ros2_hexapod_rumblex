@@ -79,6 +79,8 @@ inline std::vector<rclcpp::Parameter> defaultGaitParameters() {
 
 inline std::vector<rclcpp::Parameter> defaultRobotParameters() {
     auto params = defaultKinematicsParameters();
+    params.emplace_back("max_velocity_linear", 0.02);
+    params.emplace_back("max_velocity_rotation", 0.02);
     const auto gait_params = defaultGaitParameters();
     params.insert(params.end(), gait_params.begin(), gait_params.end());
     return params;

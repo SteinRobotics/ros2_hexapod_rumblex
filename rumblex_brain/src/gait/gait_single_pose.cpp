@@ -29,16 +29,21 @@ void CSinglePoseGait::start(double duration_s, uint8_t /*direction*/) {
     }
 }
 
-bool CSinglePoseGait::update(const geometry_msgs::msg::Twist& /*velocity*/, const CPose& torso,
+bool CSinglePoseGait::update(const geometry_msgs::msg::Twist& velocity, const CPose& torso,
                              const COrientation& head) {
+    return updateTimed(velocity, torso, head, 0.1);
+}
+
+bool CSinglePoseGait::updateTimed(const geometry_msgs::msg::Twist&, const CPose& torso,
+                                  const COrientation& head, double elapsed_s) {
+    if (!std::isfinite(elapsed_s) || elapsed_s <= 0.0 || elapsed_s > 0.5) return false;
     if (state_ == EGaitState::Stopped) return false;
 
     if (phase_ == 0.0) {
         torso_target_ = target_ ? target_->torso : torso;
         head_target_ = target_ ? target_->head : head;
     }
-    // The movement handler updates gaits every 100 ms.
-    phase_ += 0.1;
+    phase_ += elapsed_s;
     const double fraction = duration_s_ > 0.0 ? std::min(phase_ / duration_s_, 1.0) : 1.0;
     if (fraction >= 1.0 - 1e-12) state_ = EGaitState::Stopped;
     double progress = state_ == EGaitState::Stopped ? 1.0 : fraction;

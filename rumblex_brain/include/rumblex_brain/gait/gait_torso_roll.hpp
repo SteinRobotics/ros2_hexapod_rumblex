@@ -21,6 +21,7 @@ class CTorsoRollGait : public ISequenceGait {
 
     void start(double duration_s, uint8_t direction) override;
     bool update() override;
+    bool updateTimed(double elapsed_s) override;
     void requestStop() override;
     void cancelStop() override;
     EGaitState state() const override {
@@ -35,7 +36,7 @@ class CTorsoRollGait : public ISequenceGait {
     Parameters::TorsoRoll params_;
     std::map<ELegIndex, CPosition> origin_leg_positions_;
     CPose torso_origin_;
-    double phase_increment_ = 0.1;
+    double phase_rate_ = 0.1;
     double phase_ = double(0);
 };
 

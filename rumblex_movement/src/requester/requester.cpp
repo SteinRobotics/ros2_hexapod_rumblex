@@ -92,13 +92,20 @@ void CRequester::onBodyPose(const BodyPose& msg) {
     }
     kinematics_->moveTorso(rumblex_geometry::toeTargets(msg), rumblex_geometry::CPose(msg.torso_pose));
     kinematics_->setHeadOrientation(rumblex_geometry::COrientation(msg.head_pose));
+    const auto now = std::chrono::steady_clock::now();
+    pending_duration_s_.reset();
+    if (last_pose_received_) {
+        const double dt = std::chrono::duration<double>(now - *last_pose_received_).count();
+        if (dt >= 0.01 && dt <= 0.5) pending_duration_s_ = dt;
+    }
+    last_pose_received_ = now;
     pending_pose_ = true;
 }
 
 void CRequester::update(std::chrono::milliseconds timeslice) {
     if (pending_pose_) {
         pending_pose_ = false;
-        double duration_s = double(timeslice.count() / 1000.0);
+        double duration_s = pending_duration_s_.value_or(double(timeslice.count() / 1000.0));
         sendServoRequest(duration_s);
     }
     pub_body_pose_->publish(rumblex_geometry::bodyPose(*kinematics_));

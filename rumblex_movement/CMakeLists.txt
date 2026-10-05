@@ -68,6 +68,11 @@ target_link_libraries(node_movement PRIVATE
 add_executable(node_offline_visualization src/node_offline_visualization.cpp)
 target_link_libraries(node_offline_visualization PRIVATE rumblex_movement_core)
 
+install(TARGETS rumblex_movement_core
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib)
+ament_export_libraries(rumblex_movement_core)
+
 install(TARGETS
   node_movement
   node_offline_visualization
@@ -82,6 +87,9 @@ install(DIRECTORY
 # Unit tests
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_servo_controller test/test_servo_controller.cpp)
+  target_link_libraries(test_servo_controller rumblex_movement_core)
+
   ament_add_gtest(test_scserial test/test_scserial.cpp)
   if(TARGET test_scserial)
     target_link_libraries(test_scserial rumblex_movement_core util)

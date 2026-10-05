@@ -15,7 +15,7 @@ void CContinuousPoseGait::start(double /*duration_s*/, uint8_t /*direction*/) {
     RCLCPP_INFO(node_->get_logger(), "Starting CContinuousPoseGait");
     state_ = EGaitState::Running;
 
-    tick_ = 10;
+    elapsed_s_ = 1.0;
     toe_origins_ = kinematics_->getToePositions();
     torso_origin_ = kinematics_->getTorsoPose();
     head_origin_ = kinematics_->getHeadOrientation();
@@ -23,12 +23,18 @@ void CContinuousPoseGait::start(double /*duration_s*/, uint8_t /*direction*/) {
     head_target_ = head_origin_;
 }
 
-bool CContinuousPoseGait::update(const geometry_msgs::msg::Twist& /*velocity*/, const CPose& torso,
+bool CContinuousPoseGait::update(const geometry_msgs::msg::Twist& velocity, const CPose& torso,
                                  const COrientation& head) {
+    return updateTimed(velocity, torso, head, 0.1);
+}
+
+bool CContinuousPoseGait::updateTimed(const geometry_msgs::msg::Twist&, const CPose& torso,
+                                      const COrientation& head, double elapsed_s) {
+    if (!std::isfinite(elapsed_s) || elapsed_s <= 0.0 || elapsed_s > 0.5) return false;
     if (state_ == EGaitState::Stopped) return false;
 
     // Finish each finite pose trajectory before accepting another target or stop.
-    if (tick_ == 10) {
+    if (elapsed_s_ >= 1.0) {
         if (state_ == EGaitState::Stopping) {
             state_ = EGaitState::Stopped;
             return false;
@@ -38,14 +44,17 @@ bool CContinuousPoseGait::update(const geometry_msgs::msg::Twist& /*velocity*/, 
         if (torso_origin_ == torso && head_origin_ == head) return false;
         torso_target_ = torso;
         head_target_ = head;
-        tick_ = 0;
+        elapsed_s_ = 0.0;
     }
-    const double progress = trajectoryProgress(static_cast<double>(++tick_) / 10.0);
-    kinematics_->moveTorso(
-        toe_origins_, tick_ == 10 ? torso_target_ : torso_origin_.linearInterpolate(torso_target_, progress));
-    kinematics_->setHeadOrientation(tick_ == 10 ? head_target_
-                                                : head_origin_.linearInterpolate(head_target_, progress));
-    if (tick_ == 10 && state_ == EGaitState::Stopping) state_ = EGaitState::Stopped;
+    elapsed_s_ = std::min(elapsed_s_ + elapsed_s, 1.0);
+    if (elapsed_s_ >= 1.0 - 1e-12) elapsed_s_ = 1.0;
+    const double progress = trajectoryProgress(elapsed_s_);
+    kinematics_->moveTorso(toe_origins_, elapsed_s_ >= 1.0
+                                             ? torso_target_
+                                             : torso_origin_.linearInterpolate(torso_target_, progress));
+    kinematics_->setHeadOrientation(
+        elapsed_s_ >= 1.0 ? head_target_ : head_origin_.linearInterpolate(head_target_, progress));
+    if (elapsed_s_ >= 1.0 && state_ == EGaitState::Stopping) state_ = EGaitState::Stopped;
     return true;
 }
 

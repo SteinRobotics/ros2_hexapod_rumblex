@@ -233,7 +233,7 @@ int CServoController::angle_to_ticks(double angle, int idx) {
     if (!servos_.at(idx).isOrientationClockwise()) {
         angle = -angle;
     }
-    return static_cast<int>(angle * 25.0 / 6.0 + 500.0);
+    return static_cast<int>(std::lround(angle * 25.0 / 6.0 + 500.0));
 }
 
 void CServoController::onTimerStatus() {
@@ -295,23 +295,29 @@ void CServoController::onTimerStatus() {
 
 void CServoController::requestAngles(const std::map<uint32_t, double>& target_angles,
                                      const double duration_s) {
+    if (!protocol_ || !std::isfinite(duration_s) || duration_s < 0.0) return;
+    bool queued = false;
     for (const auto& [idx, target_angle] : target_angles) {
+        if (!std::isfinite(target_angle)) continue;
         auto it = servos_.find(idx);
         if (it == servos_.end()) {
             RCLCPP_WARN_ONCE(node_->get_logger(), "requestAngles: unknown servo index %u", idx);
             continue;
         }
-        double diff = std::abs(it->second.getAngle() - target_angle);
-        if (diff < 0.49) continue;
+        const int ticks = angle_to_ticks(target_angle, idx);
+        if (ticks == angle_to_ticks(it->second.getAngle(), idx)) continue;
+        const double applied_angle = ticks_to_angle(ticks, idx);
+        const double diff = std::abs(it->second.getAngle() - applied_angle);
 
         // max speed is 3ms for 1° (0.18s for 60°)
-        int duration = std::max(static_cast<int>(diff * 3), static_cast<int>(duration_s * 1000.0));
-        it->second.setAngle(target_angle);
-
-        int ticks = angle_to_ticks(target_angle, idx);
-        protocol_->setRegPos(it->second.getSerialID(), ticks, duration);
+        const int duration = std::max(static_cast<int>(std::ceil(diff * 3.0)),
+                                      static_cast<int>(std::ceil(duration_s * 1000.0)));
+        if (protocol_->setRegPos(it->second.getSerialID(), ticks, duration)) {
+            it->second.setAngle(applied_angle);
+            queued = true;
+        }
     }
-    protocol_->actionStart();
+    if (queued) protocol_->actionStart();
 }
 
 // void CServoController::sendServoRequest(const ServoRequest& msg) {

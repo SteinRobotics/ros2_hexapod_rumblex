@@ -42,5 +42,6 @@ class CMovement : public IHandler {
     std::optional<rclcpp::Time> completion_time_;
     rumblex_interfaces::msg::BodyPose last_pose_;
     std::chrono::steady_clock::time_point next_update_{};
+    std::optional<std::chrono::steady_clock::time_point> last_update_;
 };
 }  // namespace brain

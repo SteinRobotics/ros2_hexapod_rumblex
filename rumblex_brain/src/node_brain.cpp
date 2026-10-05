@@ -7,7 +7,7 @@
 #include "requester/coordinator.hpp"
 #include "requester/recognition.hpp"
 
-constexpr int REFRESH_RATE_HZ = 20;
+constexpr int REFRESH_RATE_HZ = 50;
 
 int main(int argc, char** argv) {
     rclcpp::init(argc, argv);
@@ -27,9 +27,9 @@ int main(int argc, char** argv) {
 
     rclcpp::Rate loop_rate(REFRESH_RATE_HZ);
     while (rclcpp::ok()) {
+        executor.spin_some();
         coordinator->update();
         actionPlanner->update();
-        executor.spin_some();
         loop_rate.sleep();
     }
     return 0;

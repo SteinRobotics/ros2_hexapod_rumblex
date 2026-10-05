@@ -72,7 +72,12 @@ ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist '{}'
 
 This estimates contact from gait targets, without measured foot-contact feedback,
 collision physics, or localization. The body's displayed speed follows the actual
-gait stride rather than `/movement_velocity`; it can differ from requested speed.
+gait stride rather than `/movement_velocity`. Settled cycle-average speed now
+matches physical commands; instantaneous speed varies within each segment.
+`/movement_velocity_estimated` reports stamped body-frame twist from the same
+estimate. Navigation consumes `/odom` rather than creating command-based odometry.
+When the test estimator is already running, launch navigation with
+`use_external_odometry:=true`.
 Inconsistent support trajectories and CAD versus kinematic geometry can leave
 some visible foot sliding. Use Gazebo for physics-based validation.
 Disable both test transforms and offline odometry with

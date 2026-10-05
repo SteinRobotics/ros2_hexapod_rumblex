@@ -31,6 +31,7 @@ class CActionPlanner {
     bool done();
 
    private:
+    friend class ActionPlannerTestAccess;
     std::shared_ptr<rclcpp::Node> node_;
     std::list<std::vector<std::shared_ptr<RequestBase>>> requests_highest_prio_;
     std::list<std::vector<std::shared_ptr<RequestBase>>> requests_high_prio_;

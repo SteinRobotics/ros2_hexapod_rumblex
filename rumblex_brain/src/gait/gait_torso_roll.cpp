@@ -3,7 +3,6 @@
 #include "gait/trajectory.hpp"
 
 constexpr double kPhaseLimit = TWO_PI;
-constexpr double kUpdateIntervalS = 0.1;  // Update interval in seconds
 
 namespace brain {
 
@@ -16,16 +15,22 @@ void CTorsoRollGait::start(double duration_s, uint8_t /*direction*/) {
     duration_s = std::max(duration_s, 1.0);
     state_ = EGaitState::Starting;
     phase_ = 0.0;
-    phase_increment_ = kPhaseLimit / (duration_s / kUpdateIntervalS);
+    phase_rate_ = kPhaseLimit / duration_s;
     torso_origin_ = kinematics_->getTorsoPose();
     origin_leg_positions_ = kinematics_->getToePositions();
 }
 
 bool CTorsoRollGait::update() {
+    return updateTimed(0.1);
+}
+
+bool CTorsoRollGait::updateTimed(double elapsed_s) {
+    if (!std::isfinite(elapsed_s) || elapsed_s <= 0.0 || elapsed_s > 0.5) return false;
     if (state_ == EGaitState::Stopped) {
         return false;
     }
-    phase_ = std::min(phase_ + phase_increment_, kPhaseLimit);
+    phase_ = std::min(phase_ + phase_rate_ * elapsed_s, kPhaseLimit);
+    if (phase_ >= kPhaseLimit - 1e-12) phase_ = kPhaseLimit;
     const double angle = kPhaseLimit * trajectoryProgress(phase_ / kPhaseLimit);
     auto torso = torso_origin_;
     if (phase_ < kPhaseLimit) {

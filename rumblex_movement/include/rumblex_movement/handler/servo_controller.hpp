@@ -121,6 +121,7 @@ class CServoController {
     void setInitialAnglesCallback(InitialAnglesCallback callback);
 
    private:
+    friend class ServoControllerTestAccess;
     void initServos();
     void onTimerStatus();
 

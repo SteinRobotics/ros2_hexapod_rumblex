@@ -104,6 +104,11 @@ include_directories(
   include/rumblex_brain/
 )
 
+install(TARGETS rumblex_brain_lib
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib)
+ament_export_libraries(rumblex_brain_lib)
+
 install(TARGETS
   node_brain
   DESTINATION lib/${PROJECT_NAME})
@@ -117,6 +122,12 @@ install(DIRECTORY
 # Unit tests
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_orientation_timing test/test_orientation_timing.cpp)
+  target_link_libraries(test_orientation_timing rumblex_brain_lib)
+
+  ament_add_gtest(test_velocity test/test_velocity.cpp)
+  target_link_libraries(test_velocity rumblex_brain_lib)
+
   ament_add_gtest(test_movement_types
     test/test_movement_types.cpp
     test/test_movement_types_other_translation_unit.cpp
