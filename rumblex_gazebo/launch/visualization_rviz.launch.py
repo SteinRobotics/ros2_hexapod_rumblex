@@ -96,7 +96,7 @@ def _launch_robot(context):
     lidar_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([
-                FindPackageShare('rumblex_bringup'),
+                FindPackageShare('rumblex_perception'),
                 'launch',
                 'sensors_launch.py',
             ])

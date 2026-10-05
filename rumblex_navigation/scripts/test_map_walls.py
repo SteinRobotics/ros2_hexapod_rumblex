@@ -9,10 +9,11 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile
 from sensor_msgs.msg import Range
+from std_msgs.msg import String
 from tf2_ros import Buffer, TransformException, TransformListener
 from visualization_msgs.msg import Marker, MarkerArray
 
-from wall_geometry import ray_distance, rotate, wall_boxes
+from wall_geometry import gazebo_wall_model, ray_distance, rotate, wall_boxes
 
 
 def quaternion_tuple(q):
@@ -29,6 +30,9 @@ class TestMapWalls(Node):
         self.map = None
         self.boxes = []
         latched = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
+        self.gazebo_model = None
+        if self.declare_parameter('publish_gazebo_map', False).value:
+            self.gazebo_model = self.create_publisher(String, 'gazebo_map_description', latched)
         self.markers = self.create_publisher(MarkerArray, 'test_map_walls', latched)
         self.subscription = self.create_subscription(OccupancyGrid, 'map', self.on_map, latched)
         self.tf_buffer = Buffer()
@@ -44,6 +48,10 @@ class TestMapWalls(Node):
         clear = Marker(action=Marker.DELETEALL)
         markers = MarkerArray(markers=[clear])
         pose = grid.info.origin
+        if self.gazebo_model is not None:
+            self.gazebo_model.publish(String(data=gazebo_wall_model(
+                self.boxes, (pose.position.x, pose.position.y, pose.position.z),
+                quaternion_tuple(pose.orientation))))
         for index, (lower, upper) in enumerate(self.boxes):
             marker = Marker()
             marker.header.frame_id = grid.header.frame_id

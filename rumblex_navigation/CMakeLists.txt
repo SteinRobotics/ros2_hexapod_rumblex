@@ -40,7 +40,7 @@ install(TARGETS
 install(DIRECTORY launch config maps
   DESTINATION share/${PROJECT_NAME}/)
 
-install(PROGRAMS scripts/test_map_walls.py scripts/offline_odometry.py
+install(PROGRAMS scripts/test_map_walls.py scripts/offline_odometry.py scripts/room_labels.py
   DESTINATION lib/${PROJECT_NAME})
 install(FILES scripts/wall_geometry.py scripts/planar_motion.py scripts/offline_motion.py
   DESTINATION lib/${PROJECT_NAME})

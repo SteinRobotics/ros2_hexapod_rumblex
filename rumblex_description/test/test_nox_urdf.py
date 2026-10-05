@@ -18,6 +18,16 @@ def expand(mesh=True, sim=False):
 
 
 class NoxDescriptionTests(unittest.TestCase):
+    def test_gazebo_resource_export_resolves_mesh_uris(self):
+        share = ROOT / 'rumblex_description'
+        manifest = ET.parse(share / 'package.xml')
+        export = manifest.find('export/gazebo_ros')
+        self.assertIsNotNone(export)
+        resource_root = Path(export.get('gazebo_model_path').replace('${prefix}', str(share)))
+        for mesh in expand(sim=True).findall('.//mesh'):
+            relative = mesh.get('filename').removeprefix('package://')
+            self.assertTrue((resource_root / relative).is_file(), relative)
+
     def test_mesh_resources_and_tree(self):
         model = expand()
         for mesh in model.findall('.//mesh'):

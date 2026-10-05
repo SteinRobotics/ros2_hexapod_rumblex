@@ -21,6 +21,7 @@ def generate_launch_description():
     hmi = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             FindPackageShare('rumblex_hmi'), '/launch/hmi_simulated_launch.py']),
+        condition=IfCondition(LaunchConfiguration('enable_simulated_hmi')),
     )
 
     house_map = IncludeLaunchDescription(
@@ -28,7 +29,7 @@ def generate_launch_description():
             FindPackageShare('rumblex_navigation'), '/launch/map_launch.py']),
         launch_arguments={
             'map': LaunchConfiguration('map'),
-            'use_sim_time': 'false',
+            'use_sim_time': LaunchConfiguration('use_sim_time'),
         }.items(),
     )
 
@@ -40,7 +41,10 @@ def generate_launch_description():
     movement = IncludeLaunchDescription(
         AnyLaunchDescriptionSource([
             FindPackageShare('rumblex_movement'), '/launch/movement_offline_launch.py']),
-        launch_arguments={'robot': robot}.items(),
+        launch_arguments={
+            'robot': robot,
+            'joint_states_topic': LaunchConfiguration('movement_joint_states_topic'),
+        }.items(),
     )
     display_mesh = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
@@ -49,6 +53,7 @@ def generate_launch_description():
             'robot': robot, 'joint_state_publisher_gui': 'false', 'fixed_frame': 'map',
             'joint_states_topic': 'visualization_joint_states',
         }.items(),
+        condition=IfCondition(LaunchConfiguration('enable_display')),
     )
     brain = launch.actions.TimerAction(
         period=2.0,
@@ -63,12 +68,27 @@ def generate_launch_description():
         FindPackageShare('rumblex_description'), 'config', robot, 'anatomy.yaml'])
 
     return LaunchDescription([
+        DeclareLaunchArgument('use_sim_time', default_value='false'),
+        DeclareLaunchArgument(
+            'enable_display', default_value='true',
+            description='Launch the offline mesh state publisher and RViz'),
+        DeclareLaunchArgument('movement_joint_states_topic', default_value='joint_states'),
+        DeclareLaunchArgument('publish_gazebo_map', default_value='false'),
+        DeclareLaunchArgument('start_x', default_value='-2.26',
+                              description='Initial map-frame x position (living-room center)'),
+        DeclareLaunchArgument('start_y', default_value='-2.13',
+                              description='Initial map-frame y position (living-room center)'),
+        DeclareLaunchArgument('start_yaw', default_value='0.0',
+                              description='Initial map-frame yaw in radians'),
         DeclareLaunchArgument(
             'robot', default_value='nox',
             description='Robot configuration profile (for example: nox or nira)'),
         DeclareLaunchArgument(
             'enable_simulated_teleop', default_value='true',
             description='Launch the mouse and keyboard controller GUI'),
+        DeclareLaunchArgument(
+            'enable_simulated_hmi', default_value='true',
+            description='Launch the simulated HMI GUI'),
         DeclareLaunchArgument(
             'map', default_value=PathJoinSubstitution([
                 FindPackageShare('rumblex_navigation'), 'maps', 'house_contour.yaml']),
@@ -89,13 +109,22 @@ def generate_launch_description():
             parameters=[{
                 'wall_height': ParameterValue(LaunchConfiguration('wall_height'), value_type=float),
                 'simulate_lidar': ParameterValue(LaunchConfiguration('simulate_lidar'), value_type=bool),
+                'publish_gazebo_map': ParameterValue(
+                    LaunchConfiguration('publish_gazebo_map'), value_type=bool),
             }],
+        ),
+        Node(
+            package='rumblex_navigation', executable='room_labels.py',
+            output='screen',
         ),
         # Offline supporting-foot estimate: map -> odom -> base_link.
         Node(
             package='tf2_ros', executable='static_transform_publisher',
             name='test_map_to_odom', output='screen',
-            arguments=['--frame-id', 'map', '--child-frame-id', 'odom'],
+            arguments=['--x', LaunchConfiguration('start_x'),
+                       '--y', LaunchConfiguration('start_y'),
+                       '--yaw', LaunchConfiguration('start_yaw'),
+                       '--frame-id', 'map', '--child-frame-id', 'odom'],
             condition=IfCondition(LaunchConfiguration('publish_test_map_tf')),
         ),
         Node(

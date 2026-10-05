@@ -4,12 +4,30 @@ import math
 from pathlib import Path
 import sys
 import unittest
+import xml.etree.ElementTree as ET
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
-from wall_geometry import ray_distance, rotate, wall_boxes
+from wall_geometry import gazebo_wall_model, ray_distance, rotate, wall_boxes
 
 
 class WallGeometryTest(unittest.TestCase):
+    def test_gazebo_walls_preserve_map_origin_size_and_doorway(self):
+        boxes = wall_boxes([100, 0, 100, 100, 0, 100], 3, 2, 0.5, 1.8)
+        rotation = (0, 0, math.sqrt(0.5), math.sqrt(0.5))
+        model = ET.fromstring(gazebo_wall_model(boxes, (-4.95, -5.15, 0), rotation)).find('model')
+        self.assertEqual(model.findtext('static'), 'true')
+        self.assertEqual(model.find('pose').get('rotation_format'), 'quat_xyzw')
+        self.assertEqual(list(map(float, model.findtext('pose').split())), [-4.95, -5.15, 0, *rotation])
+        collisions = model.findall('link/collision')
+        visuals = model.findall('link/visual')
+        self.assertEqual(len(collisions), 2)
+        self.assertEqual(len(visuals), 2)
+        for collision, visual in zip(collisions, visuals):
+            self.assertEqual(collision.findtext('pose'), visual.findtext('pose'))
+            self.assertEqual(collision.findtext('geometry/box/size'), '0.5 1.0 1.8')
+            self.assertEqual(collision.findtext('geometry/box/size'), visual.findtext('geometry/box/size'))
+        self.assertEqual([float(c.findtext('pose').split()[0]) for c in collisions], [0.25, 1.25])
+
     def test_merge_and_preserve_door_and_unknown(self):
         data = [100, 0, 100, 100, -1, 100, 100, 100, 100]
         boxes = wall_boxes(data, 3, 3, 0.5, 2.0)

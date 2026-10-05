@@ -7,6 +7,8 @@ Float64MultiArray on 'forward_position_controller/commands' in the joint order
 expected by the controller config.
 """
 
+import math
+
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
@@ -26,12 +28,27 @@ class JointStateBridge(Node):
         self.pub_ = self.create_publisher(
             Float64MultiArray, '/forward_position_controller/commands', 10
         )
+        self.command = None
+        # Keep the latest pose available even if the controller activates after
+        # the movement node's initial pose message.
+        self.timer = self.create_timer(0.02, self.publish_command)
 
     def on_joint_states(self, msg: JointState):
+        if len(msg.name) != len(msg.position):
+            self.get_logger().warning('Ignoring joint command with mismatched names and positions')
+            return
         name_to_pos = dict(zip(msg.name, msg.position))
+        if any(j not in name_to_pos or not math.isfinite(name_to_pos[j]) for j in self.joint_names_):
+            self.get_logger().warning('Ignoring incomplete or non-finite joint command')
+            return
         out = Float64MultiArray()
-        out.data = [name_to_pos.get(j, 0.0) for j in self.joint_names_]
-        self.pub_.publish(out)
+        out.data = [name_to_pos[j] for j in self.joint_names_]
+        self.command = out
+        self.publish_command()
+
+    def publish_command(self):
+        if self.command is not None:
+            self.pub_.publish(self.command)
 
 
 def main(args=None):

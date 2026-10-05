@@ -77,7 +77,8 @@ def _launch_robot(context):
     forward_position_controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['forward_position_controller'],
+        arguments=['forward_position_controller', '--param-file',
+                   os.path.join(pkg_gazebo, 'config', robot, 'joint_controllers.yaml')],
     )
 
     # Chain: spawn entity → start joint_state_broadcaster → start position controller
@@ -166,7 +167,7 @@ def _launch_robot(context):
 
     perception_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution([
-            FindPackageShare('rumblex_bringup'), 'launch', 'sensors_launch.py'])),
+            FindPackageShare('rumblex_perception'), 'launch', 'sensors_launch.py'])),
         launch_arguments={
             'robot': robot, 'enable_driver': 'false', 'enable_head_scan': 'true',
         }.items(),

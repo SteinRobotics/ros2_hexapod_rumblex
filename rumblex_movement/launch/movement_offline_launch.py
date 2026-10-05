@@ -17,8 +17,10 @@ def generate_launch_description():
         executable='node_movement',
         output='screen',
         parameters=[anatomy, servo_description, {'servo.offline': True}],
+        remappings=[('joint_states', LaunchConfiguration('joint_states_topic'))],
     )
     return LaunchDescription([
+        DeclareLaunchArgument('joint_states_topic', default_value='joint_states'),
         DeclareLaunchArgument(
             'robot', default_value='nox',
             choices=['nox', 'nira'],

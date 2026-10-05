@@ -28,7 +28,7 @@ def context(robot, driver='true', sweep='true'):
 @pytest.mark.parametrize('robot,package,count', [
     ('nox', 'rumblex_lidar_1d', 2), ('nira', 'rumblex_lidar_2d', 1)])
 def test_selected_pipeline(robot, package, count):
-    module = load('rumblex_bringup', 'sensors_launch')
+    module = load('rumblex_perception', 'sensors_launch')
     with patch.object(module, 'get_package_share_directory', side_effect=lambda name: str(ROOT / name)):
         ctx = context(robot)
         actions = module._launch_sensors(ctx)
@@ -48,7 +48,7 @@ def test_selected_pipeline(robot, package, count):
 
 @pytest.mark.parametrize('robot', ['unknown', '../nox', 'Nox'])
 def test_invalid_profiles_fail(robot):
-    module = load('rumblex_bringup', 'sensors_launch')
+    module = load('rumblex_perception', 'sensors_launch')
     with patch.object(module, 'get_package_share_directory', side_effect=lambda name: str(ROOT / name)):
         with pytest.raises(RuntimeError):
             module._launch_sensors(context(robot))

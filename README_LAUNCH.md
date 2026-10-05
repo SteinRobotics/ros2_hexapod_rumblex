@@ -142,6 +142,29 @@ The mesh display supports `joint_state_publisher_gui:=false` when another node s
 
 ### Full Gazebo simulation
 
+For the test bringup with the mesh robot, simulated controls, and house-contour walls:
+
+```bash
+ros2 launch rumblex_bringup test_gazebo_launch.py robot:=nox
+```
+
+This uses Gazebo as the viewer and does not start RViz. The ROS occupancy map is
+extruded into static Gazebo walls with collision geometry, preserving the map
+origin, resolution, doorways, and `wall_height`. Select another map with
+`map:=/absolute/path/to/map.yaml`; restart the launch when changing maps.
+Movement targets feed the Gazebo position controller, and Gazebo publishes the
+actual joint feedback. Controllers receive their robot-specific parameter file
+explicitly; failed controller startup stops the mesh launch.
+
+The test stack still estimates odometry from supporting feet and simulates the
+single-beam LiDAR from the map; these are not Gazebo ground-truth sensors.
+For a headless run:
+
+```bash
+ros2 launch rumblex_bringup test_gazebo_launch.py gui:=false \
+  enable_simulated_teleop:=false enable_simulated_hmi:=false
+```
+
 Launch the primitive-model simulation through the installed Lyrical `ros_gz_sim` integration:
 
 ```bash

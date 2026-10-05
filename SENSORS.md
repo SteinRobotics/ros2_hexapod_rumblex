@@ -1,9 +1,12 @@
 # Robot sensor pipelines
 
-`rumblex_bringup/config/<robot>/sensors.yaml` selects the lidar integration package
+`rumblex_perception/config/<robot>/sensors.yaml` selects the lidar integration package
 and whether head-sweep processing is needed. Drivers publish relative topic names,
 so ROS namespaces and remappings remain available. Sensor mounting transforms belong
 to `rumblex_description`; neither lidar integration publishes its own mounting TF.
+
+The bringup sensor launch forwards to `rumblex_perception/launch/sensors_launch.py`.
+Gazebo uses that shared launch directly, keeping its dependencies independent of bringup.
 
 | Robot | Driver | Processing | Navigation input |
 | --- | --- | --- | --- |

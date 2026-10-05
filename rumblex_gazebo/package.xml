@@ -20,13 +20,17 @@
   <exec_depend>joint_state_publisher</exec_depend>
   <exec_depend>forward_command_controller</exec_depend>
   <exec_depend>rclpy</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>rumblex_brain</exec_depend>
   <exec_depend>rumblex_communication</exec_depend>
   <exec_depend>rumblex_movement</exec_depend>
   <exec_depend>rumblex_navigation</exec_depend>
-  <exec_depend>rumblex_bringup</exec_depend>
+  <exec_depend>rumblex_perception</exec_depend>
   <exec_depend>teleop_twist_keyboard</exec_depend>
 
   <export>

@@ -1,6 +1,30 @@
 """Extrude occupied grid cells and intersect a lidar ray with the resulting boxes."""
 
 import math
+import xml.etree.ElementTree as ET
+
+
+def gazebo_wall_model(boxes, position, quaternion):
+    """Build one static SDF model with matching visible and collidable map walls."""
+    sdf = ET.Element('sdf', version='1.9')
+    model = ET.SubElement(sdf, 'model', name='map_walls')
+    ET.SubElement(model, 'static').text = 'true'
+    ET.SubElement(model, 'pose', rotation_format='quat_xyzw').text = ' '.join(
+        str(v) for v in (*position, *quaternion))
+    link = ET.SubElement(model, 'link', name='walls')
+    for index, (lower, upper) in enumerate(boxes):
+        center = [(a + b) / 2 for a, b in zip(lower, upper)]
+        size = ' '.join(str(b - a) for a, b in zip(lower, upper))
+        for kind in ('collision', 'visual'):
+            element = ET.SubElement(link, kind, name=f'wall_{index}')
+            ET.SubElement(element, 'pose').text = ' '.join(str(v) for v in (*center, 0, 0, 0))
+            geometry = ET.SubElement(element, 'geometry')
+            ET.SubElement(ET.SubElement(geometry, 'box'), 'size').text = size
+            if kind == 'visual':
+                material = ET.SubElement(element, 'material')
+                ET.SubElement(material, 'ambient').text = '0.65 0.7 0.8 1'
+                ET.SubElement(material, 'diffuse').text = '0.65 0.7 0.8 1'
+    return ET.tostring(sdf, encoding='unicode')
 
 
 def wall_boxes(data, width, height, resolution, wall_height):
