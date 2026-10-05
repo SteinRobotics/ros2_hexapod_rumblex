@@ -25,7 +25,7 @@ void CYawSequenceGait::start(double duration_s, uint8_t direction) {
     torso_origin_ = kinematics_->getTorsoPose();
     head_origin_ = kinematics_->getHeadOrientation();
     toe_origins_ = kinematics_->getToePositions();
-    direction_sign_ = direction == MovementRequest::CLOCKWISE ? 1.0 : -1.0;
+    direction_sign_ = direction == MovementRequest::CLOCKWISE ? -1.0 : 1.0;
     phase_rate_ = phase_limit_ / std::max(duration_s, 1.0);
 }
 

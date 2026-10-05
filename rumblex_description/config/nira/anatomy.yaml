@@ -1,11 +1,11 @@
 ################################
-# Coordinate system torso
+# Torso coordinates: +X forward, +Y left, +Z up; positive yaw is anticlockwise.
 
 #    ▲ x
 #    │
 #    │
-#   (x)─────▶ y
-#      z
+# y ◀─────(·)
+#          z (up)
 
 /**:
   ros__parameters:
@@ -25,26 +25,26 @@
       left_back:   "left_back"
 
     leg_offsets:
-      right_front: { x_m:  0.109, y_m: 0.068, yaw_deg: 45.0}
-      right_mid:   { x_m:  0.000, y_m: 0.088, yaw_deg: 90.0 }
-      right_back:  { x_m: -0.109, y_m: 0.068, yaw_deg: 135.0 }
-      left_front:  { x_m:  0.109, y_m:  -0.068, yaw_deg: -45.0 }
-      left_mid:    { x_m:  0.000, y_m:  -0.088, yaw_deg: -90.0 }
-      left_back:   { x_m: -0.109, y_m:  -0.068, yaw_deg: -135.0 }
+      right_front: { x_m:  0.109, y_m: -0.068, yaw_deg: -45.0}
+      right_mid:   { x_m:  0.000, y_m: -0.088, yaw_deg: -90.0 }
+      right_back:  { x_m: -0.109, y_m: -0.068, yaw_deg: -135.0 }
+      left_front:  { x_m:  0.109, y_m:  0.068, yaw_deg: 45.0 }
+      left_mid:    { x_m:  0.000, y_m:  0.088, yaw_deg: 90.0 }
+      left_back:   { x_m: -0.109, y_m:  0.068, yaw_deg: 135.0 }
 
     toe_positions_standing:
-      right_front: { x:  0.201, y: 0.160, z: -0.050 }
-      right_mid:   { x:  0.000, y: 0.218, z: -0.050 }
-      right_back:  { x: -0.201, y: 0.160, z: -0.050 }
-      left_front:  { x:  0.201, y:  -0.160, z: -0.050 }
-      left_mid:    { x:  0.000, y:  -0.218, z: -0.050 }
-      left_back:   { x: -0.201, y:  -0.160, z: -0.050 }
+      right_front: { x:  0.201, y: -0.160, z: -0.050 }
+      right_mid:   { x:  0.000, y: -0.218, z: -0.050 }
+      right_back:  { x: -0.201, y: -0.160, z: -0.050 }
+      left_front:  { x:  0.201, y:  0.160, z: -0.050 }
+      left_mid:    { x:  0.000, y:  0.218, z: -0.050 }
+      left_back:   { x: -0.201, y:  0.160, z: -0.050 }
 
     toe_positions_laydown:
-      right_front: { x:  0.180, y: 0.139, z: 0.010 }
-      right_mid:   { x:  0.000, y: 0.188, z: 0.010 }
-      right_back:  { x: -0.180, y: 0.139, z: 0.010 }
-      left_front:  { x:  0.180, y:  -0.139, z: 0.010 }
-      left_mid:    { x:  0.000, y:  -0.188, z: 0.010 }
-      left_back:   { x: -0.180, y:  -0.139, z: 0.010 }
+      right_front: { x:  0.180, y: -0.139, z: 0.010 }
+      right_mid:   { x:  0.000, y: -0.188, z: 0.010 }
+      right_back:  { x: -0.180, y: -0.139, z: 0.010 }
+      left_front:  { x:  0.180, y:  0.139, z: 0.010 }
+      left_mid:    { x:  0.000, y:  0.188, z: 0.010 }
+      left_back:   { x: -0.180, y:  0.139, z: 0.010 }
 

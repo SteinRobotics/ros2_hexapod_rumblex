@@ -17,6 +17,10 @@ is stored separately. `CLeg` stores its toe position in `toe_position`.
 Standing and laydown toe positions use the ROS parameter roots
 `toe_positions_standing` and `toe_positions_laydown`, with per-leg `x`, `y`, and
 `z` coordinates in metres. Leg keys use lowercase names such as `right_front`.
+Torso coordinates use +X forward, +Y left, and +Z up. Right legs have negative Y;
+positive yaw is anticlockwise when viewed from above. ROS `cmd_vel` follows these
+axes, so rightward translation and clockwise rotation use negative `linear.y` and
+`angular.z`, respectively.
 Gait parameters use `gait.<name>.<field>`; servo parameters use `servo.<field>`.
 See [naming conventions and parameter migration](NAMING.md) for the complete
 rename list. Custom configurations must migrate to the new keys.

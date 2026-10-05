@@ -227,7 +227,7 @@ The joint and mesh registrations come from the CAD horn interfaces, including
 the measured vendor bracket placement. Zero joint angles reproduce
 `assembly_complete.py`'s standing pose and its -60 degree CAD head pitch.
 Positive URDF angles increase the corresponding CAD connection angle. As in
-Nox's description, `right_*` names refer to the +Y side. These CAD joint frames
+Nox's description, `right_*` names refer to the -Y side (+X forward, +Z up). These CAD joint frames
 are not the simplified Nox inverse-kinematics frames.
 
 The torso STL includes the mounted T-mini and boards; `lidar_link` is at the

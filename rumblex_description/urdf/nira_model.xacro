@@ -5,8 +5,8 @@
   <xacro:arg name="use_sim" default="false"/>
 
   <!-- CAD registration from cad/robot_nira, in metres/radians.
-       base_link is the CAD origin, +X forward, +Z up. Side names retain
-       Nox's convention: right_* is +Y. Joint frames follow CAD horn frames.
+       base_link is the CAD origin, +X forward, +Z up. Side names follow
+       the torso convention: right_* is -Y, left_* is +Y. Joint frames follow CAD horn frames.
        Zero pose is assembly_complete's standing pose: CAD coxa/femur/tibia
        angles 0/0/-180 degrees and head yaw/pitch 0/-60 degrees.
        Positive joint angles increase the corresponding CAD angle.
@@ -92,12 +92,12 @@
     <!-- Coarse body envelope includes the layered chassis and mounted electronics. -->
     <xacro:nira_link name="base_link" mesh="assembly_torso_servo" xyz="0 0 0" rpy="0 0 0"
                      center="0 0 0.05" size="0.270 0.190 0.110" mass="0.8" meshes="${meshes}" material="creamy_white"/>
-    <xacro:nira_leg prefix="right_front" xyz="0.11476587931 0.0697658793104 0.0525" rpy="3.14159265359 0 0.785398163397" meshes="${meshes}"/>
-    <xacro:nira_leg prefix="right_mid" xyz="0 0.095175 0.0525" rpy="3.14159265359 0 1.57079632679" meshes="${meshes}"/>
-    <xacro:nira_leg prefix="right_back" xyz="-0.11476587931 0.0697658793104 0.0525" rpy="3.14159265359 0 2.35619449019" meshes="${meshes}"/>
-    <xacro:nira_leg prefix="left_front" xyz="0.11476587931 -0.0697658793104 0.0525" rpy="3.14159265359 0 -0.785398163397" meshes="${meshes}"/>
-    <xacro:nira_leg prefix="left_mid" xyz="0 -0.095175 0.0525" rpy="3.14159265359 0 -1.57079632679" meshes="${meshes}"/>
-    <xacro:nira_leg prefix="left_back" xyz="-0.11476587931 -0.0697658793104 0.0525" rpy="-3.14159265359 0 -2.35619449019" meshes="${meshes}"/>
+    <xacro:nira_leg prefix="left_front" xyz="0.11476587931 0.0697658793104 0.0525" rpy="3.14159265359 0 0.785398163397" meshes="${meshes}"/>
+    <xacro:nira_leg prefix="left_mid" xyz="0 0.095175 0.0525" rpy="3.14159265359 0 1.57079632679" meshes="${meshes}"/>
+    <xacro:nira_leg prefix="left_back" xyz="-0.11476587931 0.0697658793104 0.0525" rpy="3.14159265359 0 2.35619449019" meshes="${meshes}"/>
+    <xacro:nira_leg prefix="right_front" xyz="0.11476587931 -0.0697658793104 0.0525" rpy="3.14159265359 0 -0.785398163397" meshes="${meshes}"/>
+    <xacro:nira_leg prefix="right_mid" xyz="0 -0.095175 0.0525" rpy="3.14159265359 0 -1.57079632679" meshes="${meshes}"/>
+    <xacro:nira_leg prefix="right_back" xyz="-0.11476587931 -0.0697658793104 0.0525" rpy="-3.14159265359 0 -2.35619449019" meshes="${meshes}"/>
 
     <!-- The flipped joint frame needs -Z for positive yaw about torso +Z. -->
     <xacro:nira_joint name="head_yaw_joint" parent="base_link" child="head_yaw_link"

@@ -51,6 +51,9 @@ TEST_F(HighFiveGaitTest, RaisesRightFrontLegAndReturns) {
     CHighFiveGait gait(node_, kinematics_, params_.high_five);
     const auto initial_angles = kinematics_->getLegAngles(ELegIndex::RightFront);
     const auto initial_head = kinematics_->getHeadOrientation();
+    const auto initial_toes = kinematics_->getToePositions();
+    ASSERT_LT(initial_toes.at(ELegIndex::RightFront).y, 0.0 * units::m);
+    ASSERT_GT(initial_toes.at(ELegIndex::RightFront).x, 0.0 * units::m);
 
     gait.start(5.0, 0);
 
@@ -58,6 +61,13 @@ TEST_F(HighFiveGaitTest, RaisesRightFrontLegAndReturns) {
     int iterations = 0;
     while (gait.state() != EGaitState::Stopped && iterations++ < kMaxIterations) {
         gait.update();
+        const auto toes = kinematics_->getToePositions();
+        for (const auto& [index, toe] : toes) {
+            if (index != ELegIndex::RightFront) {
+                EXPECT_EQ(toe, initial_toes.at(index));
+            }
+        }
+        EXPECT_LT(toes.at(ELegIndex::RightFront).y, 0.0 * units::m);
         const auto current_angles = kinematics_->getLegAngles(ELegIndex::RightFront);
         if (current_angles.coxa_femur >= initial_angles.coxa_femur + kLiftThresholdDegrees * units::deg) {
             raised = true;
@@ -80,6 +90,19 @@ TEST_F(HighFiveGaitTest, RaisesRightFrontLegAndReturns) {
                 initial_head.pitch.numerical_value_in(units::deg), kHeadTolerance);
     EXPECT_NEAR(final_head.yaw.numerical_value_in(units::deg),
                 initial_head.yaw.numerical_value_in(units::deg), kHeadTolerance);
+}
+
+TEST_F(HighFiveGaitTest, RaisedFootReachesForwardOnRightSide) {
+    CHighFiveGait gait(node_, kinematics_, params_.high_five);
+    const auto initial_toe = kinematics_->getToePositions().at(ELegIndex::RightFront);
+    gait.start(5.0, 0);
+    for (int tick = 0; tick < 10; ++tick) {
+        ASSERT_TRUE(gait.update());
+    }
+    const auto raised_toe = kinematics_->getToePositions().at(ELegIndex::RightFront);
+    EXPECT_GT(raised_toe.x, initial_toe.x);
+    EXPECT_GT(raised_toe.z, initial_toe.z);
+    EXPECT_LT(raised_toe.y, 0.0 * units::m);
 }
 
 TEST_F(HighFiveGaitTest, RequestStopReturnsToNeutralQuickly) {

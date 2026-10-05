@@ -18,12 +18,12 @@
     <inertial><origin xyz="0 0 0.045"/><mass value="0.80"/><inertia ixx="0.003" ixy="0" ixz="0" iyy="0.004" iyz="0" izz="0.005"/></inertial>
   </link>
 
-  <xacro:mesh_hexapod_leg prefix="right_front" cx="0.114765879310439" cy="0.069765879310439" psi_deg="45.0"/>
-  <xacro:mesh_hexapod_leg prefix="right_mid" cx="0.000" cy="0.095175" psi_deg="90.0"/>
-  <xacro:mesh_hexapod_leg prefix="right_back" cx="-0.114765879310439" cy="0.069765879310439" psi_deg="135.0"/>
-  <xacro:mesh_hexapod_leg prefix="left_front" cx="0.114765879310439" cy="-0.069765879310439" psi_deg="-45.0"/>
-  <xacro:mesh_hexapod_leg prefix="left_mid" cx="0.000" cy="-0.095175" psi_deg="-90.0"/>
-  <xacro:mesh_hexapod_leg prefix="left_back" cx="-0.114765879310439" cy="-0.069765879310439" psi_deg="-135.0"/>
+  <xacro:mesh_hexapod_leg prefix="left_front" cx="0.114765879310439" cy="0.069765879310439" psi_deg="45.0"/>
+  <xacro:mesh_hexapod_leg prefix="left_mid" cx="0.000" cy="0.095175" psi_deg="90.0"/>
+  <xacro:mesh_hexapod_leg prefix="left_back" cx="-0.114765879310439" cy="0.069765879310439" psi_deg="135.0"/>
+  <xacro:mesh_hexapod_leg prefix="right_front" cx="0.114765879310439" cy="-0.069765879310439" psi_deg="-45.0"/>
+  <xacro:mesh_hexapod_leg prefix="right_mid" cx="0.000" cy="-0.095175" psi_deg="-90.0"/>
+  <xacro:mesh_hexapod_leg prefix="right_back" cx="-0.114765879310439" cy="-0.069765879310439" psi_deg="-135.0"/>
 
   <!-- Head transforms reproduce the standing-pose placement in
        cad/robot_nox/assembly_complete.py.  The body mesh already contains the yaw

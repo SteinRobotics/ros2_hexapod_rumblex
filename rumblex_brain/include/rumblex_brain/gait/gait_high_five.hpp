@@ -37,7 +37,8 @@ class CHighFiveGait : public ISequenceGait {
     EPhase phase_ = EPhase::Idle;
 
     CLegAngles initial_leg_angles_{};
-    CLegAngles target_leg_angles_{20.0, 50.0, 60.0};
+    // Negative coxa rotation swings the right-front leg toward torso +X.
+    CLegAngles target_leg_angles_{-20.0, 50.0, 60.0};
     COrientation initial_head_{};
     units::Angle target_head_yaw_ = 0.0 * units::deg;
     units::Angle target_head_pitch_ = -20.0 * units::deg;

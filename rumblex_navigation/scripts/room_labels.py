@@ -10,12 +10,12 @@ from visualization_msgs.msg import Marker, MarkerArray
 
 # Map-frame coordinates, measured from the current house floor plan.
 ROOMS = (
-    ('Dining room', -2.26, 2.44),
+    ('Dining', -2.26, 2.44),
     ('Kitchen', 2.58, 2.92),
     ('WC', 0.32, 3.49),
     ('Hallway', 0.35, 1.75),
-    ('Living room', -2.26, -2.13),
-    ('TV room', 2.11, -2.81),
+    ('Living', -2.26, -2.13),
+    ('TV', 2.11, -2.81),
 )
 
 

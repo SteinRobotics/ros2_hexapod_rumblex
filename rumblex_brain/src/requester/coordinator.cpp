@@ -129,6 +129,7 @@ void CCoordinator::joystickRequestReceived(const JoystickRequest& msg) {
     auto velocity = geometry_msgs::msg::Twist();
     std::optional<uint8_t> direction = std::nullopt;
 
+    // Torso axes: +X forward, +Y left, +Z up; right stick deflection is negative yaw.
     // MOVE mode: the combined gait handles velocity-based sub-gait selection internally
 
     if (gaitModes_[activeGaitIndex_] == MovementRequest::CONTINUOUS_POSE) {
@@ -140,13 +141,13 @@ void CCoordinator::joystickRequestReceived(const JoystickRequest& msg) {
         }
         // float32 left_stick_horizontal # LEFT = -1.0, RIGHT = 1.0, hangs on 0.004 -> means 0.0
         if (std::abs(msg.left_stick_horizontal) > kJoystickDeadzone_) {
-            body.position.y = msg.left_stick_horizontal * max_displacement_m;
+            body.position.y = -msg.left_stick_horizontal * max_displacement_m;
         }
         // RIGHT_STICK -> rotation
         // float32 right_stick_horizontal  # LEFT = -1.0, RIGHT = 1.0, hangs on 0.004 -> means 0.0
         const auto max_displacement_deg = 20.0;  // degrees
         if (std::abs(msg.right_stick_horizontal) > kJoystickDeadzone_) {
-            head.yaw = msg.right_stick_horizontal * max_displacement_deg;
+            head.yaw = -msg.right_stick_horizontal * max_displacement_deg;
         }
         // float32 right_stick_vertical    # TOP  = -1.0, DOWN = 1.0, hangs on 0.004 -> means 0.0
         if (std::abs(msg.right_stick_vertical) > kJoystickDeadzone_) {
@@ -170,13 +171,13 @@ void CCoordinator::joystickRequestReceived(const JoystickRequest& msg) {
     }
     // float32 left_stick_horizontal # LEFT = -1.0, RIGHT = 1.0, hangs on 0.004 -> means 0.0
     if (std::abs(msg.left_stick_horizontal) > kJoystickDeadzone_) {
-        velocity.linear.y = msg.left_stick_horizontal * kMaxVelocityLinear_;
+        velocity.linear.y = -msg.left_stick_horizontal * kMaxVelocityLinear_;
         newMovementType = activeGait;
     }
     // RIGHT_STICK -> rotation
     // float32 right_stick_horizontal  # LEFT = -1.0, RIGHT = 1.0, hangs on 0.004 -> means 0.0
     if (std::abs(msg.right_stick_horizontal) > kJoystickDeadzone_) {
-        velocity.angular.z = msg.right_stick_horizontal * kMaxVelocityRotation_;
+        velocity.angular.z = -msg.right_stick_horizontal * kMaxVelocityRotation_;
         newMovementType = activeGait;
     }
 

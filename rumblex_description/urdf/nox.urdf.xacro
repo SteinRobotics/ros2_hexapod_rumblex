@@ -110,20 +110,20 @@
        LEGS (6 legs, dimensions from anatomy.yaml leg_offsets)
        ================================================================ -->
 
-  <!-- Right side -->
-  <xacro:hexapod_leg prefix="right_front"
+  <!-- Left side (+Y) -->
+  <xacro:hexapod_leg prefix="left_front"
                      cx="0.109"  cy="0.068"  psi_deg="45.0"/>
-  <xacro:hexapod_leg prefix="right_mid"
+  <xacro:hexapod_leg prefix="left_mid"
                      cx="0.000"  cy="0.088"  psi_deg="90.0"/>
-  <xacro:hexapod_leg prefix="right_back"
+  <xacro:hexapod_leg prefix="left_back"
                      cx="-0.109" cy="0.068"  psi_deg="135.0"/>
 
-  <!-- Left side -->
-  <xacro:hexapod_leg prefix="left_front"
+  <!-- Right side (-Y) -->
+  <xacro:hexapod_leg prefix="right_front"
                      cx="0.109"  cy="-0.068" psi_deg="-45.0"/>
-  <xacro:hexapod_leg prefix="left_mid"
+  <xacro:hexapod_leg prefix="right_mid"
                      cx="0.000"  cy="-0.088" psi_deg="-90.0"/>
-  <xacro:hexapod_leg prefix="left_back"
+  <xacro:hexapod_leg prefix="right_back"
                      cx="-0.109" cy="-0.068" psi_deg="-135.0"/>
 
   <!-- ================================================================

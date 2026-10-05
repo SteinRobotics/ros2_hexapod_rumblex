@@ -84,14 +84,46 @@ TEST_F(CoordinatorTest, JoystickPoseModeActivatesGaitAndGroupsOrientationTargets
     ASSERT_TRUE(body);
     ASSERT_TRUE(head);
     EXPECT_EQ(gait->movementRequest.type, MovementRequest::CONTINUOUS_POSE);
-    EXPECT_NEAR(body->pose.position.y, 0.025, 1e-8);
-    EXPECT_NEAR(head->orientation.yaw, 14.0, 1e-6);
+    EXPECT_NEAR(body->pose.position.y, -0.025, 1e-8);
+    EXPECT_NEAR(head->orientation.yaw, -14.0, 1e-6);
     EXPECT_FALSE(CoordinatorTestAccess::locked(*coordinator_));
     request.left_stick_horizontal = 0.0;
     request.right_stick_horizontal = 0.0;
     coordinator_->joystickRequestReceived(request);
     // Releasing the sticks preserves the existing pose targets.
     EXPECT_EQ(ActionPlannerTestAccess::latestHighRequest(*planner_).size(), 1u);
+}
+
+TEST_F(CoordinatorTest, JoystickDirectionsUseForwardLeftAndAnticlockwiseAxes) {
+    create();
+    for (float deflection : {-1.0f, 1.0f}) {
+        rumblex_interfaces::msg::JoystickRequest request;
+        request.left_stick_vertical = 0.5;
+        request.left_stick_horizontal = deflection;
+        request.right_stick_horizontal = deflection;
+        coordinator_->joystickRequestReceived(request);
+        const auto& group = ActionPlannerTestAccess::latestHighRequest(*planner_);
+        const auto velocity = std::dynamic_pointer_cast<RequestVelocity>(group.back());
+        ASSERT_TRUE(velocity);
+        EXPECT_GT(velocity->velocity.linear.x, 0.0);
+        EXPECT_LT(deflection * velocity->velocity.linear.y, 0.0);
+        EXPECT_LT(deflection * velocity->velocity.angular.z, 0.0);
+    }
+}
+
+TEST_F(CoordinatorTest, CmdVelPreservesRosAxisSigns) {
+    create();
+    for (double sign : {-1.0, 1.0}) {
+        geometry_msgs::msg::Twist command;
+        command.linear.x = 0.01;
+        command.linear.y = sign * 0.02;
+        command.angular.z = sign * 0.03;
+        coordinator_->cmdVelReceived(command);
+        const auto& group = ActionPlannerTestAccess::latestHighRequest(*planner_);
+        const auto velocity = std::dynamic_pointer_cast<RequestVelocity>(group.back());
+        ASSERT_TRUE(velocity);
+        EXPECT_EQ(velocity->velocity, command);
+    }
 }
 
 TEST_F(CoordinatorTest, ReleasesExpiredLockAndMatchingMovement) {

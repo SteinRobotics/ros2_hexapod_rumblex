@@ -32,10 +32,10 @@ class KinematicsTest : public ::testing::Test {
 };
 
 // Standing position
-// RightFront: 	ag: 0.000°, 2.276°, 7.704°	| x: 0.201, y: 0.160, z: -0.050
+// RightFront: 	ag: 0.000°, 2.276°, 7.704°	| x: 0.201, y: -0.160, z: -0.050
 
 // Laydown position
-// RightFront: 	ag: 0.000°, 70.723°, -53.320°	| x: 0.180, y: 0.139, z: 0.010
+// RightFront: 	ag: 0.000°, 70.723°, -53.320°	| x: 0.180, y: -0.139, z: 0.010
 
 TEST_F(KinematicsTest, setLegAngles) {
     // create target angles
@@ -48,7 +48,7 @@ TEST_F(KinematicsTest, setLegAngles) {
 
     rumblex_geometry::CPosition toe_pos_expected;
     toe_pos_expected.x = 0.201 * rumblex_geometry::units::m;   // 0.092 + 0.109
-    toe_pos_expected.y = 0.160 * rumblex_geometry::units::m;   // 0.092 + 0.068
+    toe_pos_expected.y = -0.160 * rumblex_geometry::units::m;  // -0.092 - 0.068
     toe_pos_expected.z = -0.050 * rumblex_geometry::units::m;  // 0.045 - 0.095
 
     auto& leg = kin_->getLegs().at(rumblex_geometry::ELegIndex::RightFront);
@@ -63,7 +63,7 @@ TEST_F(KinematicsTest, check_standing_position) {
 
     rumblex_geometry::CPosition toe_pos_expected;
     toe_pos_expected.x = 0.201 * rumblex_geometry::units::m;   // 0.092 + 0.109
-    toe_pos_expected.y = 0.160 * rumblex_geometry::units::m;   // 0.092 + 0.068
+    toe_pos_expected.y = -0.160 * rumblex_geometry::units::m;  // -0.092 - 0.068
     toe_pos_expected.z = -0.050 * rumblex_geometry::units::m;  // 0.045 - 0.095
 
     rumblex_geometry::CLegAngles angles_expected;
@@ -80,9 +80,9 @@ TEST_F(KinematicsTest, check_laydown_position) {
     auto& leg = kin_->getLegs().at(rumblex_geometry::ELegIndex::RightFront);
 
     rumblex_geometry::CPosition toe_pos_expected;
-    toe_pos_expected.x = 0.180 * rumblex_geometry::units::m;  // 0.071 + 0.109
-    toe_pos_expected.y = 0.139 * rumblex_geometry::units::m;  // 0.071 + 0.068
-    toe_pos_expected.z = 0.010 * rumblex_geometry::units::m;  // 0.045 - 0.035
+    toe_pos_expected.x = 0.180 * rumblex_geometry::units::m;   // 0.071 + 0.109
+    toe_pos_expected.y = -0.139 * rumblex_geometry::units::m;  // -0.071 - 0.068
+    toe_pos_expected.z = 0.010 * rumblex_geometry::units::m;   // 0.045 - 0.035
 
     rumblex_geometry::CLegAngles angles_expected;
     angles_expected.torso_coxa = 0.0 * rumblex_geometry::units::deg;
@@ -96,7 +96,7 @@ TEST_F(KinematicsTest, check_laydown_position) {
 TEST_F(KinematicsTest, check_set_toe) {
     rumblex_geometry::CPosition target_pos;
     target_pos.x = 0.201 * rumblex_geometry::units::m;   // 0.092 + 0.109
-    target_pos.y = 0.160 * rumblex_geometry::units::m;   // 0.092 + 0.068
+    target_pos.y = -0.160 * rumblex_geometry::units::m;  // -0.092 - 0.068
     target_pos.z = -0.050 * rumblex_geometry::units::m;  // 0.045 - 0.095
 
     kin_->setToePosition(rumblex_geometry::ELegIndex::RightFront, target_pos);
@@ -116,22 +116,22 @@ TEST_F(KinematicsTest, TorsoRotationPreservesLegLocalTarget) {
     const auto standing_angles = kin_->getLegAngles(rumblex_geometry::ELegIndex::RightFront);
 
     // Rotate the coxa mount by 90 degrees about each axis and keep the same
-    // leg-local toe target: (92, 92, -50) mm relative to the mount.
+    // leg-local toe target: (92, -92, -50) mm relative to the mount.
     const std::array<std::pair<rumblex_geometry::COrientation, rumblex_geometry::CPosition>, 3> cases = {{
         {rumblex_geometry::COrientation(90.0 * rumblex_geometry::units::deg,
                                         0.0 * rumblex_geometry::units::rad,
                                         0.0 * rumblex_geometry::units::rad),
-         rumblex_geometry::CPosition(201.0 * rumblex_geometry::units::mm, 92.0 * rumblex_geometry::units::mm,
-                                     18.0 * rumblex_geometry::units::mm)},
+         rumblex_geometry::CPosition(201.0 * rumblex_geometry::units::mm, -92.0 * rumblex_geometry::units::mm,
+                                     -118.0 * rumblex_geometry::units::mm)},
         {rumblex_geometry::COrientation(0.0 * rumblex_geometry::units::rad,
                                         90.0 * rumblex_geometry::units::deg,
                                         0.0 * rumblex_geometry::units::rad),
-         rumblex_geometry::CPosition(92.0 * rumblex_geometry::units::mm, 160.0 * rumblex_geometry::units::mm,
+         rumblex_geometry::CPosition(92.0 * rumblex_geometry::units::mm, -160.0 * rumblex_geometry::units::mm,
                                      -159.0 * rumblex_geometry::units::mm)},
         {rumblex_geometry::COrientation(0.0 * rumblex_geometry::units::rad,
                                         0.0 * rumblex_geometry::units::rad,
                                         90.0 * rumblex_geometry::units::deg),
-         rumblex_geometry::CPosition(24.0 * rumblex_geometry::units::mm, 201.0 * rumblex_geometry::units::mm,
+         rumblex_geometry::CPosition(160.0 * rumblex_geometry::units::mm, 17.0 * rumblex_geometry::units::mm,
                                      -50.0 * rumblex_geometry::units::mm)},
     }};
 

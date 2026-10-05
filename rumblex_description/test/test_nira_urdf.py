@@ -39,6 +39,23 @@ class NiraDescriptionTests(unittest.TestCase):
             self.assertTrue((ROOT / element.get('filename').removeprefix('package://')).is_file())
             self.assertEqual(element.get('scale'), '0.001 0.001 0.001')
 
+    def test_leg_names_match_robot_sides_and_mount_headings(self):
+        for mesh in (False, True):
+            model = expand(mesh)
+            for side, sign in (('right', -1), ('left', 1)):
+                for location in ('front', 'mid', 'back'):
+                    name = f'{side}_{location}_coxa_joint'
+                    with self.subTest(mesh=mesh, joint=name):
+                        joint = model.find(f"joint[@name='{name}']")
+                        _, y, _ = map(float, joint.find('origin').get('xyz').split())
+                        _, _, yaw = map(float, joint.find('origin').get('rpy').split())
+                        self.assertGreater(sign * y, 0.0)
+                        # Primitive Nox points local +Y outward; CAD legs use +X.
+                        heading = yaw + (math.pi / 2 if not mesh and model.get('name') == 'nox' else 0)
+                        expected = sign * math.radians({'front': 45, 'mid': 90, 'back': 135}[location])
+                        self.assertAlmostEqual(math.sin(heading), math.sin(expected), places=6)
+                        self.assertAlmostEqual(math.cos(heading), math.cos(expected), places=6)
+
     def test_head_yaw_rotates_about_positive_torso_z(self):
         for mesh in (False, True):
             joint = expand(mesh).find("joint[@name='head_yaw_joint']")

@@ -54,6 +54,45 @@ TEST_F(VelocityTest, FullSingleAxisDemandSelectsTripodImmediately) {
     }
 }
 
+TEST_F(VelocityTest, LateralCommandMovesSwingWithBodyAndStanceAgainstBody) {
+    for (double sign : {-1.0, 1.0}) {
+        model->moveTorso(model->getStandingToePositions());
+        const auto before = model->getToePositions();
+        auto walking = gait();
+        walking.start(0.0, 0);
+        geometry_msgs::msg::Twist command;
+        command.linear.y = sign * 0.01;
+        ASSERT_TRUE(walking.updateTimed(command, CPose(), COrientation(), 0.02));
+        ASSERT_EQ(walking.activeGaitType(), EMoveCombinedGaitType::Wave);
+        const auto after = model->getToePositions();
+        EXPECT_GT(sign * (after.at(ELegIndex::RightBack).y - before.at(ELegIndex::RightBack).y),
+                  0.0 * units::m);
+        EXPECT_LT(sign * (after.at(ELegIndex::RightFront).y - before.at(ELegIndex::RightFront).y),
+                  0.0 * units::m);
+    }
+}
+
+TEST_F(VelocityTest, RotationCommandKeepsStanceFootFixedInWorld) {
+    for (double sign : {-1.0, 1.0}) {
+        model->moveTorso(model->getStandingToePositions());
+        const auto before = model->getToePositions().at(ELegIndex::RightFront);
+        auto walking = gait();
+        walking.start(0.0, 0);
+        geometry_msgs::msg::Twist command;
+        command.angular.z = sign * 0.04;
+        ASSERT_TRUE(walking.updateTimed(command, CPose(), COrientation(), 0.02));
+        ASSERT_EQ(walking.activeGaitType(), EMoveCombinedGaitType::Wave);
+        const auto after = model->getToePositions().at(ELegIndex::RightFront);
+        const double cross =
+            (before.x * after.y - before.y * after.x).numerical_value_in(units::m * units::m);
+        // Clockwise body rotation (negative Z) requires anticlockwise stance motion.
+        EXPECT_LT(sign * cross, 0.0);
+        EXPECT_NEAR(std::hypot(after.x.numerical_value_in(units::m), after.y.numerical_value_in(units::m)),
+                    std::hypot(before.x.numerical_value_in(units::m), before.y.numerical_value_in(units::m)),
+                    1e-12);
+    }
+}
+
 TEST_F(VelocityTest, ThresholdsHysteresisAndLargeChangesUseContactBoundaries) {
     auto walking = gait();
     walking.start(0.0, 0);

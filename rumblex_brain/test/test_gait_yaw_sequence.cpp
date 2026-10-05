@@ -51,7 +51,7 @@ class YawSequenceTest : public ::testing::TestWithParam<std::tuple<bool, uint8_t
 
 TEST_P(YawSequenceTest, ExcursionPreservesPoseComponentsAndReturnsExactlyToOrigin) {
     const auto origin = bodyPose(*model);
-    const double sign = direction() == MovementRequest::CLOCKWISE ? 1.0 : -1.0;
+    const double sign = direction() == MovementRequest::CLOCKWISE ? -1.0 : 1.0;
     EXPECT_FALSE(gait->update());
     gait->start(2.0, direction());
     EXPECT_EQ(bodyPose(*model), origin);
@@ -129,7 +129,7 @@ TEST_P(YawSequenceTest, StopRequestsFinishExcursionAndRestartCapturesNewOrigin) 
     gait->start(1.0, opposite);
     EXPECT_EQ(bodyPose(*model), new_origin);
     ASSERT_TRUE(gait->update());
-    const double sign = opposite == MovementRequest::CLOCKWISE ? 1.0 : -1.0;
+    const double sign = opposite == MovementRequest::CLOCKWISE ? -1.0 : 1.0;
     EXPECT_GT(sign * (bodyPose(*model).head_pose.yaw - new_origin.head_pose.yaw), 0.0);
     for (int i = 0; i < 9; ++i) ASSERT_TRUE(gait->update());
     EXPECT_EQ(gait->state(), EGaitState::Stopped);

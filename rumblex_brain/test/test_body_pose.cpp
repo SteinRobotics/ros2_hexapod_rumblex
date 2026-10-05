@@ -31,7 +31,7 @@ TEST_F(BodyPoseTest, FullPoseRoundTripUsesMetresDegreesAndStableLegOrder) {
     EXPECT_DOUBLE_EQ(msg.torso_pose.position.x, 0.005);
     EXPECT_DOUBLE_EQ(msg.toe_positions[0].x, 0.201);
     EXPECT_DOUBLE_EQ(msg.toe_positions[2].x, -0.201);
-    EXPECT_DOUBLE_EQ(msg.toe_positions[3].y, -0.160);
+    EXPECT_DOUBLE_EQ(msg.toe_positions[3].y, 0.160);
     receiver->moveTorso(toeTargets(msg), CPose(msg.torso_pose));
     receiver->setHeadOrientation(COrientation(msg.head_pose));
     EXPECT_EQ(bodyPose(*receiver), msg);
