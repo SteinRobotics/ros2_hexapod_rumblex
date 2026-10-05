@@ -7,6 +7,7 @@ import unittest
 import xml.etree.ElementTree as ET
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
+from house_rooms import ROOMS
 from wall_geometry import gazebo_wall_model, ray_distance, rotate, wall_boxes
 
 
@@ -16,8 +17,8 @@ class WallGeometryTest(unittest.TestCase):
         rotation = (0, 0, math.sqrt(0.5), math.sqrt(0.5))
         model = ET.fromstring(gazebo_wall_model(boxes, (-4.95, -5.15, 0), rotation)).find('model')
         self.assertEqual(model.findtext('static'), 'true')
-        self.assertEqual(model.find('pose').get('rotation_format'), 'quat_xyzw')
-        self.assertEqual(list(map(float, model.findtext('pose').split())), [-4.95, -5.15, 0, *rotation])
+        self.assertEqual(model.find('link/pose').get('rotation_format'), 'quat_xyzw')
+        self.assertEqual(list(map(float, model.findtext('link/pose').split())), [-4.95, -5.15, 0, *rotation])
         collisions = model.findall('link/collision')
         visuals = model.findall('link/visual')
         self.assertEqual(len(collisions), 2)
@@ -27,6 +28,32 @@ class WallGeometryTest(unittest.TestCase):
             self.assertEqual(collision.findtext('geometry/box/size'), '0.5 1.0 1.8')
             self.assertEqual(collision.findtext('geometry/box/size'), visual.findtext('geometry/box/size'))
         self.assertEqual([float(c.findtext('pose').split()[0]) for c in collisions], [0.25, 1.25])
+
+    def test_spawn_pose_override_keeps_walls_and_labels_in_map_frame(self):
+        rotation = (0, 0, math.sqrt(0.5), math.sqrt(0.5))
+        model = ET.fromstring(gazebo_wall_model(
+            [((0, 0, 0), (1, 2, 2))], (-4.95, -5.15, 0), rotation, ROOMS)).find('model')
+        # Emulate create's identity model-pose override, then compose link poses.
+        ET.SubElement(model, 'pose').text = '0 0 0 0 0 0'
+        walls = model.find("link[@name='walls']")
+        center = tuple(map(float, walls.findtext('visual/pose').split()[:3]))
+        center = rotate(center, rotation)
+        self.assertAlmostEqual(center[0] - 4.95, -5.95)
+        self.assertAlmostEqual(center[1] - 5.15, -4.65)
+        labels = model.find("link[@name='room_labels']")
+        self.assertIsNone(labels.find('collision'))
+        self.assertIsNone(labels.find('pose'))
+        for name, x, y in ROOMS:
+            ink = [v for v in labels.findall('visual') if v.get('name').startswith(name + '_')]
+            self.assertTrue(ink, name)
+            bounds = []
+            for visual in ink:
+                cx, cy, cz = map(float, visual.findtext('pose').split()[:3])
+                sx, sy, sz = map(float, visual.findtext('geometry/box/size').split())
+                bounds.append((cx - sx / 2, cx + sx / 2, cy - sy / 2, cy + sy / 2))
+                self.assertGreater(cz - sz / 2, 0)
+            self.assertAlmostEqual((min(b[0] for b in bounds) + max(b[1] for b in bounds)) / 2, x)
+            self.assertAlmostEqual((min(b[2] for b in bounds) + max(b[3] for b in bounds)) / 2, y)
 
     def test_merge_and_preserve_door_and_unknown(self):
         data = [100, 0, 100, 100, -1, 100, 100, 100, 100]

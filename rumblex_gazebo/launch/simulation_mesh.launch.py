@@ -79,8 +79,8 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'robot', default_value='nox',
             description='Robot model profile (for example: nox or nira)'),
-        DeclareLaunchArgument('spawn_x', default_value='0.0'),
-        DeclareLaunchArgument('spawn_y', default_value='0.0'),
+        DeclareLaunchArgument('spawn_x', default_value='-2.26'),
+        DeclareLaunchArgument('spawn_y', default_value='-2.13'),
         DeclareLaunchArgument('spawn_yaw', default_value='0.0'),
         OpaqueFunction(function=_launch_robot),
     ])

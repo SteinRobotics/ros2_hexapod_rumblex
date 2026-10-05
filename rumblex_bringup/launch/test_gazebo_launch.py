@@ -30,13 +30,18 @@ def generate_launch_description():
     robot = LaunchConfiguration('robot')
     return LaunchDescription([
         DeclareLaunchArgument('robot', default_value='nox', choices=['nox', 'nira']),
+        DeclareLaunchArgument('start_x', default_value='-2.26'),
+        DeclareLaunchArgument('start_y', default_value='-2.13'),
+        DeclareLaunchArgument('start_yaw', default_value='0.0'),
         GroupAction(actions=[
             SetParameter(name='use_sim_time', value=True),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(PathJoinSubstitution([
                     FindPackageShare('rumblex_gazebo'), 'launch', 'simulation_mesh.launch.py'])),
                 launch_arguments={
-                    'robot': robot, 'spawn_x': '-2.26', 'spawn_y': '-2.13',
+                    'robot': robot, 'spawn_x': LaunchConfiguration('start_x'),
+                    'spawn_y': LaunchConfiguration('start_y'),
+                    'spawn_yaw': LaunchConfiguration('start_yaw'),
                 }.items(),
             ),
             IncludeLaunchDescription(
@@ -48,8 +53,9 @@ def generate_launch_description():
                     'enable_display': 'false',
                     'movement_joint_states_topic': 'target_joint_states',
                     'publish_gazebo_map': 'true',
-                    'start_x': '-2.26',
-                    'start_y': '-2.13',
+                    'start_x': LaunchConfiguration('start_x'),
+                    'start_y': LaunchConfiguration('start_y'),
+                    'start_yaw': LaunchConfiguration('start_yaw'),
                 }.items(),
             ),
             OpaqueFunction(function=_joint_bridge),

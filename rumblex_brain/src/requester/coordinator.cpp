@@ -116,7 +116,11 @@ void CCoordinator::joystickRequestReceived(const JoystickRequest& msg) {
     // Check if joystick request matches a behavior from JSON
     auto behavior = behaviorParser_->getBehaviorForJoystickRequest(msg);
     if (behavior) {
-        executeBehavior(behavior->get(), Prio::High);
+        if (behavior->get().name == "standup") {
+            executeBehavior(behavior->get(), Prio::High);
+        } else {
+            executeBehavior(behavior->get(), Prio::Normal);
+        }
         return;
     }
 
@@ -157,7 +161,7 @@ void CCoordinator::joystickRequestReceived(const JoystickRequest& msg) {
         // targets alone leaves the previous walking gait selected and ignores head input.
         const bool body_changed = body.position.x != 0.0 || body.position.y != 0.0;
         const bool head_changed = head.yaw != 0.0 || head.pitch != 0.0;
-        submitRequestMove(MovementRequest::CONTINUOUS_POSE, 0.0, "", Prio::High,
+        submitRequestMove(MovementRequest::CONTINUOUS_POSE, 0.0, "", Prio::Normal,
                           body_changed ? std::optional(body) : std::nullopt,
                           head_changed ? std::optional(head) : std::nullopt);
         return;
@@ -200,7 +204,7 @@ void CCoordinator::joystickRequestReceived(const JoystickRequest& msg) {
         RCLCPP_INFO_STREAM(node_->get_logger(), "end move request");
         auto request = std::make_shared<RequestVelocity>();
         request->velocity = velocity;
-        submitRequest(request, Prio::High);
+        submitRequest(request, Prio::Normal);
         return;
     }
 
@@ -209,7 +213,7 @@ void CCoordinator::joystickRequestReceived(const JoystickRequest& msg) {
         actualMovementType_ == MovementRequest::NO_REQUEST) {
         return;
     }
-    submitRequestMove(newMovementType, duration_s, comment, Prio::High, body, head, velocity, direction);
+    submitRequestMove(newMovementType, duration_s, comment, Prio::Normal, body, head, velocity, direction);
 }
 
 void CCoordinator::speechRecognized(std::string text) {
@@ -239,24 +243,24 @@ void CCoordinator::speechRecognized(std::string text) {
             velocity.linear.y = -kVelocityLinear_;
         }
         RCLCPP_INFO_STREAM(node_->get_logger(), "submit move request");
-        submitRequestMove(MovementRequest::CONTINUOUS_MOVE, 0, "ich laufe los", Prio::High, std::nullopt,
+        submitRequestMove(MovementRequest::CONTINUOUS_MOVE, 0, "ich laufe los", Prio::Normal, std::nullopt,
                           std::nullopt, velocity);
     } else if (command == "commandStopMove") {
         RCLCPP_INFO_STREAM(node_->get_logger(), "submit stop move request");
         geometry_msgs::msg::Twist velocity;
-        submitRequestMove(MovementRequest::CONTINUOUS_MOVE, 0, "ich halte an", Prio::High, std::nullopt,
+        submitRequestMove(MovementRequest::CONTINUOUS_MOVE, 0, "ich halte an", Prio::Normal, std::nullopt,
                           std::nullopt, velocity);
 
     } else if (command == "tellMeSupplyVoltage") {
-        requestTellSupplyVoltage(Prio::High);
+        requestTellSupplyVoltage(Prio::Normal);
     } else if (command == "tellMeServoVoltage") {
-        requestTellServoVoltage(Prio::High);
+        requestTellServoVoltage(Prio::Normal);
     } else if (command == "tellMeServoTemperature") {
-        requestTellServoTemperature(Prio::High);
+        requestTellServoTemperature(Prio::Normal);
     } else if (command == "musicOn") {
-        requestMusikOn();
+        requestMusikOn(Prio::Normal);
     } else if (command == "musicOff") {
-        requestMusikOff();
+        requestMusikOff(Prio::High);
     }
 }
 
@@ -499,8 +503,6 @@ void CCoordinator::update() {
                 return;
             }
             RCLCPP_INFO_STREAM(node_->get_logger(), "No request received for 30 seconds, requesting default");
-            // TODO: change all other Prios to High
-            // requestWaiting(Prio::Normal);
         }
 
     } else {

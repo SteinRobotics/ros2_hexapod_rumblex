@@ -23,7 +23,7 @@ void CActionPlanner::request(std::vector<std::shared_ptr<RequestBase>> requests,
 
     // Priority handling:
     // - Highest: Interrupts everything, clears all queues, cancels running requests, and executes immediately.
-    // - High: If a Highest-priority request is active, ignore. If High is active, queue. If Normal is active, promote it to queue and execute High.
+    // - High: If a Highest-priority request is active, ignore. If High is active, queue. If Normal is active, cancel all normal requests and execute High.
     // - Normal: If Highest is active, ignore. Otherwise, queue.
     // - Background: Only queued if nothing else is running.
 
@@ -45,11 +45,10 @@ void CActionPlanner::request(std::vector<std::shared_ptr<RequestBase>> requests,
                 requests_high_prio_.push_back(requests);
                 break;
             }
-            // TODO I think better deactivate the following feature and remove the active_requests_
-            // If a Normal-priority request is active, promote it to the normal queue and execute this High-priority request
-            // if (active_prio_ == Prio::Normal) {
-            //     requests_normal_prio_.push_back(active_requests_);
-            // }
+            // If a Normal-priority request is active, cancel all normal requests and execute this High-priority request
+            if (active_prio_ == Prio::Normal) {
+                requests_normal_prio_.clear();
+            }
             cancelRunningRequest();
             requests_high_prio_.push_back(requests);
             break;

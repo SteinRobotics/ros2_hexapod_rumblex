@@ -3,20 +3,24 @@
 import math
 import xml.etree.ElementTree as ET
 
+from house_rooms import floor_lettering
 
-def gazebo_wall_model(boxes, position, quaternion):
+
+def gazebo_wall_model(boxes, position, quaternion, rooms=()):
     """Build one static SDF model with matching visible and collidable map walls."""
     sdf = ET.Element('sdf', version='1.9')
     model = ET.SubElement(sdf, 'model', name='map_walls')
     ET.SubElement(model, 'static').text = 'true'
-    ET.SubElement(model, 'pose', rotation_format='quat_xyzw').text = ' '.join(
-        str(v) for v in (*position, *quaternion))
+    # ros_gz_sim create overrides the model pose, including when no pose flags
+    # are given. Keep the grid-to-map transform on the link instead.
     link = ET.SubElement(model, 'link', name='walls')
+    ET.SubElement(link, 'pose', rotation_format='quat_xyzw').text = ' '.join(
+        str(v) for v in (*position, *quaternion))
     for index, (lower, upper) in enumerate(boxes):
         center = [(a + b) / 2 for a, b in zip(lower, upper)]
         size = ' '.join(str(b - a) for a, b in zip(lower, upper))
         for kind in ('collision', 'visual'):
-            element = ET.SubElement(link, kind, name=f'wall_{index}')
+            element = ET.SubElement(link, kind, name=f'wall_{index}_{kind}')
             ET.SubElement(element, 'pose').text = ' '.join(str(v) for v in (*center, 0, 0, 0))
             geometry = ET.SubElement(element, 'geometry')
             ET.SubElement(ET.SubElement(geometry, 'box'), 'size').text = size
@@ -24,6 +28,19 @@ def gazebo_wall_model(boxes, position, quaternion):
                 material = ET.SubElement(element, 'material')
                 ET.SubElement(material, 'ambient').text = '0.65 0.7 0.8 1'
                 ET.SubElement(material, 'diffuse').text = '0.65 0.7 0.8 1'
+    if rooms:
+        labels = ET.SubElement(model, 'link', name='room_labels')
+        # Room positions already use map coordinates, independent of grid origin.
+        for name, x, y in rooms:
+            for index, (center, size) in enumerate(floor_lettering(name, x, y)):
+                visual = ET.SubElement(labels, 'visual', name=f'{name}_{index}')
+                ET.SubElement(visual, 'cast_shadows').text = 'false'
+                ET.SubElement(visual, 'pose').text = ' '.join(str(v) for v in (*center, 0, 0, 0))
+                geometry = ET.SubElement(visual, 'geometry')
+                ET.SubElement(ET.SubElement(geometry, 'box'), 'size').text = ' '.join(map(str, size))
+                material = ET.SubElement(visual, 'material')
+                ET.SubElement(material, 'ambient').text = '0.08 0.08 0.08 1'
+                ET.SubElement(material, 'diffuse').text = '0.08 0.08 0.08 1'
     return ET.tostring(sdf, encoding='unicode')
 
 

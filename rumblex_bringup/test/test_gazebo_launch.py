@@ -27,11 +27,16 @@ def test_composes_test_stack_without_duplicate_display():
     includes = [a for a in group.get_sub_entities() if isinstance(a, IncludeLaunchDescription)]
     assert len(includes) == 2
     ctx = LaunchContext()
-    ctx.launch_configurations['robot'] = 'nox'
+    ctx.launch_configurations.update(robot='nox', start_x='-2.26', start_y='-2.13', start_yaw='0.0')
     args = {key: perform_substitutions(ctx, normalize_to_list_of_substitutions(value))
             for key, value in includes[1].launch_arguments}
     assert args == {'robot': 'nox', 'use_sim_time': 'true', 'enable_display': 'false',
-                    'movement_joint_states_topic': 'target_joint_states', 'publish_gazebo_map': 'true'}
+                    'movement_joint_states_topic': 'target_joint_states', 'publish_gazebo_map': 'true',
+                    'start_x': '-2.26', 'start_y': '-2.13', 'start_yaw': '0.0'}
+    spawn_args = {key: perform_substitutions(ctx, normalize_to_list_of_substitutions(value))
+                  for key, value in includes[0].launch_arguments}
+    assert spawn_args == {'robot': 'nox', 'spawn_x': args['start_x'],
+                          'spawn_y': args['start_y'], 'spawn_yaw': args['start_yaw']}
 
 
 def test_gazebo_test_launch_spawns_map_without_rviz():

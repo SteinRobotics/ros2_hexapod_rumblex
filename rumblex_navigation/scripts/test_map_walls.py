@@ -13,6 +13,7 @@ from std_msgs.msg import String
 from tf2_ros import Buffer, TransformException, TransformListener
 from visualization_msgs.msg import Marker, MarkerArray
 
+from house_rooms import ROOMS
 from wall_geometry import gazebo_wall_model, ray_distance, rotate, wall_boxes
 
 
@@ -51,7 +52,7 @@ class TestMapWalls(Node):
         if self.gazebo_model is not None:
             self.gazebo_model.publish(String(data=gazebo_wall_model(
                 self.boxes, (pose.position.x, pose.position.y, pose.position.z),
-                quaternion_tuple(pose.orientation))))
+                quaternion_tuple(pose.orientation), ROOMS)))
         for index, (lower, upper) in enumerate(self.boxes):
             marker = Marker()
             marker.header.frame_id = grid.header.frame_id

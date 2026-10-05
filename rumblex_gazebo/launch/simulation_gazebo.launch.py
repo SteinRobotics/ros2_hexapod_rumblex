@@ -62,6 +62,9 @@ def _launch_robot(context):
         arguments=[
             '-topic', 'robot_description',
             '-name', robot,
+            '-x', LaunchConfiguration('spawn_x'),
+            '-y', LaunchConfiguration('spawn_y'),
+            '-Y', LaunchConfiguration('spawn_yaw'),
             '-z', '0.07',  # spawn slightly above ground (standing height ~0.05m)
         ],
         output='screen',
@@ -213,5 +216,8 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'enable_navigation', default_value='false',
             description='Launch rumblex_navigation (robot-specific perception + reactive nav)'),
+        DeclareLaunchArgument('spawn_x', default_value='-2.26'),
+        DeclareLaunchArgument('spawn_y', default_value='-2.13'),
+        DeclareLaunchArgument('spawn_yaw', default_value='0.0'),
         OpaqueFunction(function=_launch_robot),
     ])

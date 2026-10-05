@@ -100,3 +100,19 @@ Check the map asset with:
 ```bash
 python3 -m unittest discover -s rumblex_navigation/test -p 'test_*.py'
 ```
+
+Gazebo uses the same house walls and room positions with:
+
+```bash
+ros2 launch rumblex_bringup test_gazebo_launch.py robot:=nox
+```
+
+The robot starts at the living-room center (`start_x:=-2.26 start_y:=-2.13`).
+`start_x`, `start_y`, and `start_yaw` set both the Gazebo spawn and the test
+map transform. The standalone `rumblex_gazebo` simulation launches use the
+same position defaults through `spawn_x`, `spawn_y`, and `spawn_yaw`; their
+empty world does not load the house map.
+The Gazebo house includes dark floor lettering for all six room names.
+These labels are visual geometry without collisions. The map-origin transform
+is stored on the wall link so the spawn tool's model-pose override cannot move
+the walls away from their map coordinates.
