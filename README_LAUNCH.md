@@ -79,7 +79,7 @@ ros2 launch rumblex_communication communication_launch.py robot:=nox
 ros2 launch rumblex_movement movement_launch.py robot:=nox
 ros2 launch rumblex_teleop teleop_launch.py
 ros2 launch rumblex_hmi hmi_launch.py
-ros2 launch rumblex_lidar lidar_launch.py
+ros2 launch rumblex_lidar_1d lidar_launch.py
 ros2 launch rumblex_navigation navigation_launch.py robot:=nox
 ```
 
@@ -91,7 +91,7 @@ ros2 launch rumblex_hmi hmi_simulated_launch.py
 ros2 launch rumblex_teleop teleop_simulated_launch.py
 ```
 
-Navigation starts the head-scan and reactive-navigation nodes; movement and a LiDAR source must also be running. Include the bundled simple-room map server for simulation with:
+Navigation consumes `scan` and odometry. For Nox, also launch `ros2 launch rumblex_perception perception_launch.py robot:=nox` to assemble head sweeps; movement and a LiDAR source must be running. See [SENSORS.md](SENSORS.md) for robot-specific pipelines. Include the bundled simple-room map server for simulation with:
 
 ```bash
 ros2 launch rumblex_navigation navigation_launch.py robot:=nox enable_map:=true

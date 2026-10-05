@@ -18,8 +18,8 @@
 #include <numbers>
 #include <vector>
 
-#include "rumblex_interfaces/msg/servo_angle.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "rumblex_interfaces/msg/servo_angle.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "sensor_msgs/msg/range.hpp"

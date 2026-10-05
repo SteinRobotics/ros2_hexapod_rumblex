@@ -6,6 +6,7 @@
 
 #include <chrono>
 #include <memory>
+#include <stdexcept>
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
@@ -16,6 +17,12 @@ using namespace std::chrono_literals;
 class NodeLidar : public rclcpp::Node {
    public:
     NodeLidar() : Node("node_lidar") {
+        frame_id_ = declare_parameter("frame_id", "lidar_link");
+        field_of_view_ = declare_parameter("field_of_view", 0.00436332313);
+        min_range_ = declare_parameter("min_range", 0.05);
+        max_range_ = declare_parameter("max_range", 40.0);
+        const auto period = declare_parameter("measurement_period_ms", 100);
+        if (period <= 0) throw std::invalid_argument("measurement_period_ms must be positive");
         lidarLite_.i2c_init();
 
         // Optionally configure LIDAR-Lite
@@ -35,19 +42,21 @@ class NodeLidar : public rclcpp::Node {
 
                 auto message = sensor_msgs::msg::Range();
                 message.header.stamp = this->get_clock()->now();
-                message.header.frame_id = "lidar_link";
+                message.header.frame_id = frame_id_;
                 message.radiation_type = sensor_msgs::msg::Range::INFRARED;
-                message.field_of_view = 0.00436332313F;  // 0.25 deg in rad
-                message.min_range = 0.05F;
-                message.max_range = 40.0F;
+                message.field_of_view = static_cast<float>(field_of_view_);
+                message.min_range = static_cast<float>(min_range_);
+                message.max_range = static_cast<float>(max_range_);
                 message.range = distance_m;
                 this->publisher_->publish(message);
             }
         };
-        timer_ = this->create_wall_timer(100ms, timer_callback);
+        timer_ = this->create_wall_timer(std::chrono::milliseconds(period), timer_callback);
     }
 
    private:
+    std::string frame_id_;
+    double field_of_view_, min_range_, max_range_;
     LIDARLite_v3 lidarLite_;
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<sensor_msgs::msg::Range>::SharedPtr publisher_;

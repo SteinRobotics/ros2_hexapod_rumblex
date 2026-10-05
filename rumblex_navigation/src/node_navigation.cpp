@@ -92,7 +92,8 @@ class NodeNavigation : public rclcpp::Node {
             });
 
         scan_sub_ = create_subscription<sensor_msgs::msg::LaserScan>(
-            "scan", 10, [this](sensor_msgs::msg::LaserScan::ConstSharedPtr msg) { latest_scan_ = msg; });
+            "scan", rclcpp::SensorDataQoS(),
+            [this](sensor_msgs::msg::LaserScan::ConstSharedPtr msg) { latest_scan_ = msg; });
 
         imu_sub_ = create_subscription<sensor_msgs::msg::Imu>(
             "bno055/imu", 10, [this](sensor_msgs::msg::Imu::ConstSharedPtr msg) { latest_imu_ = msg; });
@@ -198,7 +199,8 @@ class NodeNavigation : public rclcpp::Node {
         for (size_t i = 0; i < scan.ranges.size(); ++i) {
             const double angle = scan.angle_min + static_cast<double>(i) * scan.angle_increment;
             if (std::abs(angle) <= half_sector) {
-                if (std::isfinite(scan.ranges[i]) && scan.ranges[i] < obstacle_distance_) {
+                if (std::isfinite(scan.ranges[i]) && scan.ranges[i] >= scan.range_min &&
+                    scan.ranges[i] <= scan.range_max && scan.ranges[i] < obstacle_distance_) {
                     return true;
                 }
             }
@@ -216,7 +218,9 @@ class NodeNavigation : public rclcpp::Node {
         float best_range = 0.0F;
         double best_angle = 0.0;
         for (size_t i = 0; i < scan.ranges.size(); ++i) {
-            const float r = std::isfinite(scan.ranges[i]) ? scan.ranges[i] : 0.0F;
+            const float sample = scan.ranges[i];
+            const float r =
+                std::isfinite(sample) && sample >= scan.range_min && sample <= scan.range_max ? sample : 0.0F;
             if (r > best_range) {
                 best_range = r;
                 best_angle = scan.angle_min + static_cast<double>(i) * scan.angle_increment;

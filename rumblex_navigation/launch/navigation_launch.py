@@ -1,4 +1,4 @@
-"""Launch head-sweep scan and reactive navigation for a RumbleX hexapod."""
+"""Launch sensor-independent reactive navigation for a RumbleX hexapod."""
 
 import os
 
@@ -21,14 +21,6 @@ def generate_launch_description():
     enable_map_arg = DeclareLaunchArgument(
         'enable_map', default_value='false',
         description='Start map_server to publish the static occupancy grid')
-
-    head_scan = Node(
-        package='rumblex_navigation',
-        executable='node_head_scan',
-        name='node_head_scan',
-        output='screen',
-        parameters=[config],
-    )
 
     navigation = Node(
         package='rumblex_navigation',
@@ -77,7 +69,6 @@ def generate_launch_description():
             output='screen', parameters=[anatomy],
             condition=UnlessCondition(LaunchConfiguration('use_external_odometry')),
         ),
-        head_scan,
         navigation,
         map_server,
         lifecycle_manager,

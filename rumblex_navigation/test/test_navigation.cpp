@@ -54,6 +54,26 @@ TEST(NavigationOdometry, RequiresFeedbackAndDoesNotIntegrateCommands) {
         pump(120ms);
         EXPECT_GT(command.linear.x, 0.0);
     }
+    // A native 2D driver uses best-effort QoS and reports invalid returns as zero.
+    auto scans = test->create_publisher<sensor_msgs::msg::LaserScan>("scan", rclcpp::SensorDataQoS());
+    pump(200ms);
+    sensor_msgs::msg::LaserScan scan;
+    scan.header.frame_id = "lidar_link";
+    scan.angle_min = 0.0F;
+    scan.angle_increment = 0.1F;
+    scan.range_min = 0.03F;
+    scan.range_max = 12.0F;
+    scan.ranges = {0.1F};
+    scans->publish(scan);
+    odometry->publish(pose);
+    pump(150ms);
+    EXPECT_DOUBLE_EQ(command.linear.x, 0.0);
+    EXPECT_NE(command.angular.z, 0.0);
+    scan.ranges = {0.0F};
+    scans->publish(scan);
+    odometry->publish(pose);
+    pump(150ms);
+    EXPECT_GT(command.linear.x, 0.0);
     pump(650ms);
     EXPECT_DOUBLE_EQ(command.linear.x, 0.0);
     pose.pose.pose.position.x = 0.5;

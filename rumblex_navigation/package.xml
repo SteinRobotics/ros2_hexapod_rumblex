@@ -3,7 +3,7 @@
 <package format="3">
   <name>rumblex_navigation</name>
   <version>0.0.1</version>
-  <description>1D-lidar head-sweep navigation for the RumbleX hexapod platform</description>
+  <description>Sensor-independent navigation for the RumbleX hexapod platform</description>
   <maintainer email="stein.robotics@gmail.com">christian</maintainer>
   <license>MIT</license>
 
@@ -16,7 +16,6 @@
   <exec_depend>std_msgs</exec_depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
-  <depend>rumblex_interfaces</depend>
 
   <exec_depend>nav2_map_server</exec_depend>
   <exec_depend>nav2_lifecycle_manager</exec_depend>

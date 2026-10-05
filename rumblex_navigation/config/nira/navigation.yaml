@@ -1,3 +1,4 @@
+# Initial conservative settings; tune against Nira hardware.
 node_navigation:
   ros__parameters:
     goal_tolerance_m: 0.10        # position arrival threshold

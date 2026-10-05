@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.25)
+project(rumblex_lidar_2d)
+find_package(ament_cmake REQUIRED)
+install(DIRECTORY launch config DESTINATION share/${PROJECT_NAME})
+ament_package()

@@ -18,17 +18,6 @@ find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
-find_package(rumblex_interfaces REQUIRED)
-
-# --- Head sweep scan node ---
-add_executable(node_head_scan src/node_head_scan.cpp)
-target_link_libraries(node_head_scan
-  rclcpp::rclcpp
-  sensor_msgs::sensor_msgs__rosidl_generator_cpp
-  sensor_msgs::sensor_msgs__rosidl_typesupport_cpp
-  rumblex_interfaces::rumblex_interfaces__rosidl_generator_cpp
-  rumblex_interfaces::rumblex_interfaces__rosidl_typesupport_cpp
-)
 
 # --- Navigation node ---
 add_executable(node_navigation src/node_navigation.cpp)
@@ -45,7 +34,6 @@ target_link_libraries(node_navigation
 )
 
 install(TARGETS
-  node_head_scan
   node_navigation
   DESTINATION lib/${PROJECT_NAME})
 

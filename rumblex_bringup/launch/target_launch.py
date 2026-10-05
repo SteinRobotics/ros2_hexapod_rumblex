@@ -26,7 +26,8 @@ def generate_launch_description():
     teleop = IncludeLaunchDescription(PythonLaunchDescriptionSource([
         FindPackageShare('rumblex_teleop'), '/launch/teleop_launch.py']))
     lidar = IncludeLaunchDescription(PythonLaunchDescriptionSource([
-        FindPackageShare('rumblex_lidar'), '/launch/lidar_launch.py']))
+        FindPackageShare('rumblex_bringup'), '/launch/sensors_launch.py']),
+        launch_arguments={'robot': robot, 'enable_head_scan': LaunchConfiguration('enable_navigation')}.items())
 
     bno055_config = PathJoinSubstitution([
         FindPackageShare('rumblex_bringup'), 'config', robot, 'bno055_params.yaml'])
@@ -59,7 +60,7 @@ def generate_launch_description():
             description='Robot configuration profile (for example: nox or nira)'),
         DeclareLaunchArgument(
             'enable_navigation', default_value='false',
-            description='Launch rumblex_navigation (head-sweep scan + reactive nav)'),
+            description='Launch rumblex_navigation (robot-specific sensing + reactive nav)'),
         communication,
         hmi,
         movement,

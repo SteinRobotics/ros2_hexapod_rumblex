@@ -170,7 +170,7 @@ ros2 launch rumblex_communication communication_launch.py
 ros2 launch rumblex_movement movement_launch.py
 ros2 launch rumblex_servo servo_launch.py
 ros2 launch rumblex_teleop teleop_launch.py
-ros2 launch rumblex_lidar lidar_launch.yaml
+ros2 launch rumblex_lidar_1d lidar_launch.py
 
 #ros2 launch rumblex_servo_controller servo_controller_launch.py
 

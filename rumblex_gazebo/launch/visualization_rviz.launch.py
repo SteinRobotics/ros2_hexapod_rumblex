@@ -96,11 +96,12 @@ def _launch_robot(context):
     lidar_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([
-                FindPackageShare('rumblex_lidar'),
+                FindPackageShare('rumblex_bringup'),
                 'launch',
-                'lidar_launch.py',
+                'sensors_launch.py',
             ])
         ),
+        launch_arguments={'robot': robot}.items(),
         condition=IfCondition(enable_lidar),
     )
 
@@ -144,6 +145,6 @@ def generate_launch_description():
             description='Robot configuration profile (for example: nox or nira)'),
         DeclareLaunchArgument(
             'enable_lidar', default_value='false',
-            description='Start rumblex_lidar node and publish scan_1d for RViz Range display.'),
+            description='Start the selected robot lidar driver for RViz.'),
         OpaqueFunction(function=_launch_robot),
     ])

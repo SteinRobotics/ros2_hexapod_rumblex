@@ -164,6 +164,15 @@ def _launch_robot(context):
         actions=[movement_node, joint_state_bridge, brain_node],
     )
 
+    perception_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(PathJoinSubstitution([
+            FindPackageShare('rumblex_bringup'), 'launch', 'sensors_launch.py'])),
+        launch_arguments={
+            'robot': robot, 'enable_driver': 'false', 'enable_head_scan': 'true',
+        }.items(),
+        condition=IfCondition(LaunchConfiguration('enable_navigation')),
+    )
+
     navigation_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([
@@ -185,6 +194,7 @@ def _launch_robot(context):
         gz_ros_bridge,
         communication_launch,
         delayed_nodes,
+        perception_launch,
         navigation_launch,
     ]
 
@@ -201,6 +211,6 @@ def generate_launch_description():
             description='Full path to the Gazebo world SDF file'),
         DeclareLaunchArgument(
             'enable_navigation', default_value='false',
-            description='Launch rumblex_navigation (head-sweep scan + reactive nav)'),
+            description='Launch rumblex_navigation (robot-specific perception + reactive nav)'),
         OpaqueFunction(function=_launch_robot),
     ])

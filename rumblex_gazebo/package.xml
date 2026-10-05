@@ -26,6 +26,7 @@
   <exec_depend>rumblex_communication</exec_depend>
   <exec_depend>rumblex_movement</exec_depend>
   <exec_depend>rumblex_navigation</exec_depend>
+  <exec_depend>rumblex_bringup</exec_depend>
   <exec_depend>teleop_twist_keyboard</exec_depend>
 
   <export>

@@ -28,7 +28,9 @@ needed to add Nira.
 - `rumblex_communication/` — Speech recognition, TTS, chatbot, and audio I/O
 - `rumblex_hmi/`           — Human-machine interface (OLED, relay control)
 - `rumblex_teleop/`        — Teleoperation (joystick, remote)
-- `rumblex_lidar/`         — LIDAR sensor integration
+- `rumblex_lidar_1d/`         — Nox single-beam lidar driver
+- `rumblex_lidar_2d/`      — Nira planar lidar integration
+- `rumblex_perception/`    — Head-sweep scan processing
 - `rumblex_navigation/`    — 1D-lidar head-sweep navigation with obstacle avoidance
 - `rumblex_interfaces/`    — Custom ROS2 message and service definitions
 - `rumblex_bringup/`       — Launch and bringup scripts

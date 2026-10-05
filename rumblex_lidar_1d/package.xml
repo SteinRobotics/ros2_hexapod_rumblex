@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>rumblex_lidar</name>
+  <name>rumblex_lidar_1d</name>
   <version>0.0.1</version>
   <description>Garmin LiDAR Lite v3 driver node for the RumbleX hexapod platform</description>
   <maintainer email="stein.robotics@gmail.com">christian</maintainer>
@@ -11,8 +11,10 @@
 
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
-  <depend>std_srvs</depend>
-  <depend>rumblex_interfaces</depend>
+
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

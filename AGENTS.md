@@ -7,7 +7,7 @@ Nira is the planned second robot. Runtime packages are organized by responsibili
 
 - `rumblex_movement/`, `rumblex_brain/`, and `rumblex_communication/` contain core robot behavior and C++/Python nodes.
 - `rumblex_interfaces/` defines shared ROS messages; `rumblex_utils/` contains reusable C++ helpers.
-- `rumblex_bringup/`, `rumblex_teleop/`, `rumblex_hmi/`, `rumblex_lidar/`, and `rumblex_navigation/` provide hardware integration and launchable components.
+- `rumblex_bringup/`, `rumblex_teleop/`, `rumblex_hmi/`, `rumblex_lidar_1d/`, `rumblex_lidar_2d/`, `rumblex_perception/`, and `rumblex_navigation/` provide hardware integration and launchable components.
 - `rumblex_description/` and `rumblex_gazebo/` contain the robot model and simulation assets.
 - Package sources, headers, launch files, configuration, and package-local tests belong inside their respective package directories. Hardware and setup documentation is under `rumblex_doc/`.
 - Keep robot-specific parameters in `config/<robot>/` directories and select them with the lowercase

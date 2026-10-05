@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(rumblex_lidar)
+project(rumblex_lidar_1d)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 23)
@@ -17,8 +17,6 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(std_srvs REQUIRED)
-find_package(rumblex_interfaces REQUIRED)
 
 ## set sources
 set(SOURCES
@@ -33,14 +31,10 @@ target_link_libraries(node_lidar
   rclcpp::rclcpp
   sensor_msgs::sensor_msgs__rosidl_generator_cpp
   sensor_msgs::sensor_msgs__rosidl_typesupport_cpp
-  std_srvs::std_srvs__rosidl_generator_cpp
-  std_srvs::std_srvs__rosidl_typesupport_cpp
-  rumblex_interfaces::rumblex_interfaces__rosidl_generator_cpp
-  rumblex_interfaces::rumblex_interfaces__rosidl_typesupport_cpp
 )
 
 target_include_directories(node_lidar PRIVATE
-  include/rumblex_lidar/
+  include/rumblex_lidar_1d/
   src/LIDARLite_RaspberryPi_Library/include/
 )
 
@@ -50,7 +44,7 @@ install(TARGETS
 
 # Install launch files.
 install(DIRECTORY
-launch
+launch config
 DESTINATION share/${PROJECT_NAME}/
 )
 

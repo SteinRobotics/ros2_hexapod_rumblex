@@ -67,7 +67,7 @@ sudo apt install python3-pip
 PIP_BREAK_SYSTEM_PACKAGES=1 rosdep install --from-paths ~/Workspace/colcon_rumblex --ignore-src -r -y
 git clone https://github.com/garmin/LIDARLite_RaspberryPi_Library.git
 sudo apt install libmagicenum-dev
-nano ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_lidar/src/LIDARLite_RaspberryPi_Library/include/lidarlite_v3.h 
+nano ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_lidar_1d/src/LIDARLite_RaspberryPi_Library/include/lidarlite_v3.h
 colcon build --symlink-install
 source /opt/ros/kilted/setup.bash
 source ~/.bashrc

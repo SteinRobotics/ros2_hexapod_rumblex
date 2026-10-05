@@ -56,16 +56,20 @@ The commands below assume **Ubuntu 26.04** and **ROS 2 Lyrical** on both machine
      src/ros2_hexapod_rumblex/rumblex_brain \
      src/ros2_hexapod_rumblex/rumblex_communication \
      src/ros2_hexapod_rumblex/rumblex_hmi \
-     src/ros2_hexapod_rumblex/rumblex_lidar \
+     src/ros2_hexapod_rumblex/rumblex_lidar_1d \
+     src/ros2_hexapod_rumblex/rumblex_lidar_2d \
+     src/ros2_hexapod_rumblex/rumblex_perception \
      src/ros2_hexapod_rumblex/rumblex_navigation \
      src/ros2_hexapod_rumblex/rumblex_teleop \
      src/ros2_hexapod_rumblex/rumblex_description \
      src/ros2_hexapod_rumblex/rumblex_bringup \
      --ignore-src -r -y \
-     --skip-keys 'rviz2 joint_state_publisher_gui magic_enum fonts-liberation python3-oauth2client python-google-cloud-speech-pip python3-sounddevice-pip python-gTTS-pip'
+     --skip-keys 'ydlidar_ros2_driver rviz2 joint_state_publisher_gui magic_enum fonts-liberation python3-oauth2client python-google-cloud-speech-pip python3-sounddevice-pip python-gTTS-pip'
    python -m colcon build --symlink-install --packages-up-to rumblex_bringup
    source install/local_setup.bash
    ```
+
+   The Nox-only setup skips `ydlidar_ros2_driver`; Nira requires the external driver and SDK described in [SENSORS.md](SENSORS.md).
 
    `rosdep` installs system and ROS dependencies through apt; the explicit pip step installs the Python-only runtime dependencies into `.venv`. `libyaml-cpp-dev` and `ros-lyrical-std-srvs` supply native build dependencies; `ros-lyrical-xacro` is needed for the robot models and their tests. Do not run `rosdep` over the entire workspace on the Pi: that would also install Gazebo dependencies.
 
@@ -133,11 +137,17 @@ The commands below assume **Ubuntu 26.04** and **ROS 2 Lyrical** on both machine
      src/ros2_hexapod_rumblex/rumblex_movement \
      src/ros2_hexapod_rumblex/rumblex_brain \
      src/ros2_hexapod_rumblex/rumblex_communication \
+     src/ros2_hexapod_rumblex/rumblex_bringup \
+     src/ros2_hexapod_rumblex/rumblex_hmi \
+     src/ros2_hexapod_rumblex/rumblex_teleop \
+     src/ros2_hexapod_rumblex/rumblex_lidar_1d \
+     src/ros2_hexapod_rumblex/rumblex_lidar_2d \
+     src/ros2_hexapod_rumblex/rumblex_perception \
      src/ros2_hexapod_rumblex/rumblex_navigation \
      src/ros2_hexapod_rumblex/rumblex_description \
      src/ros2_hexapod_rumblex/rumblex_gazebo \
      --ignore-src -r -y \
-     --skip-keys 'magic_enum fonts-liberation python3-oauth2client python-google-cloud-speech-pip python3-sounddevice-pip python-gTTS-pip'
+     --skip-keys 'ydlidar_ros2_driver magic_enum fonts-liberation python3-oauth2client python-google-cloud-speech-pip python3-sounddevice-pip python-gTTS-pip'
    python -m colcon build --symlink-install \
      --packages-up-to rumblex_gazebo rumblex_description rumblex_navigation
    source install/local_setup.bash

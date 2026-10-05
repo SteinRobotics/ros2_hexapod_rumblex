@@ -1,0 +1,7 @@
+node_head_scan:
+  ros__parameters:
+    sweep_min_deg: -25.0          # rightmost sweep angle (head yaw)
+    sweep_max_deg: 25.0           # leftmost sweep angle
+    sweep_step_deg: 2.0           # angular resolution per sample
+    angle_tolerance_deg: 1.5      # servo must be within this of target
+

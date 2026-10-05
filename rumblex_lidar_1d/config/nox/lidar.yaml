@@ -1,0 +1,7 @@
+node_lidar:
+  ros__parameters:
+    frame_id: lidar_link
+    field_of_view: 0.00436332313
+    min_range: 0.05
+    max_range: 40.0
+    measurement_period_ms: 100
