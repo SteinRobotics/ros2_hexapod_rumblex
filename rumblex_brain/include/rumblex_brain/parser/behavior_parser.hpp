@@ -7,15 +7,18 @@
 #include <functional>
 #include <map>
 #include <memory>
-#include <nlohmann/json_fwd.hpp>
 #include <optional>
 #include <string>
 #include <vector>
 
-#include "rumblex_brain/requester/irequester.hpp"
-#include "rumblex_interfaces/msg/joystick_request.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "requester/utility.hpp"
+#include "rumblex_brain/requester/irequester.hpp"
+#include "rumblex_interfaces/msg/joystick_request.hpp"
+
+namespace YAML {
+class Node;
+}
 
 namespace brain {
 
@@ -30,9 +33,9 @@ struct BehaviorTrigger {
 };
 
 /**
- * @brief Parser for behaviors.json file that creates Request objects
+ * @brief Parser for behaviors.yaml file that creates Request objects
  * 
- * This class parses a JSON file containing behavior definitions and creates
+ * This class parses a YAML file containing behavior definitions and creates
  * appropriate Request objects (RequestTalking, RequestMusic, RequestMovementType, etc.)
  */
 class CBehaviorParser {
@@ -49,18 +52,18 @@ class CBehaviorParser {
     ~CBehaviorParser() = default;
 
     /**
-     * @brief Parse a behaviors.json file
-     * @param filePath Path to the JSON file
+     * @brief Parse a behaviors.yaml file
+     * @param filePath Path to the YAML file
      * @return true if parsing was successful, false otherwise
      */
     bool parseFile(const std::string& filePath);
 
     /**
-     * @brief Parse a JSON string containing behavior definitions
-     * @param jsonString JSON string to parse
+     * @brief Parse a YAML string containing behavior definitions
+     * @param yamlString YAML string to parse
      * @return true if parsing was successful, false otherwise
      */
-    bool parseString(const std::string& jsonString);
+    bool parseString(const std::string& yamlString);
 
     /**
      * @brief Get all behaviors parsed from the file
@@ -93,88 +96,88 @@ class CBehaviorParser {
 
    private:
     /**
-     * @brief Parse multiple behaviors from JSON
-     * @param behaviorsJson JSON value containing behaviors array
+     * @brief Parse multiple behaviors from YAML
+     * @param behaviorsNode YAML value containing behaviors array
      * @return true if parsing was successful
      */
-    bool parseBehaviors(const nlohmann::json& behaviorsJson);
+    bool parseBehaviors(const YAML::Node& behaviorsNode);
 
     /**
      * @brief Parse a single behavior
-     * @param behaviorJson JSON value containing a behavior object
+     * @param behaviorNode YAML value containing a behavior object
      * @return true if parsing was successful
      */
-    bool parseSingleBehavior(const nlohmann::json& behaviorJson);
+    bool parseSingleBehavior(const YAML::Node& behaviorNode);
 
     /**
      * @brief Parse a single action group
-     * @param actionJson JSON value containing a single action object
+     * @param actionNode YAML value containing a single action object
      * @return Vector of Request objects for this action group
      */
-    std::vector<std::shared_ptr<RequestBase>> parseActionGroup(const nlohmann::json& actionJson);
+    std::vector<std::shared_ptr<RequestBase>> parseActionGroup(const YAML::Node& actionNode);
 
     /**
-     * @brief Create RequestTalking from JSON value
-     * @param value JSON value (string or object)
+     * @brief Create RequestTalking from YAML value
+     * @param value YAML value (string or object)
      * @return Shared pointer to RequestTalking object, or nullptr if parsing failed
      */
-    std::shared_ptr<RequestTalking> createRequestTalking(const nlohmann::json& value);
+    std::shared_ptr<RequestTalking> createRequestTalking(const YAML::Node& value);
 
     /**
-     * @brief Create RequestChat from JSON value
-     * @param value JSON value (string or object)
+     * @brief Create RequestChat from YAML value
+     * @param value YAML value (string or object)
      * @return Shared pointer to RequestChat object, or nullptr if parsing failed
      */
-    std::shared_ptr<RequestChat> createRequestChat(const nlohmann::json& value);
+    std::shared_ptr<RequestChat> createRequestChat(const YAML::Node& value);
 
     /**
-     * @brief Create RequestMusic from JSON value
-     * @param value JSON value (string or object)
+     * @brief Create RequestMusic from YAML value
+     * @param value YAML value (string or object)
      * @return Shared pointer to RequestMusic object, or nullptr if parsing failed
      */
-    std::shared_ptr<RequestMusic> createRequestMusic(const nlohmann::json& value);
+    std::shared_ptr<RequestMusic> createRequestMusic(const YAML::Node& value);
 
     /**
-     * @brief Create RequestListening from JSON value
-     * @param value JSON value (boolean or object)
+     * @brief Create RequestListening from YAML value
+     * @param value YAML value (boolean or object)
      * @return Shared pointer to RequestListening object, or nullptr if parsing failed
      */
-    std::shared_ptr<RequestListening> createRequestListening(const nlohmann::json& value);
+    std::shared_ptr<RequestListening> createRequestListening(const YAML::Node& value);
 
     /**
-     * @brief Create RequestSystem from JSON value
-     * @param value JSON value (object)
+     * @brief Create RequestSystem from YAML value
+     * @param value YAML value (object)
      * @return Shared pointer to RequestSystem object, or nullptr if parsing failed
      */
-    std::shared_ptr<RequestSystem> createRequestSystem(const nlohmann::json& value);
+    std::shared_ptr<RequestSystem> createRequestSystem(const YAML::Node& value);
 
     /**
-     * @brief Create RequestMovementType from JSON value
-     * @param value JSON value (object)
+     * @brief Create RequestMovementType from YAML value
+     * @param value YAML value (object)
      * @return Shared pointer to RequestMovementType object, or nullptr if parsing failed
      */
-    std::shared_ptr<RequestMovementType> createRequestMovementType(const nlohmann::json& value);
+    std::shared_ptr<RequestMovementType> createRequestMovementType(const YAML::Node& value);
 
     /**
-     * @brief Create RequestSinglePose from JSON value
-     * @param value JSON value (object)
+     * @brief Create RequestSinglePose from YAML value
+     * @param value YAML value (object)
      * @return Shared pointer to RequestSinglePose object, or nullptr if parsing failed
      */
-    std::shared_ptr<RequestSinglePose> createRequestMoveBody(const nlohmann::json& value);
+    std::shared_ptr<RequestSinglePose> createRequestMoveBody(const YAML::Node& value);
 
     /**
-     * @brief Create RequestHeadOrientation from JSON value
-     * @param value JSON value (object)
+     * @brief Create RequestHeadOrientation from YAML value
+     * @param value YAML value (object)
      * @return Shared pointer to RequestHeadOrientation object, or nullptr if parsing failed
      */
-    std::shared_ptr<RequestHeadOrientation> createRequestHeadOrientation(const nlohmann::json& value);
+    std::shared_ptr<RequestHeadOrientation> createRequestHeadOrientation(const YAML::Node& value);
 
     /**
-     * @brief Create RequestVelocity from JSON value
-     * @param value JSON value (object)
+     * @brief Create RequestVelocity from YAML value
+     * @param value YAML value (object)
      * @return Shared pointer to RequestVelocity object, or nullptr if parsing failed
      */
-    std::shared_ptr<RequestVelocity> createRequestMoveVelocity(const nlohmann::json& value);
+    std::shared_ptr<RequestVelocity> createRequestMoveVelocity(const YAML::Node& value);
 
     rclcpp::Node::SharedPtr node_;
     std::vector<Behavior> behaviors_;

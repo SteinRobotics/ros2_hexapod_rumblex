@@ -34,6 +34,13 @@ void CMovement::onInitialPose(const rumblex_interfaces::msg::BodyPose& pose) {
         const auto request = *pending_request_;
         pending_request_.reset();
         startRequest(request);
+    } else {
+        // Start from measured feedback so startup follows the normal pose trajectory.
+        MovementRequest request;
+        request.type = MovementRequest::SEQUENCE_LAYDOWN;
+        request.name = "SEQUENCE_LAYDOWN";
+        setDone(false);
+        startRequest(request);
     }
 }
 

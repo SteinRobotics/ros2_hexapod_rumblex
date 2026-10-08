@@ -19,6 +19,7 @@
   <depend>ament_index_cpp</depend>
   <depend>rumblex_interfaces</depend>
   <depend>nlohmann-json-dev</depend>
+  <depend>yaml-cpp</depend>
   <depend>rumblex_utils</depend>
 
   <exec_depend>rumblex_description</exec_depend>

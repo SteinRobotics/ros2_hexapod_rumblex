@@ -4,61 +4,60 @@
 
 #include "rumblex_brain/parser/behavior_parser.hpp"
 
-#include <fstream>
-#include <nlohmann/json.hpp>
-
-using json = nlohmann::json;
+#include <yaml-cpp/yaml.h>
 
 namespace brain {
+namespace {
+// Defaults apply only to omitted fields; malformed explicit values remain errors.
+template <typename T>
+T valueOr(const YAML::Node& node, const char* key, const T& fallback) {
+    return node[key] ? node[key].as<T>() : fallback;
+}
+}  // namespace
 
 CBehaviorParser::CBehaviorParser(rclcpp::Node::SharedPtr node) : node_(node) {
 }
 
 bool CBehaviorParser::parseFile(const std::string& filePath) {
     try {
-        std::ifstream file(filePath);
-        if (!file.is_open()) {
-            RCLCPP_ERROR(node_->get_logger(), "Failed to open behavior file: %s", filePath.c_str());
+        const auto document = YAML::LoadFile(filePath);
+        if (!document.IsMap() || !document["behaviors"].IsSequence()) {
+            RCLCPP_ERROR(node_->get_logger(), "Invalid YAML format: expected 'behaviors' sequence");
             return false;
         }
-
-        json jsonData;
-        file >> jsonData;
-        file.close();
-
-        return parseString(jsonData.dump());
+        return parseBehaviors(document["behaviors"]);
     } catch (const std::exception& e) {
         RCLCPP_ERROR(node_->get_logger(), "Exception while parsing file: %s", e.what());
         return false;
     }
 }
 
-bool CBehaviorParser::parseString(const std::string& jsonString) {
+bool CBehaviorParser::parseString(const std::string& yamlString) {
     try {
-        json jsonData = json::parse(jsonString);
+        const auto document = YAML::Load(yamlString);
 
-        if (jsonData.contains("behaviors") && jsonData["behaviors"].is_array()) {
-            return parseBehaviors(jsonData["behaviors"]);
+        if (document.IsMap() && document["behaviors"].IsSequence()) {
+            return parseBehaviors(document["behaviors"]);
         } else {
-            RCLCPP_ERROR(node_->get_logger(), "Invalid JSON format: expected 'behaviors' array");
+            RCLCPP_ERROR(node_->get_logger(), "Invalid YAML format: expected 'behaviors' sequence");
             return false;
         }
     } catch (const std::exception& e) {
-        RCLCPP_ERROR(node_->get_logger(), "Exception while parsing JSON string: %s", e.what());
+        RCLCPP_ERROR(node_->get_logger(), "Exception while parsing YAML string: %s", e.what());
         return false;
     }
 }
 
-bool CBehaviorParser::parseBehaviors(const json& behaviorsArray) {
-    if (!behaviorsArray.is_array()) {
+bool CBehaviorParser::parseBehaviors(const YAML::Node& behaviorsArray) {
+    if (!behaviorsArray.IsSequence()) {
         RCLCPP_ERROR(node_->get_logger(), "Expected behaviors to be an array");
         return false;
     }
 
     behaviors_.clear();
 
-    for (const auto& behaviorJson : behaviorsArray) {
-        if (!parseSingleBehavior(behaviorJson)) {
+    for (const auto& behaviorNode : behaviorsArray) {
+        if (!parseSingleBehavior(behaviorNode)) {
             RCLCPP_WARN(node_->get_logger(), "Failed to parse one behavior, continuing with others");
         }
     }
@@ -66,12 +65,17 @@ bool CBehaviorParser::parseBehaviors(const json& behaviorsArray) {
     return !behaviors_.empty();
 }
 
-bool CBehaviorParser::parseSingleBehavior(const json& j) {
+bool CBehaviorParser::parseSingleBehavior(const YAML::Node& j) {
     Behavior behavior;
 
+    if (!j.IsMap()) {
+        RCLCPP_WARN(node_->get_logger(), "Expected behavior to be a mapping");
+        return false;
+    }
+
     // Parse behavior name
-    if (j.contains("name") && j["name"].is_string()) {
-        behavior.name = j["name"].get<std::string>();
+    if (j["name"] && j["name"].IsScalar()) {
+        behavior.name = j["name"].as<std::string>();
     } else {
         RCLCPP_WARN(node_->get_logger(), "Behavior name not found or invalid");
         behavior.name = "UNKNOWN";
@@ -79,23 +83,23 @@ bool CBehaviorParser::parseSingleBehavior(const json& j) {
 
     // Parse triggers
     BehaviorTrigger trigger;
-    if (j.contains("trigger") && j["trigger"].is_object()) {
-        const auto& triggerJson = j["trigger"];
-        if (triggerJson.contains("joystick") && triggerJson["joystick"].is_string()) {
-            trigger.joystick = triggerJson["joystick"].get<std::string>();
+    if (j["trigger"] && j["trigger"].IsMap()) {
+        const auto& triggerNode = j["trigger"];
+        if (triggerNode["joystick"] && triggerNode["joystick"].IsScalar()) {
+            trigger.joystick = triggerNode["joystick"].as<std::string>();
         }
-        if (triggerJson.contains("voice") && triggerJson["voice"].is_string()) {
-            trigger.voice = triggerJson["voice"].get<std::string>();
+        if (triggerNode["voice"] && triggerNode["voice"].IsScalar()) {
+            trigger.voice = triggerNode["voice"].as<std::string>();
         }
         behaviorTriggers_[behavior.name] = trigger;
     }
 
     // Parse actions
-    if (j.contains("actions") && j["actions"].is_array()) {
-        const auto& actionsJson = j["actions"];
+    if (j["actions"] && j["actions"].IsSequence()) {
+        const auto& actionsNode = j["actions"];
 
-        for (const auto& actionJson : actionsJson) {
-            auto requests = parseActionGroup(actionJson);
+        for (const auto& actionNode : actionsNode) {
+            auto requests = parseActionGroup(actionNode);
             if (!requests.empty()) {
                 behavior.actionGroups.push_back(requests);
             }
@@ -186,14 +190,19 @@ std::optional<std::reference_wrapper<const Behavior>> CBehaviorParser::getBehavi
     return std::nullopt;
 }
 
-std::vector<std::shared_ptr<RequestBase>> CBehaviorParser::parseActionGroup(const json& actionObject) {
+std::vector<std::shared_ptr<RequestBase>> CBehaviorParser::parseActionGroup(const YAML::Node& actionObject) {
     std::vector<std::shared_ptr<RequestBase>> requests;
 
-    // Iterate through all keys in the action object
-    for (auto it = actionObject.begin(); it != actionObject.end(); ++it) {
-        const std::string& requestType = it.key();
-        const json& requestValue = it.value();
-
+    if (!actionObject.IsMap()) {
+        RCLCPP_WARN(node_->get_logger(), "Expected action group to be a mapping");
+        return requests;
+    }
+    // Preserve the lexicographic dispatch order of the previous JSON parser.
+    std::map<std::string, YAML::Node> orderedRequests;
+    for (const auto& entry : actionObject) {
+        orderedRequests.emplace(entry.first.as<std::string>(), entry.second);
+    }
+    for (const auto& [requestType, requestValue] : orderedRequests) {
         std::shared_ptr<RequestBase> request = nullptr;
 
         if (requestType == "RequestTalking") {
@@ -226,16 +235,16 @@ std::vector<std::shared_ptr<RequestBase>> CBehaviorParser::parseActionGroup(cons
     return requests;
 }
 
-std::shared_ptr<RequestTalking> CBehaviorParser::createRequestTalking(const json& jsonValue) {
+std::shared_ptr<RequestTalking> CBehaviorParser::createRequestTalking(const YAML::Node& value) {
     try {
         auto request = std::make_shared<RequestTalking>();
 
-        if (jsonValue.is_string()) {
-            request->text = jsonValue.get<std::string>();
-        } else if (jsonValue.is_object()) {
-            request->text = jsonValue.value("text", "");
-            request->language = jsonValue.value("language", "de");
-            request->minDuration = jsonValue.value("minDuration", 0.0);
+        if (value.IsScalar()) {
+            request->text = value.as<std::string>();
+        } else if (value.IsMap()) {
+            request->text = valueOr<std::string>(value, "text", "");
+            request->language = valueOr<std::string>(value, "language", "de");
+            request->minDuration = valueOr(value, "minDuration", 0.0);
         }
 
         return request;
@@ -246,16 +255,16 @@ std::shared_ptr<RequestTalking> CBehaviorParser::createRequestTalking(const json
     return nullptr;
 }
 
-std::shared_ptr<RequestChat> CBehaviorParser::createRequestChat(const json& jsonValue) {
+std::shared_ptr<RequestChat> CBehaviorParser::createRequestChat(const YAML::Node& value) {
     try {
         auto request = std::make_shared<RequestChat>();
 
-        if (jsonValue.is_string()) {
-            request->text = jsonValue.get<std::string>();
-        } else if (jsonValue.is_object()) {
-            request->text = jsonValue.value("text", "");
-            request->language = jsonValue.value("language", "de");
-            request->minDuration = jsonValue.value("minDuration", 0.0);
+        if (value.IsScalar()) {
+            request->text = value.as<std::string>();
+        } else if (value.IsMap()) {
+            request->text = valueOr<std::string>(value, "text", "");
+            request->language = valueOr<std::string>(value, "language", "de");
+            request->minDuration = valueOr(value, "minDuration", 0.0);
         }
 
         return request;
@@ -266,16 +275,16 @@ std::shared_ptr<RequestChat> CBehaviorParser::createRequestChat(const json& json
     return nullptr;
 }
 
-std::shared_ptr<RequestMusic> CBehaviorParser::createRequestMusic(const json& jsonValue) {
+std::shared_ptr<RequestMusic> CBehaviorParser::createRequestMusic(const YAML::Node& value) {
     try {
         auto request = std::make_shared<RequestMusic>();
 
-        if (jsonValue.is_string()) {
-            request->song = jsonValue.get<std::string>();
-        } else if (jsonValue.is_object()) {
-            request->song = jsonValue.value("song", "");
-            request->volume = jsonValue.value("volume", 0.8f);
-            request->minDuration = jsonValue.value("minDuration", 0.0);
+        if (value.IsScalar()) {
+            request->song = value.as<std::string>();
+        } else if (value.IsMap()) {
+            request->song = valueOr<std::string>(value, "song", "");
+            request->volume = valueOr(value, "volume", 0.8f);
+            request->minDuration = valueOr(value, "minDuration", 0.0);
         }
 
         return request;
@@ -286,15 +295,15 @@ std::shared_ptr<RequestMusic> CBehaviorParser::createRequestMusic(const json& js
     return nullptr;
 }
 
-std::shared_ptr<RequestListening> CBehaviorParser::createRequestListening(const json& jsonValue) {
+std::shared_ptr<RequestListening> CBehaviorParser::createRequestListening(const YAML::Node& value) {
     try {
         auto request = std::make_shared<RequestListening>();
 
-        if (jsonValue.is_boolean()) {
-            request->active = jsonValue.get<bool>();
-        } else if (jsonValue.is_object()) {
-            request->active = jsonValue.value("active", false);
-            request->minDuration = jsonValue.value("minDuration", 0.0);
+        if (value.IsScalar()) {
+            request->active = value.as<bool>();
+        } else if (value.IsMap()) {
+            request->active = valueOr(value, "active", false);
+            request->minDuration = valueOr(value, "minDuration", 0.0);
         }
 
         return request;
@@ -305,13 +314,13 @@ std::shared_ptr<RequestListening> CBehaviorParser::createRequestListening(const 
     return nullptr;
 }
 
-std::shared_ptr<RequestSystem> CBehaviorParser::createRequestSystem(const json& jsonValue) {
+std::shared_ptr<RequestSystem> CBehaviorParser::createRequestSystem(const YAML::Node& value) {
     try {
-        if (jsonValue.is_object()) {
+        if (value.IsMap()) {
             auto request = std::make_shared<RequestSystem>();
-            request->turnOffServoRelay = jsonValue.value("turnOffServoRelay", false);
-            request->systemShutdown = jsonValue.value("systemShutdown", false);
-            request->minDuration = jsonValue.value("minDuration", 0.0);
+            request->turnOffServoRelay = valueOr(value, "turnOffServoRelay", false);
+            request->systemShutdown = valueOr(value, "systemShutdown", false);
+            request->minDuration = valueOr(value, "minDuration", 0.0);
             return request;
         }
     } catch (const std::exception& e) {
@@ -321,17 +330,17 @@ std::shared_ptr<RequestSystem> CBehaviorParser::createRequestSystem(const json& 
     return nullptr;
 }
 
-std::shared_ptr<RequestMovementType> CBehaviorParser::createRequestMovementType(const json& jsonValue) {
+std::shared_ptr<RequestMovementType> CBehaviorParser::createRequestMovementType(const YAML::Node& value) {
     try {
-        if (jsonValue.is_object()) {
+        if (value.IsMap()) {
             brain::MovementRequest movementRequest;
 
             // Parse movement type from "name" field (or fallback to "type" for backward compatibility)
             std::string typeStr = "";
-            if (jsonValue.contains("name") && jsonValue["name"].is_string()) {
-                typeStr = jsonValue["name"].get<std::string>();
-            } else if (jsonValue.contains("type") && jsonValue["type"].is_string()) {
-                typeStr = jsonValue["type"].get<std::string>();
+            if (value["name"] && value["name"].IsScalar()) {
+                typeStr = value["name"].as<std::string>();
+            } else if (value["type"] && value["type"].IsScalar()) {
+                typeStr = value["type"].as<std::string>();
             }
 
             if (!typeStr.empty()) {
@@ -346,8 +355,8 @@ std::shared_ptr<RequestMovementType> CBehaviorParser::createRequestMovementType(
             }
 
             // Parse direction if present
-            if (jsonValue.contains("direction") && jsonValue["direction"].is_string()) {
-                std::string directionStr = jsonValue["direction"].get<std::string>();
+            if (value["direction"] && value["direction"].IsScalar()) {
+                std::string directionStr = value["direction"].as<std::string>();
                 if (directionStr == "CLOCKWISE") {
                     movementRequest.direction = brain::MovementRequest::CLOCKWISE;
                 } else if (directionStr == "ANTICLOCKWISE") {
@@ -356,13 +365,13 @@ std::shared_ptr<RequestMovementType> CBehaviorParser::createRequestMovementType(
                     RCLCPP_WARN(node_->get_logger(), "Unknown direction: %s", directionStr.c_str());
                 }
             }
-            if (jsonValue.contains("duration_s")) {
-                movementRequest.duration_s = jsonValue["duration_s"].get<double>();
+            if (value["duration_s"]) {
+                movementRequest.duration_s = value["duration_s"].as<double>();
             }
 
             auto request = std::make_shared<RequestMovementType>();
             request->movementRequest = movementRequest;
-            request->minDuration = jsonValue.value("minDuration", 0.0);
+            request->minDuration = valueOr(value, "minDuration", 0.0);
             return request;
         }
     } catch (const std::exception& e) {
@@ -372,31 +381,30 @@ std::shared_ptr<RequestMovementType> CBehaviorParser::createRequestMovementType(
     return nullptr;
 }
 
-std::shared_ptr<RequestSinglePose> CBehaviorParser::createRequestMoveBody(const json& jsonValue) {
+std::shared_ptr<RequestSinglePose> CBehaviorParser::createRequestMoveBody(const YAML::Node& value) {
     try {
-        if (jsonValue.is_object()) {
+        if (value.IsMap()) {
             rumblex_interfaces::msg::Pose pose;
 
             // Parse position values (geometry_msgs/Vector3)
-            if (jsonValue.contains("position") && jsonValue["position"].is_object()) {
-                const auto& position = jsonValue["position"];
-                if (position.contains("x")) pose.position.x = position["x"].get<double>();
-                if (position.contains("y")) pose.position.y = position["y"].get<double>();
-                if (position.contains("z")) pose.position.z = position["z"].get<double>();
+            if (value["position"] && value["position"].IsMap()) {
+                const auto& position = value["position"];
+                if (position["x"]) pose.position.x = position["x"].as<double>();
+                if (position["y"]) pose.position.y = position["y"].as<double>();
+                if (position["z"]) pose.position.z = position["z"].as<double>();
             }
 
             // Parse orientation values (Orientation with roll, pitch, yaw)
-            if (jsonValue.contains("orientation") && jsonValue["orientation"].is_object()) {
-                const auto& orientation = jsonValue["orientation"];
-                if (orientation.contains("roll")) pose.orientation.roll = orientation["roll"].get<double>();
-                if (orientation.contains("pitch"))
-                    pose.orientation.pitch = orientation["pitch"].get<double>();
-                if (orientation.contains("yaw")) pose.orientation.yaw = orientation["yaw"].get<double>();
+            if (value["orientation"] && value["orientation"].IsMap()) {
+                const auto& orientation = value["orientation"];
+                if (orientation["roll"]) pose.orientation.roll = orientation["roll"].as<double>();
+                if (orientation["pitch"]) pose.orientation.pitch = orientation["pitch"].as<double>();
+                if (orientation["yaw"]) pose.orientation.yaw = orientation["yaw"].as<double>();
             }
 
             auto request = std::make_shared<RequestSinglePose>();
             request->pose = pose;
-            request->minDuration = jsonValue.value("minDuration", 0.0);
+            request->minDuration = valueOr(value, "minDuration", 0.0);
             return request;
         }
     } catch (const std::exception& e) {
@@ -406,19 +414,20 @@ std::shared_ptr<RequestSinglePose> CBehaviorParser::createRequestMoveBody(const 
     return nullptr;
 }
 
-std::shared_ptr<RequestHeadOrientation> CBehaviorParser::createRequestHeadOrientation(const json& jsonValue) {
+std::shared_ptr<RequestHeadOrientation> CBehaviorParser::createRequestHeadOrientation(
+    const YAML::Node& value) {
     try {
-        if (jsonValue.is_object()) {
+        if (value.IsMap()) {
             rumblex_interfaces::msg::Orientation orientation;
 
             // Parse orientation values (roll, pitch, yaw)
-            if (jsonValue.contains("roll")) orientation.roll = jsonValue["roll"].get<double>();
-            if (jsonValue.contains("pitch")) orientation.pitch = jsonValue["pitch"].get<double>();
-            if (jsonValue.contains("yaw")) orientation.yaw = jsonValue["yaw"].get<double>();
+            if (value["roll"]) orientation.roll = value["roll"].as<double>();
+            if (value["pitch"]) orientation.pitch = value["pitch"].as<double>();
+            if (value["yaw"]) orientation.yaw = value["yaw"].as<double>();
 
             auto request = std::make_shared<RequestHeadOrientation>();
             request->orientation = orientation;
-            request->minDuration = jsonValue.value("minDuration", 0.0);
+            request->minDuration = valueOr(value, "minDuration", 0.0);
             return request;
         }
     } catch (const std::exception& e) {
@@ -428,30 +437,30 @@ std::shared_ptr<RequestHeadOrientation> CBehaviorParser::createRequestHeadOrient
     return nullptr;
 }
 
-std::shared_ptr<RequestVelocity> CBehaviorParser::createRequestMoveVelocity(const json& jsonValue) {
+std::shared_ptr<RequestVelocity> CBehaviorParser::createRequestMoveVelocity(const YAML::Node& value) {
     try {
-        if (jsonValue.is_object()) {
+        if (value.IsMap()) {
             geometry_msgs::msg::Twist velocity;
 
             // Parse linear velocities
-            if (jsonValue.contains("linear")) {
-                const auto& linear = jsonValue["linear"];
-                if (linear.contains("x")) velocity.linear.x = linear["x"].get<double>();
-                if (linear.contains("y")) velocity.linear.y = linear["y"].get<double>();
-                if (linear.contains("z")) velocity.linear.z = linear["z"].get<double>();
+            if (value["linear"]) {
+                const auto& linear = value["linear"];
+                if (linear["x"]) velocity.linear.x = linear["x"].as<double>();
+                if (linear["y"]) velocity.linear.y = linear["y"].as<double>();
+                if (linear["z"]) velocity.linear.z = linear["z"].as<double>();
             }
 
             // Parse angular velocities
-            if (jsonValue.contains("angular")) {
-                const auto& angular = jsonValue["angular"];
-                if (angular.contains("x")) velocity.angular.x = angular["x"].get<double>();
-                if (angular.contains("y")) velocity.angular.y = angular["y"].get<double>();
-                if (angular.contains("z")) velocity.angular.z = angular["z"].get<double>();
+            if (value["angular"]) {
+                const auto& angular = value["angular"];
+                if (angular["x"]) velocity.angular.x = angular["x"].as<double>();
+                if (angular["y"]) velocity.angular.y = angular["y"].as<double>();
+                if (angular["z"]) velocity.angular.z = angular["z"].as<double>();
             }
 
             auto request = std::make_shared<RequestVelocity>();
             request->velocity = velocity;
-            request->minDuration = jsonValue.value("minDuration", 0.0);
+            request->minDuration = valueOr(value, "minDuration", 0.0);
             return request;
         }
     } catch (const std::exception& e) {

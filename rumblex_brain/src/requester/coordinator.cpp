@@ -60,7 +60,7 @@ CCoordinator::CCoordinator(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<C
 
 void CCoordinator::loadBehaviors() {
     const auto package_share_path = ament_index_cpp::get_package_share_path("rumblex_brain");
-    const auto file_path = (package_share_path / "config" / "behaviors.json").string();
+    const auto file_path = (package_share_path / "config" / "behaviors.yaml").string();
 
     if (!behaviorParser_->parseFile(file_path)) {
         RCLCPP_ERROR(node_->get_logger(), "Failed to parse behaviors from: %s", file_path.c_str());
@@ -113,7 +113,7 @@ void CCoordinator::joystickRequestReceived(const JoystickRequest& msg) {
         return;
     }
 
-    // Check if joystick request matches a behavior from JSON
+    // Check if joystick request matches a behavior from YAML
     auto behavior = behaviorParser_->getBehaviorForJoystickRequest(msg);
     if (behavior) {
         if (behavior->get().name == "standup") {
@@ -221,7 +221,7 @@ void CCoordinator::speechRecognized(std::string text) {
     auto command = textInterpreter_->searchInterpretation(identifiedWords);
     RCLCPP_INFO_STREAM(node_->get_logger(), "next command is: " << command);
 
-    // Check if command matches a behavior from JSON
+    // Check if command matches a behavior from YAML
     auto behavior = behaviorParser_->getBehaviorForVoiceRequest(command);
     if (behavior) {
         executeBehavior(behavior->get(), Prio::High);

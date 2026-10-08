@@ -19,6 +19,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(rumblex_interfaces REQUIRED)
 find_package(rumblex_utils REQUIRED)
+find_package(yaml-cpp REQUIRED)
 find_package(nlohmann_json REQUIRED) # nlohmann_json -> sudo apt install nlohmann-json3-dev
 
 ## set sources
@@ -59,6 +60,7 @@ target_link_libraries(rumblex_brain_lib PUBLIC
   ${rumblex_interfaces_TARGETS}
   ${rumblex_utils_TARGETS}
   nlohmann_json::nlohmann_json
+  yaml-cpp::yaml-cpp
 )
 
 add_executable(node_brain
@@ -75,18 +77,6 @@ target_link_libraries(node_brain PRIVATE
   nlohmann_json::nlohmann_json
 )
 target_include_directories(node_brain PRIVATE include)
-
-# Test executable for behavior parser
-add_executable(test_behavior_parser
-  test/test_behavior_parser.cpp
-)
-target_link_libraries(test_behavior_parser PRIVATE
-  rumblex_brain_lib
-  rclcpp::rclcpp
-  ${rumblex_interfaces_TARGETS}
-  nlohmann_json::nlohmann_json
-)
-target_include_directories(test_behavior_parser PRIVATE include)
 
 # Test executable for coordinator with behaviors
 add_executable(test_coordinator_behaviors
@@ -122,6 +112,10 @@ install(DIRECTORY
 # Unit tests
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_behavior_parser test/test_behavior_parser.cpp)
+  target_link_libraries(test_behavior_parser rumblex_brain_lib)
+  target_compile_definitions(test_behavior_parser PRIVATE
+    RUMBLEX_BEHAVIORS_FILE="${CMAKE_CURRENT_SOURCE_DIR}/config/behaviors.yaml")
   ament_add_gtest(test_orientation_timing test/test_orientation_timing.cpp)
   target_link_libraries(test_orientation_timing rumblex_brain_lib)
 

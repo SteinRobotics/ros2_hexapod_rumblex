@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <limits>
 #include <thread>
 
 #include "handler/movement.hpp"
@@ -45,7 +46,11 @@ class MovementHandlerTest : public ::testing::Test {
         options.parameter_overrides(test_helpers::defaultKinematicsParameters());
         auto model_node = std::make_shared<rclcpp::Node>("seed", options);
         CPoseModel model(model_node);
-        model.setHeadOrientation(COrientation(0.0, 7.0, 13.0));
+        model.moveTorso(model.getLaydownToePositions(), CPose());
+        model.setHeadOrientation(
+            COrientation(0.0 * units::deg,
+                         -node->get_parameter("gait.generic.head_max_pitch_deg").as_double() * units::deg,
+                         0.0 * units::deg));
         return bodyPose(model);
     }
     void request(uint8_t type, double duration = 1.0) {
@@ -77,12 +82,44 @@ TEST_F(MovementHandlerTest, WaitsForFeedbackAndDoesNotStartDurationEarly) {
     ASSERT_FALSE(poses.empty());
     EXPECT_TRUE(validBodyPose(poses.back()));
 }
-TEST_F(MovementHandlerTest, FeedbackAloneDoesNotCommandMotion) {
+TEST_F(MovementHandlerTest, AlreadyLayingDownDoesNotCommandMotion) {
     feedback->publish(initialPose());
     pump(250ms);
     EXPECT_TRUE(poses.empty());
     ASSERT_FALSE(velocities.empty());
     EXPECT_EQ(velocities.back(), geometry_msgs::msg::Twist());
+    EXPECT_TRUE(handler->done());
+}
+TEST_F(MovementHandlerTest, StartupMovesToLaydownAfterValidFeedback) {
+    pump(150ms);
+    EXPECT_TRUE(poses.empty());
+    auto invalid = initialPose();
+    invalid.head_pose.pitch = std::numeric_limits<double>::quiet_NaN();
+    feedback->publish(invalid);
+    pump(150ms);
+    EXPECT_TRUE(poses.empty());
+
+    const auto target = initialPose();
+    rclcpp::NodeOptions options;
+    options.parameter_overrides(test_helpers::defaultKinematicsParameters());
+    auto model_node = std::make_shared<rclcpp::Node>("standing_seed", options);
+    CPoseModel model(model_node);
+    model.moveTorso(model.getStandingToePositions(), CPose());
+    const auto seed = bodyPose(model);
+    feedback->publish(seed);
+    pump(250ms);
+    ASSERT_FALSE(poses.empty());
+    EXPECT_NE(poses.back(), seed);
+    EXPECT_NE(poses.back(), target);
+    EXPECT_FALSE(handler->done());
+
+    pump(1000ms);
+    EXPECT_EQ(poses.back(), target);
+    EXPECT_TRUE(handler->done());
+    const auto command_count = poses.size();
+    feedback->publish(seed);
+    pump(200ms);
+    EXPECT_EQ(poses.size(), command_count);
 }
 TEST_F(MovementHandlerTest, PublishesHighFiveRestorationAndIgnoresLaterFeedback) {
     const auto seed = initialPose();
