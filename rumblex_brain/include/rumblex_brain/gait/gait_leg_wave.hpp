@@ -16,7 +16,7 @@ class CLegWaveGait : public ISequenceGait {
                  Parameters::LegWave& params);
     ~CLegWaveGait() override = default;
 
-    void start(double duration_s, uint8_t direction) override;
+    void start(units::Duration duration_s, uint8_t direction) override;
     bool update() override;
     void requestStop() override;
     void cancelStop() override;
@@ -32,7 +32,7 @@ class CLegWaveGait : public ISequenceGait {
     uint8_t direction_ = 0;
 
     std::map<ELegIndex, CPosition> origins_;
-    double phase_ = double(0);
+    units::Angle phase_ = 0.0 * units::rad;
     ELegIndex active_leg_index_ = ELegIndex::RightFront;
 
     std::vector<ELegIndex> leg_order_ = {ELegIndex::RightFront, ELegIndex::RightMid, ELegIndex::RightBack,

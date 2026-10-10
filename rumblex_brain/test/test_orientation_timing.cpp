@@ -39,13 +39,13 @@ TEST_F(OrientationTimingTest, PoseSamplingUsesElapsedSecondsAndHasSmallMonotonic
                 gait = std::make_unique<CContinuousPoseGait>(node, model, params.continuous_pose);
             else
                 gait = std::make_unique<CSinglePoseGait>(node, model, params.single_pose);
-            gait->start(1.0, 0);
+            gait->start(1.0 * units::s, 0);
             const CPose torso(0.0, 0.0, 0.0, 0.0, 0.0, 20.0);
             const COrientation head(0.0, 10.0, 20.0);
             double previous = 0.0;
             for (int i = 0; i < 50; ++i) {
                 const double dt = jitter ? (i % 2 ? 0.025 : 0.015) : 0.02;
-                ASSERT_TRUE(gait->updateTimed(geometry_msgs::msg::Twist(), torso, head, dt));
+                ASSERT_TRUE(gait->updateTimed(Velocity(), torso, head, dt * units::s));
                 const auto pose = bodyPose(*model);
                 const double yaw = pose.head_pose.yaw;
                 EXPECT_GE(yaw + 1e-12, previous);
@@ -73,10 +73,10 @@ TEST_F(OrientationTimingTest, YawAndTorsoSequencesKeepDurationAtHigherSamplingRa
                                                       25.0 * units::deg, 20.0 * units::deg);
         else
             gait = std::make_unique<CTorsoRollGait>(node, model, params.torso_roll);
-        gait->start(1.0, MovementRequest::CLOCKWISE);
+        gait->start(1.0 * units::s, MovementRequest::CLOCKWISE);
         for (int i = 0; i < 50; ++i) {
             const double dt = i % 2 ? 0.025 : 0.015;
-            ASSERT_TRUE(gait->updateTimed(dt));
+            ASSERT_TRUE(gait->updateTimed(dt * units::s));
             if (i == 24) {
                 EXPECT_NE(bodyPose(*model), origin);
             }
@@ -89,7 +89,7 @@ TEST_F(OrientationTimingTest, YawAndTorsoSequencesKeepDurationAtHigherSamplingRa
             EXPECT_EQ(gait->state(), EGaitState::Stopped);
         else {
             gait->requestStop();
-            for (int i = 0; i < 50; ++i) gait->updateTimed(0.02);
+            for (int i = 0; i < 50; ++i) gait->updateTimed(0.02 * units::s);
             EXPECT_EQ(gait->state(), EGaitState::Stopped);
         }
     }

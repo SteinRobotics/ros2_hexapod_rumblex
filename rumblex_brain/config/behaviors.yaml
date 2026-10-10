@@ -143,7 +143,7 @@ behaviors:
     trigger:
       joystick: button_r2
       voice: commandDanceHotDogsForBreakfast
-    actions:
+    actions: &dance_hot_dogs_actions
       - RequestTalking: Ich tanze
       - RequestMusic: musicfox_hot_dogs_for_breakfast.mp3
         RequestMovementType:
@@ -377,6 +377,17 @@ behaviors:
           orientation: {roll: 0.0, pitch: 0.0, yaw: 0.0}
         RequestHeadOrientation: {roll: 0.0, yaw: 0.0, pitch: 0.0}
       - RequestMusic: STOP
+  - name: dance_standard
+    trigger:
+      voice: commandDance
+    actions: *dance_hot_dogs_actions
+  - name: clap
+    trigger:
+      voice: commandClap
+    actions:
+      - RequestMovementType:
+          name: SEQUENCE_CLAP
+          duration_s: 4.0
   - name: calibrate
     trigger:
       voice: commandCalibrate

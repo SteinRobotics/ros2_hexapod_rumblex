@@ -9,7 +9,7 @@ class CMoveCombinedGait : public IContinuousGait {
     CMoveCombinedGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> model,
                       Parameters::Wave& wave, Parameters::Ripple& ripple, Parameters::Tripod& tripod,
                       Parameters::MoveCombined& combined);
-    void start(double, uint8_t) override {
+    void start(units::Duration, uint8_t) override {
         planner_.start();
     }
     void requestStop() override {
@@ -21,11 +21,10 @@ class CMoveCombinedGait : public IContinuousGait {
     EGaitState state() const override {
         return planner_.state();
     }
-    bool update(const geometry_msgs::msg::Twist& velocity, const CPose& torso,
-                const COrientation& head) override;
+    bool update(const Velocity& velocity, const CPose& torso, const COrientation& head) override;
 
-    bool updateTimed(const geometry_msgs::msg::Twist& velocity, const CPose& torso, const COrientation& head,
-                     double elapsed_s) override;
+    bool updateTimed(const Velocity& velocity, const CPose& torso, const COrientation& head,
+                     units::Duration elapsed_s) override;
     EMoveCombinedGaitType activeGaitType() const {
         return active_gait_type_;
     }

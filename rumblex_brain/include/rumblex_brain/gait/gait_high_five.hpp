@@ -15,7 +15,7 @@ class CHighFiveGait : public ISequenceGait {
                   Parameters::HighFive& params);
     ~CHighFiveGait() override = default;
 
-    void start(double duration_s, uint8_t direction) override;
+    void start(units::Duration duration_s, uint8_t direction) override;
     bool update() override;
     void requestStop() override;
     void cancelStop() override;

@@ -52,11 +52,11 @@ TEST_F(GaitLayDownTest, LayDownStopsAtLaydownHeight) {
             COrientation(0.0 * units::deg, -params_.single_pose.head_max_pitch, 0.0 * units::deg)});
     EXPECT_EQ(gait.state(), EGaitState::Stopped);
 
-    gait.start(3.0, 0);
+    gait.start(3.0 * units::s, 0);
 
     int iterations = 0;
     while (gait.state() != EGaitState::Stopped && iterations++ < kMaxIterations) {
-        gait.update(geometry_msgs::msg::Twist(), CPose(), COrientation());
+        gait.update(Velocity(), CPose(), COrientation());
     }
 
     EXPECT_EQ(gait.state(), EGaitState::Stopped);

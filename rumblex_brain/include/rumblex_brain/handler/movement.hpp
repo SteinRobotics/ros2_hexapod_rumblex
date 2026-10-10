@@ -33,7 +33,7 @@ class CMovement : public IHandler {
     rclcpp::Subscription<rumblex_interfaces::msg::BodyPose>::SharedPtr sub_body_pose_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_movement_name_;
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_movement_velocity_;
-    geometry_msgs::msg::Twist velocity_;
+    Velocity velocity_;
     CPose torso_;
     COrientation head_;
     bool initialized_ = false;

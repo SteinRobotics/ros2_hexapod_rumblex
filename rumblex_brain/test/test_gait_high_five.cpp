@@ -55,7 +55,7 @@ TEST_F(HighFiveGaitTest, RaisesRightFrontLegAndReturns) {
     ASSERT_LT(initial_toes.at(ELegIndex::RightFront).y, 0.0 * units::m);
     ASSERT_GT(initial_toes.at(ELegIndex::RightFront).x, 0.0 * units::m);
 
-    gait.start(5.0, 0);
+    gait.start(5.0 * units::s, 0);
 
     bool raised = false;
     int iterations = 0;
@@ -95,7 +95,7 @@ TEST_F(HighFiveGaitTest, RaisesRightFrontLegAndReturns) {
 TEST_F(HighFiveGaitTest, RaisedFootReachesForwardOnRightSide) {
     CHighFiveGait gait(node_, kinematics_, params_.high_five);
     const auto initial_toe = kinematics_->getToePositions().at(ELegIndex::RightFront);
-    gait.start(5.0, 0);
+    gait.start(5.0 * units::s, 0);
     for (int tick = 0; tick < 10; ++tick) {
         ASSERT_TRUE(gait.update());
     }
@@ -109,7 +109,7 @@ TEST_F(HighFiveGaitTest, RequestStopReturnsToNeutralQuickly) {
     CHighFiveGait gait(node_, kinematics_, params_.high_five);
     const auto initial_angles = kinematics_->getLegAngles(ELegIndex::RightFront);
 
-    gait.start(5.0, 0);
+    gait.start(5.0 * units::s, 0);
 
     // Begin the raise phase for a few iterations.
     for (int i = 0; i < 3; ++i) {
@@ -138,8 +138,8 @@ TEST_F(HighFiveGaitTest, EarlyStopCompletesRaiseWithoutJumpingToRaisedPose) {
     CHighFiveGait gait(node_, kinematics_, params_.high_five);
     auto reference_model = std::make_shared<CPoseModel>(*kinematics_);
     CHighFiveGait reference(node_, reference_model, params_.high_five);
-    gait.start(2.0, 0);
-    reference.start(2.0, 0);
+    gait.start(2.0 * units::s, 0);
+    reference.start(2.0 * units::s, 0);
     for (int i = 0; i < 3; ++i) {
         gait.update();
         reference.update();

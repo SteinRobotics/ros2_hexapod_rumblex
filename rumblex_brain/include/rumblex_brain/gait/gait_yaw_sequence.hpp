@@ -14,9 +14,9 @@ class CYawSequenceGait : public ISequenceGait {
     CYawSequenceGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics, Sweep sweep,
                      units::Angle head_amplitude, units::Angle torso_amplitude);
 
-    void start(double duration_s, uint8_t direction) override;
+    void start(units::Duration duration_s, uint8_t direction) override;
     bool update() override;
-    bool updateTimed(double elapsed_s) override;
+    bool updateTimed(units::Duration elapsed_s) override;
     // Stop requests do not interrupt these finite excursions.
     void requestStop() override {
     }
@@ -29,12 +29,12 @@ class CYawSequenceGait : public ISequenceGait {
    private:
     std::shared_ptr<rclcpp::Node> node_;
     std::shared_ptr<CPoseModel> kinematics_;
-    double phase_limit_;
+    units::Angle phase_limit_;
     units::Angle head_amplitude_;
     units::Angle torso_amplitude_;
     double direction_sign_ = 1.0;
-    double phase_rate_ = 0.0;
-    double phase_ = 0.0;
+    units::AngularVelocity phase_rate_ = 0.0 * units::rad / units::s;
+    units::Angle phase_ = 0.0 * units::rad;
     CPose torso_origin_;
     COrientation head_origin_;
     std::map<ELegIndex, CPosition> toe_origins_;

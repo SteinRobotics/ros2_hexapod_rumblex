@@ -19,9 +19,9 @@ class CTorsoRollGait : public ISequenceGait {
                    Parameters::TorsoRoll& params);
     ~CTorsoRollGait() override = default;
 
-    void start(double duration_s, uint8_t direction) override;
+    void start(units::Duration duration_s, uint8_t direction) override;
     bool update() override;
-    bool updateTimed(double elapsed_s) override;
+    bool updateTimed(units::Duration elapsed_s) override;
     void requestStop() override;
     void cancelStop() override;
     EGaitState state() const override {
@@ -36,8 +36,8 @@ class CTorsoRollGait : public ISequenceGait {
     Parameters::TorsoRoll params_;
     std::map<ELegIndex, CPosition> origin_leg_positions_;
     CPose torso_origin_;
-    double phase_rate_ = 0.1;
-    double phase_ = double(0);
+    units::AngularVelocity phase_rate_ = 0.1 * units::rad / units::s;
+    units::Angle phase_ = 0.0 * units::rad;
 };
 
 }  // namespace brain

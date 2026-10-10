@@ -23,7 +23,6 @@ void CSystem::run(std::shared_ptr<RequestSystem> request) {
     std_msgs::msg::Bool msgSystemShutdown;
     msgSystemShutdown.data = request->systemShutdown;
     pubSystemShutdown_->publish(msgSystemShutdown);
-    setDone(false);
 
     // Servo relay (invert: turnOffServoRelay=true means relay should be OFF)
     std_msgs::msg::Bool msgServoRelay;
@@ -31,8 +30,6 @@ void CSystem::run(std::shared_ptr<RequestSystem> request) {
     pubServoRelay_->publish(msgServoRelay);
 
     setDone(false);
-    // shall we wait for expectedDurationMs and then set done() to true??
-    // m_expectedDurationMs = system.expectedDurationMs;
 }
 
 void CSystem::update() {

@@ -44,7 +44,10 @@ def generate_launch_description():
         actions=[IncludeLaunchDescription(
             PythonLaunchDescriptionSource([
                 FindPackageShare('rumblex_brain'), '/launch/brain_launch.py']),
-            launch_arguments={'robot': robot}.items(),
+            launch_arguments={
+                'robot': robot,
+                'autostart_listening': LaunchConfiguration('autostart_listening'),
+            }.items(),
         )],
     )
     navigation = IncludeLaunchDescription(
@@ -55,6 +58,9 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        DeclareLaunchArgument(
+            'autostart_listening', default_value='false',
+            description='Activate speech-to-text listening when the brain starts'),
         DeclareLaunchArgument(
             'robot', default_value='nox',
             description='Robot configuration profile (for example: nox or nira)'),

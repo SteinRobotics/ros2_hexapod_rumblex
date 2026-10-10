@@ -56,7 +56,7 @@ class MovementHandlerTest : public ::testing::Test {
     void request(uint8_t type, double duration = 1.0) {
         auto r = std::make_shared<RequestMovementType>();
         r->movementRequest.type = type;
-        r->movementRequest.duration_s = duration;
+        r->movementRequest.duration_s = duration * units::s;
         r->movementRequest.name = "test";
         handler->run(r);
     }

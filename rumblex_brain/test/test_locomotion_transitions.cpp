@@ -18,7 +18,7 @@ class LocomotionTransitionTest : public ::testing::TestWithParam<MovementRequest
         model_->moveTorso(model_->getStandingToePositions());
         params_ = test_helpers::makeDeclaredParameters(node_);
         gait_ = makeGait(model_);
-        forward_.linear.x = 0.01;
+        forward_.linear.x = 0.01 * units::m / units::s;
     }
     void TearDown() override {
         gait_.reset();
@@ -34,7 +34,7 @@ class LocomotionTransitionTest : public ::testing::TestWithParam<MovementRequest
                                                    params_.move_combined);
     }
     void startRunning() {
-        gait_->start(0.0, MovementRequest::CLOCKWISE);
+        gait_->start(0.0 * units::s, MovementRequest::CLOCKWISE);
         for (int i = 0; i < 1000 && gait_->state() != EGaitState::Running; ++i) {
             gait_->update(forward_, CPose(), COrientation());
         }
@@ -49,18 +49,18 @@ class LocomotionTransitionTest : public ::testing::TestWithParam<MovementRequest
     std::shared_ptr<CPoseModel> model_;
     Parameters params_;
     std::unique_ptr<IContinuousGait> gait_;
-    geometry_msgs::msg::Twist forward_;
+    Velocity forward_;
 };
 
 TEST_P(LocomotionTransitionTest, StoppingBeforeFirstSegmentHoldsActualPose) {
     model_->setHeadOrientation(COrientation(5.0, 10.0, 15.0));
     const auto before = model_->getToePositions();
     const auto head = model_->getHeadOrientation();
-    gait_->start(0.0, MovementRequest::CLOCKWISE);
+    gait_->start(0.0 * units::s, MovementRequest::CLOCKWISE);
     gait_->requestStop();
     ASSERT_EQ(gait_->state(), EGaitState::StopPending);
     const CPose torso(0.0, 0.0, 0.01, 0.0, 0.0, 0.0);
-    EXPECT_FALSE(gait_->update(geometry_msgs::msg::Twist(), torso, COrientation()));
+    EXPECT_FALSE(gait_->update(Velocity(), torso, COrientation()));
     EXPECT_EQ(gait_->state(), EGaitState::Stopped);
     EXPECT_EQ(model_->getToePositions(), before);
     EXPECT_EQ(model_->getHeadOrientation(), head);
@@ -69,7 +69,7 @@ TEST_P(LocomotionTransitionTest, StoppingBeforeFirstSegmentHoldsActualPose) {
 }
 
 TEST_P(LocomotionTransitionTest, RepeatedStopDoesNotOverwriteStartupResumeState) {
-    gait_->start(0.0, MovementRequest::CLOCKWISE);
+    gait_->start(0.0 * units::s, MovementRequest::CLOCKWISE);
     gait_->requestStop();
     gait_->requestStop();
     gait_->cancelStop();
@@ -84,7 +84,7 @@ TEST_P(LocomotionTransitionTest, RunningStopCanBeCancelledWithoutRestartingTraje
     control_model->moveTorso(control_model->getStandingToePositions());
     control_model->setHeadOrientation(COrientation());
     auto control = makeGait(control_model);
-    control->start(0.0, MovementRequest::CLOCKWISE);
+    control->start(0.0 * units::s, MovementRequest::CLOCKWISE);
     for (int i = 0; i < 1000 && control->state() != EGaitState::Running; ++i) {
         control->update(forward_, CPose(), COrientation());
     }
@@ -108,7 +108,7 @@ TEST_P(LocomotionTransitionTest, StopsUsingStoredVelocityAfterInputBecomesZero) 
     ASSERT_EQ(gait_->state(), EGaitState::Running);
     gait_->requestStop();
     for (int i = 0; i < 1000 && gait_->state() != EGaitState::Stopped; ++i) {
-        gait_->update(geometry_msgs::msg::Twist(), CPose(), COrientation());
+        gait_->update(Velocity(), CPose(), COrientation());
     }
     EXPECT_EQ(gait_->state(), EGaitState::Stopped);
     expectStanding();
@@ -121,11 +121,11 @@ TEST_P(LocomotionTransitionTest, RestartAfterStopWaitsForNewVelocity) {
         gait_->update(forward_, CPose(), COrientation());
     }
     ASSERT_EQ(gait_->state(), EGaitState::Stopped);
-    gait_->start(0.0, MovementRequest::CLOCKWISE);
-    EXPECT_FALSE(gait_->update(geometry_msgs::msg::Twist(), CPose(), COrientation()));
+    gait_->start(0.0 * units::s, MovementRequest::CLOCKWISE);
+    EXPECT_FALSE(gait_->update(Velocity(), CPose(), COrientation()));
     EXPECT_EQ(gait_->state(), EGaitState::Starting);
     gait_->requestStop();
-    gait_->update(geometry_msgs::msg::Twist(), CPose(), COrientation());
+    gait_->update(Velocity(), CPose(), COrientation());
     expectStanding();
 }
 

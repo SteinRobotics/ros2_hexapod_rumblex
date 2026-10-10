@@ -16,7 +16,6 @@ find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(std_srvs REQUIRED)
 find_package(rumblex_interfaces REQUIRED)
 find_package(rumblex_utils REQUIRED)
 find_package(yaml-cpp REQUIRED)
@@ -71,24 +70,11 @@ target_link_libraries(node_brain PRIVATE
   rclcpp::rclcpp
   ${std_msgs_TARGETS}
   ${geometry_msgs_TARGETS}
-  ${std_srvs_TARGETS}
   ament_index_cpp::ament_index_cpp
   ${rumblex_interfaces_TARGETS}
   nlohmann_json::nlohmann_json
 )
 target_include_directories(node_brain PRIVATE include)
-
-# Test executable for coordinator with behaviors
-add_executable(test_coordinator_behaviors
-  test/test_coordinator_behaviors.cpp
-)
-target_link_libraries(test_coordinator_behaviors PRIVATE
-  rumblex_brain_lib
-  rclcpp::rclcpp
-  ${rumblex_interfaces_TARGETS}
-  nlohmann_json::nlohmann_json
-)
-target_include_directories(test_coordinator_behaviors PRIVATE include)
 
 include_directories(
   include/rumblex_brain/
@@ -119,6 +105,9 @@ if(BUILD_TESTING)
   ament_add_gtest(test_orientation_timing test/test_orientation_timing.cpp)
   target_link_libraries(test_orientation_timing rumblex_brain_lib)
 
+  ament_add_gtest(test_units test/test_units.cpp)
+  target_link_libraries(test_units rumblex_brain_lib)
+
   ament_add_gtest(test_velocity test/test_velocity.cpp)
   target_link_libraries(test_velocity rumblex_brain_lib)
 
@@ -138,6 +127,8 @@ if(BUILD_TESTING)
   target_compile_definitions(test_robot_configuration PRIVATE RUMBLEX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/..")
   ament_add_gtest(test_movement_handler test/test_movement_handler.cpp)
   target_link_libraries(test_movement_handler rumblex_brain_lib)
+  ament_add_gtest(test_communication_handler test/test_communication_handler.cpp)
+  target_link_libraries(test_communication_handler rumblex_brain_lib)
   ament_add_gtest(test_body_pose test/test_body_pose.cpp)
   target_link_libraries(test_body_pose rumblex_brain_lib)
   ament_add_gtest(test_gait_clap test/test_gait_clap.cpp)

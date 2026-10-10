@@ -60,7 +60,7 @@ class SpeechToTextOnline(Thread):
             return
 
         try:
-            recog = r.recognize_google_cloud(audio, language='de-DE')
+            recog = r.recognize_google_cloud(audio, language_code='de-DE')
             self.logger.info("speech_recognition_online: " + recog)
         except sr.UnknownValueError as u:
             self.logger.warning(str(u))

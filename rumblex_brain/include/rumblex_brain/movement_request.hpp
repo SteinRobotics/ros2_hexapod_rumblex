@@ -1,7 +1,10 @@
 #pragma once
 #include <cstdint>
 #include <string>
+
+#include "rumblex_utils/units.hpp"
 namespace brain {
+namespace units = rumblex_geometry::units;
 struct MovementRequest {
     enum Type : uint8_t {
         NO_REQUEST = 0,
@@ -27,7 +30,7 @@ struct MovementRequest {
     using _type_type = uint8_t;
     uint8_t type = NO_REQUEST;
     uint8_t direction = CLOCKWISE;
-    double duration_s = 1.0;
+    units::Duration duration_s = 1.0 * units::s;
     std::string name;
 };
 }  // namespace brain

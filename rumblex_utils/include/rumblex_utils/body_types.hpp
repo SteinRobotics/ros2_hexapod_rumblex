@@ -114,6 +114,14 @@ class COrientation {
 
     ~COrientation() = default;
 
+    rumblex_interfaces::msg::Orientation toMsg() const {
+        rumblex_interfaces::msg::Orientation msg;
+        msg.roll = roll.numerical_value_in(units::deg);
+        msg.pitch = pitch.numerical_value_in(units::deg);
+        msg.yaw = yaw.numerical_value_in(units::deg);
+        return msg;
+    }
+
     bool operator==(const COrientation& rhs) const {
         return roll == rhs.roll && pitch == rhs.pitch && yaw == rhs.yaw;
     }
@@ -148,6 +156,15 @@ class CPose {
           orientation(pose.orientation.roll, pose.orientation.pitch, pose.orientation.yaw) {};
 
     ~CPose() = default;
+
+    rumblex_interfaces::msg::Pose toMsg() const {
+        rumblex_interfaces::msg::Pose msg;
+        msg.position.x = position.x.numerical_value_in(units::m);
+        msg.position.y = position.y.numerical_value_in(units::m);
+        msg.position.z = position.z.numerical_value_in(units::m);
+        msg.orientation = orientation.toMsg();
+        return msg;
+    }
 
     bool operator==(const CPose& rhs) const {
         return position == rhs.position && orientation == rhs.orientation;

@@ -4,7 +4,6 @@
 
 #include "handler/communication.hpp"
 
-// using namespace rumblex_communication;
 using std::placeholders::_1;
 
 namespace brain {
@@ -17,13 +16,13 @@ CCommunication::CCommunication(std::shared_ptr<rclcpp::Node> node) : node_(node)
     m_pubChat = node_->create_publisher<std_msgs::msg::String>("request_chat", 10);
     m_pubListening = node_->create_publisher<std_msgs::msg::Bool>("request_listening", 10);
     m_pubMusic = node_->create_publisher<std_msgs::msg::String>("request_music", 10);
-    // timer = nh->createTimer(ros::Duration(0.1), &CCommunication::timerCallback, this);
 }
 
 void CCommunication::onCommunicationStatus(const rumblex_interfaces::msg::CommunicationStatus& msg) {
     auto status_string = std::to_string(msg.status);
     RCLCPP_INFO_STREAM(node_->get_logger(), "onCommunicationStatus |" << status_string.c_str() << "|");
     m_communication.status = msg.status;
+    awaiting_status_ = false;
     if (!done() && msg.status == rumblex_interfaces::msg::CommunicationStatus::OFF) {
         setDone(true);
     }
@@ -36,6 +35,7 @@ void CCommunication::run(std::shared_ptr<RequestListening> request) {
     m_pubListening->publish(msg);
     setDone(false);
     request_time_ = std::chrono::steady_clock::now();
+    awaiting_status_ = true;
 }
 
 void CCommunication::run(std::shared_ptr<RequestTalking> request) {
@@ -45,6 +45,7 @@ void CCommunication::run(std::shared_ptr<RequestTalking> request) {
     m_pubTalking->publish(msg);
     setDone(false);
     request_time_ = std::chrono::steady_clock::now();
+    awaiting_status_ = true;
 }
 
 void CCommunication::run(std::shared_ptr<RequestChat> request) {
@@ -54,6 +55,7 @@ void CCommunication::run(std::shared_ptr<RequestChat> request) {
     m_pubChat->publish(msg);
     setDone(false);
     request_time_ = std::chrono::steady_clock::now();
+    awaiting_status_ = true;
 }
 
 void CCommunication::run(std::shared_ptr<RequestMusic> request) {
@@ -63,6 +65,7 @@ void CCommunication::run(std::shared_ptr<RequestMusic> request) {
     m_pubMusic->publish(msg);
     setDone(false);
     request_time_ = std::chrono::steady_clock::now();
+    awaiting_status_ = true;
 }
 
 void CCommunication::cancel() {
@@ -79,7 +82,7 @@ void CCommunication::cancel() {
 }
 
 void CCommunication::update() {
-    if (!done() && std::chrono::steady_clock::now() - request_time_ > kTimeout) {
+    if (!done() && awaiting_status_ && std::chrono::steady_clock::now() - request_time_ > kTimeout) {
         RCLCPP_WARN(node_->get_logger(), "CCommunication: no status received within timeout, marking done");
         setDone(true);
     }

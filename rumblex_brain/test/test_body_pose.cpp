@@ -79,7 +79,7 @@ TEST_F(BodyPoseTest, JointBasedGaitsPreserveEverySampleAcrossMessageBoundary) {
     int64_t time = 1000000000;
     for (auto& gait : gaits) {
         planner->moveTorso(planner->getStandingToePositions(), CPose(0.003, -0.002, 0.001, 2.0, -1.0, 3.0));
-        gait->start(1.0, 0);
+        gait->start(1.0 * units::s, 0);
         int tick = 0;
         while (gait->state() != EGaitState::Stopped && tick++ < 1000) {
             time += 100000000;

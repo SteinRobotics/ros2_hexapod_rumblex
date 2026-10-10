@@ -69,9 +69,9 @@ void CMovement::run(std::shared_ptr<RequestHeadOrientation> request) {
     head_ = COrientation(request->orientation);
 }
 void CMovement::run(std::shared_ptr<RequestVelocity> request) {
-    geometry_msgs::msg::Twist limited;
-    if (!limitVelocity(request->velocity, velocityLimit(node_, "max_velocity_linear"),
-                       velocityLimit(node_, "max_velocity_rotation"), limited)) {
+    Velocity limited;
+    if (!limitVelocity(request->velocity, velocityLimit<units::m / units::s>(node_, "max_velocity_linear"),
+                       velocityLimit<units::rad / units::s>(node_, "max_velocity_rotation"), limited)) {
         RCLCPP_WARN(node_->get_logger(), "Ignoring non-finite velocity request");
         return;
     }
@@ -97,7 +97,9 @@ void CMovement::updateCompletion() {
         // Repeating gaits retain their requested dwell time, measured from activation.
         if (!completion_time_) {
             completion_time_ =
-                node_->now() + rclcpp::Duration::from_seconds(std::max(0.0, completion_request_->duration_s));
+                node_->now() +
+                rclcpp::Duration::from_seconds(
+                    std::max(0.0 * units::s, completion_request_->duration_s).numerical_value_in(units::s));
         }
         if (node_->now() < *completion_time_) return;
     }
@@ -118,8 +120,10 @@ void CMovement::update() {
         gait == MovementRequest::SEQUENCE_LOOK || gait == MovementRequest::SEQUENCE_WATCH ||
         gait == MovementRequest::SEQUENCE_BODY_ROLL;
     const auto period = std::chrono::milliseconds(frequent ? 20 : 100);
-    const double elapsed_s = last_update_ ? std::chrono::duration<double>(now - *last_update_).count()
-                                          : std::chrono::duration<double>(period).count();
+    const units::Duration elapsed_s =
+        (last_update_ ? std::chrono::duration<double>(now - *last_update_).count()
+                      : std::chrono::duration<double>(period).count()) *
+        units::s;
     last_update_ = now;
     // Keep a fixed deadline: scheduling from now can turn a 50 Hz loop into 25 Hz
     // when the next iteration arrives fractionally before the previous deadline.
@@ -136,7 +140,7 @@ void CMovement::update() {
             pub_body_pose_->publish(pose);
             last_pose_ = pose;
         }
-        if (gait_controller_->moving()) effective_velocity = velocity_;
+        if (gait_controller_->moving()) effective_velocity = velocity_.toMsg();
     }
     pub_movement_velocity_->publish(effective_velocity);
 }

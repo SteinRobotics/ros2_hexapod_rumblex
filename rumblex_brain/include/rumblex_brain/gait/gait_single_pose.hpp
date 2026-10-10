@@ -23,11 +23,10 @@ class CSinglePoseGait : public IContinuousGait {
                     Parameters::SinglePose& params, std::optional<Target> target = std::nullopt);
     ~CSinglePoseGait() override = default;
 
-    void start(double duration_s, uint8_t direction) override;
-    bool update(const geometry_msgs::msg::Twist& velocity, const CPose& torso,
-                const COrientation& head) override;
-    bool updateTimed(const geometry_msgs::msg::Twist& velocity, const CPose& torso, const COrientation& head,
-                     double elapsed_s) override;
+    void start(units::Duration duration_s, uint8_t direction) override;
+    bool update(const Velocity& velocity, const CPose& torso, const COrientation& head) override;
+    bool updateTimed(const Velocity& velocity, const CPose& torso, const COrientation& head,
+                     units::Duration elapsed_s) override;
     void requestStop() override;
     void cancelStop() override;
     EGaitState state() const override {
@@ -46,8 +45,8 @@ class CSinglePoseGait : public IContinuousGait {
     CPose torso_origin_ = CPose();
     COrientation head_origin_ = COrientation();
 
-    double duration_s_ = 0.0;
-    double phase_ = 0.0;
+    units::Duration duration_s_ = 0.0 * units::s;
+    units::Duration phase_ = 0.0 * units::s;
 };
 
 }  // namespace brain

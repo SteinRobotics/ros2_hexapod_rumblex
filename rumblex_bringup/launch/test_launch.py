@@ -60,7 +60,10 @@ def generate_launch_description():
         actions=[IncludeLaunchDescription(
             PythonLaunchDescriptionSource([
                 FindPackageShare('rumblex_brain'), '/launch/brain_launch.py']),
-            launch_arguments={'robot': robot}.items(),
+            launch_arguments={
+                'robot': robot,
+                'autostart_listening': LaunchConfiguration('autostart_listening'),
+            }.items(),
         )],
     )
 
@@ -68,6 +71,9 @@ def generate_launch_description():
         FindPackageShare('rumblex_description'), 'config', robot, 'anatomy.yaml'])
 
     return LaunchDescription([
+        DeclareLaunchArgument(
+            'autostart_listening', default_value='false',
+            description='Activate speech-to-text listening when the brain starts'),
         DeclareLaunchArgument('use_sim_time', default_value='false'),
         DeclareLaunchArgument(
             'enable_display', default_value='true',

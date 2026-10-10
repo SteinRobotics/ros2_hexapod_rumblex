@@ -50,7 +50,7 @@ TEST_F(LegWaveGaitTest, LiftOccursDuringRun) {
     CLegWaveGait gait(node_, kinematics_, params_.leg_wave);
     const auto standing = kinematics_->getStandingToePositions();
 
-    gait.start(3.0, 0);
+    gait.start(3.0 * units::s, 0);
 
     bool seen_lift = false;
     int iterations = 0;
@@ -77,7 +77,7 @@ TEST_F(LegWaveGaitTest, StopRequestReturnsToNeutral) {
     CLegWaveGait gait(node_, kinematics_, params_.leg_wave);
     const auto standing = kinematics_->getStandingToePositions();
 
-    gait.start(3.0, 0);
+    gait.start(3.0 * units::s, 0);
 
     for (int i = 0; i < 3; ++i) {
         gait.update();

@@ -23,7 +23,7 @@ CClapGait::CClapGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseMo
     : node_(node), kinematics_(kinematics), params_(params) {
 }
 
-void CClapGait::start(double /*duration_s*/, uint8_t /*direction*/) {
+void CClapGait::start(units::Duration /*duration_s*/, uint8_t /*direction*/) {
     // Store initial positions
     initial_toe_positions_ = kinematics_->getToePositions();
     initial_torso_pose_ = kinematics_->getTorsoPose();
@@ -99,7 +99,7 @@ bool CClapGait::update() {
         }
         case EPhase::ClapClosing: {
             phase_progress_ = std::min(phase_progress_ + kPhaseIncrement * 2.0, 1.0);  // Faster clap
-            applyFrontLegsClap(phase_progress_, true);
+            applyFrontLegsClap(phase_progress_);
             if (phase_progress_ >= 1.0 - 1e-6) {
                 phase_ = EPhase::ClapOpening;
                 phase_progress_ = 0.0;
@@ -109,7 +109,7 @@ bool CClapGait::update() {
         }
         case EPhase::ClapOpening: {
             phase_progress_ = std::min(phase_progress_ + kPhaseIncrement * 2.0, 1.0);  // Faster clap
-            applyFrontLegsClap(1.0 - phase_progress_, true);
+            applyFrontLegsClap(1.0 - phase_progress_);
             if (phase_progress_ >= 1.0 - 1e-6) {
                 if (clap_iterations_remaining_ > 0) {
                     phase_ = EPhase::ClapClosing;
@@ -200,7 +200,7 @@ void CClapGait::applyFrontLegsLift(double alpha) {
     kinematics_->setToePosition(ELegIndex::RightFront, right_front_pos);
 }
 
-void CClapGait::applyFrontLegsClap(double alpha, [[maybe_unused]] bool closing) {
+void CClapGait::applyFrontLegsClap(double alpha) {
     alpha = trajectoryProgress(alpha);
 
     // Get current leg angles

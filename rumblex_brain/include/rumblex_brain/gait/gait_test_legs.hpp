@@ -19,7 +19,7 @@ class CTestLegsGait : public ISequenceGait {
                   Parameters::TestLegs& params);
     ~CTestLegsGait() override = default;
 
-    void start(double duration_s, uint8_t direction) override;
+    void start(units::Duration duration_s, uint8_t direction) override;
     bool update() override;
     void requestStop() override;
     void cancelStop() override;
@@ -42,8 +42,8 @@ class CTestLegsGait : public ISequenceGait {
     EGaitState state_ = EGaitState::Stopped;
     Stage stage_ = Stage::Raise;
 
-    double default_stage_duration_ = 0.5;
-    double stage_duration_ = 0.5;
+    units::Duration default_stage_duration_ = 0.5 * units::s;
+    units::Duration stage_duration_ = 0.5 * units::s;
 
     rclcpp::Time stage_start_time_;
 

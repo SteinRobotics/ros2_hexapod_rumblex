@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <limits>
 #include <stdexcept>
+#include <tuple>
 
 #include "requester/coordinator.hpp"
 #include "test_helpers.hpp"
@@ -12,6 +13,9 @@ namespace brain {
 // Exercise request timing without sleeps or exposing coordinator state to callers.
 class ActionPlannerTestAccess {
    public:
+    static const auto& latestNormalRequest(const CActionPlanner& planner) {
+        return planner.requests_normal_prio_.back();
+    }
     static const auto& latestHighRequest(const CActionPlanner& planner) {
         return planner.requests_high_prio_.back();
     }
@@ -20,7 +24,7 @@ class ActionPlannerTestAccess {
 class CoordinatorTestAccess {
    public:
     static void submit(CCoordinator& coordinator, uint32_t type, double seconds) {
-        coordinator.submitRequestMove(type, seconds);
+        coordinator.submitRequestMove(type, seconds * units::s);
     }
     static bool locked(const CCoordinator& coordinator) {
         return coordinator.movement_deadline_.has_value();
@@ -75,7 +79,7 @@ TEST_F(CoordinatorTest, JoystickPoseModeActivatesGaitAndGroupsOrientationTargets
     request.left_stick_horizontal = 0.5;
     request.right_stick_horizontal = 0.7;
     coordinator_->joystickRequestReceived(request);
-    const auto& group = ActionPlannerTestAccess::latestHighRequest(*planner_);
+    const auto& group = ActionPlannerTestAccess::latestNormalRequest(*planner_);
     ASSERT_EQ(group.size(), 3u);
     const auto gait = std::dynamic_pointer_cast<RequestMovementType>(group[0]);
     const auto body = std::dynamic_pointer_cast<RequestSinglePose>(group[1]);
@@ -91,7 +95,7 @@ TEST_F(CoordinatorTest, JoystickPoseModeActivatesGaitAndGroupsOrientationTargets
     request.right_stick_horizontal = 0.0;
     coordinator_->joystickRequestReceived(request);
     // Releasing the sticks preserves the existing pose targets.
-    EXPECT_EQ(ActionPlannerTestAccess::latestHighRequest(*planner_).size(), 1u);
+    EXPECT_EQ(ActionPlannerTestAccess::latestNormalRequest(*planner_).size(), 1u);
 }
 
 TEST_F(CoordinatorTest, JoystickDirectionsUseForwardLeftAndAnticlockwiseAxes) {
@@ -102,7 +106,7 @@ TEST_F(CoordinatorTest, JoystickDirectionsUseForwardLeftAndAnticlockwiseAxes) {
         request.left_stick_horizontal = deflection;
         request.right_stick_horizontal = deflection;
         coordinator_->joystickRequestReceived(request);
-        const auto& group = ActionPlannerTestAccess::latestHighRequest(*planner_);
+        const auto& group = ActionPlannerTestAccess::latestNormalRequest(*planner_);
         const auto velocity = std::dynamic_pointer_cast<RequestVelocity>(group.back());
         ASSERT_TRUE(velocity);
         EXPECT_GT(velocity->velocity.linear.x, 0.0);
@@ -124,6 +128,48 @@ TEST_F(CoordinatorTest, CmdVelPreservesRosAxisSigns) {
         ASSERT_TRUE(velocity);
         EXPECT_EQ(velocity->velocity, command);
     }
+}
+
+TEST_F(CoordinatorTest, VoiceRunningUsesRequestedDirectionAndStops) {
+    create();
+    for (const auto& [phrase, x, y] :
+         std::vector<std::tuple<std::string, double, double>>{{"renne nach vorne", 0.005, 0.0},
+                                                              {"renn nach hinten", -0.005, 0.0},
+                                                              {"flitze nach links", 0.0, 0.005},
+                                                              {"flitz nach rechts", 0.0, -0.005}}) {
+        coordinator_->speechRecognized(phrase);
+        const auto& group = ActionPlannerTestAccess::latestNormalRequest(*planner_);
+        ASSERT_GE(group.size(), 3u);
+        const auto gait = std::dynamic_pointer_cast<RequestMovementType>(group[1]);
+        const auto velocity = std::dynamic_pointer_cast<RequestVelocity>(group.back());
+        ASSERT_TRUE(gait);
+        ASSERT_TRUE(velocity);
+        EXPECT_EQ(gait->movementRequest.type, MovementRequest::CONTINUOUS_RUNNING);
+        EXPECT_DOUBLE_EQ(velocity->velocity.linear.x, x);
+        EXPECT_DOUBLE_EQ(velocity->velocity.linear.y, y);
+    }
+    coordinator_->speechRecognized("stoppe bewegung");
+    const auto& group = ActionPlannerTestAccess::latestNormalRequest(*planner_);
+    const auto velocity = std::dynamic_pointer_cast<RequestVelocity>(group.back());
+    ASSERT_TRUE(velocity);
+    EXPECT_EQ(velocity->velocity, geometry_msgs::msg::Twist());
+}
+
+TEST_F(CoordinatorTest, VoiceClapSelectsImplementedGait) {
+    create();
+    coordinator_->speechRecognized("klatsche");
+    const auto& group = ActionPlannerTestAccess::latestHighRequest(*planner_);
+    const auto gait = std::dynamic_pointer_cast<RequestMovementType>(group.front());
+    ASSERT_TRUE(gait);
+    EXPECT_EQ(gait->movementRequest.type, MovementRequest::SEQUENCE_CLAP);
+}
+
+TEST_F(CoordinatorTest, VoiceStandardDanceQueuesChoreography) {
+    create();
+    coordinator_->speechRecognized("tanze standardtanz");
+    const auto& group = ActionPlannerTestAccess::latestHighRequest(*planner_);
+    ASSERT_EQ(group.size(), 1u);
+    EXPECT_TRUE(std::dynamic_pointer_cast<RequestMusic>(group.front()));
 }
 
 TEST_F(CoordinatorTest, ReleasesExpiredLockAndMatchingMovement) {

@@ -10,8 +10,10 @@
 #include "requester/utility.hpp"
 #include "rumblex_interfaces/msg/servo_status.hpp"
 #include "rumblex_utils/filters.hpp"
+#include "rumblex_utils/units.hpp"
 
 namespace brain {
+namespace units = rumblex_geometry::units;
 
 enum class EError {
     None = 0,
@@ -28,25 +30,25 @@ class CErrorManagement {
     virtual ~CErrorManagement() = default;
 
     EError getErrorServo(const rumblex_interfaces::msg::ServoStatus& msg);
-    EError filterSupplyVoltage(double voltage);
+    EError filterSupplyVoltage(units::Voltage voltage);
     std::string getErrorName(EError error) {
         return std::string(magic_enum::enum_name(error));
     }
-    double getFilteredSupplyVoltage();
-    double getFilteredServoVoltage();
-    double getFilteredServoTemperature();
+    units::Voltage getFilteredSupplyVoltage();
+    units::Voltage getFilteredServoVoltage();
+    units::Temperature getFilteredServoTemperature();
 
    private:
     struct Parameters {
         struct VoltageGroup {
-            double nominal{0.0};
-            double low{0.0};
-            double critical_low{0.0};
+            units::Voltage nominal = 0.0 * units::V;
+            units::Voltage low = 0.0 * units::V;
+            units::Voltage critical_low = 0.0 * units::V;
         };
 
         struct TemperatureGroup {
-            double high{0.0};
-            double critical_high{0.0};
+            units::Temperature high = units::celsius(0.0);
+            units::Temperature critical_high = units::celsius(0.0);
         };
 
         VoltageGroup supply;
@@ -58,13 +60,13 @@ class CErrorManagement {
 
     EError filterServoVoltage(const rumblex_interfaces::msg::ServoStatus& msg);
     EError getStatusServoTemperature(const rumblex_interfaces::msg::ServoStatus& msg);
-    EError getStatusVoltage(double voltage, const Parameters::VoltageGroup& thresholds);
+    EError getStatusVoltage(units::Voltage voltage, const Parameters::VoltageGroup& thresholds);
 
     std::shared_ptr<rclcpp::Node> node_;
     Parameters parameters_;
-    double supply_voltage_filtered_ = 0.0;
-    double servo_voltage_filtered_ = 0.0;
-    double servo_temperature_filtered_ = 0.0;
+    units::Voltage supply_voltage_filtered_ = 0.0 * units::V;
+    units::Voltage servo_voltage_filtered_ = 0.0 * units::V;
+    units::Temperature servo_temperature_filtered_ = units::celsius(0.0);
 };
 
 }  // namespace brain

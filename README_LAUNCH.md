@@ -69,6 +69,20 @@ ros2 launch rumblex_bringup test_launch.py robot:=nox map:=/absolute/path/to/map
 
 Other test arguments are `wall_height` (default `2.0` metres), `simulate_lidar` (default `true`), and `publish_test_map_tf` (default `true`). Set `simulate_lidar:=false` when supplying real LiDAR readings and `publish_test_map_tf:=false` when supplying odometry/localization externally.
 
+Both `target_launch.py` and `test_launch.py` accept `autostart_listening` (default
+`false`). Set it to `true` to activate speech-to-text (STT) when the brain starts:
+
+```bash
+ros2 launch rumblex_bringup target_launch.py robot:=nox autostart_listening:=true
+ros2 launch rumblex_bringup test_launch.py robot:=nox autostart_listening:=true
+```
+
+This forwards the brain's `autostart_listening` parameter and starts offline
+robot-name recognition; recognizing the robot's name then starts online command
+recognition. The microphone, Vosk model, and Google speech credentials described
+above are required. The same option is available in `brain_launch.py` when
+launching the brain separately.
+
 ## Individual components
 
 Run the required component in its own prepared terminal:

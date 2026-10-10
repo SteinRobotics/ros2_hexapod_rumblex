@@ -7,9 +7,9 @@
 #include <chrono>
 
 #include "ihandler.hpp"
-#include "rumblex_interfaces/msg/communication_status.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "requester/irequester.hpp"
+#include "rumblex_interfaces/msg/communication_status.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/float32.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -32,8 +32,6 @@ class CCommunication : public IHandler {
     void run(std::shared_ptr<RequestMusic> request);
 
    private:
-    void timerCallback();
-
     std::shared_ptr<rclcpp::Node> node_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr m_pubTalking;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr m_pubChat;
@@ -46,6 +44,7 @@ class CCommunication : public IHandler {
 
     static constexpr std::chrono::seconds kTimeout{5};
     std::chrono::steady_clock::time_point request_time_{};
+    bool awaiting_status_ = false;
 };
 
 }  // namespace brain

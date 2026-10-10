@@ -25,7 +25,7 @@ enum class Prio {
 };
 
 struct RequestBase {
-    double minDuration = 0.0;
+    units::Duration minDuration = 0.0 * units::s;
     virtual ~RequestBase() = default;
 };
 
@@ -67,23 +67,6 @@ struct RequestHeadOrientation : RequestBase {
 
 struct RequestVelocity : RequestBase {
     geometry_msgs::msg::Twist velocity;
-};
-
-class IRequester {
-   public:
-    virtual ~IRequester() {
-    }
-    virtual void update() = 0;
-
-    void setDone(bool done) {
-        is_done_ = done;
-    }
-    bool done() const {
-        return is_done_;
-    }
-
-   private:
-    bool is_done_ = false;
 };
 
 }  // namespace brain

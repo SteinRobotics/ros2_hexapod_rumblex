@@ -22,6 +22,18 @@
         "doing": [ "tanz", "tanze" ],
         "noun": [ "excess", "party", "partie" ]
     },
+    "commandDanceDancingStreet": {
+        "doing": [ "tanz", "tanze" ],
+        "noun": [ "dancing", "street", "straße", "strasse" ]
+    },
+    "commandDance": {
+        "doing": [ "tanz", "tanze" ],
+        "noun": [ "standard", "standardtanz" ]
+    },
+    "commandRun": {
+        "doing": [ "renn", "renne", "flitz", "flitze" ],
+        "direction": [ "vorn", "vorne", "hinten", "links", "rechts" ]
+    },
     "commandMove": {
         "doing": [ "fahr", "fahre", "beweg", "bewege", "lauf", "laufe", "dreh", "drehe", "geh", "gehe" ],
         "direction": [ "vorn", "vorne", "hinten", "links", "rechts" ]
@@ -51,6 +63,22 @@
     "commandLegWave": {
         "doing": [ "bein", "beine" ],
         "noun": [ "welle" ]
+    },
+    "commandBite": {
+        "doing": [ "beiß", "beiße", "beiss", "beisse" ]
+    },
+    "commandStomp": {
+        "doing": [ "stampf", "stampfe" ]
+    },
+    "commandClap": {
+        "doing": [ "klatsch", "klatsche" ]
+    },
+    "commandCalibrate": {
+        "doing": [ "kalibrier", "kalibriere" ]
+    },
+    "commandNeutral": {
+        "doing": [ "geh", "gehe" ],
+        "noun": [ "neutral", "neutralposition", "grundstellung", "ausgangsposition" ]
     },
     "commandTestBody": {
         "doing": [ "test", "teste" ],

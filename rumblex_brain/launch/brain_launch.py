@@ -3,6 +3,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
@@ -18,9 +19,14 @@ def generate_launch_description():
         output='screen',
         parameters=[config,
             PathJoinSubstitution([get_package_share_directory('rumblex_brain'), 'config', robot, 'gait.yaml']),
-            PathJoinSubstitution([get_package_share_directory('rumblex_description'), 'config', robot, 'anatomy.yaml'])],
+            PathJoinSubstitution([get_package_share_directory('rumblex_description'), 'config', robot, 'anatomy.yaml']),
+            {'autostart_listening': ParameterValue(
+                LaunchConfiguration('autostart_listening'), value_type=bool)}],
     )
     return LaunchDescription([
+        DeclareLaunchArgument(
+            'autostart_listening', default_value='false',
+            description='Activate speech-to-text listening when the brain starts'),
         DeclareLaunchArgument(
             'robot', default_value='nox',
             description='Robot configuration profile (for example: nox or nira)'),

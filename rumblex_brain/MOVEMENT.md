@@ -95,8 +95,7 @@ request cannot move an existing segment's destination. Pose transitions retain
 their minimum duration of one second, sampled at 50 Hz.
 
 Walking and running share `CStridePlanner`. Patterns specify ordered swing
-leg groups, step reach, lift height, and head amplitude. The legacy phase-gain
-field is retained for compatibility and is unused. A segment
+leg groups, step reach, lift height, and head amplitude. A segment
 captures the actual current planned toe, torso, and head poses, then generates
 a complete swing/support trajectory. Swing lift is `64t³(1-t)³`, also with zero
 endpoint velocity and acceleration. Torso and head targets follow the same
@@ -149,9 +148,10 @@ Stop requests are graceful motion requests, not emergency actuator stops.
 
 The obsolete `gait.running.velocity_filter_alpha`, `gait.running.flight_fraction`,
 `gait.move_combined.velocity_filter_alpha`, and
-`gait.move_combined.transition_phase_span_rad` keys remain accepted for older
-configuration files but are unused. No new dependencies or required parameters
-are introduced beyond the existing brain velocity limits.
+`gait.move_combined.transition_phase_span_rad` keys and the walking/running
+`velocity_to_phase_gain` settings have been removed. Remove these unused settings
+from custom configuration files. No new dependencies or required parameters are
+introduced beyond the existing brain velocity limits.
 
 Continuity refers to the planned kinematic state, initialized from
 `body_pose_actual`, not continuously measured foot positions. Contact, servo

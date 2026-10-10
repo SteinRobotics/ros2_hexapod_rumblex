@@ -244,7 +244,7 @@ std::shared_ptr<RequestTalking> CBehaviorParser::createRequestTalking(const YAML
         } else if (value.IsMap()) {
             request->text = valueOr<std::string>(value, "text", "");
             request->language = valueOr<std::string>(value, "language", "de");
-            request->minDuration = valueOr(value, "minDuration", 0.0);
+            request->minDuration = valueOr(value, "minDuration", 0.0) * units::s;
         }
 
         return request;
@@ -264,7 +264,7 @@ std::shared_ptr<RequestChat> CBehaviorParser::createRequestChat(const YAML::Node
         } else if (value.IsMap()) {
             request->text = valueOr<std::string>(value, "text", "");
             request->language = valueOr<std::string>(value, "language", "de");
-            request->minDuration = valueOr(value, "minDuration", 0.0);
+            request->minDuration = valueOr(value, "minDuration", 0.0) * units::s;
         }
 
         return request;
@@ -284,7 +284,7 @@ std::shared_ptr<RequestMusic> CBehaviorParser::createRequestMusic(const YAML::No
         } else if (value.IsMap()) {
             request->song = valueOr<std::string>(value, "song", "");
             request->volume = valueOr(value, "volume", 0.8f);
-            request->minDuration = valueOr(value, "minDuration", 0.0);
+            request->minDuration = valueOr(value, "minDuration", 0.0) * units::s;
         }
 
         return request;
@@ -303,7 +303,7 @@ std::shared_ptr<RequestListening> CBehaviorParser::createRequestListening(const 
             request->active = value.as<bool>();
         } else if (value.IsMap()) {
             request->active = valueOr(value, "active", false);
-            request->minDuration = valueOr(value, "minDuration", 0.0);
+            request->minDuration = valueOr(value, "minDuration", 0.0) * units::s;
         }
 
         return request;
@@ -320,7 +320,7 @@ std::shared_ptr<RequestSystem> CBehaviorParser::createRequestSystem(const YAML::
             auto request = std::make_shared<RequestSystem>();
             request->turnOffServoRelay = valueOr(value, "turnOffServoRelay", false);
             request->systemShutdown = valueOr(value, "systemShutdown", false);
-            request->minDuration = valueOr(value, "minDuration", 0.0);
+            request->minDuration = valueOr(value, "minDuration", 0.0) * units::s;
             return request;
         }
     } catch (const std::exception& e) {
@@ -366,12 +366,12 @@ std::shared_ptr<RequestMovementType> CBehaviorParser::createRequestMovementType(
                 }
             }
             if (value["duration_s"]) {
-                movementRequest.duration_s = value["duration_s"].as<double>();
+                movementRequest.duration_s = value["duration_s"].as<double>() * units::s;
             }
 
             auto request = std::make_shared<RequestMovementType>();
             request->movementRequest = movementRequest;
-            request->minDuration = valueOr(value, "minDuration", 0.0);
+            request->minDuration = valueOr(value, "minDuration", 0.0) * units::s;
             return request;
         }
     } catch (const std::exception& e) {
@@ -404,7 +404,7 @@ std::shared_ptr<RequestSinglePose> CBehaviorParser::createRequestMoveBody(const 
 
             auto request = std::make_shared<RequestSinglePose>();
             request->pose = pose;
-            request->minDuration = valueOr(value, "minDuration", 0.0);
+            request->minDuration = valueOr(value, "minDuration", 0.0) * units::s;
             return request;
         }
     } catch (const std::exception& e) {
@@ -427,7 +427,7 @@ std::shared_ptr<RequestHeadOrientation> CBehaviorParser::createRequestHeadOrient
 
             auto request = std::make_shared<RequestHeadOrientation>();
             request->orientation = orientation;
-            request->minDuration = valueOr(value, "minDuration", 0.0);
+            request->minDuration = valueOr(value, "minDuration", 0.0) * units::s;
             return request;
         }
     } catch (const std::exception& e) {
@@ -460,7 +460,7 @@ std::shared_ptr<RequestVelocity> CBehaviorParser::createRequestMoveVelocity(cons
 
             auto request = std::make_shared<RequestVelocity>();
             request->velocity = velocity;
-            request->minDuration = valueOr(value, "minDuration", 0.0);
+            request->minDuration = valueOr(value, "minDuration", 0.0) * units::s;
             return request;
         }
     } catch (const std::exception& e) {

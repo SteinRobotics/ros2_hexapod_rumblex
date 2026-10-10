@@ -18,7 +18,7 @@ class CWaitingGait : public ISequenceGait {
                  Parameters::Waiting& params);
     ~CWaitingGait() override = default;
 
-    void start(double duration_s, uint8_t direction) override;
+    void start(units::Duration duration_s, uint8_t direction) override;
     bool update() override;
     void requestStop() override;
     void cancelStop() override;
@@ -35,7 +35,7 @@ class CWaitingGait : public ISequenceGait {
 
     CPose torso_origin_;
     std::map<ELegIndex, CPosition> toe_origins_;
-    double phase_ = double(0);
+    units::Angle phase_ = 0.0 * units::rad;
 };
 
 }  // namespace brain

@@ -53,7 +53,7 @@ TEST_P(YawSequenceTest, ExcursionPreservesPoseComponentsAndReturnsExactlyToOrigi
     const auto origin = bodyPose(*model);
     const double sign = direction() == MovementRequest::CLOCKWISE ? -1.0 : 1.0;
     EXPECT_FALSE(gait->update());
-    gait->start(2.0, direction());
+    gait->start(2.0 * units::s, direction());
     EXPECT_EQ(bodyPose(*model), origin);
     double peak = 0.0, minimum = 0.0;
     for (int tick = 1; tick <= 20; ++tick) {
@@ -97,7 +97,7 @@ TEST_P(YawSequenceTest, DurationClampsAndCompletesOnFirstTickAtOrAfterEndpoint) 
         SCOPED_TRACE(duration);
         resetPose();
         const auto origin = bodyPose(*model);
-        gait->start(duration, direction());
+        gait->start(duration * units::s, direction());
         const int ticks = static_cast<int>(std::ceil(std::max(duration, 1.0) / 0.1));
         for (int i = 1; i <= ticks; ++i) {
             ASSERT_TRUE(gait->update());
@@ -109,7 +109,7 @@ TEST_P(YawSequenceTest, DurationClampsAndCompletesOnFirstTickAtOrAfterEndpoint) 
 
 TEST_P(YawSequenceTest, StopRequestsFinishExcursionAndRestartCapturesNewOrigin) {
     const auto origin = bodyPose(*model);
-    gait->start(1.0, direction());
+    gait->start(1.0 * units::s, direction());
     for (int i = 0; i < 3; ++i) ASSERT_TRUE(gait->update());
     const auto in_flight = bodyPose(*model);
     gait->requestStop();
@@ -126,7 +126,7 @@ TEST_P(YawSequenceTest, StopRequestsFinishExcursionAndRestartCapturesNewOrigin) 
     const auto new_origin = bodyPose(*model);
     const uint8_t opposite = direction() == MovementRequest::CLOCKWISE ? MovementRequest::ANTICLOCKWISE
                                                                        : MovementRequest::CLOCKWISE;
-    gait->start(1.0, opposite);
+    gait->start(1.0 * units::s, opposite);
     EXPECT_EQ(bodyPose(*model), new_origin);
     ASSERT_TRUE(gait->update());
     const double sign = opposite == MovementRequest::CLOCKWISE ? -1.0 : 1.0;

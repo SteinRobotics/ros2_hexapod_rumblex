@@ -44,20 +44,20 @@ class GaitControllerTest : public ::testing::Test {
         }
     }
 
-    geometry_msgs::msg::Twist createZeroVelocity() {
-        geometry_msgs::msg::Twist vel;
-        vel.linear.x = 0.0;
-        vel.linear.y = 0.0;
-        vel.linear.z = 0.0;
-        vel.angular.x = 0.0;
-        vel.angular.y = 0.0;
-        vel.angular.z = 0.0;
+    Velocity createZeroVelocity() {
+        Velocity vel;
+        vel.linear.x = 0.0 * units::m / units::s;
+        vel.linear.y = 0.0 * units::m / units::s;
+        vel.linear.z = 0.0 * units::m / units::s;
+        vel.angular.x = 0.0 * units::rad / units::s;
+        vel.angular.y = 0.0 * units::rad / units::s;
+        vel.angular.z = 0.0 * units::rad / units::s;
         return vel;
     }
 
-    geometry_msgs::msg::Twist createForwardVelocity() {
-        geometry_msgs::msg::Twist vel = createZeroVelocity();
-        vel.linear.x = 0.1;
+    Velocity createForwardVelocity() {
+        Velocity vel = createZeroVelocity();
+        vel.linear.x = 0.1 * units::m / units::s;
         return vel;
     }
 
@@ -440,7 +440,7 @@ TEST_F(GaitControllerTest, FixedPosesPreserveRequestsAndIgnoreLivePoseTargets) {
     for (const auto type : {MovementRequestMsg::SEQUENCE_STAND_UP, MovementRequestMsg::SEQUENCE_LAYDOWN}) {
         MovementRequest request;
         request.type = type;
-        request.duration_s = 0.2;
+        request.duration_s = 0.2 * units::s;
         controller_->setGait(request);
         EXPECT_EQ(controller_->currentGait(), type);
         const CPose unrelated_pose(0.01, 0.02, 0.03, 0.0, 0.0, 0.0);
@@ -466,7 +466,7 @@ TEST_F(GaitControllerTest, SinglePoseEnforcesMinimumTrajectoryDuration) {
     for (const double duration : {0.0, 0.2, 0.5}) {
         MovementRequest request;
         request.type = MovementRequestMsg::SINGLE_POSE;
-        request.duration_s = duration;
+        request.duration_s = duration * units::s;
         controller_->setGait(request);
         const CPose target(0.01, 0.0, 0.0, 0.0, 0.0, 0.0);
         const COrientation head(0.0, 0.1, 0.0);

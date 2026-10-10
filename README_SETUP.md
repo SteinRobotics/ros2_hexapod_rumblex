@@ -38,7 +38,7 @@ The commands below assume **Ubuntu 26.04** and **ROS 2 Lyrical** on both machine
    python -m pip install --upgrade pip wheel 'setuptools<80'
    python -m pip install \
      vosk SpeechRecognition google-cloud-speech google-api-python-client \
-     oauth2client gTTS sounddevice \
+     oauth2client gTTS \
      adafruit-blinka adafruit-circuitpython-ssd1306 adafruit-circuitpython-ina228
    ```
 
@@ -121,7 +121,7 @@ The commands below assume **Ubuntu 26.04** and **ROS 2 Lyrical** on both machine
    python -m pip install --upgrade pip wheel 'setuptools<80'
    python -m pip install \
      vosk SpeechRecognition google-cloud-speech google-api-python-client \
-     oauth2client gTTS sounddevice
+     oauth2client gTTS
    ```
 
    These pip packages support the communication node used by simulation. The rosdep skip keys below cover these Python dependencies and the explicitly installed `libmagicenum-dev` and `fonts-liberation` packages. The PC setup does not need the Pi's Adafruit HMI libraries. ROS Python packages, `pygame`, and `pyaudio` remain apt-managed and are visible through `--system-site-packages`.
@@ -172,6 +172,8 @@ The commands below assume **Ubuntu 26.04** and **ROS 2 Lyrical** on both machine
 After upgrading to Ubuntu 26.04 and installing ROS 2 Lyrical, open a fresh terminal and source `/opt/ros/lyrical/setup.bash`. Remove any old ROS setup commands from your shell startup files and update the robot's boot service to use Lyrical as shown above.
 
 Archive the existing `build/`, `install/`, and `log/` directories before rebuilding. Recreate `.venv` with `/usr/bin/python3` on Ubuntu 26.04 and reinstall its Python dependencies using the steps above. Then rerun `rosdep install` and the build command for the Pi or PC. Source the new `install/local_setup.bash` after the build completes.
+
+If an existing build reports `Could NOT find Python3` even though the system Python development headers and NumPy are installed, its CMake cache may still contain Python 3.12 metadata from Jazzy. Reconfigure all packages with `python -m colcon build --symlink-install --cmake-clean-cache` (include the package selection from the Pi or PC instructions if needed). This refreshes cached Python and ROS dependency paths. Archiving the old build and install directories as described above also removes obsolete installed files after a distribution upgrade.
 
 ## Every new terminal
 

@@ -15,7 +15,7 @@ class CClapGait : public ISequenceGait {
               Parameters::Clap& params);
     ~CClapGait() override = default;
 
-    void start(double duration_s, uint8_t direction) override;
+    void start(units::Duration duration_s, uint8_t direction) override;
     bool update() override;
     void requestStop() override;
     void cancelStop() override;
@@ -42,7 +42,7 @@ class CClapGait : public ISequenceGait {
     void applyTorsoShift(double alpha);
     void applyBackLegLift(ELegIndex leg, double alpha);
     void applyFrontLegsLift(double alpha);
-    void applyFrontLegsClap(double alpha, bool closing);
+    void applyFrontLegsClap(double alpha);
 
     std::shared_ptr<rclcpp::Node> node_;
     std::shared_ptr<CPoseModel> kinematics_;

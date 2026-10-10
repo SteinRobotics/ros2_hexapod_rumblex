@@ -9,10 +9,10 @@ CWaitingGait::CWaitingGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<C
     : node_(node), kinematics_(kinematics), params_(params) {
 }
 
-void CWaitingGait::start(double /*duration_s*/, uint8_t /*direction*/) {
+void CWaitingGait::start(units::Duration /*duration_s*/, uint8_t /*direction*/) {
     // Directly enter Running; no distinct Starting phase needed.
     state_ = EGaitState::Running;
-    phase_ = 0.0;
+    phase_ = 0.0 * units::rad;
     torso_origin_ = kinematics_->getTorsoPose();
     toe_origins_ = kinematics_->getToePositions();
 }
@@ -21,14 +21,19 @@ bool CWaitingGait::update() {
     if (state_ == EGaitState::Stopped) {
         return false;
     }
-    phase_ = std::min(phase_ + 0.1, 2.0 * M_PI);
+    phase_ = std::min<units::Angle>(phase_ + 0.1 * units::rad, units::Angle(2.0 * M_PI * units::rad));
     auto torso_target = torso_origin_;
     const double excursion =
-        phase_ >= 2.0 * M_PI ? 0.0 : std::sin(2.0 * M_PI * trajectoryProgress(phase_ / (2.0 * M_PI)));
+        phase_ >= 2.0 * M_PI * units::rad
+            ? 0.0
+            : mp_units::angular::sin(
+                  2.0 * M_PI * units::rad *
+                  trajectoryProgress((phase_ / (2.0 * M_PI * units::rad)).numerical_value_in(mp_units::one)))
+                  .numerical_value_in(mp_units::one);
     torso_target.position.z += 0.05 * units::m * excursion;
     kinematics_->moveTorso(toe_origins_, torso_target);
-    if (phase_ >= 2.0 * M_PI) {
-        phase_ = 0.0;
+    if (phase_ >= 2.0 * M_PI * units::rad) {
+        phase_ = 0.0 * units::rad;
         if (state_ == EGaitState::Stopping) state_ = EGaitState::Stopped;
     }
     return true;

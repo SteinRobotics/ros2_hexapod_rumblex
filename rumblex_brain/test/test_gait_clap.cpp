@@ -46,7 +46,7 @@ TEST_F(ClapGaitTest, CompletesCycleAndReturnsToInitialPose) {
     const auto initial_torso = kinematics_->getTorsoPose();
     const auto initial_positions = kinematics_->getToePositions();
 
-    gait.start(3.0, 0);
+    gait.start(3.0 * units::s, 0);
 
     int iterations = 0;
     while (gait.state() != EGaitState::Stopped && iterations++ < kMaxIterations) {
@@ -70,7 +70,7 @@ TEST_F(ClapGaitTest, BackLegsLiftDuringSequence) {
     CClapGait gait(node_, kinematics_, params_.clap);
     const auto initial_positions = kinematics_->getToePositions();
 
-    gait.start(3.0, 0);
+    gait.start(3.0 * units::s, 0);
 
     bool right_back_lifted = false;
     bool left_back_lifted = false;
@@ -103,7 +103,7 @@ TEST_F(ClapGaitTest, FrontLegsPerformClapMovement) {
     const auto initial_left_angles = kinematics_->getLegAngles(ELegIndex::LeftFront);
     const auto initial_right_angles = kinematics_->getLegAngles(ELegIndex::RightFront);
 
-    gait.start(3.0, 0);
+    gait.start(3.0 * units::s, 0);
 
     bool front_legs_moved_for_clap = false;
 
@@ -131,7 +131,7 @@ TEST_F(ClapGaitTest, RequestStopReturnsToInitialState) {
     CClapGait gait(node_, kinematics_, params_.clap);
     const auto initial_torso = kinematics_->getTorsoPose();
 
-    gait.start(3.0, 0);
+    gait.start(3.0 * units::s, 0);
 
     // Run for a few iterations
     for (int i = 0; i < 10; ++i) {
@@ -158,7 +158,7 @@ TEST_F(ClapGaitTest, RequestStopReturnsToInitialState) {
 TEST_F(ClapGaitTest, ClapExcursionDoesNotAccumulateBetweenSamplesOrCycles) {
     kinematics_->moveTorso(kinematics_->getStandingToePositions());
     CClapGait gait(node_, kinematics_, params_.clap);
-    gait.start(3.0, 0);
+    gait.start(3.0 * units::s, 0);
     for (int i = 0; i < 60; ++i) gait.update();
     const auto origin = kinematics_->getLegAngles(ELegIndex::LeftFront).torso_coxa;
     for (int cycle = 0; cycle < 3; ++cycle) {

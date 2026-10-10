@@ -13,15 +13,15 @@ CTestLegsGait::CTestLegsGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr
     : node_(std::move(node)), kinematics_(std::move(kinematics)), params_(params) {
 }
 
-void CTestLegsGait::start(double duration_s, uint8_t /*direction*/) {
+void CTestLegsGait::start(units::Duration duration_s, uint8_t /*direction*/) {
     captureBaseAngles();
 
     current_leg_index_ = 0;
     stage_ = Stage::Raise;
     stage_start_time_ = node_->now();
 
-    const double requested = duration_s > 0.0 ? duration_s / 3.0 : default_stage_duration_;
-    stage_duration_ = std::max(requested, 1.0);
+    const auto requested = duration_s > 0.0 * units::s ? duration_s / 3.0 : default_stage_duration_;
+    stage_duration_ = std::max(requested, 1.0 * units::s);
 
     state_ = hasCurrentLeg() ? EGaitState::Running : EGaitState::Stopped;
 }
@@ -32,8 +32,8 @@ bool CTestLegsGait::update() {
     }
 
     const auto now = node_->get_clock()->now();
-    const double elapsed = std::max(0.0, (now - stage_start_time_).seconds());
-    const double progress = trajectoryProgress(elapsed / stage_duration_);
+    const auto elapsed = std::max(0.0, (now - stage_start_time_).seconds()) * units::s;
+    const double progress = trajectoryProgress((elapsed / stage_duration_).numerical_value_in(mp_units::one));
     const auto index = currentLeg();
     auto raised = base_leg_angles_.at(index);
     raised.torso_coxa += params_.torso_coxa_delta;

@@ -113,8 +113,8 @@ void CGaitController::switchGait(brain::MovementRequest request) {
     if (on_gait_changed) on_gait_changed(request);
 }
 
-bool CGaitController::updateSelectedGait(const geometry_msgs::msg::Twist& velocity, CPose torso,
-                                         COrientation head, double elapsed_s) {
+bool CGaitController::updateSelectedGait(const Velocity& velocity, CPose torso, COrientation head,
+                                         units::Duration elapsed_s) {
     if (pending_request_.type != MovementRequest::NO_REQUEST &&
         active_gait_->state() == EGaitState::Stopped) {
         switchGait(pending_request_);
