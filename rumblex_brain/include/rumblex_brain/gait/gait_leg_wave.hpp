@@ -10,6 +10,10 @@
 
 namespace brain {
 
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::rad;
+
 class CLegWaveGait : public ISequenceGait {
    public:
     CLegWaveGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics,
@@ -32,7 +36,7 @@ class CLegWaveGait : public ISequenceGait {
     uint8_t direction_ = 0;
 
     std::map<ELegIndex, CPosition> origins_;
-    units::Angle phase_ = 0.0 * units::rad;
+    units::Angle phase_ = 0.0 * rad;
     ELegIndex active_leg_index_ = ELegIndex::RightFront;
 
     std::vector<ELegIndex> leg_order_ = {ELegIndex::RightFront, ELegIndex::RightMid, ELegIndex::RightBack,

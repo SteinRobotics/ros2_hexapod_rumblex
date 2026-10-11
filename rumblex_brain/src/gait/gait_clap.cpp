@@ -8,15 +8,19 @@
 
 namespace {
 constexpr double kPhaseIncrement = 0.1;
-constexpr auto kTorsoShiftBack = -0.05 * brain::units::m;    // 5cm backward
-constexpr auto kBackLegLiftHeight = 0.05 * brain::units::m;  // 5cm up
-constexpr auto kFrontLegLiftHeight = 0.1 * brain::units::m;  // 10cm up
-constexpr auto kClapAngle = 30.0 * brain::units::deg;        // Degrees for clap movement
-constexpr int kClapRepetitions = 3;                          // Number of clap cycles
+constexpr auto kTorsoShiftBack = -0.05 * brain::m;    // 5cm backward
+constexpr auto kBackLegLiftHeight = 0.05 * brain::m;  // 5cm up
+constexpr auto kFrontLegLiftHeight = 0.1 * brain::m;  // 10cm up
+constexpr auto kClapAngle = 30.0 * brain::deg;        // Degrees for clap movement
+constexpr int kClapRepetitions = 3;                   // Number of clap cycles
 
 }  // namespace
 
 namespace brain {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::deg;
 
 CClapGait::CClapGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics,
                      Parameters::Clap& params)

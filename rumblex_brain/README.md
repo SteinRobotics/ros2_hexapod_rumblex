@@ -8,7 +8,10 @@
 Brain uses the shared mp-units types from `rumblex_utils/units.hpp` for lengths,
 angles, durations, linear and angular velocities, voltages, and temperatures.
 Gait `start`/`updateTimed` methods and movement request durations require typed
-seconds, for example `gait.start(1.0 * units::s, direction)`. Continuous gaits
+seconds, for example `gait.start(1.0 * s, direction)`. Use short mp-units names with
+`using namespace mp_units;` and `using namespace mp_units::si::unit_symbols;`.
+Explicitly import angular `rad`/`deg` symbols to retain the distinct angle dimension.
+Continuous gaits
 accept `brain::Velocity`, whose linear components are in m/s and angular
 components are in rad/s. Angles retain a distinct dimension, so angular velocity
 cannot be substituted for linear velocity.

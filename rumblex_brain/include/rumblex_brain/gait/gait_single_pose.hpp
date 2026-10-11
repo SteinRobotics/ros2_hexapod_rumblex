@@ -11,6 +11,9 @@
 
 namespace brain {
 
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+
 class CSinglePoseGait : public IContinuousGait {
    public:
     struct Target {
@@ -45,8 +48,8 @@ class CSinglePoseGait : public IContinuousGait {
     CPose torso_origin_ = CPose();
     COrientation head_origin_ = COrientation();
 
-    units::Duration duration_s_ = 0.0 * units::s;
-    units::Duration phase_ = 0.0 * units::s;
+    units::Duration duration_s_ = 0.0 * s;
+    units::Duration phase_ = 0.0 * s;
 };
 
 }  // namespace brain

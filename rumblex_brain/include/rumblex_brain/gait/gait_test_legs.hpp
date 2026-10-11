@@ -13,6 +13,9 @@
 
 namespace brain {
 
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+
 class CTestLegsGait : public ISequenceGait {
    public:
     CTestLegsGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics,
@@ -42,8 +45,8 @@ class CTestLegsGait : public ISequenceGait {
     EGaitState state_ = EGaitState::Stopped;
     Stage stage_ = Stage::Raise;
 
-    units::Duration default_stage_duration_ = 0.5 * units::s;
-    units::Duration stage_duration_ = 0.5 * units::s;
+    units::Duration default_stage_duration_ = 0.5 * s;
+    units::Duration stage_duration_ = 0.5 * s;
 
     rclcpp::Time stage_start_time_;
 

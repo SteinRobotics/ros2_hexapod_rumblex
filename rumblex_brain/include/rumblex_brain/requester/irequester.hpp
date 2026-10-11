@@ -13,6 +13,9 @@
 
 namespace brain {
 
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+
 enum class Prio {
     // is executed immediately, stops all other requests, cancel all other/pending/queued requests
     Highest = 0,
@@ -25,7 +28,7 @@ enum class Prio {
 };
 
 struct RequestBase {
-    units::Duration minDuration = 0.0 * units::s;
+    units::Duration minDuration = 0.0 * s;
     virtual ~RequestBase() = default;
 };
 

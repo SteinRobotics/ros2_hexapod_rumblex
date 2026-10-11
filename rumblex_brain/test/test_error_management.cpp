@@ -6,6 +6,10 @@
 #include "rclcpp/rclcpp.hpp"
 #include "requester/error_management.hpp"
 
+namespace {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
 using brain::CErrorManagement;
 using brain::EError;
 namespace units = rumblex_geometry::units;
@@ -57,10 +61,10 @@ TEST_F(ErrorManagementTest, DetectsHighServoTemperature) {
 }
 
 TEST_F(ErrorManagementTest, FiltersSupplyVoltageToLowState) {
-    auto error = manager_->filterSupplyVoltage(12.0 * units::V);  // pulls filtered value below low threshold
+    auto error = manager_->filterSupplyVoltage(12.0 * V);  // pulls filtered value below low threshold
     EXPECT_EQ(error, EError::VoltageLow);
-    EXPECT_LT(manager_->getFilteredSupplyVoltage().numerical_value_in(units::V), 14.9f);
-    EXPECT_GT(manager_->getFilteredSupplyVoltage().numerical_value_in(units::V), 14.0f);
+    EXPECT_LT(manager_->getFilteredSupplyVoltage().numerical_value_in(V), 14.9f);
+    EXPECT_GT(manager_->getFilteredSupplyVoltage().numerical_value_in(V), 14.0f);
 }
 
 TEST_F(ErrorManagementTest, TemperatureFilteringKeepsCelsiusOriginAndRawThresholds) {
@@ -82,16 +86,16 @@ TEST_F(ErrorManagementTest, TemperatureFilteringKeepsCelsiusOriginAndRawThreshol
 }
 
 TEST_F(ErrorManagementTest, VoltageFilteringPreservesInitializationAndCriticalThreshold) {
-    EXPECT_EQ(manager_->getFilteredSupplyVoltage(), 15.0 * units::V);
-    EXPECT_EQ(manager_->getFilteredServoVoltage(), 12.0 * units::V);
-    EXPECT_EQ(manager_->filterSupplyVoltage(12.0 * units::V), EError::VoltageLow);
-    EXPECT_NEAR(manager_->getFilteredSupplyVoltage().numerical_value_in(units::V), 14.4, 1e-12);
-    EXPECT_EQ(manager_->filterSupplyVoltage(12.0 * units::V), EError::VoltageCriticalLow);
-    EXPECT_NEAR(manager_->getFilteredSupplyVoltage().numerical_value_in(units::V), 13.92, 1e-12);
+    EXPECT_EQ(manager_->getFilteredSupplyVoltage(), 15.0 * V);
+    EXPECT_EQ(manager_->getFilteredServoVoltage(), 12.0 * V);
+    EXPECT_EQ(manager_->filterSupplyVoltage(12.0 * V), EError::VoltageLow);
+    EXPECT_NEAR(manager_->getFilteredSupplyVoltage().numerical_value_in(V), 14.4, 1e-12);
+    EXPECT_EQ(manager_->filterSupplyVoltage(12.0 * V), EError::VoltageCriticalLow);
+    EXPECT_NEAR(manager_->getFilteredSupplyVoltage().numerical_value_in(V), 13.92, 1e-12);
     rumblex_interfaces::msg::ServoStatus msg;
     msg.max_voltage = 0.0;
     EXPECT_EQ(manager_->getErrorServo(msg), EError::VoltageCriticalLow);
-    EXPECT_NEAR(manager_->getFilteredServoVoltage().numerical_value_in(units::V), 9.6, 1e-12);
+    EXPECT_NEAR(manager_->getFilteredServoVoltage().numerical_value_in(V), 9.6, 1e-12);
 }
 
 TEST_F(ErrorManagementTest, VoltageThresholdEqualityIsNotCritical) {
@@ -107,10 +111,11 @@ TEST_F(ErrorManagementTest, VoltageThresholdEqualityIsNotCritical) {
         options.parameter_overrides(parameters);
         auto node = std::make_shared<rclcpp::Node>("voltage_equality", options);
         CErrorManagement manager(node);
-        EXPECT_EQ(manager.filterSupplyVoltage(15.0 * units::V),
-                  at_critical ? EError::VoltageLow : EError::None);
+        EXPECT_EQ(manager.filterSupplyVoltage(15.0 * V), at_critical ? EError::VoltageLow : EError::None);
     }
 }
+
+}  // namespace
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);

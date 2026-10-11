@@ -5,6 +5,10 @@
 #include "rclcpp/rclcpp.hpp"
 #include "test_helpers.hpp"
 
+namespace {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
 using namespace brain;
 
 class TorsoRollGaitTest : public ::testing::Test {
@@ -42,7 +46,7 @@ TEST_F(TorsoRollGaitTest, StateTransitionsCoverAllStates) {
     EXPECT_EQ(gait_->state(), EGaitState::Stopped);
 
     // Start -> Starting
-    gait_->start(1.0 * units::s, 0);
+    gait_->start(1.0 * s, 0);
     EXPECT_EQ(gait_->state(), EGaitState::Starting);
 
     // update until Running
@@ -76,7 +80,7 @@ TEST_F(TorsoRollGaitTest, StateTransitionsCoverAllStates) {
 }
 
 TEST_F(TorsoRollGaitTest, StopDuringStartupCanBeCancelled) {
-    gait_->start(1.0 * units::s, 0);
+    gait_->start(1.0 * s, 0);
     gait_->requestStop();
     gait_->requestStop();
     ASSERT_EQ(gait_->state(), EGaitState::StopPending);
@@ -86,7 +90,7 @@ TEST_F(TorsoRollGaitTest, StopDuringStartupCanBeCancelled) {
 }
 
 TEST_F(TorsoRollGaitTest, StopDuringStartupFinishesAtNeutralTorso) {
-    gait_->start(1.0 * units::s, 0);
+    gait_->start(1.0 * s, 0);
     gait_->requestStop();
     ASSERT_EQ(gait_->state(), EGaitState::StopPending);
     for (int i = 0; i < 1000 && gait_->state() != EGaitState::Stopped; ++i) gait_->update();
@@ -95,7 +99,7 @@ TEST_F(TorsoRollGaitTest, StopDuringStartupFinishesAtNeutralTorso) {
 }
 
 TEST_F(TorsoRollGaitTest, StopWaitsForClosedCycleWithoutChangingPoseOnRequest) {
-    gait_->start(2.0 * units::s, 0);
+    gait_->start(2.0 * s, 0);
     gait_->update();
     const auto before = kinematics_->getTorsoPose();
     gait_->requestStop();
@@ -104,3 +108,5 @@ TEST_F(TorsoRollGaitTest, StopWaitsForClosedCycleWithoutChangingPoseOnRequest) {
     EXPECT_EQ(gait_->state(), EGaitState::Stopped);
     EXPECT_EQ(kinematics_->getTorsoPose(), CPose());
 }
+
+}  // namespace

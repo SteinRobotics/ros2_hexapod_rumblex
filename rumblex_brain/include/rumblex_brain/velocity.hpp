@@ -11,35 +11,37 @@
 #include "rumblex_utils/units.hpp"
 
 namespace brain {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::rad;
 namespace units = rumblex_geometry::units;
 
 // Physical velocities within the brain; ROS uses m/s and rad/s at the boundary.
 struct Velocity {
     struct Linear {
-        units::LinearVelocity x = 0.0 * units::m / units::s;
-        units::LinearVelocity y = 0.0 * units::m / units::s;
-        units::LinearVelocity z = 0.0 * units::m / units::s;
+        units::LinearVelocity x = 0.0 * m / s;
+        units::LinearVelocity y = 0.0 * m / s;
+        units::LinearVelocity z = 0.0 * m / s;
     } linear;
     struct Angular {
-        units::AngularVelocity x = 0.0 * units::rad / units::s;
-        units::AngularVelocity y = 0.0 * units::rad / units::s;
-        units::AngularVelocity z = 0.0 * units::rad / units::s;
+        units::AngularVelocity x = 0.0 * rad / s;
+        units::AngularVelocity y = 0.0 * rad / s;
+        units::AngularVelocity z = 0.0 * rad / s;
     } angular;
 
     static Velocity fromMsg(const geometry_msgs::msg::Twist& msg) {
-        return {{msg.linear.x * units::m / units::s, msg.linear.y * units::m / units::s,
-                 msg.linear.z * units::m / units::s},
-                {msg.angular.x * units::rad / units::s, msg.angular.y * units::rad / units::s,
-                 msg.angular.z * units::rad / units::s}};
+        return {{msg.linear.x * m / s, msg.linear.y * m / s, msg.linear.z * m / s},
+                {msg.angular.x * rad / s, msg.angular.y * rad / s, msg.angular.z * rad / s}};
     }
     geometry_msgs::msg::Twist toMsg() const {
         geometry_msgs::msg::Twist msg;
-        msg.linear.x = linear.x.numerical_value_in(units::m / units::s);
-        msg.linear.y = linear.y.numerical_value_in(units::m / units::s);
-        msg.linear.z = linear.z.numerical_value_in(units::m / units::s);
-        msg.angular.x = angular.x.numerical_value_in(units::rad / units::s);
-        msg.angular.y = angular.y.numerical_value_in(units::rad / units::s);
-        msg.angular.z = angular.z.numerical_value_in(units::rad / units::s);
+        msg.linear.x = linear.x.numerical_value_in(m / s);
+        msg.linear.y = linear.y.numerical_value_in(m / s);
+        msg.linear.z = linear.z.numerical_value_in(m / s);
+        msg.angular.x = angular.x.numerical_value_in(rad / s);
+        msg.angular.y = angular.y.numerical_value_in(rad / s);
+        msg.angular.z = angular.z.numerical_value_in(rad / s);
         return msg;
     }
 };
@@ -61,9 +63,8 @@ inline bool limitVelocity(const geometry_msgs::msg::Twist& input, units::LinearV
     }
     const auto velocity = Velocity::fromMsg(input);
     output = Velocity();
-    const auto magnitude = mp_units::hypot(velocity.linear.x, velocity.linear.y);
-    const double scale =
-        magnitude > linear_limit ? (linear_limit / magnitude).numerical_value_in(mp_units::one) : 1.0;
+    const auto magnitude = hypot(velocity.linear.x, velocity.linear.y);
+    const double scale = magnitude > linear_limit ? (linear_limit / magnitude).numerical_value_in(one) : 1.0;
     output.linear.x = velocity.linear.x * scale;
     output.linear.y = velocity.linear.y * scale;
     output.angular.z = std::clamp(velocity.angular.z, -angular_limit, angular_limit);

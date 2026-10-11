@@ -10,6 +10,9 @@
 
 namespace brain {
 
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+
 // Exercise request timing without sleeps or exposing coordinator state to callers.
 class ActionPlannerTestAccess {
    public:
@@ -24,7 +27,7 @@ class ActionPlannerTestAccess {
 class CoordinatorTestAccess {
    public:
     static void submit(CCoordinator& coordinator, uint32_t type, double seconds) {
-        coordinator.submitRequestMove(type, seconds * units::s);
+        coordinator.submitRequestMove({.type = type, .duration = seconds * s});
     }
     static bool locked(const CCoordinator& coordinator) {
         return coordinator.movement_deadline_.has_value();
@@ -113,6 +116,38 @@ TEST_F(CoordinatorTest, JoystickDirectionsUseForwardLeftAndAnticlockwiseAxes) {
         EXPECT_LT(deflection * velocity->velocity.linear.y, 0.0);
         EXPECT_LT(deflection * velocity->velocity.angular.z, 0.0);
     }
+}
+
+TEST_F(CoordinatorTest, JoystickDeadzoneBoundaryStopsWalkingWithoutPoseRequests) {
+    auto parameters = test_helpers::defaultCoordinatorParameters();
+    for (auto& parameter : parameters) {
+        if (parameter.get_name() == "joystick_deadzone")
+            parameter = rclcpp::Parameter("joystick_deadzone", 0.25);
+    }
+    create(parameters);
+    feedback(MovementRequest::CONTINUOUS_MOVE);
+    rumblex_interfaces::msg::JoystickRequest request;
+    request.left_stick_vertical = 0.25;
+    request.left_stick_horizontal = -0.25;
+    request.right_stick_horizontal = 0.25;
+    request.right_stick_vertical = -0.25;
+    coordinator_->joystickRequestReceived(request);
+    const auto& stopped = ActionPlannerTestAccess::latestNormalRequest(*planner_);
+    ASSERT_EQ(stopped.size(), 1u);
+    const auto velocity = std::dynamic_pointer_cast<RequestVelocity>(stopped.front());
+    ASSERT_TRUE(velocity);
+    EXPECT_EQ(velocity->velocity, geometry_msgs::msg::Twist());
+
+    request.right_stick_vertical = 0.5;
+    coordinator_->joystickRequestReceived(request);
+    const auto& active = ActionPlannerTestAccess::latestNormalRequest(*planner_);
+    ASSERT_EQ(active.size(), 4u);
+    const auto gait = std::dynamic_pointer_cast<RequestMovementType>(active.front());
+    const auto body = std::dynamic_pointer_cast<RequestSinglePose>(active[1]);
+    ASSERT_TRUE(gait);
+    ASSERT_TRUE(body);
+    EXPECT_EQ(gait->movementRequest.type, MovementRequest::CONTINUOUS_MOVE);
+    EXPECT_GT(body->pose.position.z, 0.0);
 }
 
 TEST_F(CoordinatorTest, CmdVelPreservesRosAxisSigns) {

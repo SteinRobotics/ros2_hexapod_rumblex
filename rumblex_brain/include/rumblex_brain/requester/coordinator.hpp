@@ -25,6 +25,10 @@
 
 namespace brain {
 
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::rad;
+
 class CCoordinator {
    public:
     CCoordinator(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CActionPlanner> jobHandler);
@@ -46,16 +50,29 @@ class CCoordinator {
     void executeBehavior(const Behavior& behavior, Prio prio = Prio::High);
     void submitRequest(std::shared_ptr<RequestBase> request, Prio prio);
 
-    void submitRequestMove(uint32_t movementType, units::Duration duration_s = 0.0 * units::s,
-                           std::string comment = "", Prio prio = Prio::Normal,
-                           std::optional<rumblex_interfaces::msg::Pose> body = std::nullopt,
-                           std::optional<rumblex_interfaces::msg::Orientation> head = std::nullopt,
-                           std::optional<geometry_msgs::msg::Twist> velocity = std::nullopt,
-                           std::optional<uint8_t> direction = std::nullopt);
+    struct MovementCommand {
+        uint32_t type = MovementRequest::NO_REQUEST;
+        units::Duration duration = 0.0 * s;
+        std::string comment{};
+        Prio priority = Prio::Normal;
+        std::optional<rumblex_interfaces::msg::Pose> body{};
+        std::optional<rumblex_interfaces::msg::Orientation> head{};
+        std::optional<geometry_msgs::msg::Twist> velocity{};
+        std::optional<uint8_t> direction{};
+    };
 
+    struct ErrorReaction {
+        bool turn_off_servo_relay = false;
+        bool shutdown = false;
+        Prio priority = Prio::Normal;
+    };
+
+    double applyDeadzone(double value) const;
+    MovementCommand poseFromJoystick(const rumblex_interfaces::msg::JoystickRequest& msg) const;
+    MovementCommand movementFromJoystick(const rumblex_interfaces::msg::JoystickRequest& msg) const;
+    void submitRequestMove(const MovementCommand& command);
     void requestShutdown(Prio prio);
-    void requestReactionOnError(std::string text, bool switchServoRelayOff, bool isShutdownRequested,
-                                Prio prio = Prio::Normal);
+    void requestReactionOnError(std::string text, const ErrorReaction& reaction);
 
     void requestTellSupplyVoltage(Prio prio = Prio::Normal);
     void requestTellServoVoltage(Prio prio = Prio::Normal);
@@ -89,11 +106,11 @@ class CCoordinator {
     };
     size_t activeGaitIndex_ = 0;
 
-    units::LinearVelocity kMaxVelocityLinear_ = 0.0 * units::m / units::s;
-    units::AngularVelocity kMaxVelocityRotation_ = 0.0 * units::rad / units::s;
-    units::Length kBodyFactorHeight_ = 0.0 * units::m;
-    units::Length kMinBodyHeight_ = 0.0 * units::m;
-    units::Length kMaxBodyHeight_ = 0.0 * units::m;
+    units::LinearVelocity kMaxVelocityLinear_ = 0.0 * m / s;
+    units::AngularVelocity kMaxVelocityRotation_ = 0.0 * rad / s;
+    units::Length kBodyFactorHeight_ = 0.0 * m;
+    units::Length kMinBodyHeight_ = 0.0 * m;
+    units::Length kMaxBodyHeight_ = 0.0 * m;
     double kJoystickDeadzone_ = 0.0;
     bool kActivateMovementWaiting_ = false;
 };

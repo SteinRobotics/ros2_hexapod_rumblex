@@ -10,6 +10,9 @@
 
 namespace brain {
 
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+
 class CContinuousPoseGait : public IContinuousGait {
    public:
     CContinuousPoseGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics,
@@ -32,7 +35,7 @@ class CContinuousPoseGait : public IContinuousGait {
     Parameters::ContinuousPose params_;
     EGaitState state_ = EGaitState::Stopped;
 
-    units::Duration elapsed_s_ = 1.0 * units::s;
+    units::Duration elapsed_s_ = 1.0 * s;
     std::map<ELegIndex, CPosition> toe_origins_;
     CPose torso_origin_ = CPose();
     COrientation head_origin_ = COrientation();

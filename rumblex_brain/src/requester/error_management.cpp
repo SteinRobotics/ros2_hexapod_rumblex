@@ -8,14 +8,17 @@ using namespace rumblex_interfaces::msg;
 
 namespace brain {
 
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+
 CErrorManagement::Parameters CErrorManagement::Parameters::declare(std::shared_ptr<rclcpp::Node> node) {
     Parameters params;
-    params.supply.nominal = node->declare_parameter<double>("supply_voltage") * units::V;
-    params.supply.low = node->declare_parameter<double>("supply_voltage_low") * units::V;
-    params.supply.critical_low = node->declare_parameter<double>("supply_voltage_critical_low") * units::V;
-    params.servo.nominal = node->declare_parameter<double>("servo_voltage") * units::V;
-    params.servo.low = node->declare_parameter<double>("servo_voltage_low") * units::V;
-    params.servo.critical_low = node->declare_parameter<double>("servo_voltage_critical_low") * units::V;
+    params.supply.nominal = node->declare_parameter<double>("supply_voltage") * V;
+    params.supply.low = node->declare_parameter<double>("supply_voltage_low") * V;
+    params.supply.critical_low = node->declare_parameter<double>("supply_voltage_critical_low") * V;
+    params.servo.nominal = node->declare_parameter<double>("servo_voltage") * V;
+    params.servo.low = node->declare_parameter<double>("servo_voltage_low") * V;
+    params.servo.critical_low = node->declare_parameter<double>("servo_voltage_critical_low") * V;
 
     params.servo_temperature.high = units::celsius(node->declare_parameter<double>("servo_temperature_high"));
     params.servo_temperature.critical_high =
@@ -94,7 +97,7 @@ EError CErrorManagement::filterSupplyVoltage(units::Voltage voltage) {
 
 EError CErrorManagement::filterServoVoltage(const ServoStatus& msg) {
     servo_voltage_filtered_ =
-        utils::lowPassFilter(servo_voltage_filtered_, static_cast<double>(msg.max_voltage) * units::V, 0.2);
+        utils::lowPassFilter(servo_voltage_filtered_, static_cast<double>(msg.max_voltage) * V, 0.2);
     return getStatusVoltage(servo_voltage_filtered_, parameters_.servo);
 }
 

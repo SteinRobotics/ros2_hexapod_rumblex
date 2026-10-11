@@ -1,9 +1,18 @@
 #include <gtest/gtest.h>
 
+#include "gait/gait_clap.hpp"
+#include "gait/gait_high_five.hpp"
+#include "gait/gait_test_legs.hpp"
 #include "gait/pose_model.hpp"
+#include "rcl/time.h"
 #include "rumblex_utils/body_pose.hpp"
 #include "test_helpers.hpp"
 
+namespace {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::deg;
 using namespace brain;
 class BodyPoseTest : public ::testing::Test {
    protected:
@@ -41,9 +50,9 @@ TEST_F(BodyPoseTest, JointTargetsRoundTripWithNonzeroTorso) {
     source->moveTorso(source->getStandingToePositions(), CPose(0.005, -0.003, 0.002, 3.0, -2.0, 5.0));
     for (auto leg : bodyLegOrder) {
         auto angles = source->getLegAngles(leg);
-        angles.torso_coxa += 10.0 * units::deg;
-        angles.coxa_femur += 15.0 * units::deg;
-        angles.femur_tibia += 20.0 * units::deg;
+        angles.torso_coxa += 10.0 * deg;
+        angles.coxa_femur += 15.0 * deg;
+        angles.femur_tibia += 20.0 * deg;
         source->setLegAngles(leg, angles);
     }
     auto msg = bodyPose(*source);
@@ -62,11 +71,6 @@ TEST_F(BodyPoseTest, PartialLegUpdateRetainsOtherTargets) {
     }
 }
 
-#include "gait/gait_clap.hpp"
-#include "gait/gait_high_five.hpp"
-#include "gait/gait_test_legs.hpp"
-#include "rcl/time.h"
-
 TEST_F(BodyPoseTest, JointBasedGaitsPreserveEverySampleAcrossMessageBoundary) {
     auto params = test_helpers::makeDeclaredParameters(source_node);
     // Share ownership for the existing gait interface.
@@ -79,7 +83,7 @@ TEST_F(BodyPoseTest, JointBasedGaitsPreserveEverySampleAcrossMessageBoundary) {
     int64_t time = 1000000000;
     for (auto& gait : gaits) {
         planner->moveTorso(planner->getStandingToePositions(), CPose(0.003, -0.002, 0.001, 2.0, -1.0, 3.0));
-        gait->start(1.0 * units::s, 0);
+        gait->start(1.0 * s, 0);
         int tick = 0;
         while (gait->state() != EGaitState::Stopped && tick++ < 1000) {
             time += 100000000;
@@ -94,15 +98,16 @@ TEST_F(BodyPoseTest, JointBasedGaitsPreserveEverySampleAcrossMessageBoundary) {
                 const auto expected = planner->getLegAngles(leg);
                 const auto actual = receiver->getLegAngles(leg);
                 EXPECT_NEAR(
-                    std::remainder((expected.torso_coxa - actual.torso_coxa).numerical_value_in(units::deg),
-                                   360.0),
+                    std::remainder((expected.torso_coxa - actual.torso_coxa).numerical_value_in(deg), 360.0),
                     0.0, 1e-7);
-                EXPECT_NEAR(expected.coxa_femur.numerical_value_in(units::deg),
-                            actual.coxa_femur.numerical_value_in(units::deg), 1e-7);
-                EXPECT_NEAR(expected.femur_tibia.numerical_value_in(units::deg),
-                            actual.femur_tibia.numerical_value_in(units::deg), 1e-7);
+                EXPECT_NEAR(expected.coxa_femur.numerical_value_in(deg),
+                            actual.coxa_femur.numerical_value_in(deg), 1e-7);
+                EXPECT_NEAR(expected.femur_tibia.numerical_value_in(deg),
+                            actual.femur_tibia.numerical_value_in(deg), 1e-7);
             }
         }
         EXPECT_LT(tick, 1000);
     }
 }
+
+}  // namespace

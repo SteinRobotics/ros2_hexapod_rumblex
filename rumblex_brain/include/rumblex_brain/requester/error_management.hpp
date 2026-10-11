@@ -13,6 +13,9 @@
 #include "rumblex_utils/units.hpp"
 
 namespace brain {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
 namespace units = rumblex_geometry::units;
 
 enum class EError {
@@ -41,9 +44,9 @@ class CErrorManagement {
    private:
     struct Parameters {
         struct VoltageGroup {
-            units::Voltage nominal = 0.0 * units::V;
-            units::Voltage low = 0.0 * units::V;
-            units::Voltage critical_low = 0.0 * units::V;
+            units::Voltage nominal = 0.0 * V;
+            units::Voltage low = 0.0 * V;
+            units::Voltage critical_low = 0.0 * V;
         };
 
         struct TemperatureGroup {
@@ -64,8 +67,8 @@ class CErrorManagement {
 
     std::shared_ptr<rclcpp::Node> node_;
     Parameters parameters_;
-    units::Voltage supply_voltage_filtered_ = 0.0 * units::V;
-    units::Voltage servo_voltage_filtered_ = 0.0 * units::V;
+    units::Voltage supply_voltage_filtered_ = 0.0 * V;
+    units::Voltage servo_voltage_filtered_ = 0.0 * V;
     units::Temperature servo_temperature_filtered_ = units::celsius(0.0);
 };
 

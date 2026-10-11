@@ -13,6 +13,10 @@
 
 namespace brain {
 
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::rad;
+
 class CTorsoRollGait : public ISequenceGait {
    public:
     CTorsoRollGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics,
@@ -36,8 +40,8 @@ class CTorsoRollGait : public ISequenceGait {
     Parameters::TorsoRoll params_;
     std::map<ELegIndex, CPosition> origin_leg_positions_;
     CPose torso_origin_;
-    units::AngularVelocity phase_rate_ = 0.1 * units::rad / units::s;
-    units::Angle phase_ = 0.0 * units::rad;
+    units::AngularVelocity phase_rate_ = 0.1 * rad / s;
+    units::Angle phase_ = 0.0 * rad;
 };
 
 }  // namespace brain

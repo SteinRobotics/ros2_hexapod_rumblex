@@ -5,6 +5,11 @@
 #include "rclcpp/rclcpp.hpp"
 #include "test_helpers.hpp"
 
+namespace {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::deg;
 using namespace brain;
 
 namespace {
@@ -52,10 +57,10 @@ TEST_F(HighFiveGaitTest, RaisesRightFrontLegAndReturns) {
     const auto initial_angles = kinematics_->getLegAngles(ELegIndex::RightFront);
     const auto initial_head = kinematics_->getHeadOrientation();
     const auto initial_toes = kinematics_->getToePositions();
-    ASSERT_LT(initial_toes.at(ELegIndex::RightFront).y, 0.0 * units::m);
-    ASSERT_GT(initial_toes.at(ELegIndex::RightFront).x, 0.0 * units::m);
+    ASSERT_LT(initial_toes.at(ELegIndex::RightFront).y, 0.0 * m);
+    ASSERT_GT(initial_toes.at(ELegIndex::RightFront).x, 0.0 * m);
 
-    gait.start(5.0 * units::s, 0);
+    gait.start(5.0 * s, 0);
 
     bool raised = false;
     int iterations = 0;
@@ -67,9 +72,9 @@ TEST_F(HighFiveGaitTest, RaisesRightFrontLegAndReturns) {
                 EXPECT_EQ(toe, initial_toes.at(index));
             }
         }
-        EXPECT_LT(toes.at(ELegIndex::RightFront).y, 0.0 * units::m);
+        EXPECT_LT(toes.at(ELegIndex::RightFront).y, 0.0 * m);
         const auto current_angles = kinematics_->getLegAngles(ELegIndex::RightFront);
-        if (current_angles.coxa_femur >= initial_angles.coxa_femur + kLiftThresholdDegrees * units::deg) {
+        if (current_angles.coxa_femur >= initial_angles.coxa_femur + kLiftThresholdDegrees * deg) {
             raised = true;
         }
     }
@@ -78,38 +83,38 @@ TEST_F(HighFiveGaitTest, RaisesRightFrontLegAndReturns) {
     EXPECT_LT(iterations, kMaxIterations);
 
     const auto final_angles = kinematics_->getLegAngles(ELegIndex::RightFront);
-    EXPECT_NEAR(final_angles.torso_coxa.numerical_value_in(units::deg),
-                initial_angles.torso_coxa.numerical_value_in(units::deg), kAngleTolerance);
-    EXPECT_NEAR(final_angles.coxa_femur.numerical_value_in(units::deg),
-                initial_angles.coxa_femur.numerical_value_in(units::deg), kAngleTolerance);
-    EXPECT_NEAR(final_angles.femur_tibia.numerical_value_in(units::deg),
-                initial_angles.femur_tibia.numerical_value_in(units::deg), kAngleTolerance);
+    EXPECT_NEAR(final_angles.torso_coxa.numerical_value_in(deg),
+                initial_angles.torso_coxa.numerical_value_in(deg), kAngleTolerance);
+    EXPECT_NEAR(final_angles.coxa_femur.numerical_value_in(deg),
+                initial_angles.coxa_femur.numerical_value_in(deg), kAngleTolerance);
+    EXPECT_NEAR(final_angles.femur_tibia.numerical_value_in(deg),
+                initial_angles.femur_tibia.numerical_value_in(deg), kAngleTolerance);
 
     const auto final_head = kinematics_->getHeadOrientation();
-    EXPECT_NEAR(final_head.pitch.numerical_value_in(units::deg),
-                initial_head.pitch.numerical_value_in(units::deg), kHeadTolerance);
-    EXPECT_NEAR(final_head.yaw.numerical_value_in(units::deg),
-                initial_head.yaw.numerical_value_in(units::deg), kHeadTolerance);
+    EXPECT_NEAR(final_head.pitch.numerical_value_in(deg), initial_head.pitch.numerical_value_in(deg),
+                kHeadTolerance);
+    EXPECT_NEAR(final_head.yaw.numerical_value_in(deg), initial_head.yaw.numerical_value_in(deg),
+                kHeadTolerance);
 }
 
 TEST_F(HighFiveGaitTest, RaisedFootReachesForwardOnRightSide) {
     CHighFiveGait gait(node_, kinematics_, params_.high_five);
     const auto initial_toe = kinematics_->getToePositions().at(ELegIndex::RightFront);
-    gait.start(5.0 * units::s, 0);
+    gait.start(5.0 * s, 0);
     for (int tick = 0; tick < 10; ++tick) {
         ASSERT_TRUE(gait.update());
     }
     const auto raised_toe = kinematics_->getToePositions().at(ELegIndex::RightFront);
     EXPECT_GT(raised_toe.x, initial_toe.x);
     EXPECT_GT(raised_toe.z, initial_toe.z);
-    EXPECT_LT(raised_toe.y, 0.0 * units::m);
+    EXPECT_LT(raised_toe.y, 0.0 * m);
 }
 
 TEST_F(HighFiveGaitTest, RequestStopReturnsToNeutralQuickly) {
     CHighFiveGait gait(node_, kinematics_, params_.high_five);
     const auto initial_angles = kinematics_->getLegAngles(ELegIndex::RightFront);
 
-    gait.start(5.0 * units::s, 0);
+    gait.start(5.0 * s, 0);
 
     // Begin the raise phase for a few iterations.
     for (int i = 0; i < 3; ++i) {
@@ -126,20 +131,20 @@ TEST_F(HighFiveGaitTest, RequestStopReturnsToNeutralQuickly) {
     EXPECT_LT(iterations, kMaxIterations);
 
     const auto final_angles = kinematics_->getLegAngles(ELegIndex::RightFront);
-    EXPECT_NEAR(final_angles.torso_coxa.numerical_value_in(units::deg),
-                initial_angles.torso_coxa.numerical_value_in(units::deg), kAngleTolerance);
-    EXPECT_NEAR(final_angles.coxa_femur.numerical_value_in(units::deg),
-                initial_angles.coxa_femur.numerical_value_in(units::deg), kAngleTolerance);
-    EXPECT_NEAR(final_angles.femur_tibia.numerical_value_in(units::deg),
-                initial_angles.femur_tibia.numerical_value_in(units::deg), kAngleTolerance);
+    EXPECT_NEAR(final_angles.torso_coxa.numerical_value_in(deg),
+                initial_angles.torso_coxa.numerical_value_in(deg), kAngleTolerance);
+    EXPECT_NEAR(final_angles.coxa_femur.numerical_value_in(deg),
+                initial_angles.coxa_femur.numerical_value_in(deg), kAngleTolerance);
+    EXPECT_NEAR(final_angles.femur_tibia.numerical_value_in(deg),
+                initial_angles.femur_tibia.numerical_value_in(deg), kAngleTolerance);
 }
 
 TEST_F(HighFiveGaitTest, EarlyStopCompletesRaiseWithoutJumpingToRaisedPose) {
     CHighFiveGait gait(node_, kinematics_, params_.high_five);
     auto reference_model = std::make_shared<CPoseModel>(*kinematics_);
     CHighFiveGait reference(node_, reference_model, params_.high_five);
-    gait.start(2.0 * units::s, 0);
-    reference.start(2.0 * units::s, 0);
+    gait.start(2.0 * s, 0);
+    reference.start(2.0 * s, 0);
     for (int i = 0; i < 3; ++i) {
         gait.update();
         reference.update();
@@ -152,3 +157,5 @@ TEST_F(HighFiveGaitTest, EarlyStopCompletesRaiseWithoutJumpingToRaisedPose) {
         EXPECT_EQ(kinematics_->getHeadOrientation(), reference_model->getHeadOrientation());
     }
 }
+
+}  // namespace

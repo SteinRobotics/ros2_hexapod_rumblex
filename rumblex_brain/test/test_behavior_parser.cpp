@@ -4,6 +4,11 @@
 #include "rumblex_brain/parser/behavior_parser.hpp"
 
 namespace brain {
+
+namespace {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
 class BehaviorParserTest : public ::testing::Test {
    protected:
     static void SetUpTestSuite() {
@@ -46,7 +51,7 @@ TEST_F(BehaviorParserTest, LoadsCatalogAndResolvesTriggers) {
     auto movement = request<RequestMovementType>("standup", 0, 0);
     ASSERT_TRUE(movement);
     EXPECT_EQ(movement->movementRequest.type, MovementRequest::SEQUENCE_STAND_UP);
-    EXPECT_DOUBLE_EQ(movement->movementRequest.duration_s.numerical_value_in(units::s), 1.5);
+    EXPECT_DOUBLE_EQ(movement->movementRequest.duration_s.numerical_value_in(s), 1.5);
     auto music = request<RequestMusic>("standup", 0, 1);
     ASSERT_TRUE(music);
     EXPECT_EQ(music->song, "STOP");
@@ -66,7 +71,7 @@ TEST_F(BehaviorParserTest, PreservesDanceGroupsAndPoseUnits) {
     ASSERT_TRUE(music);
     ASSERT_TRUE(pose);
     EXPECT_DOUBLE_EQ(head->orientation.yaw, -10.0);
-    EXPECT_DOUBLE_EQ(movement->movementRequest.duration_s.numerical_value_in(units::s), 1.752);
+    EXPECT_DOUBLE_EQ(movement->movementRequest.duration_s.numerical_value_in(s), 1.752);
     EXPECT_EQ(music->song, "musicfox_hot_dogs_for_breakfast.mp3");
     EXPECT_DOUBLE_EQ(pose->pose.position.x, 0.025);
     EXPECT_DOUBLE_EQ(pose->pose.orientation.roll, -6.0);
@@ -101,7 +106,7 @@ behaviors:
     EXPECT_FLOAT_EQ(music->volume, 0.8f);
     EXPECT_EQ(talking->text, "Hallo: Welt # gesprochen");
     EXPECT_EQ(talking->language, "de");
-    EXPECT_DOUBLE_EQ(talking->minDuration.numerical_value_in(units::s), 0.0);
+    EXPECT_DOUBLE_EQ(talking->minDuration.numerical_value_in(s), 0.0);
     listening = request<RequestListening>("scalars", 1, 0);
     ASSERT_TRUE(listening);
     EXPECT_FALSE(listening->active);
@@ -147,7 +152,7 @@ behaviors:
     EXPECT_TRUE(listening->active);
     EXPECT_EQ(movement->movementRequest.type, MovementRequest::SEQUENCE_LOOK);
     EXPECT_EQ(movement->movementRequest.direction, MovementRequest::ANTICLOCKWISE);
-    EXPECT_DOUBLE_EQ(movement->movementRequest.duration_s.numerical_value_in(units::s), 3);
+    EXPECT_DOUBLE_EQ(movement->movementRequest.duration_s.numerical_value_in(s), 3);
     EXPECT_EQ(music->song, "dance.mp3");
     EXPECT_FLOAT_EQ(music->volume, 0.3f);
     EXPECT_DOUBLE_EQ(pose->pose.position.z, -0.05);
@@ -162,7 +167,7 @@ behaviors:
     EXPECT_DOUBLE_EQ(velocity->velocity.linear.y, 0);
     const auto& group = parser_.getBehavior("mappings")->get().actionGroups[0];
     for (size_t i = 0; i < group.size(); ++i) {
-        EXPECT_NEAR(group[i]->minDuration.numerical_value_in(units::s), (i + 1) / 10.0, 1e-12);
+        EXPECT_NEAR(group[i]->minDuration.numerical_value_in(s), (i + 1) / 10.0, 1e-12);
     }
 }
 
@@ -231,4 +236,6 @@ behaviors:
     EXPECT_EQ(talking->text, "hello");
     EXPECT_EQ(parser_.getBehavior("valid")->get().actionGroups[0].size(), 1u);
 }
+}  // namespace
+
 }  // namespace brain

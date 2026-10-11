@@ -8,6 +8,10 @@ using brain::MovementRequest;
 
 namespace brain {
 
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::deg;
+
 brain::MovementRequest CGaitController::createMsg(std::string name, MovementRequestType type) {
     brain::MovementRequest msg;
     msg.name = name;
@@ -28,9 +32,8 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
         std::make_shared<CHighFiveGait>(node_, kinematics_, params_.high_five);
     gaits_[MovementRequest::SEQUENCE_LAYDOWN] = std::make_shared<CSinglePoseGait>(
         node_, kinematics_, params_.single_pose,
-        CSinglePoseGait::Target{
-            kinematics_->getLaydownToePositions(), CPose(),
-            COrientation(0.0 * units::deg, -params_.single_pose.head_max_pitch, 0.0 * units::deg)});
+        CSinglePoseGait::Target{kinematics_->getLaydownToePositions(), CPose(),
+                                COrientation(0.0 * deg, -params_.single_pose.head_max_pitch, 0.0 * deg)});
     gaits_[MovementRequest::SEQUENCE_LEGS_WAVE] =
         std::make_shared<CLegWaveGait>(node_, kinematics_, params_.leg_wave);
     gaits_[MovementRequest::SEQUENCE_LOOK] =
@@ -52,7 +55,7 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
     gaits_[MovementRequest::SEQUENCE_WAITING] =
         std::make_shared<CWaitingGait>(node_, kinematics_, params_.waiting);
     gaits_[MovementRequest::SEQUENCE_WATCH] = std::make_shared<CYawSequenceGait>(
-        node_, kinematics_, CYawSequenceGait::Sweep::BothSides, params_.watch.head_max_yaw, 0.0 * units::deg);
+        node_, kinematics_, CYawSequenceGait::Sweep::BothSides, params_.watch.head_max_yaw, 0.0 * deg);
 
     // Default active gait (robot starts laying down)
     active_gait_ = gaits_[MovementRequest::SEQUENCE_LAYDOWN];

@@ -10,6 +10,10 @@
 
 namespace brain {
 
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::rad;
+
 // A simple gait that keeps the robot in a waiting (standing) posture while optionally cycling a single leg.
 // Initially copied from CLegRollGait and renamed. Behavior can be specialized later.
 class CWaitingGait : public ISequenceGait {
@@ -35,7 +39,7 @@ class CWaitingGait : public ISequenceGait {
 
     CPose torso_origin_;
     std::map<ELegIndex, CPosition> toe_origins_;
-    units::Angle phase_ = 0.0 * units::rad;
+    units::Angle phase_ = 0.0 * rad;
 };
 
 }  // namespace brain

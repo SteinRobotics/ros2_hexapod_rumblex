@@ -1,6 +1,10 @@
 #include "handler/movement.hpp"
 
 namespace brain {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::rad;
 CMovement::CMovement(std::shared_ptr<rclcpp::Node> node) : node_(std::move(node)) {
     pose_model_ = std::make_shared<CPoseModel>(node_);
     gait_controller_ = std::make_unique<CGaitController>(node_, pose_model_);
@@ -70,8 +74,8 @@ void CMovement::run(std::shared_ptr<RequestHeadOrientation> request) {
 }
 void CMovement::run(std::shared_ptr<RequestVelocity> request) {
     Velocity limited;
-    if (!limitVelocity(request->velocity, velocityLimit<units::m / units::s>(node_, "max_velocity_linear"),
-                       velocityLimit<units::rad / units::s>(node_, "max_velocity_rotation"), limited)) {
+    if (!limitVelocity(request->velocity, velocityLimit<m / s>(node_, "max_velocity_linear"),
+                       velocityLimit<rad / s>(node_, "max_velocity_rotation"), limited)) {
         RCLCPP_WARN(node_->get_logger(), "Ignoring non-finite velocity request");
         return;
     }
@@ -97,9 +101,8 @@ void CMovement::updateCompletion() {
         // Repeating gaits retain their requested dwell time, measured from activation.
         if (!completion_time_) {
             completion_time_ =
-                node_->now() +
-                rclcpp::Duration::from_seconds(
-                    std::max(0.0 * units::s, completion_request_->duration_s).numerical_value_in(units::s));
+                node_->now() + rclcpp::Duration::from_seconds(
+                                   std::max(0.0 * s, completion_request_->duration_s).numerical_value_in(s));
         }
         if (node_->now() < *completion_time_) return;
     }
@@ -123,7 +126,7 @@ void CMovement::update() {
     const units::Duration elapsed_s =
         (last_update_ ? std::chrono::duration<double>(now - *last_update_).count()
                       : std::chrono::duration<double>(period).count()) *
-        units::s;
+        s;
     last_update_ = now;
     // Keep a fixed deadline: scheduling from now can turn a 50 Hz loop into 25 Hz
     // when the next iteration arrives fractionally before the previous deadline.

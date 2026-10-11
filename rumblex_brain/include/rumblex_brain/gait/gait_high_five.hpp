@@ -9,6 +9,10 @@
 
 namespace brain {
 
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::deg;
+
 class CHighFiveGait : public ISequenceGait {
    public:
     CHighFiveGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics,
@@ -40,8 +44,8 @@ class CHighFiveGait : public ISequenceGait {
     // Negative coxa rotation swings the right-front leg toward torso +X.
     CLegAngles target_leg_angles_{-20.0, 50.0, 60.0};
     COrientation initial_head_{};
-    units::Angle target_head_yaw_ = 0.0 * units::deg;
-    units::Angle target_head_pitch_ = -20.0 * units::deg;
+    units::Angle target_head_yaw_ = 0.0 * deg;
+    units::Angle target_head_pitch_ = -20.0 * deg;
 
     double phase_progress_ = 0.0;
     int hold_iterations_remaining_ = 0;

@@ -8,6 +8,9 @@
 using namespace rumblex_interfaces::msg;
 namespace brain {
 
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+
 CSinglePoseGait::CSinglePoseGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics,
                                  Parameters::SinglePose& /*params*/, std::optional<Target> target)
     : node_(node), kinematics_(kinematics), target_(std::move(target)) {
@@ -16,8 +19,8 @@ CSinglePoseGait::CSinglePoseGait(std::shared_ptr<rclcpp::Node> node, std::shared
 void CSinglePoseGait::start(units::Duration duration_s, uint8_t /*direction*/) {
     RCLCPP_INFO(node_->get_logger(), "Starting CSinglePoseGait");
     state_ = EGaitState::Running;
-    phase_ = 0.0 * units::s;
-    duration_s_ = std::max(duration_s, 1.0 * units::s);
+    phase_ = 0.0 * s;
+    duration_s_ = std::max(duration_s, 1.0 * s);
 
     torso_origin_ = kinematics_->getTorsoPose();
     head_origin_ = kinematics_->getHeadOrientation();
@@ -30,23 +33,21 @@ void CSinglePoseGait::start(units::Duration duration_s, uint8_t /*direction*/) {
 }
 
 bool CSinglePoseGait::update(const Velocity& velocity, const CPose& torso, const COrientation& head) {
-    return updateTimed(velocity, torso, head, 0.1 * units::s);
+    return updateTimed(velocity, torso, head, 0.1 * s);
 }
 
 bool CSinglePoseGait::updateTimed(const Velocity&, const CPose& torso, const COrientation& head,
                                   units::Duration elapsed_s) {
-    if (!mp_units::isfinite(elapsed_s) || elapsed_s <= 0.0 * units::s || elapsed_s > 0.5 * units::s)
-        return false;
+    if (!isfinite(elapsed_s) || elapsed_s <= 0.0 * s || elapsed_s > 0.5 * s) return false;
     if (state_ == EGaitState::Stopped) return false;
 
-    if (phase_ == 0.0 * units::s) {
+    if (phase_ == 0.0 * s) {
         torso_target_ = target_ ? target_->torso : torso;
         head_target_ = target_ ? target_->head : head;
     }
     phase_ += elapsed_s;
-    const double fraction = duration_s_ > 0.0 * units::s
-                                ? std::min((phase_ / duration_s_).numerical_value_in(mp_units::one), 1.0)
-                                : 1.0;
+    const double fraction =
+        duration_s_ > 0.0 * s ? std::min((phase_ / duration_s_).numerical_value_in(one), 1.0) : 1.0;
     if (fraction >= 1.0 - 1e-12) state_ = EGaitState::Stopped;
     double progress = state_ == EGaitState::Stopped ? 1.0 : fraction;
     progress = trajectoryProgress(progress);

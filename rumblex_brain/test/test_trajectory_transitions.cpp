@@ -5,6 +5,11 @@
 #include "rcl/time.h"
 #include "test_helpers.hpp"
 
+namespace {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::deg;
 using namespace brain;
 
 TEST(Trajectory, RestEndpointsMatchPositionVelocityAndAcceleration) {
@@ -44,17 +49,17 @@ class TrajectoryTransitionTest : public ::testing::Test {
 std::vector<StridePattern> patterns() {
     using enum ELegIndex;
     return {{{{RightBack}, {RightMid}, {RightFront}, {LeftBack}, {LeftMid}, {LeftFront}},
-             0.02 * units::m,
-             0.025 * units::m,
-             5.0 * units::deg},
+             0.02 * m,
+             0.025 * m,
+             5.0 * deg},
             {{{RightBack, LeftFront}, {RightMid, LeftMid}, {RightFront, LeftBack}},
-             0.025 * units::m,
-             0.03 * units::m,
-             8.0 * units::deg},
+             0.025 * m,
+             0.03 * m,
+             8.0 * deg},
             {{{RightFront, LeftMid, RightBack}, {LeftFront, RightMid, LeftBack}},
-             0.03 * units::m,
-             0.035 * units::m,
-             10.0 * units::deg}};
+             0.03 * m,
+             0.035 * m,
+             10.0 * deg}};
 }
 
 TEST_F(TrajectoryTransitionTest, EveryPatternChangeAndReversalCompletesCurrentSwing) {
@@ -68,26 +73,26 @@ TEST_F(TrajectoryTransitionTest, EveryPatternChangeAndReversalCompletesCurrentSw
                 planner.start();
                 reference.start();
                 Velocity velocity;
-                velocity.linear.x = 0.01 * units::m / units::s;
+                velocity.linear.x = 0.01 * m / s;
                 for (int i = 0; i < interrupt_tick; ++i) {
-                    planner.update(source, velocity, 0.7, CPose(), 0.02 * units::s);
-                    reference.update(source, velocity, 0.7, CPose(), 0.02 * units::s);
+                    planner.update(source, velocity, 0.7, CPose(), 0.02 * s);
+                    reference.update(source, velocity, 0.7, CPose(), 0.02 * s);
                 }
                 Velocity reverse;
-                reverse.linear.y = (-0.02) * units::m / units::s;
+                reverse.linear.y = (-0.02) * m / s;
                 while (!planner.atBoundary()) {
-                    planner.update(destination, reverse, 0.7, CPose(), 0.02 * units::s);
-                    reference.update(source, velocity, 0.7, CPose(), 0.02 * units::s);
+                    planner.update(destination, reverse, 0.7, CPose(), 0.02 * s);
+                    reference.update(source, velocity, 0.7, CPose(), 0.02 * s);
                     EXPECT_EQ(model->getToePositions(), reference_model->getToePositions());
                     EXPECT_EQ(model->getHeadOrientation(), reference_model->getHeadOrientation());
                 }
                 const auto touchdown = model->getToePositions();
-                planner.update(destination, reverse, 0.7, CPose(), 0.02 * units::s);
+                planner.update(destination, reverse, 0.7, CPose(), 0.02 * s);
                 for (const auto& [leg, toe] : touchdown) {
                     const auto now = model->getToePositions().at(leg);
-                    EXPECT_LT(std::abs((now.x - toe.x).numerical_value_in(units::m)), 0.001);
-                    EXPECT_LT(std::abs((now.y - toe.y).numerical_value_in(units::m)), 0.001);
-                    EXPECT_LT(std::abs((now.z - toe.z).numerical_value_in(units::m)), 0.002);
+                    EXPECT_LT(std::abs((now.x - toe.x).numerical_value_in(m)), 0.001);
+                    EXPECT_LT(std::abs((now.y - toe.y).numerical_value_in(m)), 0.001);
+                    EXPECT_LT(std::abs((now.z - toe.z).numerical_value_in(m)), 0.002);
                 }
             }
         }
@@ -97,8 +102,8 @@ TEST_F(TrajectoryTransitionTest, EveryPatternChangeAndReversalCompletesCurrentSw
 TEST_F(TrajectoryTransitionTest, StartupUsesDisplacedFeetTorsoAndHead) {
     auto toes = model->getToePositions();
     for (auto& [index, toe] : toes) {
-        toe.x += 0.007 * units::m;
-        toe.z += 0.009 * units::m;
+        toe.x += 0.007 * m;
+        toe.z += 0.009 * m;
     }
     const CPose torso(0.002, -0.003, 0.004, 1.0, 2.0, 3.0);
     const COrientation head(0.0, 5.0, 10.0);
@@ -108,26 +113,26 @@ TEST_F(TrajectoryTransitionTest, StartupUsesDisplacedFeetTorsoAndHead) {
     planner.start();
     EXPECT_EQ(model->getToePositions(), toes);
     Velocity velocity;
-    velocity.linear.x = 0.01 * units::m / units::s;
-    planner.update(patterns().front(), velocity, 0.7, CPose(), 0.02 * units::s);
+    velocity.linear.x = 0.01 * m / s;
+    planner.update(patterns().front(), velocity, 0.7, CPose(), 0.02 * s);
     for (const auto& [index, toe] : toes) {
         const auto now = model->getToePositions().at(index);
-        EXPECT_LT(std::abs((now.x - toe.x).numerical_value_in(units::m)), 0.001);
-        EXPECT_LT(std::abs((now.z - toe.z).numerical_value_in(units::m)), 0.002);
+        EXPECT_LT(std::abs((now.x - toe.x).numerical_value_in(m)), 0.001);
+        EXPECT_LT(std::abs((now.z - toe.z).numerical_value_in(m)), 0.002);
     }
-    EXPECT_GT(model->getHeadOrientation().yaw, 9.0 * units::deg);
-    EXPECT_GT(model->getTorsoPose().position.z, 0.003 * units::m);
+    EXPECT_GT(model->getHeadOrientation().yaw, 9.0 * deg);
+    EXPECT_GT(model->getTorsoPose().position.z, 0.003 * m);
 }
 
 TEST_F(TrajectoryTransitionTest, StopAndResumeDuringSettlementNeverMutatePoseOnRequest) {
     CStridePlanner planner(model);
     planner.start();
     Velocity velocity;
-    velocity.linear.x = 0.01 * units::m / units::s;
-    for (int i = 0; i < 4; ++i) planner.update(patterns().front(), velocity, 0.7, CPose(), 0.02 * units::s);
+    velocity.linear.x = 0.01 * m / s;
+    for (int i = 0; i < 4; ++i) planner.update(patterns().front(), velocity, 0.7, CPose(), 0.02 * s);
     planner.requestStop();
     for (int i = 0; i < 100 && planner.state() != EGaitState::Stopping; ++i)
-        planner.update(patterns().front(), velocity, 0.7, CPose(), 0.02 * units::s);
+        planner.update(patterns().front(), velocity, 0.7, CPose(), 0.02 * s);
     ASSERT_EQ(planner.state(), EGaitState::Stopping);
     const auto before = model->getToePositions();
     planner.cancelStop();
@@ -135,7 +140,7 @@ TEST_F(TrajectoryTransitionTest, StopAndResumeDuringSettlementNeverMutatePoseOnR
     EXPECT_EQ(planner.state(), EGaitState::Running);
     planner.requestStop();
     for (int i = 0; i < 1000 && planner.state() != EGaitState::Stopped; ++i)
-        planner.update(patterns().front(), Velocity(), 0.7, CPose(), 0.02 * units::s);
+        planner.update(patterns().front(), Velocity(), 0.7, CPose(), 0.02 * s);
     EXPECT_EQ(planner.state(), EGaitState::Stopped);
     EXPECT_EQ(model->getToePositions(), model->getStandingToePositions());
 }
@@ -153,7 +158,7 @@ TEST_F(TrajectoryTransitionTest, AllBehaviorPairsHandOffFromLastCommandedPose) {
     ASSERT_EQ(rcl_enable_ros_time_override(node->get_clock()->get_clock_handle()), RCL_RET_OK);
     int64_t time = 1000000000;
     Velocity velocity;
-    velocity.linear.x = 0.01 * units::m / units::s;
+    velocity.linear.x = 0.01 * m / s;
     auto tick = [&] {
         time += 100000000;
         EXPECT_EQ(rcl_set_ros_time_override(node->get_clock()->get_clock_handle(), time), RCL_RET_OK);
@@ -164,7 +169,7 @@ TEST_F(TrajectoryTransitionTest, AllBehaviorPairsHandOffFromLastCommandedPose) {
             SCOPED_TRACE(std::to_string(source) + " -> " + std::to_string(destination));
             MovementRequest request;
             request.type = source;
-            request.duration_s = 2.0 * units::s;
+            request.duration_s = 2.0 * s;
             controller.setGait(request);
             for (int i = 0; i < 1500 && controller.hasPendingGait(); ++i) tick();
             ASSERT_FALSE(controller.hasPendingGait());
@@ -182,9 +187,9 @@ TEST_F(TrajectoryTransitionTest, AllBehaviorPairsHandOffFromLastCommandedPose) {
                 if ((ready || starts_now) && !controller.hasPendingGait()) {
                     for (const auto& [leg, toe] : before) {
                         const auto now = model->getToePositions().at(leg);
-                        EXPECT_LT(std::abs((now.x - toe.x).numerical_value_in(units::m)), 0.01);
-                        EXPECT_LT(std::abs((now.y - toe.y).numerical_value_in(units::m)), 0.01);
-                        EXPECT_LT(std::abs((now.z - toe.z).numerical_value_in(units::m)), 0.01);
+                        EXPECT_LT(std::abs((now.x - toe.x).numerical_value_in(m)), 0.01);
+                        EXPECT_LT(std::abs((now.y - toe.y).numerical_value_in(m)), 0.01);
+                        EXPECT_LT(std::abs((now.z - toe.z).numerical_value_in(m)), 0.01);
                     }
                     handoff = true;
                     break;
@@ -203,33 +208,33 @@ TEST_F(TrajectoryTransitionTest, AllBehaviorPairsHandOffFromLastCommandedPose) {
 TEST_F(TrajectoryTransitionTest, IdleSettlesAndResumesButExplicitStopDoesNotResume) {
     CStridePlanner planner(model);
     Velocity velocity;
-    velocity.linear.x = 0.01 * units::m / units::s;
+    velocity.linear.x = 0.01 * m / s;
     planner.start();
-    for (int i = 0; i < 4; ++i) planner.update(patterns().front(), velocity, 0.7, CPose(), 0.02 * units::s);
+    for (int i = 0; i < 4; ++i) planner.update(patterns().front(), velocity, 0.7, CPose(), 0.02 * s);
     for (int i = 0; i < 1000 && planner.state() != EGaitState::Stopped; ++i)
-        planner.update(patterns().front(), Velocity(), 0.7, CPose(), 0.02 * units::s);
+        planner.update(patterns().front(), Velocity(), 0.7, CPose(), 0.02 * s);
     ASSERT_EQ(planner.state(), EGaitState::Stopped);
     EXPECT_EQ(model->getToePositions(), model->getStandingToePositions());
-    EXPECT_TRUE(planner.update(patterns().front(), velocity, 0.7, CPose(), 0.02 * units::s));
+    EXPECT_TRUE(planner.update(patterns().front(), velocity, 0.7, CPose(), 0.02 * s));
     planner.requestStop();
     for (int i = 0; i < 1000 && planner.state() != EGaitState::Stopped; ++i)
-        planner.update(patterns().front(), velocity, 0.7, CPose(), 0.02 * units::s);
+        planner.update(patterns().front(), velocity, 0.7, CPose(), 0.02 * s);
     ASSERT_EQ(planner.state(), EGaitState::Stopped);
-    EXPECT_FALSE(planner.update(patterns().front(), velocity, 0.7, CPose(), 0.02 * units::s));
+    EXPECT_FALSE(planner.update(patterns().front(), velocity, 0.7, CPose(), 0.02 * s));
 }
 
 TEST_F(TrajectoryTransitionTest, PatternChangeRetainsCyclePhaseInsteadOfRestartingFirstGroup) {
     CStridePlanner planner(model);
     planner.start();
     Velocity velocity;
-    velocity.linear.x = 0.01 * units::m / units::s;
+    velocity.linear.x = 0.01 * m / s;
     for (int segment = 0; segment < 2; ++segment) {
         do {
-            planner.update(patterns()[0], velocity, 0.7, CPose(), 0.02 * units::s);
+            planner.update(patterns()[0], velocity, 0.7, CPose(), 0.02 * s);
         } while (!planner.atBoundary());
     }
     ASSERT_TRUE(planner.atBoundary());
-    planner.update(patterns()[1], velocity, 0.7, CPose(), 0.02 * units::s);
+    planner.update(patterns()[1], velocity, 0.7, CPose(), 0.02 * s);
     const auto standing = model->getStandingToePositions();
     for (const auto& [index, toe] : model->getToePositions()) {
         if (index == ELegIndex::RightMid || index == ELegIndex::LeftMid)
@@ -238,3 +243,5 @@ TEST_F(TrajectoryTransitionTest, PatternChangeRetainsCyclePhaseInsteadOfRestarti
             EXPECT_EQ(toe.z, standing.at(index).z);
     }
 }
+
+}  // namespace

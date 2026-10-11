@@ -5,6 +5,10 @@
 #include "movement_request.hpp"
 #include "test_helpers.hpp"
 
+namespace {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
 using namespace brain;
 
 class LocomotionTransitionTest : public ::testing::TestWithParam<MovementRequest::Type> {
@@ -18,7 +22,7 @@ class LocomotionTransitionTest : public ::testing::TestWithParam<MovementRequest
         model_->moveTorso(model_->getStandingToePositions());
         params_ = test_helpers::makeDeclaredParameters(node_);
         gait_ = makeGait(model_);
-        forward_.linear.x = 0.01 * units::m / units::s;
+        forward_.linear.x = 0.01 * m / s;
     }
     void TearDown() override {
         gait_.reset();
@@ -34,7 +38,7 @@ class LocomotionTransitionTest : public ::testing::TestWithParam<MovementRequest
                                                    params_.move_combined);
     }
     void startRunning() {
-        gait_->start(0.0 * units::s, MovementRequest::CLOCKWISE);
+        gait_->start(0.0 * s, MovementRequest::CLOCKWISE);
         for (int i = 0; i < 1000 && gait_->state() != EGaitState::Running; ++i) {
             gait_->update(forward_, CPose(), COrientation());
         }
@@ -56,7 +60,7 @@ TEST_P(LocomotionTransitionTest, StoppingBeforeFirstSegmentHoldsActualPose) {
     model_->setHeadOrientation(COrientation(5.0, 10.0, 15.0));
     const auto before = model_->getToePositions();
     const auto head = model_->getHeadOrientation();
-    gait_->start(0.0 * units::s, MovementRequest::CLOCKWISE);
+    gait_->start(0.0 * s, MovementRequest::CLOCKWISE);
     gait_->requestStop();
     ASSERT_EQ(gait_->state(), EGaitState::StopPending);
     const CPose torso(0.0, 0.0, 0.01, 0.0, 0.0, 0.0);
@@ -69,7 +73,7 @@ TEST_P(LocomotionTransitionTest, StoppingBeforeFirstSegmentHoldsActualPose) {
 }
 
 TEST_P(LocomotionTransitionTest, RepeatedStopDoesNotOverwriteStartupResumeState) {
-    gait_->start(0.0 * units::s, MovementRequest::CLOCKWISE);
+    gait_->start(0.0 * s, MovementRequest::CLOCKWISE);
     gait_->requestStop();
     gait_->requestStop();
     gait_->cancelStop();
@@ -84,7 +88,7 @@ TEST_P(LocomotionTransitionTest, RunningStopCanBeCancelledWithoutRestartingTraje
     control_model->moveTorso(control_model->getStandingToePositions());
     control_model->setHeadOrientation(COrientation());
     auto control = makeGait(control_model);
-    control->start(0.0 * units::s, MovementRequest::CLOCKWISE);
+    control->start(0.0 * s, MovementRequest::CLOCKWISE);
     for (int i = 0; i < 1000 && control->state() != EGaitState::Running; ++i) {
         control->update(forward_, CPose(), COrientation());
     }
@@ -121,7 +125,7 @@ TEST_P(LocomotionTransitionTest, RestartAfterStopWaitsForNewVelocity) {
         gait_->update(forward_, CPose(), COrientation());
     }
     ASSERT_EQ(gait_->state(), EGaitState::Stopped);
-    gait_->start(0.0 * units::s, MovementRequest::CLOCKWISE);
+    gait_->start(0.0 * s, MovementRequest::CLOCKWISE);
     EXPECT_FALSE(gait_->update(Velocity(), CPose(), COrientation()));
     EXPECT_EQ(gait_->state(), EGaitState::Starting);
     gait_->requestStop();
@@ -132,3 +136,5 @@ TEST_P(LocomotionTransitionTest, RestartAfterStopWaitsForNewVelocity) {
 INSTANTIATE_TEST_SUITE_P(WalkingAndRunning, LocomotionTransitionTest,
                          ::testing::Values(MovementRequest::CONTINUOUS_MOVE,
                                            MovementRequest::CONTINUOUS_RUNNING));
+
+}  // namespace

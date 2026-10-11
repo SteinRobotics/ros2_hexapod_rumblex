@@ -14,6 +14,11 @@ using namespace std::chrono_literals;
 
 namespace brain {
 
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::deg;
+using mp_units::angular::unit_symbols::rad;
+
 CCoordinator::CCoordinator(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CActionPlanner> actionPlanner)
     : node_(node), actionPlanner_(actionPlanner) {
     const auto required = [&node](const char* name) {
@@ -24,24 +29,23 @@ CCoordinator::CCoordinator(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<C
         }
         return value;
     };
-    kMaxVelocityLinear_ = required("max_velocity_linear") * units::m / units::s;
-    kMaxVelocityRotation_ = required("max_velocity_rotation") * units::rad / units::s;
-    kBodyFactorHeight_ = required("body_factor_height") * units::m;
+    kMaxVelocityLinear_ = required("max_velocity_linear") * m / s;
+    kMaxVelocityRotation_ = required("max_velocity_rotation") * rad / s;
+    kBodyFactorHeight_ = required("body_factor_height") * m;
     kJoystickDeadzone_ = required("joystick_deadzone");
-    kMinBodyHeight_ = required("min_body_height") * units::m;
-    kMaxBodyHeight_ = required("max_body_height") * units::m;
+    kMinBodyHeight_ = required("min_body_height") * m;
+    kMaxBodyHeight_ = required("max_body_height") * m;
 
-    if (kMaxVelocityLinear_ <= 0.0 * units::m / units::s)
+    if (kMaxVelocityLinear_ <= 0.0 * m / s)
         throw std::invalid_argument("max_velocity_linear must be positive");
-    if (kMaxVelocityRotation_ <= 0.0 * units::rad / units::s)
+    if (kMaxVelocityRotation_ <= 0.0 * rad / s)
         throw std::invalid_argument("max_velocity_rotation must be positive");
-    if (kBodyFactorHeight_ < 0.0 * units::m)
-        throw std::invalid_argument("body_factor_height must be nonnegative");
+    if (kBodyFactorHeight_ < 0.0 * m) throw std::invalid_argument("body_factor_height must be nonnegative");
     if (kJoystickDeadzone_ < 0.0 || kJoystickDeadzone_ >= 1.0) {
         throw std::invalid_argument("joystick_deadzone must be in [0, 1)");
     }
-    if (kMinBodyHeight_ > 0.0 * units::m) throw std::invalid_argument("min_body_height must be <= 0");
-    if (kMaxBodyHeight_ < 0.0 * units::m) throw std::invalid_argument("max_body_height must be >= 0");
+    if (kMinBodyHeight_ > 0.0 * m) throw std::invalid_argument("min_body_height must be <= 0");
+    if (kMaxBodyHeight_ < 0.0 * m) throw std::invalid_argument("max_body_height must be >= 0");
 
     textInterpreter_ = std::make_shared<CTextInterpreter>(node_);
     errorManagement_ = std::make_shared<CErrorManagement>(node_);
@@ -100,8 +104,10 @@ void CCoordinator::cycleGaitMode() {
 }
 
 void CCoordinator::cmdVelReceived(const geometry_msgs::msg::Twist& msg) {
-    submitRequestMove(MovementRequest::CONTINUOUS_MOVE, 0.0 * units::s, "", Prio::High, std::nullopt,
-                      std::nullopt, msg);
+    submitRequestMove({.type = MovementRequest::CONTINUOUS_MOVE,
+                       .duration = 0.0 * s,
+                       .priority = Prio::High,
+                       .velocity = msg});
 }
 
 void CCoordinator::joystickRequestReceived(const JoystickRequest& msg) {
@@ -128,97 +134,67 @@ void CCoordinator::joystickRequestReceived(const JoystickRequest& msg) {
         return;
     }
 
-    units::Duration duration_s = 0.0 * units::s;
-    std::string comment = "";
-    uint32_t newMovementType = MovementRequest::NO_REQUEST;
-    auto activeGait = gaitModes_[activeGaitIndex_];
-    auto body = CPose();
-    auto head = COrientation();
-    auto velocity = Velocity();
-    std::optional<uint8_t> direction = std::nullopt;
-
-    // Torso axes: +X forward, +Y left, +Z up; right stick deflection is negative yaw.
-    // MOVE mode: the combined gait handles velocity-based sub-gait selection internally
-
     if (gaitModes_[activeGaitIndex_] == MovementRequest::CONTINUOUS_POSE) {
-        // LEFT_STICK -> linear movement
-        // float32 left_stick_vertical   # TOP  = -1.0, DOWN = 1.0,  hangs on 0.004 -> means 0.0
-        const auto max_displacement_m = 0.05 * units::m;  // meters
-        if (std::abs(msg.left_stick_vertical) > kJoystickDeadzone_) {
-            body.position.x = msg.left_stick_vertical * max_displacement_m;
-        }
-        // float32 left_stick_horizontal # LEFT = -1.0, RIGHT = 1.0, hangs on 0.004 -> means 0.0
-        if (std::abs(msg.left_stick_horizontal) > kJoystickDeadzone_) {
-            body.position.y = -msg.left_stick_horizontal * max_displacement_m;
-        }
-        // RIGHT_STICK -> rotation
-        // float32 right_stick_horizontal  # LEFT = -1.0, RIGHT = 1.0, hangs on 0.004 -> means 0.0
-        const auto max_displacement_deg = 20.0 * units::deg;  // degrees
-        if (std::abs(msg.right_stick_horizontal) > kJoystickDeadzone_) {
-            head.yaw = -msg.right_stick_horizontal * max_displacement_deg;
-        }
-        // float32 right_stick_vertical    # TOP  = -1.0, DOWN = 1.0, hangs on 0.004 -> means 0.0
-        if (std::abs(msg.right_stick_vertical) > kJoystickDeadzone_) {
-            head.pitch = msg.right_stick_vertical * max_displacement_deg;
-        }
-        // Activate the pose gait and deliver body/head targets together. Updating
-        // targets alone leaves the previous walking gait selected and ignores head input.
-        const bool body_changed = body.position.x != 0.0 * units::m || body.position.y != 0.0 * units::m;
-        const bool head_changed = head.yaw != 0.0 * units::deg || head.pitch != 0.0 * units::deg;
-        submitRequestMove(MovementRequest::CONTINUOUS_POSE, 0.0 * units::s, "", Prio::Normal,
-                          body_changed ? std::optional(body.toMsg()) : std::nullopt,
-                          head_changed ? std::optional(head.toMsg()) : std::nullopt);
+        submitRequestMove(poseFromJoystick(msg));
         return;
     }
 
-    // LEFT_STICK -> linear movement
-    // float32 left_stick_vertical   # TOP  = -1.0, DOWN = 1.0,  hangs on 0.004 -> means 0.0
-    if (std::abs(msg.left_stick_vertical) > kJoystickDeadzone_) {
-        velocity.linear.x = msg.left_stick_vertical * kMaxVelocityLinear_;
-        newMovementType = activeGait;
-    }
-    // float32 left_stick_horizontal # LEFT = -1.0, RIGHT = 1.0, hangs on 0.004 -> means 0.0
-    if (std::abs(msg.left_stick_horizontal) > kJoystickDeadzone_) {
-        velocity.linear.y = -msg.left_stick_horizontal * kMaxVelocityLinear_;
-        newMovementType = activeGait;
-    }
-    // RIGHT_STICK -> rotation
-    // float32 right_stick_horizontal  # LEFT = -1.0, RIGHT = 1.0, hangs on 0.004 -> means 0.0
-    if (std::abs(msg.right_stick_horizontal) > kJoystickDeadzone_) {
-        velocity.angular.z = -msg.right_stick_horizontal * kMaxVelocityRotation_;
-        newMovementType = activeGait;
-    }
-
-    // float32 right_stick_vertical    # TOP  = -1.0, DOWN = 1.0, hangs on 0.004 -> means 0.0
-    if (std::abs(msg.right_stick_vertical) > kJoystickDeadzone_) {
-        body.position.z =
-            std::clamp(msg.right_stick_vertical * kBodyFactorHeight_, kMinBodyHeight_, kMaxBodyHeight_);
-        newMovementType = activeGait;
-    } else {
-        body.position.z = 0.0 * units::m;
-    }
-
-    if (movement_deadline_ && actualMovementType_ == newMovementType) {
+    const auto command = movementFromJoystick(msg);
+    if (movement_deadline_ && actualMovementType_ == command.type) {
         RCLCPP_WARN_STREAM(node_->get_logger(), "movement request is locked, ignoring joystick request");
         return;
     }
-
-    if ((actualMovementType_ == MovementRequest::CONTINUOUS_MOVE) &&
-        newMovementType == MovementRequest::NO_REQUEST) {
+    if (actualMovementType_ == MovementRequest::CONTINUOUS_MOVE &&
+        command.type == MovementRequest::NO_REQUEST) {
         RCLCPP_INFO_STREAM(node_->get_logger(), "end move request");
         auto request = std::make_shared<RequestVelocity>();
-        request->velocity = velocity.toMsg();
+        request->velocity = *command.velocity;
         submitRequest(request, Prio::Normal);
         return;
     }
-
-    // no new request
-    if (newMovementType == MovementRequest::NO_REQUEST &&
-        actualMovementType_ == MovementRequest::NO_REQUEST) {
+    if (command.type == MovementRequest::NO_REQUEST && actualMovementType_ == MovementRequest::NO_REQUEST)
         return;
-    }
-    submitRequestMove(newMovementType, duration_s, comment, Prio::Normal, body.toMsg(), head.toMsg(),
-                      velocity.toMsg(), direction);
+    submitRequestMove(command);
+}
+
+double CCoordinator::applyDeadzone(double value) const {
+    return std::abs(value) > kJoystickDeadzone_ ? value : 0.0;
+}
+
+CCoordinator::MovementCommand CCoordinator::poseFromJoystick(const JoystickRequest& msg) const {
+    constexpr auto max_translation = 0.05 * m;
+    constexpr auto max_rotation = 20.0 * deg;
+    CPose body;
+    COrientation head;
+    // Torso axes: +X forward, +Y left; right stick deflection is negative yaw.
+    body.position.x = applyDeadzone(msg.left_stick_vertical) * max_translation;
+    body.position.y = -applyDeadzone(msg.left_stick_horizontal) * max_translation;
+    head.yaw = -applyDeadzone(msg.right_stick_horizontal) * max_rotation;
+    head.pitch = applyDeadzone(msg.right_stick_vertical) * max_rotation;
+
+    MovementCommand command{.type = MovementRequest::CONTINUOUS_POSE};
+    // Neutral sticks leave previously supplied pose targets unchanged.
+    if (body.position.x != 0.0 * m || body.position.y != 0.0 * m) command.body = body.toMsg();
+    if (head.yaw != 0.0 * deg || head.pitch != 0.0 * deg) command.head = head.toMsg();
+    return command;
+}
+
+CCoordinator::MovementCommand CCoordinator::movementFromJoystick(const JoystickRequest& msg) const {
+    const double forward = applyDeadzone(msg.left_stick_vertical);
+    const double lateral = applyDeadzone(msg.left_stick_horizontal);
+    const double yaw = applyDeadzone(msg.right_stick_horizontal);
+    const double height = applyDeadzone(msg.right_stick_vertical);
+    Velocity velocity;
+    velocity.linear.x = forward * kMaxVelocityLinear_;
+    velocity.linear.y = -lateral * kMaxVelocityLinear_;
+    velocity.angular.z = -yaw * kMaxVelocityRotation_;
+    CPose body;
+    body.position.z = std::clamp(height * kBodyFactorHeight_, kMinBodyHeight_, kMaxBodyHeight_);
+    const bool active = forward != 0.0 || lateral != 0.0 || yaw != 0.0 || height != 0.0;
+    return {.type = active ? gaitModes_[activeGaitIndex_] : uint32_t{MovementRequest::NO_REQUEST},
+            .body = body.toMsg(),
+            .head = COrientation().toMsg(),
+            .velocity = velocity.toMsg()};
 }
 
 void CCoordinator::speechRecognized(std::string text) {
@@ -234,7 +210,7 @@ void CCoordinator::speechRecognized(std::string text) {
     }
 
     if (command == "commandMove" || command == "commandRun") {
-        constexpr auto kVelocityLinear_ = 0.005 * units::m / units::s;
+        constexpr auto kVelocityLinear_ = 0.005 * m / s;
         Velocity velocity;
         if (textInterpreter_->lettersIdentified("vorn", identifiedWords) ||
             textInterpreter_->lettersIdentified("vorne", identifiedWords)) {
@@ -249,16 +225,22 @@ void CCoordinator::speechRecognized(std::string text) {
         }
         RCLCPP_INFO_STREAM(node_->get_logger(), "submit move request");
         const bool running = command == "commandRun";
-        submitRequestMove(running ? MovementRequest::CONTINUOUS_RUNNING : MovementRequest::CONTINUOUS_MOVE,
-                          0 * units::s, running ? "ich renne los" : "ich laufe los", Prio::Normal,
-                          std::nullopt, std::nullopt, velocity.toMsg());
+        submitRequestMove(
+            {.type = running ? MovementRequest::CONTINUOUS_RUNNING : MovementRequest::CONTINUOUS_MOVE,
+             .duration = 0 * s,
+             .comment = running ? "ich renne los" : "ich laufe los",
+             .priority = Prio::Normal,
+             .velocity = velocity.toMsg()});
     } else if (command == "commandBite" || command == "commandStomp") {
         RCLCPP_WARN_STREAM(node_->get_logger(), "No gait implemented for voice command: " << command);
     } else if (command == "commandStopMove") {
         RCLCPP_INFO_STREAM(node_->get_logger(), "submit stop move request");
         Velocity velocity;
-        submitRequestMove(MovementRequest::CONTINUOUS_MOVE, 0 * units::s, "ich halte an", Prio::Normal,
-                          std::nullopt, std::nullopt, velocity.toMsg());
+        submitRequestMove({.type = MovementRequest::CONTINUOUS_MOVE,
+                           .duration = 0 * s,
+                           .comment = "ich halte an",
+                           .priority = Prio::Normal,
+                           .velocity = velocity.toMsg()});
 
     } else if (command == "tellMeSupplyVoltage") {
         requestTellSupplyVoltage(Prio::Normal);
@@ -274,19 +256,20 @@ void CCoordinator::speechRecognized(std::string text) {
 }
 
 void CCoordinator::supplyVoltageReceived(float voltage) {
-    auto statusSupplyVoltage = errorManagement_->filterSupplyVoltage(static_cast<double>(voltage) * units::V);
+    auto statusSupplyVoltage = errorManagement_->filterSupplyVoltage(static_cast<double>(voltage) * V);
     if (statusSupplyVoltage == EError::VoltageCriticalLow) {
         RCLCPP_ERROR_STREAM(node_->get_logger(), "SupplyVoltage is critical low, shutting down the system");
 
         std::string text = "Versorgungsspannung extrem niedrig, schalte ab";
-        requestReactionOnError(text, true, true, Prio::Highest);
+        requestReactionOnError(text,
+                               {.turn_off_servo_relay = true, .shutdown = true, .priority = Prio::Highest});
         return;
     }
 
     if (statusSupplyVoltage == EError::VoltageLow) {
         RCLCPP_WARN_STREAM(node_->get_logger(), "SupplyVoltage is low");
         std::string text = "Versorgungsspannung ist zu niedrig";
-        requestReactionOnError(text, false, false, Prio::High);
+        requestReactionOnError(text, {.priority = Prio::High});
     }
 }
 
@@ -301,10 +284,10 @@ void CCoordinator::servoStatusReceived(const ServoStatus& msg) {
     }
     if (error == EError::VoltageCriticalLow) {
         text = "Servo Spannung ist zu niedrig";
-        requestReactionOnError(text, true, false, Prio::Highest);
+        requestReactionOnError(text, {.turn_off_servo_relay = true, .priority = Prio::Highest});
     } else {
         text = "Servo Fehler " + errorManagement_->getErrorName(error);
-        requestReactionOnError(text, true, false, Prio::High);
+        requestReactionOnError(text, {.turn_off_servo_relay = true, .priority = Prio::High});
     }
 }
 
@@ -335,7 +318,7 @@ void CCoordinator::requestShutdown(Prio prio) {
     submitRequest(request, prio);
 
     if (isStanding_) {
-        submitRequestMove(MovementRequest::SEQUENCE_LAYDOWN, 1.5 * units::s, "", prio);
+        submitRequestMove({.type = MovementRequest::SEQUENCE_LAYDOWN, .duration = 1.5 * s, .priority = prio});
     }
     auto sysRequest = std::make_shared<RequestSystem>();
     sysRequest->turnOffServoRelay = true;
@@ -344,8 +327,8 @@ void CCoordinator::requestShutdown(Prio prio) {
     submitRequest(sysRequest, prio);
 }
 
-void CCoordinator::requestReactionOnError(std::string text, bool switchServoRelayOff,
-                                          bool isShutdownRequested, Prio prio) {
+void CCoordinator::requestReactionOnError(std::string text, const ErrorReaction& reaction) {
+    const auto prio = reaction.priority;
     if (timerErrorRequest_->isRunning() && !timerErrorRequest_->haveSecondsElapsed(10.0)) {
         return;
     } else {
@@ -356,14 +339,15 @@ void CCoordinator::requestReactionOnError(std::string text, bool switchServoRela
     talkRequest->text = text;
     submitRequest(talkRequest, prio);
 
-    if (switchServoRelayOff || isShutdownRequested) {
+    if (reaction.turn_off_servo_relay || reaction.shutdown) {
         if (isStanding_) {
-            submitRequestMove(MovementRequest::SEQUENCE_LAYDOWN, 1.5 * units::s, "", prio);
+            submitRequestMove(
+                {.type = MovementRequest::SEQUENCE_LAYDOWN, .duration = 1.5 * s, .priority = prio});
         }
         auto sysRequest = std::make_shared<RequestSystem>();
-        sysRequest->turnOffServoRelay = switchServoRelayOff;
-        isServoRelayOn_ = !switchServoRelayOff;
-        sysRequest->systemShutdown = isShutdownRequested;
+        sysRequest->turnOffServoRelay = reaction.turn_off_servo_relay;
+        isServoRelayOn_ = !reaction.turn_off_servo_relay;
+        sysRequest->systemShutdown = reaction.shutdown;
         submitRequest(sysRequest, prio);
     }
 }
@@ -381,71 +365,70 @@ void CCoordinator::requestMusikOff(Prio prio) {
     actionPlanner_->request({request}, prio);
 }
 
-void CCoordinator::submitRequestMove(uint32_t movementType, units::Duration duration_s, std::string comment,
-                                     Prio prio, std::optional<rumblex_interfaces::msg::Pose> body,
-                                     std::optional<rumblex_interfaces::msg::Orientation> head,
-                                     std::optional<geometry_msgs::msg::Twist> velocity,
-                                     std::optional<uint8_t> direction) {
-    if (!mp_units::isfinite(duration_s)) {
-        throw std::invalid_argument("movement duration_s must be finite");
+void CCoordinator::submitRequestMove(const MovementCommand& command) {
+    if (!isfinite(command.duration)) {
+        throw std::invalid_argument("movement duration must be finite");
     }
     std::vector<std::shared_ptr<RequestBase>> request_v;
-    if (!comment.empty()) {
+    if (!command.comment.empty()) {
         auto talkRequest = std::make_shared<RequestTalking>();
-        talkRequest->text = comment;
+        talkRequest->text = command.comment;
         request_v.push_back(talkRequest);
     }
     // If we are not standing, we need to stand up first
-    if (!isStanding_ && (movementType == MovementRequest::CONTINUOUS_MOVE ||
-                         movementType == MovementRequest::CONTINUOUS_RUNNING)) {
+    if (!isStanding_ && (command.type == MovementRequest::CONTINUOUS_MOVE ||
+                         command.type == MovementRequest::CONTINUOUS_RUNNING)) {
         RCLCPP_INFO_STREAM(node_->get_logger(), "standup before move request");
         isStanding_ = true;
         // recursive call to first stand up
-        submitRequestMove(MovementRequest::SEQUENCE_STAND_UP, 1.5 * units::s, "ich stehe erst mal auf", prio);
+        submitRequestMove({.type = MovementRequest::SEQUENCE_STAND_UP,
+                           .duration = 1.5 * s,
+                           .comment = "ich stehe erst mal auf",
+                           .priority = command.priority});
     }
 
     auto request = MovementRequest();
-    request.type = movementType;
-    request.duration_s = duration_s;
-    if (direction.has_value()) {
-        request.direction = direction.value();
+    request.type = command.type;
+    request.duration_s = command.duration;
+    if (command.direction.has_value()) {
+        request.direction = command.direction.value();
     }
     request.name = movementTypeToName.at(request.type);
     auto moveRequest = std::make_shared<RequestMovementType>();
     moveRequest->movementRequest = request;
     request_v.push_back(moveRequest);
-    if (body.has_value()) {
+    if (command.body.has_value()) {
         auto bodyRequest = std::make_shared<RequestSinglePose>();
-        bodyRequest->pose = body.value();
+        bodyRequest->pose = command.body.value();
         request_v.push_back(bodyRequest);
     }
-    if (head.has_value()) {
+    if (command.head.has_value()) {
         auto headRequest = std::make_shared<RequestHeadOrientation>();
-        headRequest->orientation = head.value();
+        headRequest->orientation = command.head.value();
         request_v.push_back(headRequest);
     }
-    if (velocity.has_value()) {
+    if (command.velocity.has_value()) {
         auto velocityRequest = std::make_shared<RequestVelocity>();
-        velocityRequest->velocity = velocity.value();
+        velocityRequest->velocity = command.velocity.value();
         request_v.push_back(velocityRequest);
     }
-    actionPlanner_->request(request_v, prio);
+    actionPlanner_->request(request_v, command.priority);
 
-    if (movementType == MovementRequest::CONTINUOUS_MOVE ||
-        movementType == MovementRequest::CONTINUOUS_RUNNING ||
-        (movementType == MovementRequest::CONTINUOUS_POSE && duration_s <= 0.0 * units::s)) {
+    if (command.type == MovementRequest::CONTINUOUS_MOVE ||
+        command.type == MovementRequest::CONTINUOUS_RUNNING ||
+        (command.type == MovementRequest::CONTINUOUS_POSE && command.duration <= 0.0 * s)) {
         movement_deadline_.reset();
         return;
     }
     movement_deadline_ = MovementDeadline{
         std::chrono::steady_clock::now() +
-            std::chrono::duration<double>(std::max(0.0 * units::s, duration_s).numerical_value_in(units::s)),
-        movementType};
+            std::chrono::duration<double>(std::max(0.0 * s, command.duration).numerical_value_in(s)),
+        command.type};
 }
 
 void CCoordinator::requestTellSupplyVoltage(Prio prio) {
     auto text = std::format("Die Versorgungsspannung ist aktuell {:.1f} Volt",
-                            errorManagement_->getFilteredSupplyVoltage().numerical_value_in(units::V));
+                            errorManagement_->getFilteredSupplyVoltage().numerical_value_in(V));
     auto request = std::make_shared<RequestTalking>();
     request->text = text;
     submitRequest(request, prio);
@@ -453,7 +436,7 @@ void CCoordinator::requestTellSupplyVoltage(Prio prio) {
 
 void CCoordinator::requestTellServoVoltage(Prio prio) {
     auto text = std::format("Die Servo Spannung ist aktuell {:.1f} Volt",
-                            errorManagement_->getFilteredServoVoltage().numerical_value_in(units::V));
+                            errorManagement_->getFilteredServoVoltage().numerical_value_in(V));
     auto request = std::make_shared<RequestTalking>();
     request->text = text;
     submitRequest(request, prio);

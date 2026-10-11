@@ -12,6 +12,10 @@
 
 namespace brain::test_helpers {
 
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::deg;
+
 inline std::vector<rclcpp::Parameter> defaultKinematicsParameters() {
     std::vector<rclcpp::Parameter> params = {
         rclcpp::Parameter("coxa_length_m", 0.050), rclcpp::Parameter("femur_length_m", 0.063),
@@ -110,39 +114,36 @@ inline Parameters makeDeclaredParameters(const std::shared_ptr<rclcpp::Node>& no
 // Reusable helper to compare CPosition
 inline void expectPositionNear(const CPosition& expected, const CPosition& actual,
                                const std::string& msg = "", double tolerance = 1e-3) {
-    EXPECT_NEAR(expected.x.numerical_value_in(units::m), actual.x.numerical_value_in(units::m), tolerance)
-        << msg;
-    EXPECT_NEAR(expected.y.numerical_value_in(units::m), actual.y.numerical_value_in(units::m), tolerance)
-        << msg;
-    EXPECT_NEAR(expected.z.numerical_value_in(units::m), actual.z.numerical_value_in(units::m), tolerance)
-        << msg;
+    EXPECT_NEAR(expected.x.numerical_value_in(m), actual.x.numerical_value_in(m), tolerance) << msg;
+    EXPECT_NEAR(expected.y.numerical_value_in(m), actual.y.numerical_value_in(m), tolerance) << msg;
+    EXPECT_NEAR(expected.z.numerical_value_in(m), actual.z.numerical_value_in(m), tolerance) << msg;
 }
 
 // Reusable helper to compare CLegAngles
 inline void expectAnglesNear(const CLegAngles& expected, const CLegAngles& actual,
                              const std::string& msg = "", double tolerance = 1e-3) {
-    EXPECT_NEAR(expected.torso_coxa.numerical_value_in(units::deg),
-                actual.torso_coxa.numerical_value_in(units::deg), tolerance)
+    EXPECT_NEAR(expected.torso_coxa.numerical_value_in(deg), actual.torso_coxa.numerical_value_in(deg),
+                tolerance)
         << msg;
-    EXPECT_NEAR(expected.coxa_femur.numerical_value_in(units::deg),
-                actual.coxa_femur.numerical_value_in(units::deg), tolerance)
+    EXPECT_NEAR(expected.coxa_femur.numerical_value_in(deg), actual.coxa_femur.numerical_value_in(deg),
+                tolerance)
         << msg;
-    EXPECT_NEAR(expected.femur_tibia.numerical_value_in(units::deg),
-                actual.femur_tibia.numerical_value_in(units::deg), tolerance)
+    EXPECT_NEAR(expected.femur_tibia.numerical_value_in(deg), actual.femur_tibia.numerical_value_in(deg),
+                tolerance)
         << msg;
 }
 
 // Compare CPose component-wise (position + orientation)
 inline void expectPoseNear(const CPose& expected, const CPose& actual, const std::string& msg = "") {
     expectPositionNear(expected.position, actual.position, msg);
-    EXPECT_DOUBLE_EQ(expected.orientation.roll.numerical_value_in(units::deg),
-                     actual.orientation.roll.numerical_value_in(units::deg))
+    EXPECT_DOUBLE_EQ(expected.orientation.roll.numerical_value_in(deg),
+                     actual.orientation.roll.numerical_value_in(deg))
         << msg;
-    EXPECT_DOUBLE_EQ(expected.orientation.pitch.numerical_value_in(units::deg),
-                     actual.orientation.pitch.numerical_value_in(units::deg))
+    EXPECT_DOUBLE_EQ(expected.orientation.pitch.numerical_value_in(deg),
+                     actual.orientation.pitch.numerical_value_in(deg))
         << msg;
-    EXPECT_DOUBLE_EQ(expected.orientation.yaw.numerical_value_in(units::deg),
-                     actual.orientation.yaw.numerical_value_in(units::deg))
+    EXPECT_DOUBLE_EQ(expected.orientation.yaw.numerical_value_in(deg),
+                     actual.orientation.yaw.numerical_value_in(deg))
         << msg;
 }
 
@@ -155,13 +156,9 @@ inline void expectLegNear(const CLeg& expected, const CLeg& actual, const std::s
 // Compare COrientation (roll, pitch, yaw) - for head, roll should be 0.0
 inline void expectHeadNear(const COrientation& expected, const COrientation& actual,
                            const std::string& msg = "") {
-    EXPECT_DOUBLE_EQ(expected.roll.numerical_value_in(units::deg), actual.roll.numerical_value_in(units::deg))
-        << msg;
-    EXPECT_DOUBLE_EQ(expected.pitch.numerical_value_in(units::deg),
-                     actual.pitch.numerical_value_in(units::deg))
-        << msg;
-    EXPECT_DOUBLE_EQ(expected.yaw.numerical_value_in(units::deg), actual.yaw.numerical_value_in(units::deg))
-        << msg;
+    EXPECT_DOUBLE_EQ(expected.roll.numerical_value_in(deg), actual.roll.numerical_value_in(deg)) << msg;
+    EXPECT_DOUBLE_EQ(expected.pitch.numerical_value_in(deg), actual.pitch.numerical_value_in(deg)) << msg;
+    EXPECT_DOUBLE_EQ(expected.yaw.numerical_value_in(deg), actual.yaw.numerical_value_in(deg)) << msg;
 }
 
 }  // namespace brain::test_helpers

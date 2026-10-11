@@ -7,6 +7,10 @@
 
 namespace brain {
 
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::rad;
+
 // Finite yaw excursions return to the captured pose before handing off.
 class CYawSequenceGait : public ISequenceGait {
    public:
@@ -33,8 +37,8 @@ class CYawSequenceGait : public ISequenceGait {
     units::Angle head_amplitude_;
     units::Angle torso_amplitude_;
     double direction_sign_ = 1.0;
-    units::AngularVelocity phase_rate_ = 0.0 * units::rad / units::s;
-    units::Angle phase_ = 0.0 * units::rad;
+    units::AngularVelocity phase_rate_ = 0.0 * rad / s;
+    units::Angle phase_ = 0.0 * rad;
     CPose torso_origin_;
     COrientation head_origin_;
     std::map<ELegIndex, CPosition> toe_origins_;

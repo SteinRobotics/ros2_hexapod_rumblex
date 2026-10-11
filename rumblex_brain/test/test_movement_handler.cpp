@@ -6,6 +6,11 @@
 #include "handler/movement.hpp"
 #include "test_helpers.hpp"
 
+namespace {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::deg;
 using namespace brain;
 using namespace std::chrono_literals;
 class MovementHandlerTest : public ::testing::Test {
@@ -47,16 +52,14 @@ class MovementHandlerTest : public ::testing::Test {
         auto model_node = std::make_shared<rclcpp::Node>("seed", options);
         CPoseModel model(model_node);
         model.moveTorso(model.getLaydownToePositions(), CPose());
-        model.setHeadOrientation(
-            COrientation(0.0 * units::deg,
-                         -node->get_parameter("gait.generic.head_max_pitch_deg").as_double() * units::deg,
-                         0.0 * units::deg));
+        model.setHeadOrientation(COrientation(
+            0.0 * deg, -node->get_parameter("gait.generic.head_max_pitch_deg").as_double() * deg, 0.0 * deg));
         return bodyPose(model);
     }
     void request(uint8_t type, double duration = 1.0) {
         auto r = std::make_shared<RequestMovementType>();
         r->movementRequest.type = type;
-        r->movementRequest.duration_s = duration * units::s;
+        r->movementRequest.duration_s = duration * s;
         r->movementRequest.name = "test";
         handler->run(r);
     }
@@ -262,3 +265,5 @@ TEST_F(MovementHandlerTest, OrientationPublishesFrequentSamplesWithoutCompressin
     pump(1100ms);
     EXPECT_DOUBLE_EQ(poses.back().head_pose.yaw, 23.0);
 }
+
+}  // namespace

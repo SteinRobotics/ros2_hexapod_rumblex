@@ -5,6 +5,10 @@
 #include "rclcpp/rclcpp.hpp"
 #include "test_helpers.hpp"
 
+namespace {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
 using namespace brain;
 
 namespace {
@@ -50,7 +54,7 @@ TEST_F(GaitStandUpTest, StandUpStopsAtStandingHeight) {
         CSinglePoseGait::Target{kinematics_->getStandingToePositions(), CPose(), COrientation()});
     EXPECT_EQ(gait.state(), EGaitState::Stopped);
 
-    gait.start(3.0 * units::s, 0);
+    gait.start(3.0 * s, 0);
 
     int iterations = 0;
     while (gait.state() != EGaitState::Stopped && iterations++ < kMaxIterations) {
@@ -64,7 +68,8 @@ TEST_F(GaitStandUpTest, StandUpStopsAtStandingHeight) {
     const auto final_positions = kinematics_->getToePositions();
     for (const auto& [leg_index, target] : standing_targets) {
         const auto& actual = final_positions.at(leg_index);
-        EXPECT_NEAR(actual.z.numerical_value_in(units::m), target.z.numerical_value_in(units::m),
-                    kPositionTolerance);
+        EXPECT_NEAR(actual.z.numerical_value_in(m), target.z.numerical_value_in(m), kPositionTolerance);
     }
 }
+
+}  // namespace

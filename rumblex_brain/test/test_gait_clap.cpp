@@ -5,6 +5,11 @@
 #include "rclcpp/rclcpp.hpp"
 #include "test_helpers.hpp"
 
+namespace {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::deg;
 using namespace brain;
 
 namespace {
@@ -46,7 +51,7 @@ TEST_F(ClapGaitTest, CompletesCycleAndReturnsToInitialPose) {
     const auto initial_torso = kinematics_->getTorsoPose();
     const auto initial_positions = kinematics_->getToePositions();
 
-    gait.start(3.0 * units::s, 0);
+    gait.start(3.0 * s, 0);
 
     int iterations = 0;
     while (gait.state() != EGaitState::Stopped && iterations++ < kMaxIterations) {
@@ -58,19 +63,19 @@ TEST_F(ClapGaitTest, CompletesCycleAndReturnsToInitialPose) {
 
     // Verify torso position returned to initial state
     const auto final_torso = kinematics_->getTorsoPose();
-    EXPECT_NEAR(final_torso.position.x.numerical_value_in(units::m),
-                initial_torso.position.x.numerical_value_in(units::m), kPositionTolerance);
-    EXPECT_NEAR(final_torso.position.y.numerical_value_in(units::m),
-                initial_torso.position.y.numerical_value_in(units::m), kPositionTolerance);
-    EXPECT_NEAR(final_torso.position.z.numerical_value_in(units::m),
-                initial_torso.position.z.numerical_value_in(units::m), kPositionTolerance);
+    EXPECT_NEAR(final_torso.position.x.numerical_value_in(m), initial_torso.position.x.numerical_value_in(m),
+                kPositionTolerance);
+    EXPECT_NEAR(final_torso.position.y.numerical_value_in(m), initial_torso.position.y.numerical_value_in(m),
+                kPositionTolerance);
+    EXPECT_NEAR(final_torso.position.z.numerical_value_in(m), initial_torso.position.z.numerical_value_in(m),
+                kPositionTolerance);
 }
 
 TEST_F(ClapGaitTest, BackLegsLiftDuringSequence) {
     CClapGait gait(node_, kinematics_, params_.clap);
     const auto initial_positions = kinematics_->getToePositions();
 
-    gait.start(3.0 * units::s, 0);
+    gait.start(3.0 * s, 0);
 
     bool right_back_lifted = false;
     bool left_back_lifted = false;
@@ -83,13 +88,13 @@ TEST_F(ClapGaitTest, BackLegsLiftDuringSequence) {
 
         // Check if right back leg was lifted
         if (current_positions.at(ELegIndex::RightBack).z >
-            initial_positions.at(ELegIndex::RightBack).z + 0.01 * units::m) {
+            initial_positions.at(ELegIndex::RightBack).z + 0.01 * m) {
             right_back_lifted = true;
         }
 
         // Check if left back leg was lifted
         if (current_positions.at(ELegIndex::LeftBack).z >
-            initial_positions.at(ELegIndex::LeftBack).z + 0.01 * units::m) {
+            initial_positions.at(ELegIndex::LeftBack).z + 0.01 * m) {
             left_back_lifted = true;
         }
     }
@@ -103,7 +108,7 @@ TEST_F(ClapGaitTest, FrontLegsPerformClapMovement) {
     const auto initial_left_angles = kinematics_->getLegAngles(ELegIndex::LeftFront);
     const auto initial_right_angles = kinematics_->getLegAngles(ELegIndex::RightFront);
 
-    gait.start(3.0 * units::s, 0);
+    gait.start(3.0 * s, 0);
 
     bool front_legs_moved_for_clap = false;
 
@@ -115,11 +120,10 @@ TEST_F(ClapGaitTest, FrontLegsPerformClapMovement) {
         const auto current_right_angles = kinematics_->getLegAngles(ELegIndex::RightFront);
 
         // Check if front legs moved their torso_coxa angles for clapping
-        const auto left_diff = mp_units::abs(current_left_angles.torso_coxa - initial_left_angles.torso_coxa);
-        const auto right_diff =
-            mp_units::abs(current_right_angles.torso_coxa - initial_right_angles.torso_coxa);
+        const auto left_diff = abs(current_left_angles.torso_coxa - initial_left_angles.torso_coxa);
+        const auto right_diff = abs(current_right_angles.torso_coxa - initial_right_angles.torso_coxa);
 
-        if (left_diff > 5.0 * units::deg || right_diff > 5.0 * units::deg) {
+        if (left_diff > 5.0 * deg || right_diff > 5.0 * deg) {
             front_legs_moved_for_clap = true;
         }
     }
@@ -131,7 +135,7 @@ TEST_F(ClapGaitTest, RequestStopReturnsToInitialState) {
     CClapGait gait(node_, kinematics_, params_.clap);
     const auto initial_torso = kinematics_->getTorsoPose();
 
-    gait.start(3.0 * units::s, 0);
+    gait.start(3.0 * s, 0);
 
     // Run for a few iterations
     for (int i = 0; i < 10; ++i) {
@@ -151,26 +155,28 @@ TEST_F(ClapGaitTest, RequestStopReturnsToInitialState) {
 
     // Verify torso returned to initial position
     const auto final_torso = kinematics_->getTorsoPose();
-    EXPECT_NEAR(final_torso.position.x.numerical_value_in(units::m),
-                initial_torso.position.x.numerical_value_in(units::m), kPositionTolerance);
+    EXPECT_NEAR(final_torso.position.x.numerical_value_in(m), initial_torso.position.x.numerical_value_in(m),
+                kPositionTolerance);
 }
 
 TEST_F(ClapGaitTest, ClapExcursionDoesNotAccumulateBetweenSamplesOrCycles) {
     kinematics_->moveTorso(kinematics_->getStandingToePositions());
     CClapGait gait(node_, kinematics_, params_.clap);
-    gait.start(3.0 * units::s, 0);
+    gait.start(3.0 * s, 0);
     for (int i = 0; i < 60; ++i) gait.update();
     const auto origin = kinematics_->getLegAngles(ELegIndex::LeftFront).torso_coxa;
     for (int cycle = 0; cycle < 3; ++cycle) {
         for (int i = 0; i < 5; ++i) {
             gait.update();
             const auto offset = kinematics_->getLegAngles(ELegIndex::LeftFront).torso_coxa - origin;
-            EXPECT_GE(offset, 0.0 * units::deg);
-            EXPECT_LE(offset, 30.0 * units::deg);
+            EXPECT_GE(offset, 0.0 * deg);
+            EXPECT_LE(offset, 30.0 * deg);
         }
         for (int i = 0; i < 5; ++i) gait.update();
-        EXPECT_NEAR((kinematics_->getLegAngles(ELegIndex::LeftFront).torso_coxa - origin)
-                        .numerical_value_in(units::deg),
-                    0.0, 1e-9);
+        EXPECT_NEAR(
+            (kinematics_->getLegAngles(ELegIndex::LeftFront).torso_coxa - origin).numerical_value_in(deg),
+            0.0, 1e-9);
     }
 }
+
+}  // namespace

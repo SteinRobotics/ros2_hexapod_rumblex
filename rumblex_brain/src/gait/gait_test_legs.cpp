@@ -8,6 +8,9 @@
 #include "gait/trajectory.hpp"
 
 namespace brain {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
 CTestLegsGait::CTestLegsGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics,
                              Parameters::TestLegs& params)
     : node_(std::move(node)), kinematics_(std::move(kinematics)), params_(params) {
@@ -20,8 +23,8 @@ void CTestLegsGait::start(units::Duration duration_s, uint8_t /*direction*/) {
     stage_ = Stage::Raise;
     stage_start_time_ = node_->now();
 
-    const auto requested = duration_s > 0.0 * units::s ? duration_s / 3.0 : default_stage_duration_;
-    stage_duration_ = std::max(requested, 1.0 * units::s);
+    const auto requested = duration_s > 0.0 * s ? duration_s / 3.0 : default_stage_duration_;
+    stage_duration_ = std::max(requested, 1.0 * s);
 
     state_ = hasCurrentLeg() ? EGaitState::Running : EGaitState::Stopped;
 }
@@ -32,8 +35,8 @@ bool CTestLegsGait::update() {
     }
 
     const auto now = node_->get_clock()->now();
-    const auto elapsed = std::max(0.0, (now - stage_start_time_).seconds()) * units::s;
-    const double progress = trajectoryProgress((elapsed / stage_duration_).numerical_value_in(mp_units::one));
+    const auto elapsed = std::max(0.0, (now - stage_start_time_).seconds()) * s;
+    const double progress = trajectoryProgress((elapsed / stage_duration_).numerical_value_in(one));
     const auto index = currentLeg();
     auto raised = base_leg_angles_.at(index);
     raised.torso_coxa += params_.torso_coxa_delta;

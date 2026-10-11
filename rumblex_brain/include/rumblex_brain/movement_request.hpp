@@ -4,6 +4,9 @@
 
 #include "rumblex_utils/units.hpp"
 namespace brain {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
 namespace units = rumblex_geometry::units;
 struct MovementRequest {
     enum Type : uint8_t {
@@ -30,7 +33,7 @@ struct MovementRequest {
     using _type_type = uint8_t;
     uint8_t type = NO_REQUEST;
     uint8_t direction = CLOCKWISE;
-    units::Duration duration_s = 1.0 * units::s;
+    units::Duration duration_s = 1.0 * s;
     std::string name;
 };
 }  // namespace brain

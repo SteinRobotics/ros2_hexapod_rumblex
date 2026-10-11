@@ -5,6 +5,10 @@
 #include "rclcpp/rclcpp.hpp"
 #include "test_helpers.hpp"
 
+namespace {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
 using namespace brain;
 
 namespace {
@@ -50,7 +54,7 @@ TEST_F(LegWaveGaitTest, LiftOccursDuringRun) {
     CLegWaveGait gait(node_, kinematics_, params_.leg_wave);
     const auto standing = kinematics_->getStandingToePositions();
 
-    gait.start(3.0 * units::s, 0);
+    gait.start(3.0 * s, 0);
 
     bool seen_lift = false;
     int iterations = 0;
@@ -61,7 +65,7 @@ TEST_F(LegWaveGaitTest, LiftOccursDuringRun) {
             const auto& idx = kv.first;
             const auto& base = kv.second;
             const auto& now = pos.at(idx);
-            if (now.z >= base.z + (0.5 * kLegLiftHeight * units::m)) {
+            if (now.z >= base.z + (0.5 * kLegLiftHeight * m)) {
                 seen_lift = true;
                 break;
             }
@@ -77,7 +81,7 @@ TEST_F(LegWaveGaitTest, StopRequestReturnsToNeutral) {
     CLegWaveGait gait(node_, kinematics_, params_.leg_wave);
     const auto standing = kinematics_->getStandingToePositions();
 
-    gait.start(3.0 * units::s, 0);
+    gait.start(3.0 * s, 0);
 
     for (int i = 0; i < 3; ++i) {
         gait.update();
@@ -97,9 +101,11 @@ TEST_F(LegWaveGaitTest, StopRequestReturnsToNeutral) {
         const auto& idx = kv.first;
         const auto& base = kv.second;
         const auto& now = final_pos.at(idx);
-        EXPECT_NEAR(now.x.numerical_value_in(units::m), base.x.numerical_value_in(units::m), kTolerance);
-        EXPECT_NEAR(now.y.numerical_value_in(units::m), base.y.numerical_value_in(units::m), kTolerance);
-        EXPECT_NEAR(now.z.numerical_value_in(units::m), base.z.numerical_value_in(units::m),
+        EXPECT_NEAR(now.x.numerical_value_in(m), base.x.numerical_value_in(m), kTolerance);
+        EXPECT_NEAR(now.y.numerical_value_in(m), base.y.numerical_value_in(m), kTolerance);
+        EXPECT_NEAR(now.z.numerical_value_in(m), base.z.numerical_value_in(m),
                     1e-2);  // allow slightly larger tolerance for IK/clamping
     }
 }
+
+}  // namespace

@@ -2,9 +2,13 @@
 
 #include "gait/trajectory.hpp"
 
-constexpr auto kPhaseLimit = TWO_PI * brain::units::rad;
+constexpr auto kPhaseLimit = TWO_PI * brain::rad;
 
 namespace brain {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::rad;
 
 CTorsoRollGait::CTorsoRollGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics,
                                Parameters::TorsoRoll& params)
@@ -12,40 +16,36 @@ CTorsoRollGait::CTorsoRollGait(std::shared_ptr<rclcpp::Node> node, std::shared_p
 }
 
 void CTorsoRollGait::start(units::Duration duration_s, uint8_t /*direction*/) {
-    duration_s = std::max(duration_s, 1.0 * units::s);
+    duration_s = std::max(duration_s, 1.0 * s);
     state_ = EGaitState::Starting;
-    phase_ = 0.0 * units::rad;
+    phase_ = 0.0 * rad;
     phase_rate_ = kPhaseLimit / duration_s;
     torso_origin_ = kinematics_->getTorsoPose();
     origin_leg_positions_ = kinematics_->getToePositions();
 }
 
 bool CTorsoRollGait::update() {
-    return updateTimed(0.1 * units::s);
+    return updateTimed(0.1 * s);
 }
 
 bool CTorsoRollGait::updateTimed(units::Duration elapsed_s) {
-    if (!mp_units::isfinite(elapsed_s) || elapsed_s <= 0.0 * units::s || elapsed_s > 0.5 * units::s)
-        return false;
+    if (!isfinite(elapsed_s) || elapsed_s <= 0.0 * s || elapsed_s > 0.5 * s) return false;
     if (state_ == EGaitState::Stopped) {
         return false;
     }
     phase_ = std::min<units::Angle>(phase_ + phase_rate_ * elapsed_s, kPhaseLimit);
-    if (phase_ >= kPhaseLimit - 1e-12 * units::rad) phase_ = kPhaseLimit;
-    const auto angle =
-        kPhaseLimit * trajectoryProgress((phase_ / kPhaseLimit).numerical_value_in(mp_units::one));
+    if (phase_ >= kPhaseLimit - 1e-12 * rad) phase_ = kPhaseLimit;
+    const auto angle = kPhaseLimit * trajectoryProgress((phase_ / kPhaseLimit).numerical_value_in(one));
     auto torso = torso_origin_;
     if (phase_ < kPhaseLimit) {
-        torso.orientation.roll +=
-            params_.torso_max_roll * mp_units::angular::sin(angle).numerical_value_in(mp_units::one);
-        torso.orientation.pitch += params_.torso_max_pitch *
-                                   (1.0 - mp_units::angular::cos(angle).numerical_value_in(mp_units::one)) *
-                                   0.5;
+        torso.orientation.roll += params_.torso_max_roll * angular::sin(angle).numerical_value_in(one);
+        torso.orientation.pitch +=
+            params_.torso_max_pitch * (1.0 - angular::cos(angle).numerical_value_in(one)) * 0.5;
     }
     kinematics_->moveTorso(origin_leg_positions_, torso);
     if (state_ == EGaitState::Starting) state_ = EGaitState::Running;
     if (phase_ >= kPhaseLimit) {
-        phase_ = 0.0 * units::rad;
+        phase_ = 0.0 * rad;
         if (state_ == EGaitState::StopPending) state_ = EGaitState::Stopped;
     }
     return true;

@@ -8,12 +8,17 @@
 #include "velocity.hpp"
 
 namespace brain {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::deg;
+using mp_units::angular::unit_symbols::rad;
 namespace units = rumblex_geometry::units;
 
 struct Parameters {
     struct TorsoRoll {
-        units::Angle torso_max_roll = 0.0 * units::deg;
-        units::Angle torso_max_pitch = 0.0 * units::deg;
+        units::Angle torso_max_roll = 0.0 * deg;
+        units::Angle torso_max_pitch = 0.0 * deg;
     };
 
     struct Clap {};
@@ -23,54 +28,54 @@ struct Parameters {
     struct HighFive {};
 
     struct LegWave {
-        units::Length leg_lift_height = 0.0 * units::m;
+        units::Length leg_lift_height = 0.0 * m;
     };
 
     struct Ripple {
-        units::Angle head_yaw_amplitude = 0.0 * units::deg;
-        units::Length gait_step_length = 0.0 * units::m;
-        units::Length leg_lift_height = 0.0 * units::m;
+        units::Angle head_yaw_amplitude = 0.0 * deg;
+        units::Length gait_step_length = 0.0 * m;
+        units::Length leg_lift_height = 0.0 * m;
     };
 
     struct Running {
-        units::Angle head_yaw_amplitude = 0.0 * units::deg;
-        units::Length gait_step_length = 0.0 * units::m;
-        units::Length leg_lift_height = 0.0 * units::m;
+        units::Angle head_yaw_amplitude = 0.0 * deg;
+        units::Length gait_step_length = 0.0 * m;
+        units::Length leg_lift_height = 0.0 * m;
         double rotation_weight{0.7};
     };
 
     struct Look {
-        units::Angle torso_max_yaw = 0.0 * units::deg;
-        units::Angle head_max_yaw = 0.0 * units::deg;
+        units::Angle torso_max_yaw = 0.0 * deg;
+        units::Angle head_max_yaw = 0.0 * deg;
     };
 
     struct SinglePose {
-        units::Angle head_max_pitch = 0.0 * units::deg;
+        units::Angle head_max_pitch = 0.0 * deg;
     };
 
     struct TestLegs {
-        units::Angle torso_coxa_delta = 0.0 * units::deg;
-        units::Angle coxa_femur_delta = 0.0 * units::deg;
-        units::Angle femur_tibia_delta = 0.0 * units::deg;
+        units::Angle torso_coxa_delta = 0.0 * deg;
+        units::Angle coxa_femur_delta = 0.0 * deg;
+        units::Angle femur_tibia_delta = 0.0 * deg;
     };
 
     struct Tripod {
-        units::Angle head_yaw_amplitude = 0.0 * units::deg;
-        units::Length gait_step_length = 0.0 * units::m;
-        units::Length leg_lift_height = 0.0 * units::m;
+        units::Angle head_yaw_amplitude = 0.0 * deg;
+        units::Length gait_step_length = 0.0 * m;
+        units::Length leg_lift_height = 0.0 * m;
     };
 
     struct Waiting {};
 
     struct Wave {
-        units::Angle head_yaw_amplitude = 0.0 * units::deg;
-        units::Length gait_step_length = 0.0 * units::m;
-        units::Length leg_lift_height = 0.0 * units::m;
+        units::Angle head_yaw_amplitude = 0.0 * deg;
+        units::Length gait_step_length = 0.0 * m;
+        units::Length leg_lift_height = 0.0 * m;
     };
 
     struct Watch {
-        units::Angle torso_max_yaw = 0.0 * units::deg;
-        units::Angle head_max_yaw = 0.0 * units::deg;
+        units::Angle torso_max_yaw = 0.0 * deg;
+        units::Angle head_max_yaw = 0.0 * deg;
     };
 
     struct MoveCombined {
@@ -78,8 +83,8 @@ struct Parameters {
         double velocity_threshold_ripple_tripod{0.6};
         double hysteresis_margin{0.05};
         double rotation_weight{0.7};
-        units::LinearVelocity max_linear_velocity = 0.01 * units::m / units::s;
-        units::AngularVelocity max_angular_velocity = 0.01 * units::rad / units::s;
+        units::LinearVelocity max_linear_velocity = 0.01 * m / s;
+        units::AngularVelocity max_angular_velocity = 0.01 * rad / s;
     };
 
     TorsoRoll torso_roll;
@@ -105,20 +110,17 @@ inline Parameters Parameters::declare(std::shared_ptr<rclcpp::Node> node) {
     Parameters params;
 
     // Generic Parameters
-    const auto torso_max_roll =
-        node->declare_parameter<double>("gait.generic.torso_max_roll_deg") * units::deg;
-    const auto torso_max_pitch =
-        node->declare_parameter<double>("gait.generic.torso_max_pitch_deg") * units::deg;
-    const auto head_max_yaw = node->declare_parameter<double>("gait.generic.head_max_yaw_deg") * units::deg;
-    const auto head_max_pitch =
-        node->declare_parameter<double>("gait.generic.head_max_pitch_deg") * units::deg;
+    const auto torso_max_roll = node->declare_parameter<double>("gait.generic.torso_max_roll_deg") * deg;
+    const auto torso_max_pitch = node->declare_parameter<double>("gait.generic.torso_max_pitch_deg") * deg;
+    const auto head_max_yaw = node->declare_parameter<double>("gait.generic.head_max_yaw_deg") * deg;
+    const auto head_max_pitch = node->declare_parameter<double>("gait.generic.head_max_pitch_deg") * deg;
 
-    const auto leg_lift_height = node->declare_parameter<double>("gait.generic.leg_lift_height_m") * units::m;
-    const auto step_length = node->declare_parameter<double>("gait.generic.step_length_m") * units::m;
+    const auto leg_lift_height = node->declare_parameter<double>("gait.generic.leg_lift_height_m") * m;
+    const auto step_length = node->declare_parameter<double>("gait.generic.step_length_m") * m;
 
-    if (!std::isfinite(step_length.numerical_value_in(units::m)) || step_length <= 0.0 * units::m)
+    if (!std::isfinite(step_length.numerical_value_in(m)) || step_length <= 0.0 * m)
         throw std::invalid_argument("gait.generic.step_length_m must be finite and positive");
-    if (!std::isfinite(leg_lift_height.numerical_value_in(units::m)) || leg_lift_height < 0.0 * units::m)
+    if (!std::isfinite(leg_lift_height.numerical_value_in(m)) || leg_lift_height < 0.0 * m)
         throw std::invalid_argument("gait.generic.leg_lift_height_m must be finite and nonnegative");
 
     // Torso Roll
@@ -126,27 +128,25 @@ inline Parameters Parameters::declare(std::shared_ptr<rclcpp::Node> node) {
     params.torso_roll.torso_max_pitch = torso_max_pitch;
 
     // Tripod
-    params.tripod.head_yaw_amplitude =
-        node->declare_parameter<double>("gait.tripod.head_max_yaw_deg") * units::deg;
+    params.tripod.head_yaw_amplitude = node->declare_parameter<double>("gait.tripod.head_max_yaw_deg") * deg;
     params.tripod.gait_step_length = step_length;
     params.tripod.leg_lift_height = leg_lift_height;
 
     // Running
     params.running.head_yaw_amplitude =
-        node->declare_parameter<double>("gait.running.head_max_yaw_deg", 5.0) * units::deg;
+        node->declare_parameter<double>("gait.running.head_max_yaw_deg", 5.0) * deg;
     params.running.gait_step_length = step_length;
     params.running.leg_lift_height = leg_lift_height;
     params.running.rotation_weight = node->declare_parameter<double>("gait.running.rotation_weight", 0.7);
 
     // Ripple
     params.ripple.head_yaw_amplitude =
-        node->declare_parameter<double>("gait.ripple.head_max_yaw_deg", 10.0) * units::deg;
+        node->declare_parameter<double>("gait.ripple.head_max_yaw_deg", 10.0) * deg;
     params.ripple.gait_step_length = step_length;
     params.ripple.leg_lift_height = leg_lift_height;
 
     // Wave
-    params.wave.head_yaw_amplitude =
-        node->declare_parameter<double>("gait.wave.head_max_yaw_deg", 8.0) * units::deg;
+    params.wave.head_yaw_amplitude = node->declare_parameter<double>("gait.wave.head_max_yaw_deg", 8.0) * deg;
     params.wave.gait_step_length = step_length;
     params.wave.leg_lift_height = leg_lift_height;
 
@@ -154,15 +154,14 @@ inline Parameters Parameters::declare(std::shared_ptr<rclcpp::Node> node) {
     params.single_pose.head_max_pitch = head_max_pitch;
 
     // Leg Wave
-    params.leg_wave.leg_lift_height =
-        node->declare_parameter<double>("gait.leg_wave.leg_lift_height_m") * units::m;
+    params.leg_wave.leg_lift_height = node->declare_parameter<double>("gait.leg_wave.leg_lift_height_m") * m;
 
     // Look
-    params.look.torso_max_yaw = node->declare_parameter<double>("gait.look.torso_max_yaw_deg") * units::deg;
-    params.look.head_max_yaw = node->declare_parameter<double>("gait.look.head_max_yaw_deg") * units::deg;
+    params.look.torso_max_yaw = node->declare_parameter<double>("gait.look.torso_max_yaw_deg") * deg;
+    params.look.head_max_yaw = node->declare_parameter<double>("gait.look.head_max_yaw_deg") * deg;
 
     // Watch
-    params.watch.torso_max_yaw = node->declare_parameter<double>("gait.watch.torso_max_yaw_deg") * units::deg;
+    params.watch.torso_max_yaw = node->declare_parameter<double>("gait.watch.torso_max_yaw_deg") * deg;
     params.watch.head_max_yaw = head_max_yaw;
 
     // MoveCombined
@@ -174,15 +173,13 @@ inline Parameters Parameters::declare(std::shared_ptr<rclcpp::Node> node) {
         node->declare_parameter<double>("gait.move_combined.hysteresis_margin", 0.05);
     params.move_combined.rotation_weight =
         node->declare_parameter<double>("gait.move_combined.rotation_weight", 0.7);
-    params.move_combined.max_linear_velocity =
-        velocityLimit<units::m / units::s>(node, "max_velocity_linear");
-    params.move_combined.max_angular_velocity =
-        velocityLimit<units::rad / units::s>(node, "max_velocity_rotation");
+    params.move_combined.max_linear_velocity = velocityLimit<m / s>(node, "max_velocity_linear");
+    params.move_combined.max_angular_velocity = velocityLimit<rad / s>(node, "max_velocity_rotation");
     for (const auto& [name, limit] :
          {std::pair{"gait.move_combined.max_linear_velocity_m_s",
-                    params.move_combined.max_linear_velocity.numerical_value_in(units::m / units::s)},
+                    params.move_combined.max_linear_velocity.numerical_value_in(m / s)},
           std::pair{"gait.move_combined.max_angular_velocity_rad_s",
-                    params.move_combined.max_angular_velocity.numerical_value_in(units::rad / units::s)}}) {
+                    params.move_combined.max_angular_velocity.numerical_value_in(rad / s)}}) {
         const double alias = node->declare_parameter<double>(name, limit);
         if (!std::isfinite(alias) || std::abs(alias - limit) > 1e-12)
             throw std::invalid_argument(std::string(name) + " must match the authoritative velocity limit");
@@ -199,11 +196,11 @@ inline Parameters Parameters::declare(std::shared_ptr<rclcpp::Node> node) {
 
     // Test Legs
     params.test_legs.torso_coxa_delta =
-        node->declare_parameter<double>("gait.test_legs.torso_coxa_delta_deg") * units::deg;
+        node->declare_parameter<double>("gait.test_legs.torso_coxa_delta_deg") * deg;
     params.test_legs.coxa_femur_delta =
-        node->declare_parameter<double>("gait.test_legs.coxa_femur_delta_deg") * units::deg;
+        node->declare_parameter<double>("gait.test_legs.coxa_femur_delta_deg") * deg;
     params.test_legs.femur_tibia_delta =
-        node->declare_parameter<double>("gait.test_legs.femur_tibia_delta_deg") * units::deg;
+        node->declare_parameter<double>("gait.test_legs.femur_tibia_delta_deg") * deg;
 
     return params;
 }

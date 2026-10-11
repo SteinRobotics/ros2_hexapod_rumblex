@@ -8,6 +8,11 @@
 #include "test_helpers.hpp"
 #include "velocity.hpp"
 
+namespace {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::rad;
 using namespace brain;
 
 class VelocityTest : public ::testing::Test {
@@ -43,12 +48,12 @@ TEST_F(VelocityTest, FullSingleAxisDemandSelectsTripodImmediately) {
     for (int axis : {0, 1, 2}) {
         for (double sign : {-1.0, 1.0}) {
             auto walking = gait();
-            walking.start(0.0 * units::s, 0);
+            walking.start(0.0 * s, 0);
             Velocity command;
-            if (axis == 0) command.linear.x = (sign * 0.1) * units::m / units::s;
-            if (axis == 1) command.linear.y = (sign * 0.1) * units::m / units::s;
-            if (axis == 2) command.angular.z = (sign * 0.4) * units::rad / units::s;
-            walking.updateTimed(command, CPose(), COrientation(), 0.02 * units::s);
+            if (axis == 0) command.linear.x = (sign * 0.1) * m / s;
+            if (axis == 1) command.linear.y = (sign * 0.1) * m / s;
+            if (axis == 2) command.angular.z = (sign * 0.4) * rad / s;
+            walking.updateTimed(command, CPose(), COrientation(), 0.02 * s);
             EXPECT_EQ(walking.activeGaitType(), EMoveCombinedGaitType::Tripod);
         }
     }
@@ -59,16 +64,14 @@ TEST_F(VelocityTest, LateralCommandMovesSwingWithBodyAndStanceAgainstBody) {
         model->moveTorso(model->getStandingToePositions());
         const auto before = model->getToePositions();
         auto walking = gait();
-        walking.start(0.0 * units::s, 0);
+        walking.start(0.0 * s, 0);
         Velocity command;
-        command.linear.y = (sign * 0.01) * units::m / units::s;
-        ASSERT_TRUE(walking.updateTimed(command, CPose(), COrientation(), 0.02 * units::s));
+        command.linear.y = (sign * 0.01) * m / s;
+        ASSERT_TRUE(walking.updateTimed(command, CPose(), COrientation(), 0.02 * s));
         ASSERT_EQ(walking.activeGaitType(), EMoveCombinedGaitType::Wave);
         const auto after = model->getToePositions();
-        EXPECT_GT(sign * (after.at(ELegIndex::RightBack).y - before.at(ELegIndex::RightBack).y),
-                  0.0 * units::m);
-        EXPECT_LT(sign * (after.at(ELegIndex::RightFront).y - before.at(ELegIndex::RightFront).y),
-                  0.0 * units::m);
+        EXPECT_GT(sign * (after.at(ELegIndex::RightBack).y - before.at(ELegIndex::RightBack).y), 0.0 * m);
+        EXPECT_LT(sign * (after.at(ELegIndex::RightFront).y - before.at(ELegIndex::RightFront).y), 0.0 * m);
     }
 }
 
@@ -77,30 +80,28 @@ TEST_F(VelocityTest, RotationCommandKeepsStanceFootFixedInWorld) {
         model->moveTorso(model->getStandingToePositions());
         const auto before = model->getToePositions().at(ELegIndex::RightFront);
         auto walking = gait();
-        walking.start(0.0 * units::s, 0);
+        walking.start(0.0 * s, 0);
         Velocity command;
-        command.angular.z = (sign * 0.04) * units::rad / units::s;
-        ASSERT_TRUE(walking.updateTimed(command, CPose(), COrientation(), 0.02 * units::s));
+        command.angular.z = (sign * 0.04) * rad / s;
+        ASSERT_TRUE(walking.updateTimed(command, CPose(), COrientation(), 0.02 * s));
         ASSERT_EQ(walking.activeGaitType(), EMoveCombinedGaitType::Wave);
         const auto after = model->getToePositions().at(ELegIndex::RightFront);
-        const double cross =
-            (before.x * after.y - before.y * after.x).numerical_value_in(units::m * units::m);
+        const double cross = (before.x * after.y - before.y * after.x).numerical_value_in(m * m);
         // Clockwise body rotation (negative Z) requires anticlockwise stance motion.
         EXPECT_LT(sign * cross, 0.0);
-        EXPECT_NEAR(std::hypot(after.x.numerical_value_in(units::m), after.y.numerical_value_in(units::m)),
-                    std::hypot(before.x.numerical_value_in(units::m), before.y.numerical_value_in(units::m)),
-                    1e-12);
+        EXPECT_NEAR(std::hypot(after.x.numerical_value_in(m), after.y.numerical_value_in(m)),
+                    std::hypot(before.x.numerical_value_in(m), before.y.numerical_value_in(m)), 1e-12);
     }
 }
 
 TEST_F(VelocityTest, ThresholdsHysteresisAndLargeChangesUseContactBoundaries) {
     auto walking = gait();
-    walking.start(0.0 * units::s, 0);
+    walking.start(0.0 * s, 0);
     auto demand = [&](double value) {
         Velocity command;
-        command.linear.y = (value * 0.1) * units::m / units::s;
+        command.linear.y = (value * 0.1) * m / s;
         // One second is the upper bound on a segment; two seconds crosses it.
-        for (int i = 0; i < 100; ++i) walking.updateTimed(command, CPose(), COrientation(), 0.02 * units::s);
+        for (int i = 0; i < 100; ++i) walking.updateTimed(command, CPose(), COrientation(), 0.02 * s);
         return walking.activeGaitType();
     };
     EXPECT_EQ(demand(0.1), EMoveCombinedGaitType::Wave);
@@ -115,16 +116,16 @@ TEST_F(VelocityTest, ThresholdsHysteresisAndLargeChangesUseContactBoundaries) {
 
 TEST_F(VelocityTest, MaximumRequestCompletesSlowSwingBeforeSelectingTripodWithinOneSecond) {
     auto walking = gait();
-    walking.start(0.0 * units::s, 0);
+    walking.start(0.0 * s, 0);
     Velocity command;
-    command.linear.y = 0.001 * units::m / units::s;
-    for (int i = 0; i < 4; ++i) walking.updateTimed(command, CPose(), COrientation(), 0.02 * units::s);
-    command.linear.y = 0.1 * units::m / units::s;
-    walking.updateTimed(command, CPose(), COrientation(), 0.02 * units::s);
+    command.linear.y = 0.001 * m / s;
+    for (int i = 0; i < 4; ++i) walking.updateTimed(command, CPose(), COrientation(), 0.02 * s);
+    command.linear.y = 0.1 * m / s;
+    walking.updateTimed(command, CPose(), COrientation(), 0.02 * s);
     EXPECT_EQ(walking.activeGaitType(), EMoveCombinedGaitType::Wave);
     int ticks = 1;
     while (walking.activeGaitType() != EMoveCombinedGaitType::Tripod && ticks < 50) {
-        walking.updateTimed(command, CPose(), COrientation(), 0.02 * units::s);
+        walking.updateTimed(command, CPose(), COrientation(), 0.02 * s);
         ++ticks;
     }
     EXPECT_EQ(walking.activeGaitType(), EMoveCombinedGaitType::Tripod);
@@ -146,18 +147,18 @@ TEST(VelocityLimits, PlanarMagnitudeDirectionUnitsAndInvalidCommands) {
     input.linear.x = 0.3;
     input.linear.y = -0.4;
     input.angular.z = 0.1;
-    ASSERT_TRUE(limitVelocity(input, 0.1 * units::m / units::s, 0.02 * units::rad / units::s, output));
-    EXPECT_NEAR(output.linear.x.numerical_value_in(units::m / units::s), 0.06, 1e-12);
-    EXPECT_NEAR(output.linear.y.numerical_value_in(units::m / units::s), -0.08, 1e-12);
-    EXPECT_DOUBLE_EQ(output.angular.z.numerical_value_in(units::rad / units::s), 0.02);
+    ASSERT_TRUE(limitVelocity(input, 0.1 * m / s, 0.02 * rad / s, output));
+    EXPECT_NEAR(output.linear.x.numerical_value_in(m / s), 0.06, 1e-12);
+    EXPECT_NEAR(output.linear.y.numerical_value_in(m / s), -0.08, 1e-12);
+    EXPECT_DOUBLE_EQ(output.angular.z.numerical_value_in(rad / s), 0.02);
     input.linear.x = 0.01;
     input.linear.y = 0.0;
     input.angular.z = -0.01;
-    ASSERT_TRUE(limitVelocity(input, 0.1 * units::m / units::s, 0.02 * units::rad / units::s, output));
-    EXPECT_DOUBLE_EQ(output.linear.x.numerical_value_in(units::m / units::s), 0.01);
-    EXPECT_DOUBLE_EQ(output.angular.z.numerical_value_in(units::rad / units::s), -0.01);
+    ASSERT_TRUE(limitVelocity(input, 0.1 * m / s, 0.02 * rad / s, output));
+    EXPECT_DOUBLE_EQ(output.linear.x.numerical_value_in(m / s), 0.01);
+    EXPECT_DOUBLE_EQ(output.angular.z.numerical_value_in(rad / s), -0.01);
     input.linear.y = std::numeric_limits<double>::quiet_NaN();
-    EXPECT_FALSE(limitVelocity(input, 0.1 * units::m / units::s, 0.02 * units::rad / units::s, output));
+    EXPECT_FALSE(limitVelocity(input, 0.1 * m / s, 0.02 * rad / s, output));
 }
 
 // Recover body displacement solely from common supporting feet, independent of commands.
@@ -168,11 +169,11 @@ std::array<double, 3> displacement(const std::map<ELegIndex, CPosition>& previou
     double ax = 0.0, ay = 0.0, bx = 0.0, by = 0.0;
     for (const auto& [index, a] : previous) {
         const auto& b = current.at(index);
-        if (std::abs((a.z - standing.at(index).z).numerical_value_in(units::m)) > 1e-6 ||
-            std::abs((b.z - standing.at(index).z).numerical_value_in(units::m)) > 1e-6)
+        if (std::abs((a.z - standing.at(index).z).numerical_value_in(m)) > 1e-6 ||
+            std::abs((b.z - standing.at(index).z).numerical_value_in(m)) > 1e-6)
             continue;
-        const std::array pair = {a.x.numerical_value_in(units::m), a.y.numerical_value_in(units::m),
-                                 b.x.numerical_value_in(units::m), b.y.numerical_value_in(units::m)};
+        const std::array pair = {a.x.numerical_value_in(m), a.y.numerical_value_in(m),
+                                 b.x.numerical_value_in(m), b.y.numerical_value_in(m)};
         pairs.push_back(pair);
         ax += pair[0];
         ay += pair[1];
@@ -219,20 +220,20 @@ TEST_F(VelocityTest, SupportingFootMotionMatchesPhysicalCommandsAndElapsedTime) 
                     walking = std::make_unique<CRunningGait>(node, model, params.running);
                 else
                     walking = std::make_unique<CMoveCombinedGait>(gait());
-                walking->start(0.0 * units::s, 0);
+                walking->start(0.0 * s, 0);
                 Velocity command;
-                command.linear.x = values[0] * units::m / units::s;
-                command.linear.y = values[1] * units::m / units::s;
-                command.angular.z = values[2] * units::rad / units::s;
+                command.linear.x = values[0] * m / s;
+                command.linear.y = values[1] * m / s;
+                command.angular.z = values[2] * rad / s;
                 // Warm up enough for every foot to complete its first swing.
                 for (int i = 0; i < 600; ++i)
-                    walking->updateTimed(command, CPose(), COrientation(), 0.02 * units::s);
+                    walking->updateTimed(command, CPose(), COrientation(), 0.02 * s);
                 std::array<double, 3> sum{};
                 double time = 0.0;
                 for (int i = 0; i < 3000; ++i) {
                     const double dt = jitter ? (i % 2 ? 0.025 : 0.015) : 0.02;
                     const auto previous = model->getToePositions();
-                    walking->updateTimed(command, CPose(), COrientation(), dt * units::s);
+                    walking->updateTimed(command, CPose(), COrientation(), dt * s);
                     const auto delta =
                         displacement(previous, model->getToePositions(), model->getStandingToePositions());
                     // Convert each finite body-frame displacement back to twist integrals.
@@ -254,29 +255,31 @@ TEST_F(VelocityTest, SupportingFootMotionMatchesPhysicalCommandsAndElapsedTime) 
 
 TEST_F(VelocityTest, InvalidElapsedTimeHoldsPoseAndDoesNotCatchUpAcrossGap) {
     auto walking = gait();
-    walking.start(0.0 * units::s, 0);
+    walking.start(0.0 * s, 0);
     Velocity command;
-    command.linear.y = 0.1 * units::m / units::s;
-    walking.updateTimed(command, CPose(), COrientation(), 0.02 * units::s);
+    command.linear.y = 0.1 * m / s;
+    walking.updateTimed(command, CPose(), COrientation(), 0.02 * s);
     const auto before = model->getToePositions();
     for (double dt : {0.0, -0.01, 1.0, std::numeric_limits<double>::quiet_NaN()}) {
-        EXPECT_FALSE(walking.updateTimed(command, CPose(), COrientation(), dt * units::s));
+        EXPECT_FALSE(walking.updateTimed(command, CPose(), COrientation(), dt * s));
         EXPECT_EQ(model->getToePositions(), before);
     }
-    EXPECT_TRUE(walking.updateTimed(command, CPose(), COrientation(), 0.02 * units::s));
+    EXPECT_TRUE(walking.updateTimed(command, CPose(), COrientation(), 0.02 * s));
 }
 
 TEST_F(VelocityTest, IdleThresholdsUseIndependentPhysicalDimensions) {
     for (bool angular : {false, true}) {
         for (double speed : {0.0, 0.5e-6, 1e-6, 2e-6}) {
             auto walking = gait();
-            walking.start(0.0 * units::s, 0);
+            walking.start(0.0 * s, 0);
             Velocity command;
             if (angular)
-                command.angular.z = speed * units::rad / units::s;
+                command.angular.z = speed * rad / s;
             else
-                command.linear.x = speed * units::m / units::s;
-            EXPECT_EQ(walking.updateTimed(command, CPose(), COrientation(), 0.02 * units::s), speed >= 1e-6);
+                command.linear.x = speed * m / s;
+            EXPECT_EQ(walking.updateTimed(command, CPose(), COrientation(), 0.02 * s), speed >= 1e-6);
         }
     }
 }
+
+}  // namespace

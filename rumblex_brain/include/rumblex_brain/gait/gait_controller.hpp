@@ -33,6 +33,9 @@
 
 namespace brain {
 
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+
 class CGaitController {
    public:
     CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics);
@@ -60,7 +63,7 @@ class CGaitController {
 
     bool updateSelectedGait(const Velocity& velocity, CPose torso = CPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
                             COrientation head = COrientation(0.0, 0.0, 0.0),
-                            units::Duration elapsed_s = 0.1 * units::s);
+                            units::Duration elapsed_s = 0.1 * s);
     void requestStopSelectedGait();
 
    private:

@@ -12,6 +12,12 @@
 #include "rclcpp/rclcpp.hpp"
 #include "test_helpers.hpp"
 
+namespace {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::deg;
+using mp_units::angular::unit_symbols::rad;
 using namespace brain;
 using MovementRequestMsg = brain::MovementRequest;
 
@@ -46,18 +52,18 @@ class GaitControllerTest : public ::testing::Test {
 
     Velocity createZeroVelocity() {
         Velocity vel;
-        vel.linear.x = 0.0 * units::m / units::s;
-        vel.linear.y = 0.0 * units::m / units::s;
-        vel.linear.z = 0.0 * units::m / units::s;
-        vel.angular.x = 0.0 * units::rad / units::s;
-        vel.angular.y = 0.0 * units::rad / units::s;
-        vel.angular.z = 0.0 * units::rad / units::s;
+        vel.linear.x = 0.0 * m / s;
+        vel.linear.y = 0.0 * m / s;
+        vel.linear.z = 0.0 * m / s;
+        vel.angular.x = 0.0 * rad / s;
+        vel.angular.y = 0.0 * rad / s;
+        vel.angular.z = 0.0 * rad / s;
         return vel;
     }
 
     Velocity createForwardVelocity() {
         Velocity vel = createZeroVelocity();
-        vel.linear.x = 0.1 * units::m / units::s;
+        vel.linear.x = 0.1 * m / s;
         return vel;
     }
 
@@ -431,16 +437,11 @@ TEST_F(GaitControllerTest, CancellationDiscardsPendingSwitch) {
     EXPECT_FALSE(controller_->moving());
 }
 
-int main(int argc, char** argv) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
-
 TEST_F(GaitControllerTest, FixedPosesPreserveRequestsAndIgnoreLivePoseTargets) {
     for (const auto type : {MovementRequestMsg::SEQUENCE_STAND_UP, MovementRequestMsg::SEQUENCE_LAYDOWN}) {
         MovementRequest request;
         request.type = type;
-        request.duration_s = 0.2 * units::s;
+        request.duration_s = 0.2 * s;
         controller_->setGait(request);
         EXPECT_EQ(controller_->currentGait(), type);
         const CPose unrelated_pose(0.01, 0.02, 0.03, 0.0, 0.0, 0.0);
@@ -457,8 +458,7 @@ TEST_F(GaitControllerTest, FixedPosesPreserveRequestsAndIgnoreLivePoseTargets) {
         const double pitch = type == MovementRequestMsg::SEQUENCE_STAND_UP
                                  ? 0.0
                                  : -node_->get_parameter("gait.generic.head_max_pitch_deg").as_double();
-        EXPECT_EQ(kinematics_->getHeadOrientation(),
-                  COrientation(0.0 * units::deg, pitch * units::deg, 0.0 * units::deg));
+        EXPECT_EQ(kinematics_->getHeadOrientation(), COrientation(0.0 * deg, pitch * deg, 0.0 * deg));
     }
 }
 
@@ -466,7 +466,7 @@ TEST_F(GaitControllerTest, SinglePoseEnforcesMinimumTrajectoryDuration) {
     for (const double duration : {0.0, 0.2, 0.5}) {
         MovementRequest request;
         request.type = MovementRequestMsg::SINGLE_POSE;
-        request.duration_s = duration * units::s;
+        request.duration_s = duration * s;
         controller_->setGait(request);
         const CPose target(0.01, 0.0, 0.0, 0.0, 0.0, 0.0);
         const COrientation head(0.0, 0.1, 0.0);
@@ -499,4 +499,11 @@ TEST_F(GaitControllerTest, ReselectingContinuousPoseCancelsPendingSwitchAndKeeps
     EXPECT_GT(kinematics_->getTorsoPose().position.x, previous_x);
     EXPECT_TRUE(controller_->updateSelectedGait(createZeroVelocity(), target, head));
     EXPECT_EQ(controller_->currentGait(), MovementRequest::CONTINUOUS_POSE);
+}
+
+}  // namespace
+
+int main(int argc, char** argv) {
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

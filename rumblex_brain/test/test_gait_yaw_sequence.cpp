@@ -9,6 +9,11 @@
 #include "rumblex_utils/body_pose.hpp"
 #include "test_helpers.hpp"
 
+namespace {
+
+using namespace mp_units;
+using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::deg;
 using namespace brain;
 
 class YawSequenceTest : public ::testing::TestWithParam<std::tuple<bool, uint8_t>> {
@@ -26,7 +31,7 @@ class YawSequenceTest : public ::testing::TestWithParam<std::tuple<bool, uint8_t
                                                       params.look.head_max_yaw, params.look.torso_max_yaw);
         else
             gait = std::make_unique<CYawSequenceGait>(node, model, CYawSequenceGait::Sweep::BothSides,
-                                                      params.watch.head_max_yaw, 0.0 * units::deg);
+                                                      params.watch.head_max_yaw, 0.0 * deg);
     }
     void TearDown() override {
         gait.reset();
@@ -53,7 +58,7 @@ TEST_P(YawSequenceTest, ExcursionPreservesPoseComponentsAndReturnsExactlyToOrigi
     const auto origin = bodyPose(*model);
     const double sign = direction() == MovementRequest::CLOCKWISE ? -1.0 : 1.0;
     EXPECT_FALSE(gait->update());
-    gait->start(2.0 * units::s, direction());
+    gait->start(2.0 * s, direction());
     EXPECT_EQ(bodyPose(*model), origin);
     double peak = 0.0, minimum = 0.0;
     for (int tick = 1; tick <= 20; ++tick) {
@@ -97,7 +102,7 @@ TEST_P(YawSequenceTest, DurationClampsAndCompletesOnFirstTickAtOrAfterEndpoint) 
         SCOPED_TRACE(duration);
         resetPose();
         const auto origin = bodyPose(*model);
-        gait->start(duration * units::s, direction());
+        gait->start(duration * s, direction());
         const int ticks = static_cast<int>(std::ceil(std::max(duration, 1.0) / 0.1));
         for (int i = 1; i <= ticks; ++i) {
             ASSERT_TRUE(gait->update());
@@ -109,7 +114,7 @@ TEST_P(YawSequenceTest, DurationClampsAndCompletesOnFirstTickAtOrAfterEndpoint) 
 
 TEST_P(YawSequenceTest, StopRequestsFinishExcursionAndRestartCapturesNewOrigin) {
     const auto origin = bodyPose(*model);
-    gait->start(1.0 * units::s, direction());
+    gait->start(1.0 * s, direction());
     for (int i = 0; i < 3; ++i) ASSERT_TRUE(gait->update());
     const auto in_flight = bodyPose(*model);
     gait->requestStop();
@@ -126,7 +131,7 @@ TEST_P(YawSequenceTest, StopRequestsFinishExcursionAndRestartCapturesNewOrigin) 
     const auto new_origin = bodyPose(*model);
     const uint8_t opposite = direction() == MovementRequest::CLOCKWISE ? MovementRequest::ANTICLOCKWISE
                                                                        : MovementRequest::CLOCKWISE;
-    gait->start(1.0 * units::s, opposite);
+    gait->start(1.0 * s, opposite);
     EXPECT_EQ(bodyPose(*model), new_origin);
     ASSERT_TRUE(gait->update());
     const double sign = opposite == MovementRequest::CLOCKWISE ? -1.0 : 1.0;
@@ -141,3 +146,5 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Combine(::testing::Bool(),
                        ::testing::Values(static_cast<uint8_t>(MovementRequest::CLOCKWISE),
                                          static_cast<uint8_t>(MovementRequest::ANTICLOCKWISE))));
+
+}  // namespace
