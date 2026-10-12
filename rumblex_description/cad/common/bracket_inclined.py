@@ -129,9 +129,9 @@ def build_bracket() -> Part:
     plate = top_plate_solid()  # already positioned/tilted in global coords
  
     with BuildPart() as bracket:
-        add(plate)
-        add(leg.locate(Location((-PLATE_W / 2, -PLATE_D / 2, 0))))
-        add(leg.locate(Location((PLATE_W / 2 - LEG_T, -PLATE_D / 2, 0))))
+        insert(plate)
+        insert(leg.locate(Location((-PLATE_W / 2, -PLATE_D / 2, 0))))
+        insert(leg.locate(Location((PLATE_W / 2 - LEG_T, -PLATE_D / 2, 0))))
 
         RigidJoint("plate_mount", joint_location=Location(PLATE_PLANE.offset(PLATE_T)))
 

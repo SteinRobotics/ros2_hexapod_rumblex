@@ -25,7 +25,7 @@ from build123d import (
     Plane,
     Polygon,
     Sketch,
-    add,
+    insert,
     extrude,
     RevoluteJoint,
     Axis,
@@ -132,7 +132,7 @@ def build_cutout_surface() -> Sketch:
 def build_cutout_model(surface: Sketch) -> Part:
     """Extrude a cutout preview sketch into a sample plate."""
     with BuildPart() as model:
-        add(surface)
+        insert(surface)
         extrude(amount=CUTOUT_PREVIEW_THICKNESS)
 
     return model.part

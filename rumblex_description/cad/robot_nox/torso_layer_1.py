@@ -15,7 +15,7 @@ import robot_nox.torso_common as torso_common
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
-        add(torso_common.build_surface())
+        insert(torso_common.build_surface())
 
         for points in torso_common.SERVO_BACK_CUTOUTS.values():
             Polygon(*points, align=None, mode=Mode.SUBTRACT)
@@ -29,7 +29,7 @@ def build_surface() -> Sketch:
 
 def build_model(surface: Sketch) -> Part:
     with BuildPart() as model:
-        add(surface)
+        insert(surface)
         extrude(amount=torso_common.THICKNESS)
 
     return model.part

@@ -19,7 +19,7 @@ from build123d import (
     Part,
     Polygon,
     Sketch,
-    add,
+    insert,
     export_step,
     extrude,
 )
@@ -34,7 +34,7 @@ from robot_nira.foot_common import build_surface as build_common_surface
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
-        add(build_common_surface())
+        insert(build_common_surface())
         Polygon(*SERVO_BACK_CUTOUT, align=None, mode=Mode.SUBTRACT)
 
         for x, y, radius in SERVO_BRACKET_HOLES:
@@ -45,7 +45,7 @@ def build_surface() -> Sketch:
 
 def build_model(surface: Sketch) -> Part:
     with BuildPart() as model:
-        add(surface)
+        insert(surface)
         extrude(amount=THICKNESS)
 
     return model.part

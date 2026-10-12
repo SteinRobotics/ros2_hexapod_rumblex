@@ -16,7 +16,7 @@ from robot_nox import EXPORT_DIR
 
 from build123d import (
     BuildPart, BuildSketch, Compound, ExportDXF, Locations, Part, Pos,
-    Rectangle, Rot, Sketch, add, export_step, extrude,
+    Rectangle, Rot, Sketch, insert, export_step, extrude,
 )
 
 import robot_nox.torso_common as torso_common
@@ -69,7 +69,7 @@ def build_surface(height: float, side: bool = False) -> Sketch:
 
 def build_model(surface: Sketch) -> Part:
     with BuildPart() as model:
-        add(surface)
+        insert(surface)
         extrude(amount=THICKNESS)
     return model.part
 

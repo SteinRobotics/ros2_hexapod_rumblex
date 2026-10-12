@@ -19,7 +19,7 @@ from build123d import (
     Rectangle,
     Sketch,
     Sphere,
-    add,
+    insert,
     extrude,
 )
 
@@ -118,7 +118,7 @@ def build_surface() -> Sketch:
 
 def build_model(surface: Sketch) -> Part:
     with BuildPart() as model:
-        add(surface)
+        insert(surface)
         extrude(amount=THICKNESS)
 
     return model.part

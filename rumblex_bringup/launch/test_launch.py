@@ -100,7 +100,7 @@ def generate_launch_description():
                 FindPackageShare('rumblex_navigation'), 'maps', 'house_contour.yaml']),
             description='Occupancy map YAML file'),
         DeclareLaunchArgument(
-            'wall_height', default_value='2.0',
+            'wall_height', default_value='1.0',
             description='Height of occupied map walls in metres'),
         DeclareLaunchArgument(
             'simulate_lidar', default_value='true',

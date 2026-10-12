@@ -97,11 +97,11 @@ def place_board_holes(
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
-        add(torso_common.base_plate)
+        insert(torso_common.base_plate)
 
         for pos in OCTAGON_POSITIONS:
             with Locations(pos):
-                add(chamfered_octagon(55, 55, 4))
+                insert(chamfered_octagon(55, 55, 4))
 
         for loc in torso_common.hole_locations:
             with Locations(loc):
@@ -158,7 +158,7 @@ def build_surface() -> Sketch:
 
 def build_model(surface: Sketch) -> Part:
     with BuildPart() as model:
-        add(surface)
+        insert(surface)
         extrude(amount=torso_common.THICKNESS)
     return model.part
 

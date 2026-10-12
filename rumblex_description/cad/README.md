@@ -123,7 +123,8 @@ DXFs under `generated/nira/dxf/dxf_1p5mm/lidar_interface_housing/`.
 Fits are nominal, without kerf allowance; interface dimensions remain
 photo-based estimates pending hardware measurement.
 
-The rear layer-3 frame ends at X=0; the cream layer-4 roof ends at X=80 mm.
+The layer-3 support frame ends at X=15 mm, where the layer-4 roof's triangular
+tip begins; the cream layer-4 roof ends at X=80 mm.
 The upper spacers are 50 mm long, placing the frame underside at Z=101.5 mm
 and roof underside at Z=103 mm. The roof has 2.1 mm vertical clearance above
 the scanner envelope. The frame is behind the scanner, so its physical

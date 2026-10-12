@@ -20,7 +20,7 @@ from build123d import (
     Part,
     Polygon,
     Sketch,
-    add,
+    insert,
     export_step,
     extrude,
 )
@@ -32,9 +32,9 @@ from utils.ocp_utils import show
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
-        add(canopy_surface())
+        insert(canopy_surface())
         # Paired swept gills leave a solid central spine and a perimeter rim.
-        for x in (-78, -62, -46, -30):
+        for x in (-60, -44, -28, -12):
             for side in (-1, 1):
                 Polygon((x - 5, side * 12), (x + 2, side * 12),
                         (x - 16, side * 39), (x - 23, side * 39),
@@ -49,7 +49,7 @@ def build_surface() -> Sketch:
 
 def build_model(surface: Sketch) -> Part:
     with BuildPart() as model:
-        add(surface)
+        insert(surface)
         extrude(amount=torso_common.THICKNESS)
 
     return model.part

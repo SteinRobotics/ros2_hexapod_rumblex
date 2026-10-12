@@ -14,6 +14,7 @@ LIDAR_ASSEMBLY_X = LIDAR_X + 13.0
 LOW_RAIL_HEIGHT = 8.0
 CANOPY_TIP_X = LIDAR_X
 CANOPY_HALF_WIDTH = torso_common.rect_h / 2
+CANOPY_SHOULDER_X = CANOPY_TIP_X - CANOPY_HALF_WIDTH
 REAR_X = -torso_common.rect_w / 2
 REAR_CORNER_X = REAR_X + torso_common.chamfer_length
 REAR_CORNER_Y = CANOPY_HALF_WIDTH - torso_common.chamfer_length
@@ -25,9 +26,9 @@ def canopy_surface() -> Sketch:
     with BuildSketch() as sketch:
         Polygon(
             (REAR_X, -REAR_CORNER_Y), (REAR_CORNER_X, -CANOPY_HALF_WIDTH),
-            (CANOPY_TIP_X - CANOPY_HALF_WIDTH, -CANOPY_HALF_WIDTH),
+            (CANOPY_SHOULDER_X, -CANOPY_HALF_WIDTH),
             (CANOPY_TIP_X, LIDAR_Y),
-            (CANOPY_TIP_X - CANOPY_HALF_WIDTH, CANOPY_HALF_WIDTH),
+            (CANOPY_SHOULDER_X, CANOPY_HALF_WIDTH),
             (REAR_CORNER_X, CANOPY_HALF_WIDTH), (REAR_X, REAR_CORNER_Y), align=None,
         )
     return sketch.sketch

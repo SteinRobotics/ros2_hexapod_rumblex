@@ -26,8 +26,8 @@ def gazebo_wall_model(boxes, position, quaternion, rooms=()):
             ET.SubElement(ET.SubElement(geometry, 'box'), 'size').text = size
             if kind == 'visual':
                 material = ET.SubElement(element, 'material')
-                ET.SubElement(material, 'ambient').text = '0.65 0.7 0.8 1'
-                ET.SubElement(material, 'diffuse').text = '0.65 0.7 0.8 1'
+                ET.SubElement(material, 'ambient').text = '1 1 1 1'
+                ET.SubElement(material, 'diffuse').text = '1 1 1 1'
     if rooms:
         labels = ET.SubElement(model, 'link', name='room_labels')
         # Room positions already use map coordinates, independent of grid origin.

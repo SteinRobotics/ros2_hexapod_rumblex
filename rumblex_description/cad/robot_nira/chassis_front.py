@@ -6,7 +6,7 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from build123d import (BuildSketch, ExportDXF, Locations, Mode, Part, Rectangle,
-                       Sketch, add, export_step)
+                       Sketch, insert, export_step)
 from robot_nira import EXPORT_DIR, dxf_directory
 from robot_nira import chassis_common
 import robot_nira.torso_common as torso_common
@@ -19,7 +19,7 @@ def build_surface(height: float) -> Sketch:
     deck_top = height - chassis_common.TAB_DEPTH - chassis_common.RAIL_HEIGHT
     top_of_body = deck_top - chassis_common.TAB_DEPTH
     with BuildSketch() as sketch:
-        add(base)
+        insert(base)
         with Locations((0, (top_of_body + height + 2) / 2)):
             Rectangle(chassis_common.ROW_WIDTH + 2, height + 2 - top_of_body,
                       mode=Mode.SUBTRACT)

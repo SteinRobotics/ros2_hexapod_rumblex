@@ -18,7 +18,7 @@ from robot_nira.lidar_interface_housing import DECK_TAB_POSITIONS, DECK_TAB_WIDT
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
-        add(torso_common.build_surface())
+        insert(torso_common.build_surface())
 
 
         # Integral front deck bridges the old central opening to both side rails.
@@ -33,16 +33,16 @@ def build_surface() -> Sketch:
         # farther outboard to clear the interface housing.
         with Locations(*(location for location in torso_common.diagonal_slots_locations
                          if location.position.X < 0)):
-            add(torso_common.rectangle_slots.sketch, mode=Mode.SUBTRACT)
+            insert(torso_common.rectangle_slots.sketch, mode=Mode.SUBTRACT)
         with Locations(*torso_common.front_diagonal_slots_locations):
-            add(torso_common.front_diagonal_slots.sketch, mode=Mode.SUBTRACT)
+            insert(torso_common.front_diagonal_slots.sketch, mode=Mode.SUBTRACT)
 
         # The front sill ends at this deck, so its three top fingers need
         # individual slots. The other rows retain their continuous openings.
         front_location = max(torso_common.rectangle_slots_locations,
                              key=lambda location: location.position.X)
         with Locations(front_location):
-            add(torso_common.rectangle_slots.sketch, mode=Mode.SUBTRACT)
+            insert(torso_common.rectangle_slots.sketch, mode=Mode.SUBTRACT)
         with Locations(*(location for location in torso_common.rectangle_slots_locations
                          if location != front_location)):
             Rectangle(
@@ -63,7 +63,7 @@ def build_surface() -> Sketch:
 
 def build_model(surface: Sketch) -> Part:
     with BuildPart() as model:
-        add(surface)
+        insert(surface)
         extrude(amount=torso_common.THICKNESS)
 
     return model.part

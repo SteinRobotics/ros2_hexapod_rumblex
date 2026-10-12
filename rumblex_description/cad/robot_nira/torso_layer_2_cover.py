@@ -18,7 +18,7 @@ from build123d import (
     Pos,
     Rectangle,
     Sketch,
-    add,
+    insert,
     export_step,
     extrude,
     offset,
@@ -42,8 +42,8 @@ def build_surface() -> Sketch:
     outline = build_opening_outline()
     cable_cutouts = build_cable_cutouts(outline)
     with BuildSketch() as sketch:
-        add(outline)
-        add(cable_cutouts, mode=Mode.SUBTRACT)
+        insert(outline)
+        insert(cable_cutouts, mode=Mode.SUBTRACT)
 
     return sketch.sketch
 
@@ -82,7 +82,7 @@ def build_cable_cutouts(outline: Sketch, *, stop_at_edge: bool = False) -> Sketc
 
 def build_model(surface: Sketch) -> Part:
     with BuildPart() as model:
-        add(surface)
+        insert(surface)
         extrude(amount=THICKNESS)
     return model.part
 

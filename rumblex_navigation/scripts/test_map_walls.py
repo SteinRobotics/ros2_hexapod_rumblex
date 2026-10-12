@@ -24,7 +24,7 @@ def quaternion_tuple(q):
 class TestMapWalls(Node):
     def __init__(self):
         super().__init__('test_map_walls')
-        self.height = self.declare_parameter('wall_height', 2.0).value
+        self.height = self.declare_parameter('wall_height', 1.0).value
         if not math.isfinite(self.height) or self.height <= 0:
             raise ValueError('wall_height must be finite and positive')
         self.lidar_frame = self.declare_parameter('lidar_frame', 'lidar_link').value
@@ -67,7 +67,7 @@ class TestMapWalls(Node):
             marker.pose.orientation = pose.orientation
             marker.scale.x, marker.scale.y, marker.scale.z = (
                 b - a for a, b in zip(lower, upper))
-            marker.color.r, marker.color.g, marker.color.b, marker.color.a = 0.65, 0.7, 0.8, 0.8
+            marker.color.r, marker.color.g, marker.color.b, marker.color.a = 1.0, 1.0, 1.0, 1.0
             markers.markers.append(marker)
         self.markers.publish(markers)
 

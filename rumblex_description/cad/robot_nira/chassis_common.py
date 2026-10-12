@@ -3,7 +3,7 @@
 from math import hypot
 
 from build123d import (
-    BuildPart, BuildSketch, Locations, Part, Rectangle, Sketch, add, extrude,
+    BuildPart, BuildSketch, Locations, Part, Rectangle, Sketch, insert, extrude,
 )
 
 import robot_nira.torso_common as torso_common
@@ -63,6 +63,6 @@ def build_plate_surface(height: float) -> Sketch:
 
 def build_model(surface: Sketch) -> Part:
     with BuildPart() as model:
-        add(surface)
+        insert(surface)
         extrude(amount=THICKNESS)
     return model.part

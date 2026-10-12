@@ -5,13 +5,15 @@ import unittest
 
 from build123d import (
     Box, BuildPart, BuildSketch, Circle, Cylinder, Locations, Mode, Part, Plane, Polygon, Pos,
-    add, extrude,
+    insert, extrude,
 )
 
 from robot_nira import (torso_common, chassis_common,
                         chassis_slope_cover, lidar_ydlidar_tmini, lidar_interface_housing)
 from robot_nira.assembly_complete import build_assembly
-from robot_nira.lidar_layout import LIDAR_ASSEMBLY_X, LIDAR_X, LIDAR_Y, canopy_surface
+from robot_nira.lidar_layout import (
+    CANOPY_HALF_WIDTH, CANOPY_SHOULDER_X, LIDAR_ASSEMBLY_X, LIDAR_X, LIDAR_Y, canopy_surface,
+)
 
 
 def leaves(part):
@@ -101,7 +103,11 @@ class NiraLidarTests(unittest.TestCase):
 
     def test_canopy_rear_frame_and_roof_clear_scanner(self):
         rear_frame = self.parts['torso_layer_3']
-        self.assertAlmostEqual(rear_frame.bounding_box().max.X, 0)
+        self.assertAlmostEqual(rear_frame.bounding_box().max.X, CANOPY_SHOULDER_X)
+        for side in (-1, 1):
+            support = Pos(CANOPY_SHOULDER_X - 1, side * (CANOPY_HALF_WIDTH - 2),
+                          rear_frame.bounding_box().center().Z) * Box(1, 1, 1)
+            self.assertAlmostEqual((support & rear_frame).volume, support.volume)
         for name in ('torso_layer_3', 'torso_layer_4'):
             with self.subTest(plate=name):
                 plate = self.parts[name]
@@ -192,7 +198,7 @@ class NiraLidarTests(unittest.TestCase):
                     # The tab footprints sit inside the canopy perimeter.
                     with BuildPart() as outline:
                         with BuildSketch(Plane.XY.offset(top.min.Z)):
-                            add(canopy_surface())
+                            insert(canopy_surface())
                         extrude(amount=torso_common.THICKNESS)
                     self.assertAlmostEqual((tabs & outline.part).volume, tabs.volume)
 

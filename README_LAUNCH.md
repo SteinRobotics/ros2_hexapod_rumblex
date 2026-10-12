@@ -67,7 +67,7 @@ ros2 launch rumblex_bringup test_launch.py robot:=nox enable_simulated_teleop:=f
 ros2 launch rumblex_bringup test_launch.py robot:=nox map:=/absolute/path/to/map.yaml
 ```
 
-Other test arguments are `wall_height` (default `2.0` metres), `simulate_lidar` (default `true`), and `publish_test_map_tf` (default `true`). Set `simulate_lidar:=false` when supplying real LiDAR readings and `publish_test_map_tf:=false` when supplying odometry/localization externally.
+Other test arguments are `wall_height` (default `1.0` metres), `simulate_lidar` (default `true`), and `publish_test_map_tf` (default `true`). Set `simulate_lidar:=false` when supplying real LiDAR readings and `publish_test_map_tf:=false` when supplying odometry/localization externally.
 
 Both `target_launch.py` and `test_launch.py` accept `autostart_listening` (default
 `false`). Set it to `true` to activate speech-to-text (STT) when the brain starts:

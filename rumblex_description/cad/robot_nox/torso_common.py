@@ -227,16 +227,16 @@ hole_locations = [
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
-        add(base_plate)
+        insert(base_plate)
         for pos in octagon_positions:
             with Locations(pos):
                 RegularPolygon(radius=octagon_size, side_count=8, rotation=OCTAGON_ROTATION)
 
-        add(hantel.sketch, mode=Mode.SUBTRACT)
+        insert(hantel.sketch, mode=Mode.SUBTRACT)
 
         for loc in rectangle_slots_locations:
             with Locations(loc):
-                add(rectangle_slots.sketch, mode=Mode.SUBTRACT)
+                insert(rectangle_slots.sketch, mode=Mode.SUBTRACT)
 
         for loc in hole_locations:
             with Locations(loc):
@@ -247,7 +247,7 @@ def build_surface() -> Sketch:
 
 def build_model(surface: Sketch) -> Part:
     with BuildPart() as model:
-        add(surface)
+        insert(surface)
         extrude(amount=THICKNESS)
 
     return model.part

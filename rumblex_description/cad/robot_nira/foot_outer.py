@@ -13,7 +13,7 @@ if __package__ in (None, ""):
 
 from build123d import (
     BuildPart, BuildSketch, ExportDXF, Locations, Mode, Part, Polygon,
-    Pos, Rectangle, Rot, Sketch, add, export_step, extrude,
+    Pos, Rectangle, Rot, Sketch, insert, export_step, extrude,
 )
 
 from robot_nira import EXPORT_DIR, dxf_directory
@@ -46,7 +46,7 @@ def build_surface() -> Sketch:
 
 def build_model(surface: Sketch) -> Part:
     with BuildPart() as model:
-        add(surface)
+        insert(surface)
         extrude(amount=THICKNESS)
     return model.part
 

@@ -8,7 +8,7 @@ if __package__ in (None, ""):
 
 from math import hypot
 from build123d import (
-    Box, BuildPart, BuildSketch, Mode, Part, Plane, Polygon, Pos, add,
+    Box, BuildPart, BuildSketch, Mode, Part, Plane, Polygon, Pos, insert,
     export_step, extrude,
 )
 import common.loudspeaker as loudspeaker
@@ -105,7 +105,7 @@ def build_slope_cover(z_top: float) -> Part:
 
     
     with BuildPart() as perforated:
-        add(result)
+        insert(result)
         for y in SPEAKER_Y_POSITIONS:
             with BuildSketch(speaker_plane(z_top, y).offset(0.1)):
                 for across, along in speaker_slot_positions():

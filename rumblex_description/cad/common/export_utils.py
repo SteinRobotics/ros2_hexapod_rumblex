@@ -16,6 +16,11 @@ from OCP.TopLoc import TopLoc_Location
 
 GENERATED_DIR = Path(__file__).resolve().parents[1] / "generated"
 
+# Support static methods exposed with or without the ``_s`` suffix across OCP versions.
+_as_face = getattr(TopoDS, "Face_s", None) or TopoDS.Face
+_triangulation = getattr(BRep_Tool, "Triangulation_s", None) or BRep_Tool.Triangulation
+_surface_properties = getattr(BRepGProp, "SurfaceProperties_s", None) or BRepGProp.SurfaceProperties
+
 
 def export_stl_ignoring_degenerate_faces(part, path: str) -> bool:
     """Export the mesh while omitting only faces too small to triangulate.
@@ -33,10 +38,10 @@ def export_stl_ignoring_degenerate_faces(part, path: str) -> bool:
     builder.MakeCompound(meshed_faces)
     faces = TopExp_Explorer(part.wrapped, TopAbs_FACE)
     while faces.More():
-        face = TopoDS.Face_s(faces.Current())
-        if BRep_Tool.Triangulation_s(face, TopLoc_Location()) is None:
+        face = _as_face(faces.Current())
+        if _triangulation(face, TopLoc_Location()) is None:
             properties = GProp_GProps()
-            BRepGProp.SurfaceProperties_s(face, properties)
+            _surface_properties(face, properties)
             if abs(properties.Mass()) > 1e-8:
                 raise ValueError("STL export would omit a non-degenerate face")
         else:

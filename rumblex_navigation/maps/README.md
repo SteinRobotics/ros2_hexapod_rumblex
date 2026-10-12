@@ -84,8 +84,8 @@ Disable both test transforms and offline odometry with
 `publish_test_map_tf:=false` when providing an actual odometry/localization
 transform tree; two publishers must not own the robot's pose.
 
-The test launch extrudes occupied cells into 2 m high walls (from ground level
-to z=2 m) on `/test_map_walls`, displayed automatically in the model RViz config.
+The test launch extrudes occupied cells into white 1 m high walls (from ground level
+to z=1 m) on `/test_map_walls`, displayed automatically in the model RViz config.
 It also simulates the Nox single-beam lidar on `/scan_1d` by intersecting the
 lidar frame's forward ray with these same boxes, including head yaw and pitch.
 Unknown and free cells remain empty; blocked stairs are extruded like walls.

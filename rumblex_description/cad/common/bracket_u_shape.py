@@ -115,9 +115,9 @@ def build_bracket() -> Part:
     plate = top_plate_solid()  
  
     with BuildPart() as bracket:
-        add(plate)
-        add(leg.locate(Location((-PLATE_W / 2, -PLATE_D / 2, -LEG_H))))
-        add(leg.locate(Location((PLATE_W / 2 - LEG_T, -PLATE_D / 2, -LEG_H))))
+        insert(plate)
+        insert(leg.locate(Location((-PLATE_W / 2, -PLATE_D / 2, -LEG_H))))
+        insert(leg.locate(Location((PLATE_W / 2 - LEG_T, -PLATE_D / 2, -LEG_H))))
  
         # Inner mating face on the left leg, at the horn's centre hole.
         RigidJoint(

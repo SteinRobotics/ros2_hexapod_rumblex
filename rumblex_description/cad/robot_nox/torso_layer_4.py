@@ -16,7 +16,7 @@ from build123d import (
     ExportDXF,
     Part,
     Sketch,
-    add,
+    insert,
     export_step,
     extrude,
 )
@@ -27,14 +27,14 @@ from utils.ocp_utils import show
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
-        add(torso_common.base_plate.sketch)
+        insert(torso_common.base_plate.sketch)
 
     return sketch.sketch
 
 
 def build_model(surface: Sketch) -> Part:
     with BuildPart() as model:
-        add(surface)
+        insert(surface)
         extrude(amount=torso_common.THICKNESS)
 
     return model.part

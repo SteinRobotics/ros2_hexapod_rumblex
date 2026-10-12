@@ -16,7 +16,7 @@ from build123d import (
     Part,
     Polygon,
     Sketch,
-    add,
+    insert,
     export_step,
     extrude,
 )
@@ -53,13 +53,13 @@ def build_surface() -> Sketch:
             (REAR_X, -inner_y),
             align=None,
         )
-        add(cable_cutouts, mode=Mode.SUBTRACT)
+        insert(cable_cutouts, mode=Mode.SUBTRACT)
     return sketch.sketch
 
 
 def build_model(surface: Sketch) -> Part:
     with BuildPart() as model:
-        add(surface)
+        insert(surface)
         extrude(amount=THICKNESS)
     return model.part
 

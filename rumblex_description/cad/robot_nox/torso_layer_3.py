@@ -19,7 +19,7 @@ from build123d import (
     Mode,
     Part,
     Sketch,
-    add,
+    insert,
     export_step,
     extrude,
 )
@@ -32,12 +32,12 @@ def build_surface() -> Sketch:
     with BuildSketch() as sketch:
         # Shared 220 x 130 mm rectangle with 20 mm corner chamfers.
         # This leaves 3.25 mm beyond the shared spacer footprints.
-        add(torso_common.base_plate.sketch)
-        add(torso_common.hantel.sketch, mode=Mode.SUBTRACT)
+        insert(torso_common.base_plate.sketch)
+        insert(torso_common.hantel.sketch, mode=Mode.SUBTRACT)
 
         for location in [*torso_common.rectangle_slots_locations, *torso_common.diagonal_slots_locations]:
             with Locations(location):
-                add(torso_common.rectangle_slots.sketch, mode=Mode.SUBTRACT)
+                insert(torso_common.rectangle_slots.sketch, mode=Mode.SUBTRACT)
 
         for location in torso_common.hole_locations:
             with Locations(location):
@@ -48,7 +48,7 @@ def build_surface() -> Sketch:
 
 def build_model(surface: Sketch) -> Part:
     with BuildPart() as model:
-        add(surface)
+        insert(surface)
         extrude(amount=torso_common.THICKNESS)
 
     return model.part

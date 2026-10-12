@@ -15,11 +15,11 @@ import robot_nox.torso_common as torso_common
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
-        add(torso_common.build_surface())
+        insert(torso_common.build_surface())
 
         # These plates start at layer 2, so retain three individual tab slots.
         with Locations(*torso_common.diagonal_slots_locations):
-            add(torso_common.rectangle_slots.sketch, mode=Mode.SUBTRACT)
+            insert(torso_common.rectangle_slots.sketch, mode=Mode.SUBTRACT)
 
         # Join each three-slot row while retaining its full outer span.
         with Locations(*torso_common.rectangle_slots_locations):
@@ -41,7 +41,7 @@ def build_surface() -> Sketch:
 
 def build_model(surface: Sketch) -> Part:
     with BuildPart() as model:
-        add(surface)
+        insert(surface)
         extrude(amount=torso_common.THICKNESS)
 
     return model.part
