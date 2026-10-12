@@ -1,0 +1,705 @@
+{
+  "robot": "nira",
+  "units": "mm",
+  "scope": "laser-cut sheet components only",
+  "settings": {
+    "width": 300,
+    "height": 400,
+    "margin": 3,
+    "clearance": 1,
+    "kerf": 0,
+    "tolerance": 0.01,
+    "resolution": 1,
+    "rotation_step": 30,
+    "trials": 3
+  },
+  "required_components": 48,
+  "components": [
+    {
+      "name": "torso_layer_0",
+      "quantity": 1,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 27623.945147692848
+    },
+    {
+      "name": "torso_layer_1",
+      "quantity": 1,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 15744.17254195776
+    },
+    {
+      "name": "torso_layer_2",
+      "quantity": 1,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 18949.367422544914
+    },
+    {
+      "name": "torso_layer_3",
+      "quantity": 1,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 5713.411867143597
+    },
+    {
+      "name": "torso_layer_4",
+      "quantity": 1,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 18534.725666117694
+    },
+    {
+      "name": "foot_front",
+      "quantity": 6,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 2818.7950292028013
+    },
+    {
+      "name": "foot_back",
+      "quantity": 6,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 2824.2950292028013
+    },
+    {
+      "name": "foot_connection",
+      "quantity": 6,
+      "thickness_mm": 3.0,
+      "nominal_area_mm2": 439.2146018366025
+    },
+    {
+      "name": "torso_layer_2_addon",
+      "quantity": 1,
+      "thickness_mm": 1.0,
+      "nominal_area_mm2": 1808.1882936858674
+    },
+    {
+      "name": "torso_layer_2_cover",
+      "quantity": 1,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 12255.00450809963
+    },
+    {
+      "name": "foot_outer",
+      "quantity": 6,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 1595.9999999999998
+    },
+    {
+      "name": "chassis_front",
+      "quantity": 1,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 1351.9999999999998
+    },
+    {
+      "name": "chassis_back",
+      "quantity": 1,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 3097.8407346410204
+    },
+    {
+      "name": "chassis_side",
+      "quantity": 2,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 7817.499999999997
+    },
+    {
+      "name": "chassis_diagonal_back",
+      "quantity": 1,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 2071.9999999999995
+    },
+    {
+      "name": "chassis_diagonal_back_left",
+      "quantity": 1,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 1749.9999999999995
+    },
+    {
+      "name": "chassis_diagonal_front",
+      "quantity": 2,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 230.0
+    },
+    {
+      "name": "chassis_slope_cover",
+      "quantity": 1,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 6461.341971510885
+    },
+    {
+      "name": "lidar_housing_lid",
+      "quantity": 1,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 2281.0
+    },
+    {
+      "name": "lidar_housing_side_negative_y",
+      "quantity": 1,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 624.0
+    },
+    {
+      "name": "lidar_housing_side_positive_y",
+      "quantity": 1,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 624.0
+    },
+    {
+      "name": "lidar_housing_front",
+      "quantity": 1,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 624.0
+    },
+    {
+      "name": "lidar_housing_back",
+      "quantity": 1,
+      "thickness_mm": 1.5,
+      "nominal_area_mm2": 736.0
+    },
+    {
+      "name": "head_chin",
+      "quantity": 1,
+      "thickness_mm": 3.0,
+      "nominal_area_mm2": 1965.3349619224687
+    },
+    {
+      "name": "head_brow",
+      "quantity": 1,
+      "thickness_mm": 3.0,
+      "nominal_area_mm2": 2095.8300912272407
+    },
+    {
+      "name": "head_rear_adapter",
+      "quantity": 1,
+      "thickness_mm": 3.0,
+      "nominal_area_mm2": 2550.8637206128824
+    }
+  ],
+  "nesting": "deterministic multi-order conservative polygon raster heuristic; no optimality guarantee",
+  "geometry": "original CAD curves",
+  "sheets_per_thickness": {
+    "1mm": 1,
+    "1.5mm": 3,
+    "3mm": 1
+  },
+  "sheets": [
+    {
+      "file": "1mm/sheet_01.dxf",
+      "thickness_mm": 1.0,
+      "placed_components": 1,
+      "utilization_percent": 1.5068235780715562,
+      "placements": [
+        {
+          "type": "torso_layer_2_addon",
+          "instance": 1,
+          "layer": "torso_layer_2_addon__001",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            71.52,
+            57.02
+          ]
+        }
+      ]
+    },
+    {
+      "file": "1.5mm/sheet_01.dxf",
+      "thickness_mm": 1.5,
+      "placed_components": 15,
+      "utilization_percent": 75.47758945985555,
+      "placements": [
+        {
+          "type": "torso_layer_0",
+          "instance": 1,
+          "layer": "torso_layer_0__001",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            113.52,
+            68.52
+          ]
+        },
+        {
+          "type": "torso_layer_4",
+          "instance": 1,
+          "layer": "torso_layer_4__001",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            113.52,
+            200.51999999999998
+          ]
+        },
+        {
+          "type": "torso_layer_2_cover",
+          "instance": 1,
+          "layer": "torso_layer_2_cover__001",
+          "rotation_deg": 90.0,
+          "translation_mm": [
+            246.20949480000002,
+            209.526948452434
+          ]
+        },
+        {
+          "type": "chassis_side",
+          "instance": 2,
+          "layer": "chassis_side__002",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            203.52,
+            256.52
+          ]
+        },
+        {
+          "type": "chassis_side",
+          "instance": 1,
+          "layer": "chassis_side__001",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            61.52,
+            267.52
+          ]
+        },
+        {
+          "type": "chassis_slope_cover",
+          "instance": 1,
+          "layer": "chassis_slope_cover__001",
+          "rotation_deg": 90.0,
+          "translation_mm": [
+            259.3319801,
+            59.27
+          ]
+        },
+        {
+          "type": "foot_back",
+          "instance": 6,
+          "layer": "foot_back__006",
+          "rotation_deg": 180.0,
+          "translation_mm": [
+            265.27,
+            348.52
+          ]
+        },
+        {
+          "type": "foot_front",
+          "instance": 6,
+          "layer": "foot_front__006",
+          "rotation_deg": 180.0,
+          "translation_mm": [
+            147.26999999999998,
+            357.52
+          ]
+        },
+        {
+          "type": "chassis_front",
+          "instance": 1,
+          "layer": "chassis_front__001",
+          "rotation_deg": 90.0,
+          "translation_mm": [
+            295.52,
+            330.52
+          ]
+        },
+        {
+          "type": "lidar_housing_front",
+          "instance": 1,
+          "layer": "lidar_housing_front__001",
+          "rotation_deg": 210.0,
+          "translation_mm": [
+            164.66000641025553,
+            158.9113555296167
+          ]
+        },
+        {
+          "type": "lidar_housing_back",
+          "instance": 1,
+          "layer": "lidar_housing_back__001",
+          "rotation_deg": 180.0,
+          "translation_mm": [
+            30.02,
+            389.02
+          ]
+        },
+        {
+          "type": "lidar_housing_side_negative_y",
+          "instance": 1,
+          "layer": "lidar_housing_side_negative_y__001",
+          "rotation_deg": 300.0,
+          "translation_mm": [
+            176.2103332099679,
+            228.19590479511777
+          ]
+        },
+        {
+          "type": "lidar_housing_side_positive_y",
+          "instance": 1,
+          "layer": "lidar_housing_side_positive_y__001",
+          "rotation_deg": 240.0,
+          "translation_mm": [
+            275.2103332099679,
+            289.26686668944114
+          ]
+        },
+        {
+          "type": "chassis_diagonal_front",
+          "instance": 2,
+          "layer": "chassis_diagonal_front__002",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            200.52,
+            265.52
+          ]
+        },
+        {
+          "type": "chassis_diagonal_front",
+          "instance": 1,
+          "layer": "chassis_diagonal_front__001",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            58.519999999999996,
+            267.52
+          ]
+        }
+      ]
+    },
+    {
+      "file": "1.5mm/sheet_02.dxf",
+      "thickness_mm": 1.5,
+      "placed_components": 13,
+      "utilization_percent": 53.92603411063841,
+      "placements": [
+        {
+          "type": "torso_layer_1",
+          "instance": 1,
+          "layer": "torso_layer_1__001",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            125.4751813,
+            93.4751813
+          ]
+        },
+        {
+          "type": "torso_layer_2",
+          "instance": 1,
+          "layer": "torso_layer_2__001",
+          "rotation_deg": 180.0,
+          "translation_mm": [
+            174.4751813,
+            258.47518130000003
+          ]
+        },
+        {
+          "type": "foot_front",
+          "instance": 2,
+          "layer": "foot_front__002",
+          "rotation_deg": 180.0,
+          "translation_mm": [
+            164.26999999999998,
+            60.519999999999996
+          ]
+        },
+        {
+          "type": "foot_back",
+          "instance": 3,
+          "layer": "foot_back__003",
+          "rotation_deg": 90.0,
+          "translation_mm": [
+            266.52,
+            22.77
+          ]
+        },
+        {
+          "type": "foot_back",
+          "instance": 4,
+          "layer": "foot_back__004",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            51.769999999999996,
+            116.77
+          ]
+        },
+        {
+          "type": "foot_front",
+          "instance": 5,
+          "layer": "foot_front__005",
+          "rotation_deg": 180.0,
+          "translation_mm": [
+            213.26999999999998,
+            225.52
+          ]
+        },
+        {
+          "type": "foot_back",
+          "instance": 1,
+          "layer": "foot_back__001",
+          "rotation_deg": 270.0,
+          "translation_mm": [
+            30.77,
+            269.27
+          ]
+        },
+        {
+          "type": "foot_front",
+          "instance": 4,
+          "layer": "foot_front__004",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            140.77,
+            281.77
+          ]
+        },
+        {
+          "type": "lidar_housing_lid",
+          "instance": 1,
+          "layer": "lidar_housing_lid__001",
+          "rotation_deg": 90.0,
+          "translation_mm": [
+            172.02,
+            112.02
+          ]
+        },
+        {
+          "type": "foot_front",
+          "instance": 1,
+          "layer": "foot_front__001",
+          "rotation_deg": 180.0,
+          "translation_mm": [
+            138.26999999999998,
+            343.52
+          ]
+        },
+        {
+          "type": "chassis_diagonal_back",
+          "instance": 1,
+          "layer": "chassis_diagonal_back__001",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            274.52,
+            116.52
+          ]
+        },
+        {
+          "type": "foot_front",
+          "instance": 3,
+          "layer": "foot_front__003",
+          "rotation_deg": 180.0,
+          "translation_mm": [
+            261.27,
+            352.52
+          ]
+        },
+        {
+          "type": "chassis_back",
+          "instance": 1,
+          "layer": "chassis_back__001",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            23.52,
+            290.52
+          ]
+        }
+      ]
+    },
+    {
+      "file": "1.5mm/sheet_03.dxf",
+      "thickness_mm": 1.5,
+      "placed_components": 10,
+      "utilization_percent": 18.906668271290997,
+      "placements": [
+        {
+          "type": "torso_layer_3",
+          "instance": 1,
+          "layer": "torso_layer_3__001",
+          "rotation_deg": 90.0,
+          "translation_mm": [
+            68.52,
+            113.52
+          ]
+        },
+        {
+          "type": "foot_back",
+          "instance": 2,
+          "layer": "foot_back__002",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            146.77,
+            30.77
+          ]
+        },
+        {
+          "type": "foot_back",
+          "instance": 5,
+          "layer": "foot_back__005",
+          "rotation_deg": 180.0,
+          "translation_mm": [
+            267.27,
+            40.519999999999996
+          ]
+        },
+        {
+          "type": "chassis_diagonal_back_left",
+          "instance": 1,
+          "layer": "chassis_diagonal_back_left__001",
+          "rotation_deg": 90.0,
+          "translation_mm": [
+            94.52000000000001,
+            47.519999999999996
+          ]
+        },
+        {
+          "type": "foot_outer",
+          "instance": 2,
+          "layer": "foot_outer__002",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            115.52,
+            63.52
+          ]
+        },
+        {
+          "type": "foot_outer",
+          "instance": 5,
+          "layer": "foot_outer__005",
+          "rotation_deg": 180.0,
+          "translation_mm": [
+            101.61320877358368,
+            104.52000000000001
+          ]
+        },
+        {
+          "type": "foot_outer",
+          "instance": 1,
+          "layer": "foot_outer__001",
+          "rotation_deg": 180.0,
+          "translation_mm": [
+            274.61320877358366,
+            104.52000000000001
+          ]
+        },
+        {
+          "type": "foot_outer",
+          "instance": 4,
+          "layer": "foot_outer__004",
+          "rotation_deg": 90.0,
+          "translation_mm": [
+            291.52,
+            49.519999999999996
+          ]
+        },
+        {
+          "type": "foot_outer",
+          "instance": 6,
+          "layer": "foot_outer__006",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            115.52,
+            100.52
+          ]
+        },
+        {
+          "type": "foot_outer",
+          "instance": 3,
+          "layer": "foot_outer__003",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            2.5199999999999996,
+            106.52
+          ]
+        }
+      ]
+    },
+    {
+      "file": "3mm/sheet_01.dxf",
+      "thickness_mm": 3.0,
+      "placed_components": 9,
+      "utilization_percent": 7.706096987318506,
+      "placements": [
+        {
+          "type": "head_rear_adapter",
+          "instance": 1,
+          "layer": "head_rear_adapter__001",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            33.519999999999996,
+            38.52
+          ]
+        },
+        {
+          "type": "head_brow",
+          "instance": 1,
+          "layer": "head_brow__001",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            100.54630189113932,
+            41.52780531439677
+          ]
+        },
+        {
+          "type": "head_chin",
+          "instance": 1,
+          "layer": "head_chin__001",
+          "rotation_deg": 180.0,
+          "translation_mm": [
+            171.5463018911393,
+            3.52
+          ]
+        },
+        {
+          "type": "foot_connection",
+          "instance": 1,
+          "layer": "foot_connection__001",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            226.02,
+            10.02
+          ]
+        },
+        {
+          "type": "foot_connection",
+          "instance": 2,
+          "layer": "foot_connection__002",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            263.02,
+            10.02
+          ]
+        },
+        {
+          "type": "foot_connection",
+          "instance": 3,
+          "layer": "foot_connection__003",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            225.02,
+            25.02
+          ]
+        },
+        {
+          "type": "foot_connection",
+          "instance": 4,
+          "layer": "foot_connection__004",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            262.02,
+            25.02
+          ]
+        },
+        {
+          "type": "foot_connection",
+          "instance": 5,
+          "layer": "foot_connection__005",
+          "rotation_deg": 90.0,
+          "translation_mm": [
+            289.02,
+            21.02
+          ]
+        },
+        {
+          "type": "foot_connection",
+          "instance": 6,
+          "layer": "foot_connection__006",
+          "rotation_deg": 0.0,
+          "translation_mm": [
+            224.02,
+            40.019999999999996
+          ]
+        }
+      ]
+    }
+  ],
+  "placed_components": 48
+}

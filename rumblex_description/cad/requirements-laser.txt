@@ -1,0 +1,5 @@
+# Install into the CAD virtualenv (build123d also requires its OCP dependencies).
+build123d>=0.10,<0.14
+ezdxf>=1.4,<2
+shapely>=2.0,<3
+scipy>=1.11,<2

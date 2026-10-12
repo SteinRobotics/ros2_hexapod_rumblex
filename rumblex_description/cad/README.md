@@ -275,3 +275,88 @@ the continuous scan-band test separately protects the optical path. They do
 not impose the former 3 mm envelope gap or certify manufacturing clearance.
 The head cage collision test excludes the vendor bracket/simplified servo pair,
 whose case and flange overlap slightly; separate tests verify its bore alignment.
+
+## Complete laser cutting jobs
+
+`generate_dxf.py` builds the selected robot's laser-cut BOM from the current
+parametric CAD and nests every instance on **300 × 400 mm** sheets. Run from
+this CAD directory:
+
+```bash
+.venv/bin/python -m pip install -r requirements-laser.txt
+.venv/bin/python generate_dxf.py --robot nira
+# Optional full beam-width compensation and a finer placement search:
+.venv/bin/python generate_dxf.py --robot nira --output output_fine \
+  --clearance 1 --margin 3 --kerf 0.15 --resolution 0.5 --rotation-step 15 --trials 5
+.venv/bin/python -m unittest discover -s tests -p test_laser_cutting.py -v
+```
+
+The default job is `output/nira/{1mm,1.5mm,3mm}/sheet_01.dxf`, with further
+numbered sheets as necessary. `summary.txt` and `summary.json` record the BOM,
+per-type thickness and quantity, sheet utilization, settings and every part's
+instance ID, rotation and translation. Empty thickness groups have no directory.
+Existing robot output directories are refused: choose a new `--output` root
+for a new job. A job is published only after all geometry, nesting and DXF
+read-back checks pass; a failed job leaves no partial robot output directory.
+
+Nira currently requires **48 laser-cut pieces**: 1 of 1 mm, 38 of 1.5 mm and
+9 of 3 mm. Its BOM includes six of each foot plate, both rear brace variants,
+five lidar housing panels, the sloped speaker cover and three camera cage
+plates. Purchased brackets, servos, electronics, rubber toes and turned
+spacers are outside the laser-cut BOM. Counts for repeated legs and chassis
+plates follow the assembly's servo and slot configurations. Source CAD
+hardware estimates documented above remain estimates.
+
+`--robot nox` is also configured, but currently **fails validation**:
+`robot_nox/torso_layer_0.py:build_surface()` creates three disconnected faces
+(one main plate and two detached octagons of 2,993 mm² each). Its assembly
+models these as one bottom-layer component. The intended connectivity or
+separate-piece BOM must be specified before a complete Nox cutting job can
+be generated. The generator neither drops these islands nor invents connecting
+material. Nox's 20 mm head block is not a supported laser-cut sheet part.
+
+### Geometry and nesting behavior
+
+- Units are millimetres at 1:1 scale, explicitly recorded in DXF headers.
+  Each instance has its own named layer. DXFs contain only cutting geometry;
+  no sheet border, dimensions, labels or duplicate shared cutting lines.
+- Outer contours and every hole are exported as closed chains of original
+  CAD LINE/ARC/CIRCLE/SPLINE entities. Analytic curves are preserved. Closed
+  contours may consist of several connected entities rather than a single
+  closed polyline. The cutter must support these standard R2010 DXF entities.
+- `--kerf` is the full beam width, default zero. Positive compensation offsets
+  the CAD face outward by half that width, expanding outer contours and
+  shrinking holes with round corner joins. It retains CAD curves, and rejects
+  failed offsets, disconnected parts or vanished holes. Use uncompensated
+  files if the cutter software already applies compensation.
+- The geometry-aware nesting heuristic conservatively rasterizes the actual
+  profiles, including holes, and uses FFT correlation to find free placements
+  for each rotation. It can put smaller parts inside larger cutouts. Several
+  deterministic part orders compete; the result with fewest sheets wins,
+  with occupied height as a tie-breaker. It does not prove global optimality.
+- `--resolution` controls placement search precision (default 1 mm), not DXF
+  shape precision. Finer grids and smaller `--rotation-step` values improve
+  the search at increased runtime. Grid rounding and conservative curve/cell
+  envelopes can leave gaps larger than `--clearance`. If a near-sheet-size
+  part is rejected, smaller resolution, margins or additional rotations may
+  help; parts are never scaled to fit.
+- `--tolerance` (default 0.01 mm) controls polygon sampling for nesting and
+  verification only. Original and kerf-offset DXF curves are not tessellated.
+  The nesting envelope reserves sampling tolerance, half the inter-part
+  clearance and half the beam width around each toolpath. Final checks verify
+  instance IDs, thickness separation, polygon distances, overlaps and sheet
+  margins. Saved DXFs are reopened, audited, and their closed contours and
+  holes compared with the placed profiles.
+- Material utilization is the sum of nominal CAD material areas (holes
+  excluded) divided by the full 120,000 mm² sheet area. It is not the bounding
+  rectangle utilization or the occupied raster-cell percentage.
+
+To add a robot, register a builder in `laser_cutting/robots.py:ROBOT_BUILDERS`.
+The callable returns `Component(name, quantity, thickness, surface)` entries:
+unique descriptive names, positive integer quantities, thickness 1/1.5/3 mm,
+and one connected planar CAD face per physical component type in XY at Z=0.
+Use the real design's builders and assembly quantities. Use `cutting_face()`
+for a constant-thickness solid in another plane; it checks that extruding the
+face reconstructs the complete part before flattening it. Add regression tests
+for the model's expected BOM. Missing or ambiguous manufacturing geometry must
+be resolved in the design rather than approximated for packing.
