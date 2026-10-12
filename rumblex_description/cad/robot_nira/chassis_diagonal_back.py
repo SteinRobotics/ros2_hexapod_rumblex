@@ -5,7 +5,7 @@ if __package__ in (None, ""):
     from pathlib import Path
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from build123d import ExportDXF, Part, Pos, Rot, Sketch, export_step
+from build123d import ExportDXF, Part, Pos, Rectangle, Rot, Sketch
 from robot_nira import EXPORT_DIR, dxf_directory
 from robot_nira import chassis_common
 import robot_nira.torso_common as torso_common
@@ -13,12 +13,21 @@ from utils.colors import COLOR_CREAMY_WHITE
 from utils.ocp_utils import show
 
 
-def build_surface(height: float) -> Sketch:
-    return chassis_common.build_plate_surface(height)
+OLED_WIDTH = 23.0
+OLED_HEIGHT = 14.0
 
 
-def build_model(height: float) -> Part:
-    return chassis_common.build_model(build_surface(height))
+def build_surface(height: float, *, with_oled: bool = False) -> Sketch:
+    surface = chassis_common.build_plate_surface(height)
+    if with_oled:
+        face_height = height/2 + 10
+        center_y = chassis_common.TAB_DEPTH + 5 * face_height / 6
+        surface -= Pos(0, center_y) * Rectangle(OLED_WIDTH, OLED_HEIGHT)
+    return surface
+
+
+def build_model(height: float, *, with_oled: bool = False) -> Part:
+    return chassis_common.build_model(build_surface(height, with_oled=with_oled))
 
 
 def build_diagonal_plates(z_bottom: float, z_top: float) -> list[Part]:
@@ -27,6 +36,7 @@ def build_diagonal_plates(z_bottom: float, z_top: float) -> list[Part]:
 
     height = z_top + torso_common.THICKNESS - z_bottom
     rear = build_model(height)
+    rear_left = build_model(height, with_oled=True)
     front = chassis_diagonal_front.build_model(height)
     upright = Pos(0, chassis_common.THICKNESS / 2, 0) * Rot(X=90)
     plates = []
@@ -35,7 +45,9 @@ def build_diagonal_plates(z_bottom: float, z_top: float) -> list[Part]:
                  *torso_common.front_diagonal_slots_locations]
     for location in locations:
         is_front = location.position.X > 0
-        plate = Pos(0, 0, z_bottom) * location * upright * (front if is_front else rear)
+        is_left = location.position.Y > 0
+        model = front if is_front else (rear_left if is_left else rear)
+        plate = Pos(0, 0, z_bottom) * location * upright * model
         end = "front" if is_front else "back"
         side = "left" if location.position.Y > 0 else "right"
         plate.label = f"chassis_diagonal_{end}_{side}"
@@ -48,15 +60,17 @@ def main() -> None:
     from robot_nira.torso_layout import DIAGONAL_PLATE_HEIGHT
 
     height = DIAGONAL_PLATE_HEIGHT
-    surface = build_surface(height)
-    model = chassis_common.build_model(surface)
-    model.label = "chassis_diagonal_back"
     dxf_dir = dxf_directory(chassis_common.THICKNESS)
     dxf_dir.mkdir(parents=True, exist_ok=True)
-    drawing = ExportDXF()
-    drawing.add_shape(surface)
-    drawing.write(str(dxf_dir / "chassis_diagonal_back.dxf"))
-    show(model, name="chassis_diagonal_back", clear=True)
+    for name, with_oled in (("chassis_diagonal_back", False),
+                            ("chassis_diagonal_back_left", True)):
+        surface = build_surface(height, with_oled=with_oled)
+        drawing = ExportDXF()
+        drawing.add_shape(surface)
+        drawing.write(str(dxf_dir / f"{name}.dxf"))
+    model = build_model(height, with_oled=True)
+    model.label = "chassis_diagonal_back_left"
+    show(model, name=model.label, clear=True)
 
 
 if __name__ == "__main__":

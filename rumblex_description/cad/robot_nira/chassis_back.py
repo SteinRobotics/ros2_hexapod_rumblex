@@ -5,15 +5,25 @@ if __package__ in (None, ""):
     from pathlib import Path
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from build123d import ExportDXF, Part, Sketch, export_step
+from build123d import Circle, ExportDXF, Part, Pos, Sketch
 from robot_nira import EXPORT_DIR, dxf_directory
 from robot_nira import chassis_common
 import robot_nira.torso_common as torso_common
 from utils.ocp_utils import show
 
+from robot_nira.torso_layout import (
+     SPACER_LENGTH_1_to_2
+)
+
+
+SWITCH_RADIUS = 10.0
+
 
 def build_surface(height: float) -> Sketch:
-    return chassis_common.build_plate_surface(height)
+    """Build the rear plate with a switch hole midway between layers 1 and 2."""
+    surface = chassis_common.build_plate_surface(height)
+    center_y = chassis_common.TAB_DEPTH + SPACER_LENGTH_1_to_2 / 2
+    return surface - Pos(0, center_y) * Circle(SWITCH_RADIUS)
 
 
 def build_model(height: float) -> Part:
