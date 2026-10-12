@@ -132,6 +132,11 @@ separation is checked using the solids. The front diagonal braces have two
 bottom tabs and a compact solid profile. Rear walls, diagonal braces and four
 rear upper spacers support the canopy.
 
+The sloped speaker cover is recessed 3 mm rearward (-X) from the side-plate
+shoulders. Its five fingers on each side engage enclosed through-slots,
+leaving the sloping side edges continuous. The speakers and their vents
+move with the cover; finger ends remain flush with the outer side faces.
+
 The forward **270° sector (-135° to +135° from +X)** is clear in the default
 complete-robot pose. The geometry test intersects a continuous 4 mm high
 scan band with the robot, from 20 to approximately 600 mm radius. It also

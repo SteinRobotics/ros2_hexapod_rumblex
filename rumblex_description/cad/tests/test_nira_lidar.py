@@ -245,14 +245,15 @@ class NiraLidarTests(unittest.TestCase):
 
         self.assertTrue(cover.is_valid)
         self.assertEqual(len(cover.solids()), 1)
-        self.assertAlmostEqual(cover.bounding_box().max.X, chassis_common.SLOPE_END_X)
+        self.assertAlmostEqual(cover.bounding_box().max.X,
+                               chassis_common.SLOPE_END_X - 3.0)
         self.assertAlmostEqual(cover.bounding_box().max.Z, top)
         for side in (left, right):
             self.assertLess(cover.distance_to(side), 1e-6)
             overlap = cover & side
             self.assertLess(overlap.volume if overlap else 0, 1e-6)
-            # Five cover fingers occupy matching notches across the complete
-            # side-plate thickness; the intervening edge stays against it.
+            # Five cover fingers occupy enclosed slots across the complete
+            # side-plate thickness.
             side_band = Pos(0, side.bounding_box().center().Y, top - 20) * Box(
                 300, chassis_common.THICKNESS, 100)
             fingers = cover & side_band
@@ -263,9 +264,19 @@ class NiraLidarTests(unittest.TestCase):
                 * chassis_common.JOINT_FINGER_LENGTH
                 * chassis_common.THICKNESS ** 2,
             )
+            # Every tongue is surrounded by side material, rather than opening
+            # onto the sloped perimeter.
+            face = max(side.faces(), key=lambda face: face.area)
+            holes = face.inner_wires()
+            self.assertGreaterEqual(len(holes), chassis_common.JOINT_FINGER_COUNT)
+            for finger in fingers.solids():
+                self.assertTrue(any(
+                    (wire.bounding_box().center() - finger.center()).length < chassis_common.THICKNESS
+                    for wire in holes
+                ))
         # The cover spans the centre at mid-slope while clearing the housing
         # at its lower edge.
-        midpoint = (chassis_common.SLOPE_START_X + chassis_common.SLOPE_END_X) / 2
+        midpoint = (chassis_common.SLOPE_START_X + chassis_common.SLOPE_END_X) / 2 - 3.0
         # Derive the centre from the cover ends, then probe along the slope's
         # normal inside the sheet. This remains valid when its angle changes.
         low_top = self.parts['torso_layer_2'].bounding_box().max.Z + chassis_slope_cover.LOW_RAIL_HEIGHT
@@ -284,8 +295,7 @@ class NiraLidarTests(unittest.TestCase):
         slots = chassis_slope_cover.speaker_slot_positions()
         self.assertGreater(len(slots), 20)
 
-        for name, y, slope in zip(('left', 'right'), chassis_slope_cover.SPEAKER_Y_POSITIONS,
-                                  (1, -1)):
+        for name, y in zip(('left', 'right'), chassis_slope_cover.SPEAKER_Y_POSITIONS):
             speaker = self.parts[f'loudspeaker_{name}']
             with self.subTest(speaker=name):
                 self.assertTrue(speaker.is_valid)
@@ -302,10 +312,10 @@ class NiraLidarTests(unittest.TestCase):
                              * Cylinder(0.1,
                                         chassis_common.THICKNESS + 0.2))
                     self.assertFalse(cover & probe)
-                # A point along / or \ lies in the slot; one perpendicular
-                # to it lies in the solid bridge between slots.
-                for dx, dy, is_open in ((1, slope, True), (-1, -slope, True),
-                                        (1, -slope, False), (-1, slope, False)):
+                # Probe the central octagon and the solid bridges halfway
+                # to its neighbouring openings.
+                for dx, dy, is_open in ((1, 1, True), (-1, -1, True),
+                                        (2.5, 0, False), (-2.5, 0, False)):
                     probe = (plane.location
                              * Pos(dx, dy, -chassis_common.THICKNESS / 2)
                              * Cylinder(0.1, chassis_common.THICKNESS + 0.2))

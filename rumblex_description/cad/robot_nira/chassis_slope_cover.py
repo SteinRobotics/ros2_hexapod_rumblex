@@ -16,7 +16,7 @@ import robot_nira.torso_common as torso_common
 import robot_nira.lidar_interface_housing as lidar_housing
 from robot_nira import EXPORT_DIR
 from robot_nira.chassis_common import (
-    RAIL_HEIGHT, SLOPE_END_X, SLOPE_START_X, THICKNESS,
+    RAIL_HEIGHT, SLOPE_COVER_SETBACK, SLOPE_END_X, SLOPE_START_X, THICKNESS,
     slope_finger_profiles,
 )
 from robot_nira.lidar_layout import LOW_RAIL_HEIGHT
@@ -35,7 +35,8 @@ def speaker_plane(z_top: float, y: float) -> Plane:
     drop = RAIL_HEIGHT - LOW_RAIL_HEIGHT
     length = hypot(run, drop)
     return Plane(
-        origin=((SLOPE_START_X + SLOPE_END_X) / 2, y, z_top - drop / 2),
+        origin=((SLOPE_START_X + SLOPE_END_X) / 2 - SLOPE_COVER_SETBACK,
+                y, z_top - drop / 2),
         x_dir=(0, 1, 0),
         z_dir=(drop / length, 0, run / length),
     )
@@ -69,8 +70,8 @@ def build_slope_cover(z_top: float) -> Part:
     run = SLOPE_END_X - SLOPE_START_X
     drop = RAIL_HEIGHT - LOW_RAIL_HEIGHT
     slope_length = hypot(run, drop)
-    # Offset the sheet into the chassis, keeping its outer face flush with
-    # the shoulder edges and its ends against the inner faces of the sides.
+    # Recess the sheet behind the shoulder edges, with its ends against
+    # the inner faces of the sides.
     inward_x = -THICKNESS * drop / slope_length
     inward_z = -THICKNESS * run / slope_length
     side_y = max(
@@ -88,9 +89,9 @@ def build_slope_cover(z_top: float) -> Part:
                 align=None,
             )
         extrude(amount=2 * inner_y)
-    result = Pos(0, inner_y, 0) * cover.part
-    # Alternate short tongues with the side-plate edge. Each tongue fills a
-    # matching notch through the side plate thickness, flush at its outside.
+    result = Pos(-SLOPE_COVER_SETBACK, inner_y, 0) * cover.part
+    # Short tongues fill enclosed slots through the side plate thickness,
+    # finishing flush at the outside faces.
     for profile in slope_finger_profiles(z_top):
         with BuildPart() as finger:
             with BuildSketch(Plane.XZ):
