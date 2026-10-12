@@ -9,7 +9,7 @@ from build123d import ExportDXF, Part, Pos, Rectangle, Rot, Sketch
 from robot_nira import EXPORT_DIR, dxf_directory
 from robot_nira import chassis_common
 import robot_nira.torso_common as torso_common
-from utils.colors import COLOR_CREAMY_WHITE
+from utils.colors import COLOR_DARK_GRAY
 from utils.ocp_utils import show
 
 
@@ -51,7 +51,7 @@ def build_diagonal_plates(z_bottom: float, z_top: float) -> list[Part]:
         end = "front" if is_front else "back"
         side = "left" if location.position.Y > 0 else "right"
         plate.label = f"chassis_diagonal_{end}_{side}"
-        plate.color = COLOR_CREAMY_WHITE
+        plate.color = COLOR_DARK_GRAY
         plates.append(plate)
     return plates
 

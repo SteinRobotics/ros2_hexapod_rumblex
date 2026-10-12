@@ -12,7 +12,7 @@ from robot_nira import EXPORT_DIR
 from build123d import Compound, Pos, Rot, export_step
 from utils.ocp_utils import show
 
-from utils.colors import COLOR_CREAMY_WHITE, COLOR_WINE_RED, COLOR_DARK_GRAY
+from utils.colors import COLOR_CREAMY_WHITE, COLOR_WINE_RED, COLOR_DARK_GRAY, COLOR_GRAY, COLOR_TITAN_SILVER
 
 import common.battery as battery
 import common.toe as toe
@@ -52,6 +52,15 @@ def build_assembly() -> Compound:
     torso_layer_2_cover_part = torso_layer_2_cover.build_model(torso_layer_2_cover.build_surface())
     torso_layer_3_part = torso_layer_3.build_model(torso_layer_3.build_surface())
     torso_layer_4_part = torso_layer_4.build_model(torso_layer_4.build_surface())
+    chassis_side_parts = chassis_side.build_plates(
+        torso_layout.LAYER_1_BOTTOM, torso_layout.LAYER_3_BOTTOM
+    )
+    chassis_diagonal_parts = chassis_diagonal_back.build_diagonal_plates(
+        torso_layout.LAYER_2_BOTTOM, torso_layout.LAYER_3_BOTTOM
+    )
+    chassis_slope_cover_part = chassis_slope_cover.build_slope_cover(torso_layout.LAYER_3_BOTTOM)
+    speaker_parts = chassis_slope_cover.build_speakers(torso_layout.LAYER_3_BOTTOM)
+    lidar_interface_housing_part = lidar_interface_housing.build_model()
     battery_part = battery.build_model()
     toe_part = toe.build_model()
 
@@ -71,13 +80,22 @@ def build_assembly() -> Compound:
         length=SPACER_LENGTH_TOP,
     )
 
-    torso_layer_0_part.color = COLOR_CREAMY_WHITE
-    torso_layer_1_part.color = COLOR_CREAMY_WHITE
-    torso_layer_2_part.color = COLOR_CREAMY_WHITE
-    torso_layer_2_addon_part.color = COLOR_CREAMY_WHITE
-    torso_layer_2_cover_part.color = COLOR_CREAMY_WHITE
+    # Assign colors to the parts
+    torso_layer_0_part.color = COLOR_TITAN_SILVER
+    torso_layer_1_part.color = COLOR_TITAN_SILVER
+    torso_layer_2_part.color = COLOR_TITAN_SILVER
+    torso_layer_2_addon_part.color = COLOR_TITAN_SILVER
+    torso_layer_2_cover_part.color = COLOR_TITAN_SILVER
     torso_layer_3_part.color = COLOR_WINE_RED
-    torso_layer_4_part.color = COLOR_CREAMY_WHITE
+    torso_layer_4_part.color = COLOR_DARK_GRAY
+
+    for part in chassis_side_parts:
+        part.color = COLOR_DARK_GRAY
+    for part in chassis_diagonal_parts:
+        part.color = COLOR_DARK_GRAY
+    chassis_slope_cover_part.color = COLOR_DARK_GRAY
+    lidar_interface_housing_part.color = COLOR_TITAN_SILVER
+
     toe_part.color = COLOR_DARK_GRAY
     spacer_part_0_1.color = COLOR_WINE_RED
     spacer_part_1_2.color = COLOR_WINE_RED
@@ -90,6 +108,7 @@ def build_assembly() -> Compound:
     torso_layer_2_cover_part.label = "torso_layer_2_cover"
     torso_layer_3_part.label = "torso_layer_3"
     torso_layer_4_part.label = "torso_layer_4"
+    lidar_interface_housing_part.label = "lidar_interface_housing"
     toe_part.label = "toe"
 
     positions_for_toes = torso_layer_0.TOE_MOUNTING_POSITIONS
@@ -116,7 +135,7 @@ def build_assembly() -> Compound:
     housing = (
         Pos(LIDAR_ASSEMBLY_X, LIDAR_Y, z_spacer_top)
         * lidar_interface_flip
-        * lidar_interface_housing.build_model()
+        * lidar_interface_housing_part
     )
 
     lidar = Pos(
@@ -183,10 +202,10 @@ def build_assembly() -> Compound:
             board_interface,
             housing,
             lidar,
-            *chassis_side.build_plates(z_layer_1, z_layer_3),
-            *chassis_diagonal_back.build_diagonal_plates(z_layer_2, z_layer_3),
-            chassis_slope_cover.build_slope_cover(z_layer_3),
-            *chassis_slope_cover.build_speakers(z_layer_3),
+            *chassis_side_parts,
+            *chassis_diagonal_parts,
+            chassis_slope_cover_part,
+            *speaker_parts,
             *toe_instances,
             *spacer_instances,
         ],

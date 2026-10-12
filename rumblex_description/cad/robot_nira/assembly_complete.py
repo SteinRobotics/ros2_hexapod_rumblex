@@ -18,7 +18,9 @@ import robot_nira.assembly_coxa as assembly_coxa
 import robot_nira.assembly_head as assembly_head
 import robot_nira.assembly_leg as assembly_leg
 from utils.ocp_utils import show
+from ocp_vscode import save_screenshot
 
+OCVSCODE_SCREENSHOT = True
 
 LAYDOWN_ANGLE_FEMUR = -60.0
 LAYDOWN_ANGLE_TIBIA = -60.0
@@ -75,6 +77,9 @@ def main() -> None:
     # export_step(assembly, str(EXPORT_DIR / "step/assembly_complete.step"))
     export_stl_ignoring_degenerate_faces(assembly, str(EXPORT_DIR / "stl/assembly_complete.stl"))
     show(assembly, name="assembly_complete", clear=True)
+
+    if OCVSCODE_SCREENSHOT:
+        save_screenshot(str(EXPORT_DIR / "assembly_complete.png"))
 
 
 if __name__ == "__main__":

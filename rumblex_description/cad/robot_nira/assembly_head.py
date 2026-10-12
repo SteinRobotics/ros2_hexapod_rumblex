@@ -16,7 +16,7 @@ from build123d import (
 )
 
 from utils.ocp_utils import show
-from utils.colors import COLOR_CREAMY_WHITE, COLOR_DARK_GRAY, COLOR_WINE_RED
+from utils.colors import COLOR_CREAMY_WHITE, COLOR_DARK_GRAY, COLOR_WINE_RED, COLOR_TITAN_SILVER
 from utils import spacer
 from robot_nira import webcam_obsbot
 import common.servo_simplified as servo_simplified
@@ -79,7 +79,7 @@ def build_deck(*, brow: bool = False) -> Part:
                     RectangleRounded(14, 12, 2, mode=Mode.SUBTRACT)
         extrude(amount=PLATE_THICKNESS)
     plate.part.label = "head_brow" if brow else "head_chin"
-    plate.part.color = COLOR_CREAMY_WHITE
+    plate.part.color = COLOR_TITAN_SILVER
     return plate.part
 
 
@@ -108,7 +108,7 @@ def build_adapter() -> Part:
                 RectangleRounded(15, 10, 2, mode=Mode.SUBTRACT)
         extrude(amount=PLATE_THICKNESS)
     plate.part.label = "head_rear_adapter"
-    plate.part.color = COLOR_CREAMY_WHITE
+    plate.part.color = COLOR_TITAN_SILVER
     return plate.part
 
 

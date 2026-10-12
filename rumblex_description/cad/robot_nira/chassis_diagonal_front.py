@@ -39,8 +39,6 @@ def build_model(height: float) -> Part:
 
 
 def main() -> None:
-    import robot_nira.assembly_torso as assembly_torso
-
     from robot_nira.torso_layout import DIAGONAL_PLATE_HEIGHT
 
     height = DIAGONAL_PLATE_HEIGHT

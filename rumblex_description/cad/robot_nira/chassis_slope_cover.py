@@ -20,7 +20,7 @@ from robot_nira.chassis_common import (
     slope_finger_profiles,
 )
 from robot_nira.lidar_layout import LOW_RAIL_HEIGHT
-from utils.colors import COLOR_CREAMY_WHITE
+from utils.colors import COLOR_DARK_GRAY
 from utils.ocp_utils import show
 
 SPEAKER_Y_POSITIONS = (25.0, -25.0)
@@ -110,7 +110,7 @@ def build_slope_cover(z_top: float) -> Part:
             extrude(amount=-THICKNESS - 0.2, mode=Mode.SUBTRACT)
     result = perforated.part
     result.label = "chassis_slope_cover"
-    result.color = COLOR_CREAMY_WHITE
+    result.color = COLOR_DARK_GRAY
     return result
 
 

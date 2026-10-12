@@ -22,7 +22,7 @@ import robot_nira.foot_outer as foot_outer
 from robot_nira.foot_common import FOOT_SPACER_OVERALL_LENGTH
 from utils.ocp_utils import show
 
-from utils.colors import COLOR_CREAMY_WHITE, COLOR_WINE_RED, COLOR_DARK_GRAY
+from utils.colors import COLOR_CREAMY_WHITE, COLOR_WINE_RED, COLOR_DARK_GRAY, COLOR_TITAN_SILVER
 
 
 TARGET_HOLE_X = foot_back.FOOT_MOUNT_HOLES[0]["x"]
@@ -32,6 +32,7 @@ def build_assembly() -> Compound:
     connection_part = foot_connection.build_model(foot_connection.build_surface())
     foot_front_part = foot_front.build_model(foot_front.build_surface())
     foot_back_part = foot_back.build_model(foot_back.build_surface())
+    foot_outer_part = foot_outer.build_placed_model()
     toe_part = toe.build_model()
     spacer_part = spacer.build_model(
         outer_diameter=FOOT_SPACER_OUTER_DIAMETER,
@@ -39,9 +40,11 @@ def build_assembly() -> Compound:
         length=FOOT_SPACER_OVERALL_LENGTH,
     )
 
-    foot_front_part.color = COLOR_CREAMY_WHITE
-    foot_back_part.color = COLOR_CREAMY_WHITE
-    connection_part.color = COLOR_CREAMY_WHITE
+    # Assign colors to the parts
+    foot_front_part.color = COLOR_TITAN_SILVER
+    foot_back_part.color = COLOR_TITAN_SILVER
+    foot_outer_part.color = COLOR_TITAN_SILVER
+    connection_part.color = COLOR_TITAN_SILVER
     toe_part.color = COLOR_DARK_GRAY
     spacer_part.color = COLOR_WINE_RED
 
@@ -53,6 +56,7 @@ def build_assembly() -> Compound:
     # Stack cheeks along +Z; the toe connection and outer armor bridge them.
     foot_front_part.label = "foot_front"
     foot_back_part.label = "foot_back"
+    foot_outer_part.label = "foot_outer"
     foot_back_placed = foot_back_part
     spacer_z = foot_back.THICKNESS + FOOT_SPACER_OVERALL_LENGTH / 2
     spacer_placed_parts = [
@@ -80,7 +84,7 @@ def build_assembly() -> Compound:
             foot_front_placed,
             foot_back_placed,
             *spacer_placed_parts,
-            foot_outer.build_placed_model(),
+            foot_outer_part,
         ]
     )
 

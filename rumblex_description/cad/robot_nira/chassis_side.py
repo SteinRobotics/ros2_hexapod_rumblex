@@ -12,7 +12,7 @@ from robot_nira import chassis_common
 import robot_nira.torso_common as torso_common
 from robot_nira.armor_style import gill_points
 from robot_nira.lidar_layout import LOW_RAIL_HEIGHT
-from utils.colors import COLOR_CREAMY_WHITE
+from utils.colors import COLOR_DARK_GRAY
 from utils.ocp_utils import show
 
 
@@ -88,7 +88,7 @@ def build_plates(z_bottom: float, z_top: float) -> list[Part]:
         else:
             continue
         plate.label = f"chassis_{name}"
-        plate.color = COLOR_CREAMY_WHITE
+        plate.color = COLOR_DARK_GRAY
         plates.append(plate)
     return plates
 
