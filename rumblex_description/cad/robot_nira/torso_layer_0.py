@@ -31,14 +31,6 @@ TOE_MOUNTING_POSITIONS = [(sx * 75.0, sy * 37.0) for sx, sy in
 TOE_HOLE_RADIUS = 1.5
 TOE_MOUNTING_HOLES = [(x, y, TOE_HOLE_RADIUS) for x, y in TOE_MOUNTING_POSITIONS]
 
-
-OCTAGON_POSITIONS = [
-    torso_common.octagon_position_left_top,
-    torso_common.octagon_position_right_top,
-    torso_common.octagon_position_right_bottom,
-    torso_common.octagon_position_left_bottom,
-]
-
 OUTPUT_DIR = EXPORT_DIR
 OUTPUT_NAME = "torso_layer_0"
 
@@ -73,10 +65,6 @@ def place_board_holes(
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
         insert(torso_common.base_plate)
-
-        for pos in OCTAGON_POSITIONS:
-            with Locations(pos):
-                insert(chamfered_octagon(55, 55, 4))
 
         for loc in torso_common.hole_locations:
             with Locations(loc):

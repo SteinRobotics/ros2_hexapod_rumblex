@@ -6,7 +6,7 @@ if __package__ in (None, ""):
     from pathlib import Path
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from math import hypot
+from math import ceil, cos, hypot, pi, sin, sqrt
 from build123d import (
     Box, BuildPart, BuildSketch, Mode, Part, Plane, Polygon, Pos, insert,
     export_step, extrude,
@@ -15,7 +15,6 @@ import common.loudspeaker as loudspeaker
 import robot_nira.torso_common as torso_common
 import robot_nira.lidar_interface_housing as lidar_housing
 from robot_nira import EXPORT_DIR
-from robot_nira.armor_style import GILL_SWEEP_RATIO, GILL_WIDTH_RATIO, gill_points
 from robot_nira.chassis_common import (
     RAIL_HEIGHT, SLOPE_END_X, SLOPE_START_X, THICKNESS,
     slope_finger_profiles,
@@ -25,10 +24,9 @@ from utils.colors import COLOR_CREAMY_WHITE
 from utils.ocp_utils import show
 
 SPEAKER_Y_POSITIONS = (25.0, -25.0)
-SPEAKER_GILL_SPAN = 3.5
-SPEAKER_GILL_ROW_GAP = 1.0
-SPEAKER_SLOT_PITCH = 6.0
-SPEAKER_SLOT_FIELD_RADIUS = loudspeaker.FRONT_DIAMETER / 2 - 3.5
+SPEAKER_OCTAGON_FLAT_SIZE = 4.0
+SPEAKER_SLOT_PITCH = 5.0
+SPEAKER_SLOT_FIELD_RADIUS = loudspeaker.FRONT_DIAMETER / 2 - 2.0
 
 
 def speaker_plane(z_top: float, y: float) -> Plane:
@@ -44,28 +42,26 @@ def speaker_plane(z_top: float, y: float) -> Plane:
 
 
 def speaker_slot_positions() -> list[tuple[float, float]]:
-    """Staggered gill centres within the speaker face, leaving a solid rim."""
+    """Centred honeycomb rows with every opening inside the solid speaker rim."""
     positions = []
-    # A gill spans width + sweep along the slope. Leave a full bridge between rows.
-    row_pitch = (SPEAKER_GILL_SPAN * (GILL_WIDTH_RATIO + GILL_SWEEP_RATIO)
-                 + SPEAKER_GILL_ROW_GAP)
-    for row in range(-3, 4):
-        for column in range(-3, 4):
+    row_pitch = SPEAKER_SLOT_PITCH * sqrt(3) / 2
+    extent = ceil(SPEAKER_SLOT_FIELD_RADIUS / row_pitch)
+    for row in range(-extent, extent + 1):
+        for column in range(-extent, extent + 1):
             across = (column + 0.5 * (row % 2)) * SPEAKER_SLOT_PITCH
             along = row * row_pitch
-            if hypot(across, along) <= SPEAKER_SLOT_FIELD_RADIUS:
+            if all(hypot(x, y) <= SPEAKER_SLOT_FIELD_RADIUS
+                   for x, y in speaker_octagon_points(across, along)):
                 positions.append((across, along))
     return positions
 
 
-def speaker_gill_points(across: float, along: float, side: int):
-    """Centre and mirror a foot-style gill on a speaker face."""
-    span = SPEAKER_GILL_SPAN
-    width = span * GILL_WIDTH_RATIO
-    sweep = span * GILL_SWEEP_RATIO
-    points = gill_points(along + (sweep - width) / 2,
-                         side * across - span / 2, span, side=side)
-    return [(transverse, longitudinal) for longitudinal, transverse in points]
+def speaker_octagon_points(across: float, along: float) -> list[tuple[float, float]]:
+    """Regular octagonal opening with horizontal and vertical flats."""
+    radius = SPEAKER_OCTAGON_FLAT_SIZE / (2 * cos(pi / 8))
+    return [(across + radius * cos(pi / 8 + corner * pi / 4),
+             along + radius * sin(pi / 8 + corner * pi / 4))
+            for corner in range(8)]
 
 
 def build_slope_cover(z_top: float) -> Part:
@@ -103,13 +99,12 @@ def build_slope_cover(z_top: float) -> Part:
         result = result + Pos(0, side_y + THICKNESS / 2, 0) * finger.part
         result = result + Pos(0, -inner_y + 0.05, 0) * finger.part
 
-    
     with BuildPart() as perforated:
         insert(result)
         for y in SPEAKER_Y_POSITIONS:
             with BuildSketch(speaker_plane(z_top, y).offset(0.1)):
                 for across, along in speaker_slot_positions():
-                    Polygon(*speaker_gill_points(across, along, -1 if y > 0 else 1),
+                    Polygon(*speaker_octagon_points(across, along),
                             align=None)
             extrude(amount=-THICKNESS - 0.2, mode=Mode.SUBTRACT)
     result = perforated.part
