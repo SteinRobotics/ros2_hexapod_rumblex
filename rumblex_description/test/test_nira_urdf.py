@@ -1,12 +1,16 @@
 """Headless description checks; run with the ROS environment sourced."""
 from pathlib import Path
 import math
+import shutil
+import subprocess
+import tempfile
 import unittest
 from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
 import xacro
 import xacro.substitution_args
+import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -18,6 +22,77 @@ def expand(mesh=False, sim=False):
 
 
 class NiraDescriptionTests(unittest.TestCase):
+    def test_imu_mount_matches_flipped_cad_board(self):
+        for mesh in (False, True):
+            model = expand(mesh, True)
+            joint = model.find("joint[@name='imu_joint']")
+            self.assertEqual(joint.find('parent').get('link'), 'base_link')
+            self.assertEqual(joint.find('origin').get('xyz'), '0 -0.002 0.0185')
+            # Rz(90) Ry(180) in CAD equals Rz(-90) Rx(180) in URDF.
+            roll, pitch, yaw = map(float, joint.find('origin').get('rpy').split())
+            self.assertAlmostEqual(roll, math.pi)
+            self.assertAlmostEqual(pitch, 0)
+            self.assertAlmostEqual(yaw, -math.pi / 2)
+            sensor = model.find("gazebo[@reference='imu_link']/sensor")
+            self.assertEqual(sensor.get('type'), 'imu')
+            self.assertEqual(sensor.findtext('gz_frame_id'), 'imu_link')
+            self.assertEqual(sensor.findtext('topic'), 'imu/data')
+            self.assertEqual(sensor.findtext('imu/orientation_reference_frame/localization'), 'ENU')
+            self.assertIsNone(expand(mesh).find(".//sensor[@type='imu']"))
+
+    @unittest.skipUnless(shutil.which('gz'), 'Gazebo CLI unavailable')
+    def test_imu_survives_fixed_joint_reduction(self):
+        for mesh in (False, True):
+            with tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / 'nira.urdf'
+                ET.ElementTree(expand(mesh, True)).write(path)
+                result = subprocess.run(['gz', 'sdf', '-p', str(path)], check=True,
+                                        capture_output=True, text=True)
+            sdf = ET.fromstring(result.stdout)
+            sensor = sdf.find("model/link[@name='base_link']/sensor[@name='imu_bno055']")
+            self.assertIsNotNone(sensor)
+            self.assertEqual(sensor.findtext('gz_frame_id'), 'imu_link')
+            pose = list(map(float, sensor.findtext('pose').split()))
+            for actual, expected in zip(pose[:3], [0, -0.002, 0.0185]):
+                self.assertAlmostEqual(actual, expected)
+            self.assertAlmostEqual(abs(pose[3]), math.pi, places=5)
+            self.assertAlmostEqual(pose[4], 0)
+            self.assertAlmostEqual(pose[5], -math.pi / 2, places=5)
+
+    def test_lidar_is_a_horizontal_scan_at_the_cad_mount(self):
+        config = yaml.safe_load((ROOT / 'rumblex_lidar_2d/config/nira/lidar.yaml').read_text())
+        driver = config['ydlidar_ros2_driver_node']['ros__parameters']
+        for mesh in (False, True):
+            self.assertIsNone(expand(mesh).find('.//sensor'))
+            model = expand(mesh, True)
+            mount = model.find("joint[@name='lidar_joint']")
+            self.assertEqual(mount.find('parent').get('link'), 'base_link')
+            self.assertEqual(mount.find('origin').get('xyz'), '0.093 0 0.0933')
+            sensor = model.find("gazebo[@reference='lidar_link']/sensor")
+            self.assertEqual(sensor.get('type'), 'gpu_lidar')
+            self.assertEqual(sensor.findtext('gz_frame_id'), driver['frame_id'])
+            self.assertEqual(sensor.findtext('topic'), 'lidar_scan')
+            self.assertEqual(float(sensor.findtext('update_rate')), driver['frequency'])
+            scan = sensor.find('lidar/scan')
+            self.assertEqual(int(scan.findtext('horizontal/samples')), 400)
+            for bound in ('min', 'max'):
+                self.assertAlmostEqual(float(scan.findtext(f'horizontal/{bound}_angle')),
+                                       math.radians(driver[f'angle_{bound}']))
+                self.assertEqual(float(scan.findtext(f'vertical/{bound}_angle')), 0)
+                self.assertEqual(float(sensor.findtext(f'lidar/range/{bound}')),
+                                 driver[f'range_{bound}'])
+            self.assertEqual(int(scan.findtext('vertical/samples')), 1)
+
+    def test_primitive_visual_clears_scan_plane_and_shows_lidar(self):
+        model = expand()
+        visual = model.find("link[@name='base_link']/visual")
+        top = float(visual.find('origin').get('xyz').split()[2])
+        top += float(visual.find('geometry/box').get('size').split()[2]) / 2
+        self.assertLessEqual(top, 0.067)
+        self.assertEqual(len(model.findall("link[@name='lidar_link']/visual")), 2)
+        # The mesh torso already contains the scanner housing.
+        self.assertFalse(expand(True).findall("link[@name='lidar_link']/visual"))
+
     def test_variants_share_complete_joint_tree(self):
         primitive, mesh = expand(), expand(True)
         self.assertEqual([ET.tostring(j) for j in primitive.findall('joint')],

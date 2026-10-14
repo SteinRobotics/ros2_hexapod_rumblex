@@ -53,8 +53,14 @@ class CGaitController {
     bool hasPendingGait() const {
         return pending_request_.type != MovementRequest::NO_REQUEST;
     }
-    bool stopped() const {
+    // The active gait is at a rest endpoint; another gait may still be pending.
+    bool motionStopped() const {
         return active_gait_->state() == EGaitState::Stopped;
+    }
+    // Outstanding controller stop intent, including finite gaits that finish
+    // naturally without entering StopPending or Stopping.
+    bool stopRequested() const {
+        return stop_requested_;
     }
     bool finishesAutomatically() const;
     MovementRequestType currentGait() const {
@@ -73,6 +79,7 @@ class CGaitController {
     std::shared_ptr<rclcpp::Node> node_;
     std::shared_ptr<CPoseModel> kinematics_;
     Parameters params_;
+    bool stop_requested_ = false;
 
     std::map<MovementRequestType, std::shared_ptr<brain::IGait>> gaits_;
 

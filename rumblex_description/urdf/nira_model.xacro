@@ -13,7 +13,7 @@
        Meshes are native millimetre exports; only visuals use their geometry.
        Collision boxes are CAD envelopes. Masses, limits and dynamics are
        provisional estimates, not measured Nira hardware parameters. -->
-  <xacro:macro name="nira_link" params="name mesh xyz rpy center size mass meshes material">
+  <xacro:macro name="nira_link" params="name mesh xyz rpy center size mass meshes material visual_center:='' visual_size:=''">
     <xacro:property name="dims" value="${[float(v) for v in size.split()]}"/>
     <link name="${name}">
       <visual>
@@ -23,8 +23,8 @@
                           scale="0.001 0.001 0.001"/></geometry>
         </xacro:if>
         <xacro:unless value="${meshes}">
-          <origin xyz="${center}"/>
-          <geometry><box size="${size}"/></geometry>
+          <origin xyz="${visual_center or center}"/>
+          <geometry><box size="${visual_size or size}"/></geometry>
         </xacro:unless>
         <material name="${material}"/>
       </visual>
@@ -90,7 +90,10 @@
     </xacro:if>
 
     <!-- Coarse body envelope includes the layered chassis and mounted electronics. -->
+    <!-- Keep the primitive visual below the scanner mount: GPU lidar sees visuals.
+         The full collision/inertia envelope remains a coarse approximation. -->
     <xacro:nira_link name="base_link" mesh="assembly_torso_servo" xyz="0 0 0" rpy="0 0 0"
+                     visual_center="0 0 0.031" visual_size="0.270 0.190 0.072"
                      center="0 0 0.05" size="0.270 0.190 0.110" mass="0.8" meshes="${meshes}" material="creamy_white"/>
     <xacro:nira_leg prefix="left_front" xyz="0.11476587931 0.0697658793104 0.0525" rpy="3.14159265359 0 0.785398163397" meshes="${meshes}"/>
     <xacro:nira_leg prefix="left_mid" xyz="0 0.095175 0.0525" rpy="3.14159265359 0 1.57079632679" meshes="${meshes}"/>
@@ -120,13 +123,82 @@
       <parent link="base_link"/><child link="lidar_link"/>
       <origin xyz="0.093 0 0.0933"/>
     </joint>
-    <link name="lidar_link"/>
+    <link name="lidar_link">
+      <xacro:unless value="${meshes}">
+        <visual>
+          <origin xyz="0 0 -0.015725"/>
+          <geometry><box size="0.0386 0.0386 0.02115"/></geometry>
+          <material name="dark_gray"/>
+        </visual>
+        <visual>
+          <origin xyz="0 0 0.001225"/>
+          <geometry><cylinder radius="0.0181" length="0.01275"/></geometry>
+          <material name="dark_gray"/>
+        </visual>
+      </xacro:unless>
+    </link>
+    <xacro:if value="$(arg use_sim)">
+      <gazebo reference="lidar_link">
+        <!-- Match config/nira's hardware driver: 4 kHz sampling at 10 Hz,
+             one horizontal 360-degree scan, 0.03..12 m. -->
+        <sensor name="lidar_ydlidar_tmini" type="gpu_lidar">
+          <pose>0 0 0 0 0 0</pose>
+          <topic>lidar_scan</topic>
+          <gz_frame_id>lidar_link</gz_frame_id>
+          <update_rate>10</update_rate>
+          <always_on>true</always_on>
+          <visualize>true</visualize>
+          <lidar>
+            <scan>
+              <horizontal>
+                <samples>400</samples>
+                <resolution>1</resolution>
+                <min_angle>${-pi}</min_angle>
+                <max_angle>${pi}</max_angle>
+              </horizontal>
+              <vertical>
+                <samples>1</samples>
+                <resolution>1</resolution>
+                <min_angle>0</min_angle>
+                <max_angle>0</max_angle>
+              </vertical>
+            </scan>
+            <range><min>0.03</min><max>12.0</max><resolution>0.01</resolution></range>
+          </lidar>
+        </sensor>
+      </gazebo>
+    </xacro:if>
 
     <!-- BNO055 board origin: board_layout and place_board(), including the flip. -->
     <joint name="imu_joint" type="fixed">
       <parent link="base_link"/><child link="imu_link"/>
       <origin xyz="0 -0.002 0.0185" rpy="${pi} 0 ${-pi/2}"/>
     </joint>
-    <link name="imu_link"/>
+    <link name="imu_link">
+      <!-- Mesh torso already includes this CAD board envelope (not chip dimensions). -->
+      <xacro:unless value="${meshes}">
+        <visual>
+          <origin xyz="0 0 0.0075"/>
+          <geometry><box size="0.026 0.016 0.015"/></geometry>
+          <material name="bno055_board"><color rgba="0.05 0.3 0.1 1"/></material>
+        </visual>
+      </xacro:unless>
+    </link>
+    <xacro:if value="$(arg use_sim)">
+      <gazebo reference="imu_link">
+        <!-- Ideal IMU in CAD board axes; no BNO055 chip-axis remap or
+             calibration model. Acceleration includes gravity. -->
+        <sensor name="imu_bno055" type="imu">
+          <pose>0 0 0 0 0 0</pose>
+          <topic>imu/data</topic>
+          <gz_frame_id>imu_link</gz_frame_id>
+          <update_rate>100</update_rate>
+          <always_on>true</always_on>
+          <imu>
+            <orientation_reference_frame><localization>ENU</localization></orientation_reference_frame>
+          </imu>
+        </sensor>
+      </gazebo>
+    </xacro:if>
   </xacro:macro>
 </robot>

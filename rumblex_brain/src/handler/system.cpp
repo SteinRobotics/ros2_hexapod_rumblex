@@ -29,11 +29,11 @@ void CSystem::run(std::shared_ptr<RequestSystem> request) {
     msgServoRelay.data = !request->turnOffServoRelay;
     pubServoRelay_->publish(msgServoRelay);
 
-    setDone(false);
+    setRequestFinished(false);
 }
 
 void CSystem::update() {
-    setDone(true);
+    setRequestFinished(true);
 }
 
 void CSystem::cancel() {

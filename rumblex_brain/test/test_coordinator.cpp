@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <limits>
 #include <stdexcept>
+#include <thread>
 #include <tuple>
 
 #include "requester/coordinator.hpp"
@@ -13,9 +14,15 @@ namespace brain {
 using namespace mp_units;
 using namespace mp_units::si::unit_symbols;
 
-// Exercise request timing without sleeps or exposing coordinator state to callers.
+// Inspect scheduling in tests without exposing planner state to callers.
 class ActionPlannerTestAccess {
    public:
+    static CMovement& movement(CActionPlanner& planner) {
+        return *planner.handler_movement_;
+    }
+    static const auto& activeRequests(const CActionPlanner& planner) {
+        return planner.active_requests_;
+    }
     static const auto& latestNormalRequest(const CActionPlanner& planner) {
         return planner.requests_normal_prio_.back();
     }
@@ -72,6 +79,43 @@ class CoordinatorTest : public ::testing::Test {
     std::shared_ptr<CActionPlanner> planner_;
     std::unique_ptr<CCoordinator> coordinator_;
 };
+
+TEST_F(CoordinatorTest, CancellationAllowsSchedulingBeforeMotionStops) {
+    create();
+    auto publisher = node_->create_publisher<rumblex_interfaces::msg::BodyPose>(
+        "body_pose_actual", rclcpp::QoS(1).transient_local());
+    rclcpp::NodeOptions seed_options;
+    seed_options.parameter_overrides(test_helpers::defaultKinematicsParameters());
+    auto seed_node = std::make_shared<rclcpp::Node>("scheduler_seed", seed_options);
+    CPoseModel model(seed_node);
+    model.moveTorso(model.getLaydownToePositions(), CPose());
+    publisher->publish(bodyPose(model));
+    rclcpp::executors::SingleThreadedExecutor executor;
+    executor.add_node(node_);
+    auto& movement = ActionPlannerTestAccess::movement(*planner_);
+    // Deliver initialization without advancing the startup trajectory.
+    for (int i = 0; i < 20; ++i) {
+        executor.spin_some();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    auto stand = std::make_shared<RequestMovementType>();
+    stand->movementRequest.type = MovementRequest::SEQUENCE_STAND_UP;
+    stand->movementRequest.duration_s = 1.0 * s;
+    movement.run(stand);
+    ASSERT_FALSE(movement.requestFinished());
+    ASSERT_FALSE(movement.motionStopped());
+
+    auto system = std::make_shared<RequestSystem>();
+    planner_->request({system}, Prio::Highest);
+    EXPECT_TRUE(movement.requestFinished());
+    EXPECT_TRUE(movement.stopRequested());
+    EXPECT_FALSE(movement.motionStopped());
+    planner_->update();
+    const auto& active = ActionPlannerTestAccess::activeRequests(*planner_);
+    ASSERT_EQ(active.size(), 1u);
+    EXPECT_EQ(active.front(), system);
+    EXPECT_FALSE(movement.motionStopped());
+}
 
 TEST_F(CoordinatorTest, JoystickPoseModeActivatesGaitAndGroupsOrientationTargets) {
     create();

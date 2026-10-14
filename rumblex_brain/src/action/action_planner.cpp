@@ -74,15 +74,15 @@ void CActionPlanner::request(std::vector<std::shared_ptr<RequestBase>> requests,
 }
 
 void CActionPlanner::update() {
-    bool is_done = true;
+    bool request_group_finished = true;
     for (auto handler : handlers_) {
         handler->update();
-        if (!handler->done()) {
-            is_done = false;
+        if (!handler->requestFinished()) {
+            request_group_finished = false;
         }
     }
-    is_done_ = is_done;
-    if (!is_done_) {
+    request_group_finished_ = request_group_finished;
+    if (!request_group_finished_) {
         return;
     }
     // RCLCPP_INFO_STREAM(node_->get_logger(), "schedule new request");
@@ -141,8 +141,8 @@ void CActionPlanner::cancelRunningRequest() {
     }
 }
 
-bool CActionPlanner::done() {
-    return is_done_;
+bool CActionPlanner::requestGroupFinished() {
+    return request_group_finished_;
 }
 
 }  // namespace brain

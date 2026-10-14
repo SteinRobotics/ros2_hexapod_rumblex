@@ -36,11 +36,11 @@ TEST_F(CommunicationHandlerTest, AcknowledgedListeningWaitsForOffPastTimeout) {
 
     std::this_thread::sleep_for(5100ms);
     handler.update();
-    EXPECT_FALSE(handler.done());
+    EXPECT_FALSE(handler.requestFinished());
 
     status.status = rumblex_interfaces::msg::CommunicationStatus::OFF;
     handler.onCommunicationStatus(status);
-    EXPECT_TRUE(handler.done());
+    EXPECT_TRUE(handler.requestFinished());
 }
 
 TEST_F(CommunicationHandlerTest, NewRequestRequiresFreshAcknowledgment) {
@@ -52,13 +52,13 @@ TEST_F(CommunicationHandlerTest, NewRequestRequiresFreshAcknowledgment) {
     rumblex_interfaces::msg::CommunicationStatus status;
     status.status = rumblex_interfaces::msg::CommunicationStatus::OFF;
     handler.onCommunicationStatus(status);
-    ASSERT_TRUE(handler.done());
+    ASSERT_TRUE(handler.requestFinished());
 
     handler.run(request);
     handler.update();
-    ASSERT_FALSE(handler.done());
+    ASSERT_FALSE(handler.requestFinished());
 
     std::this_thread::sleep_for(5100ms);
     handler.update();
-    EXPECT_TRUE(handler.done());
+    EXPECT_TRUE(handler.requestFinished());
 }

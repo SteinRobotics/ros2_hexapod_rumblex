@@ -25,7 +25,7 @@ CMovement::CMovement(std::shared_ptr<rclcpp::Node> node) : node_(std::move(node)
     std_msgs::msg::String name;
     name.data = "SEQUENCE_LAYDOWN";
     pub_movement_name_->publish(name);
-    setDone(true);
+    setRequestFinished(true);
 }
 
 void CMovement::onInitialPose(const rumblex_interfaces::msg::BodyPose& pose) {
@@ -43,24 +43,24 @@ void CMovement::onInitialPose(const rumblex_interfaces::msg::BodyPose& pose) {
         MovementRequest request;
         request.type = MovementRequest::SEQUENCE_LAYDOWN;
         request.name = "SEQUENCE_LAYDOWN";
-        setDone(false);
+        setRequestFinished(false);
         startRequest(request);
     }
 }
 
 void CMovement::startRequest(const MovementRequest& request) {
-    completion_time_.reset();
-    completion_request_.reset();
+    dwell_deadline_.reset();
+    tracked_request_.reset();
     if (!gait_controller_->setGait(request)) {
-        setDone(true);
+        setRequestFinished(true);
         return;
     }
-    completion_request_ = request;
-    updateCompletion();
+    tracked_request_ = request;
+    updateRequestCompletion();
 }
 
 void CMovement::run(std::shared_ptr<RequestMovementType> request) {
-    setDone(false);
+    setRequestFinished(false);
     if (initialized_)
         startRequest(request->movementRequest);
     else
@@ -84,35 +84,37 @@ void CMovement::run(std::shared_ptr<RequestVelocity> request) {
 
 void CMovement::cancel() {
     pending_request_.reset();
-    completion_time_.reset();
-    completion_request_.reset();
+    dwell_deadline_.reset();
+    tracked_request_.reset();
     gait_controller_->requestStopSelectedGait();
-    setDone(true);
+    // Release the scheduler now; the controller still owns graceful stopping
+    // and the rest-endpoint handoff to a subsequent movement request.
+    setRequestFinished(true);
 }
 
-void CMovement::updateCompletion() {
-    if (!completion_request_ || gait_controller_->hasPendingGait() ||
-        gait_controller_->currentGait() != completion_request_->type) {
+void CMovement::updateRequestCompletion() {
+    if (!tracked_request_ || gait_controller_->hasPendingGait() ||
+        gait_controller_->currentGait() != tracked_request_->type) {
         return;
     }
     if (gait_controller_->finishesAutomatically()) {
-        if (!gait_controller_->stopped()) return;
+        if (!gait_controller_->motionStopped()) return;
     } else {
         // Repeating gaits retain their requested dwell time, measured from activation.
-        if (!completion_time_) {
-            completion_time_ =
+        if (!dwell_deadline_) {
+            dwell_deadline_ =
                 node_->now() + rclcpp::Duration::from_seconds(
-                                   std::max(0.0 * s, completion_request_->duration_s).numerical_value_in(s));
+                                   std::max(0.0 * s, tracked_request_->duration_s).numerical_value_in(s));
         }
-        if (node_->now() < *completion_time_) return;
+        if (node_->now() < *dwell_deadline_) return;
     }
-    completion_request_.reset();
-    completion_time_.reset();
-    setDone(true);
+    tracked_request_.reset();
+    dwell_deadline_.reset();
+    setRequestFinished(true);
 }
 
 void CMovement::update() {
-    updateCompletion();
+    updateRequestCompletion();
     const auto now = std::chrono::steady_clock::now();
     if (now < next_update_) return;
     const auto gait = gait_controller_->currentGait();
@@ -136,7 +138,7 @@ void CMovement::update() {
     geometry_msgs::msg::Twist effective_velocity;
     if (initialized_) {
         const bool progressed = gait_controller_->updateSelectedGait(velocity_, torso_, head_, elapsed_s);
-        updateCompletion();
+        updateRequestCompletion();
         auto pose = bodyPose(*pose_model_);
         // Some sequences restore their final pose while returning false on completion.
         if ((progressed || pose != last_pose_) && validBodyPose(pose)) {

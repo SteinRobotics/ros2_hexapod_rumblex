@@ -15,16 +15,18 @@ class IHandler {
     virtual void update() = 0;
     virtual void cancel() = 0;
 
-    bool done() const {
-        return is_done_;
+    // Finished means this request no longer blocks scheduling. It does not imply
+    // success or that an asynchronous operation (including motion) has stopped.
+    bool requestFinished() const {
+        return request_finished_;
     }
 
-    void setDone(bool state) {
-        is_done_ = state;
+    void setRequestFinished(bool state) {
+        request_finished_ = state;
     }
 
    private:
-    bool is_done_ = true;
+    bool request_finished_ = true;
 };
 
 }  // namespace brain

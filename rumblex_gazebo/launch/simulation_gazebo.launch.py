@@ -99,13 +99,14 @@ def _launch_robot(context):
         )
     )
 
-    # --- Bridge: forward /clock and /lidar_scan from Gazebo to ROS ---
+    # --- Bridge: forward simulation clock and sensor data from Gazebo to ROS ---
     gz_ros_bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
         arguments=[
             '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
             '/lidar_scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
+            '/imu/data@sensor_msgs/msg/Imu[gz.msgs.IMU',
         ],
     )
 

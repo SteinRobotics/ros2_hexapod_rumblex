@@ -14,6 +14,31 @@ the latest target with a duration based on the pose delivery interval (normally 
 for locomotion/orientation and 100 ms for other gestures). Without a new command it
 publishes state but does not initiate motion.
 
+## Request completion and stopping
+
+`IHandler::requestFinished()` means the current request no longer blocks the
+scheduler. It does not imply success or stopped motion. The planner's
+`requestGroupFinished()` caches the aggregate from its last handler update,
+before dispatching the next request group.
+
+Finite movement requests finish when their selected gait reaches `Stopped`.
+Repeating requests finish when their dwell deadline expires, measured from gait
+activation; this does not request a stop. Repeating requests reset that deadline
+when resubmitted. Dwell deadlines continue to use the ROS clock.
+
+Cancellation clears pending/tracked movement requests and immediately marks the
+request finished. The controller continues the graceful stop and manages any
+subsequent gait handoff at the rest endpoint. Scheduling does not wait for rest.
+
+`stopRequested()` reports outstanding controller stop intent, including a gait
+replacement or cancellation of a finite sequence that naturally runs to its end.
+It clears at rest, on a new gait activation, or when an accepted same-gait request
+withdraws the intent. It does not describe autonomous gait settlement from zero
+velocity. `motionStopped()` reports only that the active gait is at its planned
+rest endpoint; a replacement gait may still be pending. An active continuous
+gait holding an unchanged pose need not report `Stopped`. Neither query measures
+hardware motion, and motion state is meaningful only after initial pose feedback.
+
 ## Message contract
 
 ```text

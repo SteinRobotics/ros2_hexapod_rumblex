@@ -23,8 +23,8 @@ void CCommunication::onCommunicationStatus(const rumblex_interfaces::msg::Commun
     RCLCPP_INFO_STREAM(node_->get_logger(), "onCommunicationStatus |" << status_string.c_str() << "|");
     m_communication.status = msg.status;
     awaiting_status_ = false;
-    if (!done() && msg.status == rumblex_interfaces::msg::CommunicationStatus::OFF) {
-        setDone(true);
+    if (!requestFinished() && msg.status == rumblex_interfaces::msg::CommunicationStatus::OFF) {
+        setRequestFinished(true);
     }
 }
 
@@ -33,7 +33,7 @@ void CCommunication::run(std::shared_ptr<RequestListening> request) {
     std_msgs::msg::Bool msg;
     msg.data = request->active;
     m_pubListening->publish(msg);
-    setDone(false);
+    setRequestFinished(false);
     request_time_ = std::chrono::steady_clock::now();
     awaiting_status_ = true;
 }
@@ -43,7 +43,7 @@ void CCommunication::run(std::shared_ptr<RequestTalking> request) {
     std_msgs::msg::String msg;
     msg.data = request->text;
     m_pubTalking->publish(msg);
-    setDone(false);
+    setRequestFinished(false);
     request_time_ = std::chrono::steady_clock::now();
     awaiting_status_ = true;
 }
@@ -53,7 +53,7 @@ void CCommunication::run(std::shared_ptr<RequestChat> request) {
     std_msgs::msg::String msg;
     msg.data = request->text;
     m_pubChat->publish(msg);
-    setDone(false);
+    setRequestFinished(false);
     request_time_ = std::chrono::steady_clock::now();
     awaiting_status_ = true;
 }
@@ -63,7 +63,7 @@ void CCommunication::run(std::shared_ptr<RequestMusic> request) {
     std_msgs::msg::String msg;
     msg.data = request->song;
     m_pubMusic->publish(msg);
-    setDone(false);
+    setRequestFinished(false);
     request_time_ = std::chrono::steady_clock::now();
     awaiting_status_ = true;
 }
@@ -82,9 +82,10 @@ void CCommunication::cancel() {
 }
 
 void CCommunication::update() {
-    if (!done() && awaiting_status_ && std::chrono::steady_clock::now() - request_time_ > kTimeout) {
+    if (!requestFinished() && awaiting_status_ &&
+        std::chrono::steady_clock::now() - request_time_ > kTimeout) {
         RCLCPP_WARN(node_->get_logger(), "CCommunication: no status received within timeout, marking done");
-        setDone(true);
+        setRequestFinished(true);
     }
 }
 

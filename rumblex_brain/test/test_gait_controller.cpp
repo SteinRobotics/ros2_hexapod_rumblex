@@ -495,10 +495,61 @@ TEST_F(GaitControllerTest, ReselectingContinuousPoseCancelsPendingSwitchAndKeeps
     controller_->setGait(request);
     EXPECT_FALSE(controller_->hasPendingGait());
     EXPECT_TRUE(controller_->updateSelectedGait(createZeroVelocity(), target, head));
-    EXPECT_FALSE(controller_->stopped());
+    EXPECT_FALSE(controller_->motionStopped());
     EXPECT_GT(kinematics_->getTorsoPose().position.x, previous_x);
     EXPECT_TRUE(controller_->updateSelectedGait(createZeroVelocity(), target, head));
     EXPECT_EQ(controller_->currentGait(), MovementRequest::CONTINUOUS_POSE);
+}
+
+TEST_F(GaitControllerTest, StopIntentSurvivesFiniteGaitUntilRestAndReplacement) {
+    MovementRequest pose;
+    pose.type = MovementRequest::SINGLE_POSE;
+    pose.duration_s = 1.0 * s;
+    ASSERT_TRUE(controller_->setGait(pose));
+    const CPose target(0.0, 0.0, 0.02, 0.0, 0.0, 0.0);
+    controller_->updateSelectedGait(createZeroVelocity(), target, COrientation(), 0.1 * s);
+    ASSERT_FALSE(controller_->motionStopped());
+
+    MovementRequest next;
+    next.type = MovementRequest::CONTINUOUS_POSE;
+    ASSERT_TRUE(controller_->setGait(next));
+    EXPECT_TRUE(controller_->stopRequested());
+    EXPECT_TRUE(controller_->hasPendingGait());
+    EXPECT_EQ(controller_->currentGait(), pose.type);
+    for (int i = 0; i < 20 && !controller_->motionStopped(); ++i) {
+        EXPECT_EQ(controller_->currentGait(), pose.type);
+        controller_->updateSelectedGait(createZeroVelocity(), target, COrientation(), 0.1 * s);
+    }
+    ASSERT_TRUE(controller_->motionStopped());
+    EXPECT_FALSE(controller_->stopRequested());
+    EXPECT_TRUE(controller_->hasPendingGait());
+    EXPECT_EQ(kinematics_->getTorsoPose(), target);
+    controller_->updateSelectedGait(createZeroVelocity(), target, COrientation(), 0.1 * s);
+    EXPECT_EQ(controller_->currentGait(), next.type);
+    EXPECT_FALSE(controller_->stopRequested());
+    EXPECT_FALSE(controller_->hasPendingGait());
+}
+
+TEST_F(GaitControllerTest, SameGaitWithdrawsStopIntentAndInvalidRequestPreservesIt) {
+    MovementRequest pose;
+    pose.type = MovementRequest::CONTINUOUS_POSE;
+    ASSERT_TRUE(controller_->setGait(pose));
+    controller_->requestStopSelectedGait();
+    EXPECT_TRUE(controller_->stopRequested());
+    EXPECT_FALSE(controller_->motionStopped());
+    MovementRequest invalid;
+    invalid.type = MovementRequest::NO_REQUEST;
+    EXPECT_FALSE(controller_->setGait(invalid));
+    EXPECT_TRUE(controller_->stopRequested());
+    ASSERT_TRUE(controller_->setGait(pose));
+    EXPECT_FALSE(controller_->stopRequested());
+    EXPECT_FALSE(controller_->motionStopped());
+    controller_->requestStopSelectedGait();
+    controller_->updateSelectedGait(createZeroVelocity());
+    ASSERT_TRUE(controller_->motionStopped());
+    EXPECT_FALSE(controller_->stopRequested());
+    controller_->requestStopSelectedGait();
+    EXPECT_FALSE(controller_->stopRequested());
 }
 
 }  // namespace

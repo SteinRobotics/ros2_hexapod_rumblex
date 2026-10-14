@@ -182,7 +182,7 @@ TEST_F(TrajectoryTransitionTest, AllBehaviorPairsHandOffFromLastCommandedPose) {
             bool handoff = false;
             for (int i = 0; i < 1500; ++i) {
                 const auto before = model->getToePositions();
-                const bool ready = controller.stopped();
+                const bool ready = controller.motionStopped();
                 tick();
                 if ((ready || starts_now) && !controller.hasPendingGait()) {
                     for (const auto& [leg, toe] : before) {

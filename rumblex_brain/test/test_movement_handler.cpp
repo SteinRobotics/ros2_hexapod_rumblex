@@ -76,12 +76,12 @@ TEST_F(MovementHandlerTest, WaitsForFeedbackAndDoesNotStartDurationEarly) {
     request(MovementRequest::SEQUENCE_STAND_UP, 0.2);
     pump(350ms);
     EXPECT_TRUE(poses.empty());
-    EXPECT_FALSE(handler->done());
+    EXPECT_FALSE(handler->requestFinished());
     feedback->publish(initialPose());
     pump(400ms);
-    EXPECT_FALSE(handler->done());
+    EXPECT_FALSE(handler->requestFinished());
     pump(800ms);
-    EXPECT_TRUE(handler->done());
+    EXPECT_TRUE(handler->requestFinished());
     ASSERT_FALSE(poses.empty());
     EXPECT_TRUE(validBodyPose(poses.back()));
 }
@@ -91,7 +91,7 @@ TEST_F(MovementHandlerTest, AlreadyLayingDownDoesNotCommandMotion) {
     EXPECT_TRUE(poses.empty());
     ASSERT_FALSE(velocities.empty());
     EXPECT_EQ(velocities.back(), geometry_msgs::msg::Twist());
-    EXPECT_TRUE(handler->done());
+    EXPECT_TRUE(handler->requestFinished());
 }
 TEST_F(MovementHandlerTest, StartupMovesToLaydownAfterValidFeedback) {
     pump(150ms);
@@ -114,11 +114,11 @@ TEST_F(MovementHandlerTest, StartupMovesToLaydownAfterValidFeedback) {
     ASSERT_FALSE(poses.empty());
     EXPECT_NE(poses.back(), seed);
     EXPECT_NE(poses.back(), target);
-    EXPECT_FALSE(handler->done());
+    EXPECT_FALSE(handler->requestFinished());
 
     pump(1000ms);
     EXPECT_EQ(poses.back(), target);
-    EXPECT_TRUE(handler->done());
+    EXPECT_TRUE(handler->requestFinished());
     const auto command_count = poses.size();
     feedback->publish(seed);
     pump(200ms);
@@ -177,14 +177,16 @@ TEST_F(MovementHandlerTest, PendingRepeatingGaitGetsFullDurationAfterActivation)
     request(MovementRequest::CONTINUOUS_POSE, 0.5);
     pump(600ms);
     EXPECT_FALSE(activated);
-    EXPECT_FALSE(handler->done());
+    EXPECT_FALSE(handler->requestFinished());
     for (int i = 0; i < 20 && !activated; ++i) pump(50ms);
     ASSERT_TRUE(activated);
-    EXPECT_FALSE(handler->done());
+    EXPECT_FALSE(handler->requestFinished());
     pump(200ms);
-    EXPECT_FALSE(handler->done());
+    EXPECT_FALSE(handler->requestFinished());
     pump(400ms);
-    EXPECT_TRUE(handler->done());
+    EXPECT_TRUE(handler->requestFinished());
+    EXPECT_FALSE(handler->motionStopped());
+    EXPECT_FALSE(handler->stopRequested());
 }
 
 TEST_F(MovementHandlerTest, FiniteGaitWaitsForActualCompletion) {
@@ -192,9 +194,28 @@ TEST_F(MovementHandlerTest, FiniteGaitWaitsForActualCompletion) {
     pump(150ms);
     request(MovementRequest::SEQUENCE_HIGH_FIVE, 0.1);
     pump(300ms);
-    EXPECT_FALSE(handler->done());
+    EXPECT_FALSE(handler->requestFinished());
     pump(4200ms);
-    EXPECT_TRUE(handler->done());
+    EXPECT_TRUE(handler->requestFinished());
+}
+
+TEST_F(MovementHandlerTest, CancellationFinishesRequestBeforeFiniteMotionStops) {
+    feedback->publish(initialPose());
+    pump(150ms);
+    request(MovementRequest::SEQUENCE_STAND_UP, 1.0);
+    pump(150ms);
+    ASSERT_FALSE(handler->requestFinished());
+    ASSERT_FALSE(handler->motionStopped());
+    handler->cancel();
+    EXPECT_TRUE(handler->requestFinished());
+    EXPECT_TRUE(handler->stopRequested());
+    EXPECT_FALSE(handler->motionStopped());
+    const auto poses_before_stop = poses.size();
+    pump(1200ms);
+    EXPECT_TRUE(handler->requestFinished());
+    EXPECT_TRUE(handler->motionStopped());
+    EXPECT_FALSE(handler->stopRequested());
+    EXPECT_GT(poses.size(), poses_before_stop);
 }
 
 TEST_F(MovementHandlerTest, RepeatedTimedRequestRestartsCompletionTimer) {
@@ -202,13 +223,13 @@ TEST_F(MovementHandlerTest, RepeatedTimedRequestRestartsCompletionTimer) {
     pump(150ms);
     request(MovementRequest::CONTINUOUS_POSE, 0.2);
     pump(300ms);
-    ASSERT_TRUE(handler->done());
+    ASSERT_TRUE(handler->requestFinished());
     request(MovementRequest::CONTINUOUS_POSE, 0.3);
-    EXPECT_FALSE(handler->done());
+    EXPECT_FALSE(handler->requestFinished());
     pump(100ms);
-    EXPECT_FALSE(handler->done());
+    EXPECT_FALSE(handler->requestFinished());
     pump(300ms);
-    EXPECT_TRUE(handler->done());
+    EXPECT_TRUE(handler->requestFinished());
 }
 
 TEST_F(MovementHandlerTest, CancelledPendingRequestDoesNotRestartCompletionTracking) {
@@ -219,7 +240,7 @@ TEST_F(MovementHandlerTest, CancelledPendingRequestDoesNotRestartCompletionTrack
     request(MovementRequest::CONTINUOUS_POSE, 1.0);
     handler->cancel();
     pump(700ms);
-    EXPECT_TRUE(handler->done());
+    EXPECT_TRUE(handler->requestFinished());
 }
 
 TEST_F(MovementHandlerTest, PendingFiniteGaitWaitsForItsOwnCompletion) {
@@ -229,9 +250,9 @@ TEST_F(MovementHandlerTest, PendingFiniteGaitWaitsForItsOwnCompletion) {
     pump(100ms);
     request(MovementRequest::SEQUENCE_LAYDOWN, 0.2);
     pump(350ms);
-    EXPECT_FALSE(handler->done());
+    EXPECT_FALSE(handler->requestFinished());
     pump(1800ms);
-    EXPECT_TRUE(handler->done());
+    EXPECT_TRUE(handler->requestFinished());
 }
 
 TEST_F(MovementHandlerTest, SameTypeFiniteRequestCompletesAndInvalidRequestDoesNotBlock) {
@@ -240,11 +261,11 @@ TEST_F(MovementHandlerTest, SameTypeFiniteRequestCompletesAndInvalidRequestDoesN
     // Laydown is already selected when the controller is constructed.
     request(MovementRequest::SEQUENCE_LAYDOWN, 0.2);
     pump(1200ms);
-    EXPECT_TRUE(handler->done());
+    EXPECT_TRUE(handler->requestFinished());
     request(MovementRequest::NO_REQUEST);
-    EXPECT_TRUE(handler->done());
+    EXPECT_TRUE(handler->requestFinished());
     request(MovementRequest::SEQUENCE_DANCE);
-    EXPECT_TRUE(handler->done());
+    EXPECT_TRUE(handler->requestFinished());
 }
 
 TEST_F(MovementHandlerTest, OrientationPublishesFrequentSamplesWithoutCompressingDuration) {

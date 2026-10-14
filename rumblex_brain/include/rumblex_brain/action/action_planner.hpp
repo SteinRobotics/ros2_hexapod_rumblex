@@ -28,7 +28,9 @@ class CActionPlanner {
     void request(std::vector<std::shared_ptr<RequestBase>> requests_v, Prio prio);
     void execute(std::vector<std::shared_ptr<RequestBase>>& requests_v);
     void cancelRunningRequest();
-    bool done();
+    // Cached result from the last handler update, before dispatching the next
+    // group. This is scheduling completion, not a motion-rest indication.
+    bool requestGroupFinished();
 
    private:
     friend class ActionPlannerTestAccess;
@@ -41,7 +43,7 @@ class CActionPlanner {
     Prio active_prio_ = Prio::Background;
 
     std::vector<std::shared_ptr<IHandler>> handlers_;
-    bool is_done_ = true;
+    bool request_group_finished_ = true;
     std::shared_ptr<CSystem> handler_system_;
     std::shared_ptr<CCommunication> handler_communication_;
     std::shared_ptr<CMovement> handler_movement_;

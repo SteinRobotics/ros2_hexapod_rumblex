@@ -16,6 +16,14 @@ class CMovement : public IHandler {
     explicit CMovement(std::shared_ptr<rclcpp::Node> node);
     void update() override;
     void cancel() override;
+    // These describe planned gait state, not measured hardware motion. Before
+    // initial pose feedback, motion state is not yet meaningful.
+    bool motionStopped() const {
+        return gait_controller_->motionStopped();
+    }
+    bool stopRequested() const {
+        return gait_controller_->stopRequested();
+    }
     void run(std::shared_ptr<RequestMovementType> request);
     void run(std::shared_ptr<RequestSinglePose> request);
     void run(std::shared_ptr<RequestHeadOrientation> request);
@@ -25,7 +33,7 @@ class CMovement : public IHandler {
    private:
     void onInitialPose(const rumblex_interfaces::msg::BodyPose& pose);
     void startRequest(const MovementRequest& request);
-    void updateCompletion();
+    void updateRequestCompletion();
     std::shared_ptr<rclcpp::Node> node_;
     std::shared_ptr<CPoseModel> pose_model_;
     std::unique_ptr<CGaitController> gait_controller_;
@@ -38,8 +46,8 @@ class CMovement : public IHandler {
     COrientation head_;
     bool initialized_ = false;
     std::optional<MovementRequest> pending_request_;
-    std::optional<MovementRequest> completion_request_;
-    std::optional<rclcpp::Time> completion_time_;
+    std::optional<MovementRequest> tracked_request_;
+    std::optional<rclcpp::Time> dwell_deadline_;
     rumblex_interfaces::msg::BodyPose last_pose_;
     std::chrono::steady_clock::time_point next_update_{};
     std::optional<std::chrono::steady_clock::time_point> last_update_;

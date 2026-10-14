@@ -80,6 +80,7 @@ bool CGaitController::setGait(brain::MovementRequest request) {
     // If there's an active gait and the same gait is requested again, handle
     // transient states (Stopped -> start, StopPending/Stopping -> cancelStop) and return.
     if (request.type == active_request_.type) {
+        stop_requested_ = false;
         if (active_gait_->state() == EGaitState::Stopped) {
             RCLCPP_INFO(node_->get_logger(), "CGaitController::setGait starting %s", request.name.c_str());
             active_gait_->start(request.duration_s, request.direction);
@@ -95,6 +96,7 @@ bool CGaitController::setGait(brain::MovementRequest request) {
     if (active_gait_->state() != EGaitState::Stopped) {
         pending_request_ = request;
         active_gait_->requestStop();
+        stop_requested_ = !motionStopped();
         return true;
     }
 
@@ -104,6 +106,7 @@ bool CGaitController::setGait(brain::MovementRequest request) {
 }
 
 void CGaitController::switchGait(brain::MovementRequest request) {
+    stop_requested_ = false;
     RCLCPP_INFO_STREAM(node_->get_logger(),
                        "CGaitController: switching to " << request.name << " (type=" << +request.type << ")");
     pending_request_ = createMsg("NO_REQUEST", MovementRequest::NO_REQUEST);
@@ -123,13 +126,14 @@ bool CGaitController::updateSelectedGait(const Velocity& velocity, CPose torso, 
         switchGait(pending_request_);
     }
 
+    bool progressed = false;
     if (auto continuous = std::dynamic_pointer_cast<IContinuousGait>(active_gait_)) {
-        return continuous->updateTimed(velocity, torso, head, elapsed_s);
+        progressed = continuous->updateTimed(velocity, torso, head, elapsed_s);
+    } else if (auto sequence = std::dynamic_pointer_cast<ISequenceGait>(active_gait_)) {
+        progressed = sequence->updateTimed(elapsed_s);
     }
-    if (auto sequence = std::dynamic_pointer_cast<ISequenceGait>(active_gait_)) {
-        return sequence->updateTimed(elapsed_s);
-    }
-    return false;
+    if (motionStopped()) stop_requested_ = false;
+    return progressed;
 }
 
 bool CGaitController::finishesAutomatically() const {
@@ -151,6 +155,7 @@ bool CGaitController::finishesAutomatically() const {
 void CGaitController::requestStopSelectedGait() {
     pending_request_ = createMsg("NO_REQUEST", MovementRequest::NO_REQUEST);
     active_gait_->requestStop();
+    stop_requested_ = !motionStopped();
 }
 
 }  // namespace brain

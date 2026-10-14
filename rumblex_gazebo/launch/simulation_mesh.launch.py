@@ -58,9 +58,13 @@ def _launch_robot(context):
                     arguments=['forward_position_controller', '--param-file',
                                os.path.join(gazebo_share, 'config', robot, 'joint_controllers.yaml')],
                     output='screen')
-    clock_bridge = Node(
+    sensor_bridge = Node(
         package='ros_gz_bridge', executable='parameter_bridge',
-        arguments=['/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'],
+        arguments=[
+            '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
+            '/lidar_scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
+            '/imu/data@sensor_msgs/msg/Imu[gz.msgs.IMU',
+        ],
     )
     return [
         RegisterEventHandler(OnProcessExit(
@@ -69,7 +73,7 @@ def _launch_robot(context):
             target_action=jsb, on_exit=_after_success([position], 'Joint state broadcaster'))),
         RegisterEventHandler(OnProcessExit(
             target_action=position, on_exit=_after_success([], 'Position controller'))),
-        gazebo, rsp, spawn, clock_bridge,
+        gazebo, rsp, spawn, sensor_bridge,
     ]
 
 

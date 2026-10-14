@@ -242,8 +242,9 @@ head STL includes the camera pod and pitch servo. Collision envelopes,
 estimated masses and provisional motion limits support model development;
 they are not calibrated dynamics or verified mechanical travel limits.
 `use_sim:=true` adds the shared ros2_control interfaces and the Nira controller
-configuration. This does not provide a complete Nira movement profile or
-simulated sensor data.
+configuration, a planar T-mini lidar and an ideal BNO055 IMU. This does not
+provide a complete Nira movement profile. See `rumblex_gazebo/README.md` for
+sensor topics, mounting conventions and simulation limitations.
 
 The description package's colcon tests check both variants, mesh resources,
 the connected joint tree and simulation configuration. The additional
