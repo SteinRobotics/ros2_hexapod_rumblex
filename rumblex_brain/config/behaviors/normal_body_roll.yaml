@@ -1,0 +1,9 @@
+name: normal_body_roll
+trigger:
+  joystick: button_x
+  voice: commandBodyRoll
+actions:
+  - RequestTalking: Ich rolle den Rumpf
+    RequestMovementType:
+      name: SEQUENCE_BODY_ROLL
+      duration_s: 4.0

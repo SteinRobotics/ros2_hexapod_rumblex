@@ -1,0 +1,10 @@
+name: normal_watch
+trigger:
+  joystick: button_a
+  voice: commandWatch
+actions:
+  - RequestTalking: ich sehe mich um
+    RequestMovementType:
+      name: SEQUENCE_WATCH
+      duration_s: 5.0
+  - RequestTalking: Fertig mit dem Umschauen.

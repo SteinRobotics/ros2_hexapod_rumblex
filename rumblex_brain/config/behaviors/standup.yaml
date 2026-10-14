@@ -1,0 +1,9 @@
+name: standup
+trigger:
+  joystick: dpad_vertical_up
+  voice: commandStandup
+actions:
+  - RequestMusic: STOP
+    RequestMovementType:
+      name: SEQUENCE_STAND_UP
+      duration_s: 1.5

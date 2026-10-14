@@ -6,6 +6,10 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <algorithm>
+#include <filesystem>
+#include <stdexcept>
+
 namespace brain {
 
 using namespace mp_units;
@@ -16,6 +20,60 @@ template <typename T>
 T valueOr(const YAML::Node& node, const char* key, const T& fallback) {
     return node[key] ? node[key].as<T>() : fallback;
 }
+// Expand fragments before creating requests so a broken include cannot execute a partial sequence.
+YAML::Node expandActions(const YAML::Node& actions, const std::filesystem::path& source,
+                         std::vector<std::filesystem::path>& stack) {
+    if (!actions.IsSequence()) {
+        throw std::runtime_error("Expected actions sequence in " + source.string());
+    }
+    YAML::Node expanded(YAML::NodeType::Sequence);
+    for (const auto& action : actions) {
+        if (action.IsMap() && action["include"]) {
+            if (action.size() != 1 || !action["include"].IsScalar()) {
+                throw std::runtime_error("include must be the only key and contain a file path in " +
+                                         source.string());
+            }
+            const auto path =
+                std::filesystem::canonical(source.parent_path() / action["include"].as<std::string>());
+            if (std::find(stack.begin(), stack.end(), path) != stack.end()) {
+                throw std::runtime_error("Circular action fragment include: " + path.string());
+            }
+            if (stack.size() >= 64) {
+                throw std::runtime_error("Action fragment nesting exceeds 64 files: " + path.string());
+            }
+            stack.push_back(path);
+            const auto fragment = YAML::LoadFile(path.string());
+            if (!fragment.IsMap() || fragment.size() != 1 || !fragment["actions"]) {
+                throw std::runtime_error("Expected fragment with only an actions sequence: " + path.string());
+            }
+            for (const auto& group : expandActions(fragment["actions"], path, stack)) {
+                expanded.push_back(group);
+            }
+            stack.pop_back();
+        } else {
+            expanded.push_back(action);
+        }
+    }
+    return expanded;
+}
+
+YAML::Node loadBehaviors(const std::filesystem::path& file) {
+    const auto path = std::filesystem::canonical(file);
+    const auto document = YAML::LoadFile(path.string());
+    YAML::Node behaviors(YAML::NodeType::Sequence);
+    if (document.IsMap() && document["behaviors"] && document["behaviors"].IsSequence()) {
+        for (const auto& behavior : document["behaviors"]) behaviors.push_back(YAML::Clone(behavior));
+    } else if (document.IsMap() && document["name"]) {
+        behaviors.push_back(YAML::Clone(document));
+    } else {
+        throw std::runtime_error("Expected a behavior or behaviors sequence: " + path.string());
+    }
+    for (auto behavior : behaviors) {
+        std::vector<std::filesystem::path> stack{path};
+        behavior["actions"] = expandActions(behavior["actions"], path, stack);
+    }
+    return behaviors;
+}
 }  // namespace
 
 CBehaviorParser::CBehaviorParser(rclcpp::Node::SharedPtr node) : node_(node) {
@@ -23,14 +81,40 @@ CBehaviorParser::CBehaviorParser(rclcpp::Node::SharedPtr node) : node_(node) {
 
 bool CBehaviorParser::parseFile(const std::string& filePath) {
     try {
-        const auto document = YAML::LoadFile(filePath);
-        if (!document.IsMap() || !document["behaviors"].IsSequence()) {
-            RCLCPP_ERROR(node_->get_logger(), "Invalid YAML format: expected 'behaviors' sequence");
-            return false;
-        }
-        return parseBehaviors(document["behaviors"]);
+        CBehaviorParser parsed(node_);
+        const auto behaviors = loadBehaviors(filePath);
+        if (!parsed.parseBehaviors(behaviors) || parsed.behaviors_.size() != behaviors.size()) return false;
+        behaviors_ = std::move(parsed.behaviors_);
+        behaviorTriggers_ = std::move(parsed.behaviorTriggers_);
+        return true;
     } catch (const std::exception& e) {
         RCLCPP_ERROR(node_->get_logger(), "Exception while parsing file: %s", e.what());
+        return false;
+    }
+}
+
+bool CBehaviorParser::parseDirectory(const std::string& directoryPath) {
+    try {
+        std::vector<std::filesystem::path> files;
+        for (const auto& entry : std::filesystem::directory_iterator(directoryPath)) {
+            const auto extension = entry.path().extension();
+            if (entry.is_regular_file() && (extension == ".yaml" || extension == ".yml")) {
+                files.push_back(entry.path());
+            }
+        }
+        std::sort(files.begin(), files.end());
+        YAML::Node catalog(YAML::NodeType::Sequence);
+        for (const auto& file : files) {
+            for (const auto& behavior : loadBehaviors(file)) catalog.push_back(behavior);
+        }
+        CBehaviorParser parsed(node_);
+        if (!parsed.parseBehaviors(catalog) || parsed.behaviors_.size() != catalog.size()) return false;
+        behaviors_ = std::move(parsed.behaviors_);
+        behaviorTriggers_ = std::move(parsed.behaviorTriggers_);
+        return true;
+    } catch (const std::exception& e) {
+        RCLCPP_ERROR(node_->get_logger(), "Failed to load behavior directory '%s': %s", directoryPath.c_str(),
+                     e.what());
         return false;
     }
 }
@@ -39,7 +123,7 @@ bool CBehaviorParser::parseString(const std::string& yamlString) {
     try {
         const auto document = YAML::Load(yamlString);
 
-        if (document.IsMap() && document["behaviors"].IsSequence()) {
+        if (document.IsMap() && document["behaviors"] && document["behaviors"].IsSequence()) {
             return parseBehaviors(document["behaviors"]);
         } else {
             RCLCPP_ERROR(node_->get_logger(), "Invalid YAML format: expected 'behaviors' sequence");
@@ -58,6 +142,7 @@ bool CBehaviorParser::parseBehaviors(const YAML::Node& behaviorsArray) {
     }
 
     behaviors_.clear();
+    behaviorTriggers_.clear();
 
     for (const auto& behaviorNode : behaviorsArray) {
         if (!parseSingleBehavior(behaviorNode)) {
@@ -84,6 +169,10 @@ bool CBehaviorParser::parseSingleBehavior(const YAML::Node& j) {
         behavior.name = "UNKNOWN";
     }
 
+    if (getBehavior(behavior.name)) {
+        throw std::runtime_error("Duplicate behavior name: " + behavior.name);
+    }
+
     // Parse triggers
     BehaviorTrigger trigger;
     if (j["trigger"] && j["trigger"].IsMap()) {
@@ -94,7 +183,6 @@ bool CBehaviorParser::parseSingleBehavior(const YAML::Node& j) {
         if (triggerNode["voice"] && triggerNode["voice"].IsScalar()) {
             trigger.voice = triggerNode["voice"].as<std::string>();
         }
-        behaviorTriggers_[behavior.name] = trigger;
     }
 
     // Parse actions
@@ -118,6 +206,7 @@ bool CBehaviorParser::parseSingleBehavior(const YAML::Node& j) {
         return false;
     }
 
+    behaviorTriggers_[behavior.name] = trigger;
     behaviors_.push_back(behavior);
     RCLCPP_INFO(node_->get_logger(), "Parsed behavior '%s' with %zu action groups", behavior.name.c_str(),
                 behavior.actionGroups.size());
@@ -199,6 +288,9 @@ std::vector<std::shared_ptr<RequestBase>> CBehaviorParser::parseActionGroup(cons
     if (!actionObject.IsMap()) {
         RCLCPP_WARN(node_->get_logger(), "Expected action group to be a mapping");
         return requests;
+    }
+    if (actionObject["include"]) {
+        throw std::runtime_error("Action fragment includes require parseFile or parseDirectory");
     }
     // Preserve the lexicographic dispatch order of the previous JSON parser.
     std::map<std::string, YAML::Node> orderedRequests;

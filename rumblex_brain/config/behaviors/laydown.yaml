@@ -1,0 +1,9 @@
+name: laydown
+trigger:
+  joystick: dpad_vertical_down
+  voice: commandLaydown
+actions:
+  - RequestTalking: ich lege mich hin
+    RequestMovementType:
+      name: SEQUENCE_LAYDOWN
+      duration_s: 1.5

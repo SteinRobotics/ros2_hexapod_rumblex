@@ -101,7 +101,7 @@ if(BUILD_TESTING)
   ament_add_gtest(test_behavior_parser test/test_behavior_parser.cpp)
   target_link_libraries(test_behavior_parser rumblex_brain_lib)
   target_compile_definitions(test_behavior_parser PRIVATE
-    RUMBLEX_BEHAVIORS_FILE="${CMAKE_CURRENT_SOURCE_DIR}/config/behaviors.yaml")
+    RUMBLEX_BEHAVIORS_DIRECTORY="${CMAKE_CURRENT_SOURCE_DIR}/config/behaviors")
   ament_add_gtest(test_orientation_timing test/test_orientation_timing.cpp)
   target_link_libraries(test_orientation_timing rumblex_brain_lib)
 

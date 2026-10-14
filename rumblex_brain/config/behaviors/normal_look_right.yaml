@@ -1,0 +1,10 @@
+name: normal_look_right
+trigger:
+  joystick: button_r1
+  voice: commandLookRight
+actions:
+  - RequestTalking: Ich schaue nach rechts
+    RequestMovementType:
+      name: SEQUENCE_LOOK
+      direction: CLOCKWISE
+      duration_s: 3.0

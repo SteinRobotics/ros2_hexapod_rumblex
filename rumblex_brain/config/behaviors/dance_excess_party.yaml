@@ -1,0 +1,7 @@
+name: dance_excess_party
+trigger:
+  joystick: button_l2
+  voice: commandDanceExcessParty
+actions:
+  - RequestTalking: Party
+  - RequestMusic: musicfox_excess_party.mp3

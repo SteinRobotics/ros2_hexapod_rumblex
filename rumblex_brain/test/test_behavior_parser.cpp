@@ -1,5 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+
 #include "rclcpp/rclcpp.hpp"
 #include "rumblex_brain/parser/behavior_parser.hpp"
 
@@ -33,8 +37,89 @@ class BehaviorParserTest : public ::testing::Test {
     }
 };
 
+class BehaviorFilesTest : public BehaviorParserTest {
+   protected:
+    void SetUp() override {
+        char pattern[] = "/tmp/rumblex-behaviors-XXXXXX";
+        const auto directory = mkdtemp(pattern);
+        ASSERT_NE(directory, nullptr);
+        directory_ = directory;
+    }
+    void TearDown() override {
+        if (!directory_.empty()) std::filesystem::remove_all(directory_);
+    }
+    void write(const std::string& name, const std::string& yaml) {
+        const auto path = directory_ / name;
+        std::filesystem::create_directories(path.parent_path());
+        std::ofstream(path) << yaml;
+    }
+    std::filesystem::path directory_;
+};
+
+TEST_F(BehaviorFilesTest, LoadsAllFilesAndNestedFragmentsInOrder) {
+    write("behaviors/b.yml", "name: second\nactions: [{RequestTalking: second}]\n");
+    write("behaviors/a.yaml", R"(
+name: first
+trigger: {voice: firstCommand}
+actions:
+  - RequestTalking: before
+  - include: ../fragments/outer.yaml
+  - include: ../fragments/inner.yaml
+  - RequestTalking: after
+)");
+    write("fragments/outer.yaml", "actions:\n  - include: inner.yaml\n");
+    write("fragments/inner.yaml", "actions: [{RequestTalking: inside, RequestMusic: STOP}]\n");
+    write("behaviors/ignored.txt", "not yaml");
+    ASSERT_TRUE(parser_.parseDirectory((directory_ / "behaviors").string()));
+    ASSERT_EQ(parser_.getBehaviors().size(), 2u);
+    EXPECT_EQ(parser_.getBehaviors()[0].name, "first");
+    EXPECT_EQ(parser_.getBehaviors()[1].name, "second");
+    ASSERT_TRUE(parser_.getBehaviorForVoiceRequest("firstCommand"));
+    ASSERT_EQ(parser_.getBehaviors()[0].actionGroups.size(), 4u);
+    auto inside = request<RequestTalking>("first", 1, 1);
+    auto repeated = request<RequestTalking>("first", 2, 1);
+    ASSERT_TRUE(inside);
+    ASSERT_TRUE(repeated);
+    EXPECT_EQ(inside->text, "inside");
+    EXPECT_NE(inside, repeated);
+    ASSERT_TRUE(parser_.parseFile((directory_ / "behaviors/b.yml").string()));
+    EXPECT_FALSE(parser_.getBehaviorForVoiceRequest("firstCommand"));
+}
+
+TEST_F(BehaviorFilesTest, RejectsBrokenIncludesWithoutReplacingCatalog) {
+    ASSERT_TRUE(parser_.parseDirectory(RUMBLEX_BEHAVIORS_DIRECTORY));
+    write("behavior.yaml", "name: broken\nactions: [{include: fragment.yaml}]\n");
+    const auto file = (directory_ / "behavior.yaml").string();
+    EXPECT_FALSE(parser_.parseFile(file));
+    for (const auto* fragment :
+         {"actions: [{include: fragment.yaml}]", "actions: [{include: behavior.yaml}]", "actions: {}",
+          "actions: [", "name: invalid", "actions: [{include: [], RequestTalking: mixed}]"}) {
+        write("fragment.yaml", fragment);
+        EXPECT_FALSE(parser_.parseFile(file)) << fragment;
+        EXPECT_EQ(parser_.getBehaviors().size(), 17u);
+        EXPECT_TRUE(parser_.getBehaviorForVoiceRequest("commandStandup"));
+    }
+}
+
+TEST_F(BehaviorFilesTest, RejectsDuplicateNamesAndInvalidDirectoryEntries) {
+    write("a.yaml", "name: duplicate\nactions: [{RequestTalking: hello}]\n");
+    write("b.yaml", "name: duplicate\nactions: [{RequestTalking: other}]\n");
+    EXPECT_FALSE(parser_.parseDirectory(directory_.string()));
+    EXPECT_TRUE(parser_.getBehaviors().empty());
+    write("b.yaml", "name: invalid\nactions: []\n");
+    EXPECT_FALSE(parser_.parseDirectory(directory_.string()));
+    EXPECT_TRUE(parser_.getBehaviors().empty());
+    EXPECT_FALSE(parser_.parseDirectory((directory_ / "missing").string()));
+    std::filesystem::create_directory(directory_ / "empty");
+    EXPECT_FALSE(parser_.parseDirectory((directory_ / "empty").string()));
+}
+
+TEST_F(BehaviorParserTest, RejectsIncludesWithoutSourceFile) {
+    EXPECT_FALSE(parser_.parseString("behaviors: [{name: invalid, actions: [{include: fragment.yaml}]}]"));
+}
+
 TEST_F(BehaviorParserTest, LoadsCatalogAndResolvesTriggers) {
-    ASSERT_TRUE(parser_.parseFile(RUMBLEX_BEHAVIORS_FILE));
+    ASSERT_TRUE(parser_.parseDirectory(RUMBLEX_BEHAVIORS_DIRECTORY));
     EXPECT_EQ(parser_.getBehaviors().size(), 17u);
     EXPECT_FALSE(parser_.getBehavior("missing"));
     EXPECT_FALSE(parser_.getBehaviorForVoiceRequest("missing"));
@@ -58,7 +143,7 @@ TEST_F(BehaviorParserTest, LoadsCatalogAndResolvesTriggers) {
 }
 
 TEST_F(BehaviorParserTest, PreservesDanceGroupsAndPoseUnits) {
-    ASSERT_TRUE(parser_.parseFile(RUMBLEX_BEHAVIORS_FILE));
+    ASSERT_TRUE(parser_.parseDirectory(RUMBLEX_BEHAVIORS_DIRECTORY));
     const auto dance = parser_.getBehavior("dance_hot_dogs_for_breakfast");
     ASSERT_TRUE(dance);
     EXPECT_EQ(dance->get().actionGroups.size(), 18u);

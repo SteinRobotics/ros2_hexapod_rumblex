@@ -1,0 +1,9 @@
+name: normal_test_legs
+trigger:
+  joystick: dpad_horizontal_left
+  voice: commandTestLegs
+actions:
+  - RequestTalking: Ich teste die Beine
+    RequestMovementType:
+      name: SEQUENCE_TESTLEGS
+      duration_s: 3.0

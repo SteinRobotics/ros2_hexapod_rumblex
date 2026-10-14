@@ -1,0 +1,7 @@
+name: clap
+trigger:
+  voice: commandClap
+actions:
+  - RequestMovementType:
+      name: SEQUENCE_CLAP
+      duration_s: 4.0

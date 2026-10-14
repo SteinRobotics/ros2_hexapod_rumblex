@@ -1,0 +1,5 @@
+name: dance_standard
+trigger:
+  voice: commandDance
+actions:
+  - include: ../behavior_fragments/dance_hot_dogs_for_breakfast.yaml

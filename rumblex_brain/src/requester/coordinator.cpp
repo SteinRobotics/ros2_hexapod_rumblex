@@ -67,9 +67,9 @@ CCoordinator::CCoordinator(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<C
 
 void CCoordinator::loadBehaviors() {
     const auto package_share_path = ament_index_cpp::get_package_share_path("rumblex_brain");
-    const auto file_path = (package_share_path / "config" / "behaviors.yaml").string();
+    const auto file_path = (package_share_path / "config" / "behaviors").string();
 
-    if (!behaviorParser_->parseFile(file_path)) {
+    if (!behaviorParser_->parseDirectory(file_path)) {
         RCLCPP_ERROR(node_->get_logger(), "Failed to parse behaviors from: %s", file_path.c_str());
         return;
     }

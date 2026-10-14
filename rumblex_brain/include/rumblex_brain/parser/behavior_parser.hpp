@@ -33,7 +33,7 @@ struct BehaviorTrigger {
 };
 
 /**
- * @brief Parser for behaviors.yaml file that creates Request objects
+ * @brief Parser for behavior YAML files that creates Request objects
  * 
  * This class parses a YAML file containing behavior definitions and creates
  * appropriate Request objects (RequestTalking, RequestMusic, RequestMovementType, etc.)
@@ -52,11 +52,15 @@ class CBehaviorParser {
     ~CBehaviorParser() = default;
 
     /**
-     * @brief Parse a behaviors.yaml file
+     * @brief Parse a behavior file (single definition or behaviors sequence)
      * @param filePath Path to the YAML file
      * @return true if parsing was successful, false otherwise
      */
     bool parseFile(const std::string& filePath);
+
+    /// Load all .yaml/.yml files in filename order (nonrecursive).
+    /// File/directory loads are atomic: failures retain the previous catalog.
+    bool parseDirectory(const std::string& directoryPath);
 
     /**
      * @brief Parse a YAML string containing behavior definitions
