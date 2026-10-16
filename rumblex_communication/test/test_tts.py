@@ -1,81 +1,63 @@
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import pytest
+
 from rumblex_communication.tts import TextToSpeech
 
 
 def make_tts(tmp_path):
-    tts = TextToSpeech(Mock(), 'de', logger=Mock())
-    tts.tts_cache = tmp_path / 'missing' / 'tts_cache'
+    tts = TextToSpeech('de', logger=Mock())
+    tts.tts_cache = tmp_path / 'cache'
     return tts
 
 
-def test_first_request_creates_cache_and_uses_google(tmp_path):
+def test_download_is_cached(tmp_path):
     tts = make_tts(tmp_path)
-    callback = Mock()
-    with patch('rumblex_communication.tts.gTTS') as google, \
-            patch('rumblex_communication.tts.subprocess.call') as fallback:
-        google.return_value.save.side_effect = lambda path: Path(path).write_bytes(b'mp3 audio')
-        tts.run('Hallo!', callback)
-
-    google.assert_called_once_with(text='Hallo!', lang='de')
-    cached = tts.tts_cache / 'hallo.mp3'
-    assert cached.read_bytes() == b'mp3 audio'
-    tts.music_player.play_file.assert_called_once_with(str(cached))
-    fallback.assert_not_called()
-    callback.assert_called_once_with()
+    with patch('rumblex_communication.tts.gTTS') as google:
+        google.return_value.save.side_effect = lambda path: Path(path).write_bytes(b'audio')
+        path = tts.synthesize('Hallo!')
+        assert tts.synthesize('Hallo!') == path
+    assert path.read_bytes() == b'audio'
+    google.assert_called_once_with(text='Hallo!', lang='de', timeout=10)
 
 
-def test_cached_audio_does_not_contact_google(tmp_path):
+def test_cache_distinguishes_punctuation_case_long_text_and_language(tmp_path):
     tts = make_tts(tmp_path)
-    tts.tts_cache.mkdir(parents=True)
-    cached = tts.tts_cache / 'hallo.mp3'
-    cached.write_bytes(b'mp3 audio')
-    with patch('rumblex_communication.tts.gTTS') as google, \
-            patch('rumblex_communication.tts.subprocess.call') as fallback:
-        tts.run('Hallo!')
-
-    google.assert_not_called()
-    fallback.assert_not_called()
-    tts.music_player.play_file.assert_called_once_with(str(cached))
+    with patch('rumblex_communication.tts.gTTS') as google:
+        google.return_value.save.side_effect = lambda path: Path(path).write_bytes(b'audio')
+        paths = [tts.synthesize(text) for text in ('Hallo!', 'hallo', 'a' * 60 + 'b', 'a' * 60 + 'c')]
+        tts.language = 'en'
+        paths.append(tts.synthesize('Hallo!'))
+    assert len(set(paths)) == 5
 
 
-def test_failed_download_is_not_cached_and_next_request_retries(tmp_path):
+def test_failed_download_uses_wav_and_retries_online_next_time(tmp_path):
     tts = make_tts(tmp_path)
-    callback = Mock()
-
-    def fail_download(path):
-        Path(path).write_bytes(b'partial audio')
-        raise RuntimeError('Request failed')
-
     with patch('rumblex_communication.tts.gTTS') as google, \
-            patch('rumblex_communication.tts.subprocess.call') as fallback:
-        google.return_value.save.side_effect = fail_download
-        tts.run('Hallo!', callback)
-        assert list(tts.tts_cache.iterdir()) == []
-        fallback.assert_called_once()
-        tts.music_player.play_file.assert_not_called()
-        callback.assert_called_once_with()
-
-        google.return_value.save.side_effect = lambda path: Path(path).write_bytes(b'mp3 audio')
-        tts.run('Hallo!')
-
+            patch('rumblex_communication.tts.subprocess.run') as fallback:
+        def fail(path):
+            Path(path).write_bytes(b'partial')
+            raise RuntimeError('offline')
+        google.return_value.save.side_effect = fail
+        fallback.side_effect = lambda args, **kwargs: Path(args[4]).write_bytes(b'wav')
+        path = tts.synthesize('Hallo!')
+        assert path.suffix == '.wav'
+        assert not list(tts.tts_cache.glob('*.mp3'))
+        google.return_value.save.side_effect = lambda path: Path(path).write_bytes(b'mp3')
+        assert tts.synthesize('Hallo!').suffix == '.mp3'
     assert google.call_count == 2
-    assert (tts.tts_cache / 'hallo.mp3').read_bytes() == b'mp3 audio'
-    tts.music_player.play_file.assert_called_once()
-    assert fallback.call_count == 1
 
 
-def test_empty_cache_entry_is_downloaded_again(tmp_path):
+def test_fallback_failure_propagates_and_cleans_temporary_files(tmp_path):
     tts = make_tts(tmp_path)
-    tts.tts_cache.mkdir(parents=True)
-    cached = tts.tts_cache / 'hallo.mp3'
-    cached.touch()
-    with patch('rumblex_communication.tts.gTTS') as google, \
-            patch('rumblex_communication.tts.subprocess.call') as fallback:
-        google.return_value.save.side_effect = lambda path: Path(path).write_bytes(b'mp3 audio')
-        tts.run('Hallo!')
+    with patch('rumblex_communication.tts.gTTS', side_effect=RuntimeError('offline')), \
+            patch('rumblex_communication.tts.subprocess.run', side_effect=FileNotFoundError):
+        with pytest.raises(FileNotFoundError):
+            tts.synthesize('Hallo!')
+    assert list(tts.tts_cache.iterdir()) == []
 
-    assert cached.read_bytes() == b'mp3 audio'
-    google.return_value.save.assert_called_once()
-    fallback.assert_not_called()
+
+def test_cache_respects_xdg(monkeypatch, tmp_path):
+    monkeypatch.setenv('XDG_CACHE_HOME', str(tmp_path))
+    assert TextToSpeech('de').tts_cache == tmp_path / 'rumblex/tts'

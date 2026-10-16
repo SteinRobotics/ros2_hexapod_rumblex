@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Canopy support frame ending where the roof's triangular tip begins."""
+"""Closed canopy support frame ending where the roof's triangular tip begins."""
 
 # Allow direct execution as well as package imports.
 if __package__ in (None, ""):
@@ -31,8 +31,15 @@ from robot_nira.lidar_layout import CANOPY_SHOULDER_X, REAR_X, canopy_surface
 from utils.ocp_utils import show
 
 
+FRONT_RAIL_WIDTH = 5.0
+
+
 def build_surface() -> Sketch:
-    opening = torso_common.hantel.sketch & (Pos(-100, 0) * Rectangle(240, 200))
+    opening_front_x = CANOPY_SHOULDER_X - FRONT_RAIL_WIDTH
+    opening = torso_common.hantel.sketch & (
+        Pos((REAR_X + opening_front_x) / 2, 0)
+        * Rectangle(opening_front_x - REAR_X, 2 * torso_common.rect_h)
+    )
     support_region = Pos((REAR_X + CANOPY_SHOULDER_X) / 2, 0) * Rectangle(
         CANOPY_SHOULDER_X - REAR_X, 2 * torso_common.rect_h
     )

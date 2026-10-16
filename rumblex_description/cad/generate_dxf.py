@@ -8,7 +8,11 @@ from laser_cutting.robots import ROBOT_BUILDERS
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        epilog="Example for Nira:\n  .venv/bin/python generate_dxf.py --robot nira --output generated/nira/",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument("--robot", required=True, choices=tuple(ROBOT_BUILDERS))
     parser.add_argument("--output", type=Path, default=Path("output"), help="New output root (default: output)")
     parser.add_argument("--clearance", type=float, default=1, help="Minimum gap between cuts, mm (default: 1)")

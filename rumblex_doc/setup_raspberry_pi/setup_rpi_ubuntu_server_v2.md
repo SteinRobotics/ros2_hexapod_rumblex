@@ -76,7 +76,7 @@ source ~/.bashrc
 ### install dependencies
 ```
 sudo apt install python3-pygame
-python3 -m pip install --break-system-packages vosk pyttsx3 google-api-python-client google-cloud-speech oauth2client sounddevice SpeechRecognition pyyaml
+python3 -m pip install --break-system-packages pyttsx3 google-cloud-speech sounddevice SpeechRecognition pyyaml
 sudo apt install -y portaudio19-dev python3-pyaudio
 sudo pip3 install adafruit-circuitpython-ssd1306 --break-system-packages
 sudo pip3 install adafruit-circuitpython-bno055 --break-system-packages
@@ -99,3 +99,4 @@ rumblex ALL=(ALL) NOPASSWD: /sbin/shutdown, /sbin/restart, /usr/sbin/reboot, /bi
 
 ## Autostart Service
 sudo loginctl enable-linger rumblex
+For offline robot-name recognition, follow the [openWakeWord ONNX setup](../../rumblex_communication/readme.md) before launching communication.

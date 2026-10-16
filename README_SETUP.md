@@ -37,8 +37,8 @@ The commands below assume **Ubuntu 26.04** and **ROS 2 Lyrical** on both machine
    source .venv/bin/activate
    python -m pip install --upgrade pip wheel 'setuptools<80'
    python -m pip install \
-     vosk SpeechRecognition google-cloud-speech google-api-python-client \
-     oauth2client gTTS \
+     SpeechRecognition google-cloud-speech \
+     gTTS \
      adafruit-blinka adafruit-circuitpython-ssd1306 adafruit-circuitpython-ina228
    ```
 
@@ -64,7 +64,7 @@ The commands below assume **Ubuntu 26.04** and **ROS 2 Lyrical** on both machine
      src/ros2_hexapod_rumblex/rumblex_description \
      src/ros2_hexapod_rumblex/rumblex_bringup \
      --ignore-src -r -y \
-     --skip-keys 'ydlidar_ros2_driver rviz2 joint_state_publisher_gui magic_enum fonts-liberation python3-oauth2client python-google-cloud-speech-pip python3-sounddevice-pip python-gTTS-pip'
+     --skip-keys 'ydlidar_ros2_driver rviz2 joint_state_publisher_gui magic_enum fonts-liberation python-google-cloud-speech-pip python3-sounddevice-pip python-gTTS-pip'
    python -m colcon build --symlink-install --packages-up-to rumblex_bringup
    source install/local_setup.bash
    ```
@@ -73,10 +73,12 @@ The commands below assume **Ubuntu 26.04** and **ROS 2 Lyrical** on both machine
 
    `rosdep` installs system and ROS dependencies through apt; the explicit pip step installs the Python-only runtime dependencies into `.venv`. `libyaml-cpp-dev` and `ros-lyrical-std-srvs` supply native build dependencies; `ros-lyrical-xacro` is needed for the robot models and their tests. Do not run `rosdep` over the entire workspace on the Pi: that would also install Gazebo dependencies.
 
+For offline robot-name recognition, follow the [openWakeWord ONNX setup](rumblex_communication/readme.md) before launching communication.
+
 6. Check the environment, then start Nox:
 
    ```bash
-   python -c 'import rclpy, pygame, pyaudio, sounddevice, vosk, speech_recognition, gtts, board, adafruit_ssd1306, adafruit_ina228; print("Python dependencies OK")'
+   python -c 'import rclpy, pygame, pyaudio, sounddevice, openwakeword, speech_recognition, gtts, board, adafruit_ssd1306, adafruit_ina228; print("Python dependencies OK")'
    ros2 launch rumblex_bringup target_launch.py robot:=nox
    # Optional: start head-sweep navigation too
    ros2 launch rumblex_bringup target_launch.py robot:=nox enable_navigation:=true
@@ -120,9 +122,11 @@ The commands below assume **Ubuntu 26.04** and **ROS 2 Lyrical** on both machine
    source .venv/bin/activate
    python -m pip install --upgrade pip wheel 'setuptools<80'
    python -m pip install \
-     vosk SpeechRecognition google-cloud-speech google-api-python-client \
-     oauth2client gTTS
+     SpeechRecognition google-cloud-speech \
+     gTTS
    ```
+
+   Also complete the [openWakeWord ONNX setup](rumblex_communication/readme.md) in this venv before building. Vosk is no longer required.
 
    These pip packages support the communication node used by simulation. The rosdep skip keys below cover these Python dependencies and the explicitly installed `libmagicenum-dev` and `fonts-liberation` packages. The PC setup does not need the Pi's Adafruit HMI libraries. ROS Python packages, `pygame`, and `pyaudio` remain apt-managed and are visible through `--system-site-packages`.
 
@@ -147,7 +151,7 @@ The commands below assume **Ubuntu 26.04** and **ROS 2 Lyrical** on both machine
      src/ros2_hexapod_rumblex/rumblex_description \
      src/ros2_hexapod_rumblex/rumblex_gazebo \
      --ignore-src -r -y \
-     --skip-keys 'ydlidar_ros2_driver magic_enum fonts-liberation python3-oauth2client python-google-cloud-speech-pip python3-sounddevice-pip python-gTTS-pip'
+     --skip-keys 'ydlidar_ros2_driver magic_enum fonts-liberation python-google-cloud-speech-pip python3-sounddevice-pip python-gTTS-pip'
    python -m colcon build --symlink-install \
      --packages-up-to rumblex_gazebo rumblex_description rumblex_navigation
    source install/local_setup.bash
@@ -188,7 +192,7 @@ source install/local_setup.bash
 
 Check the interpreter with `which python` and `python -c 'import rclpy; print(rclpy.__file__)'`. For a package-level check, run `python -m colcon test --packages-select <package_name> --event-handlers console_direct+` followed by `colcon test-result --verbose` from the workspace root.
 
-If a communication node reports `ModuleNotFoundError: No module named 'vosk'` even though it is installed in `.venv`, rebuild the package with the venv's Python:
+If a communication node reports `ModuleNotFoundError: No module named 'openwakeword'` even though it is installed in `.venv`, rebuild the package with the venv's Python:
 
 ```bash
 python -m colcon build --symlink-install --packages-select rumblex_communication
@@ -197,3 +201,5 @@ head -n 1 install/rumblex_communication/lib/rumblex_communication/node_communica
 ```
 
 The executable's first line should point to `.venv/bin/python`. Activating a venv after a build does not change the interpreter recorded in existing ROS Python executables.
+
+For offline robot-name recognition, follow the [openWakeWord ONNX setup](rumblex_communication/readme.md) before launching communication.

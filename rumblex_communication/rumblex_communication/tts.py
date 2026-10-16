@@ -1,61 +1,40 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+"""Speech synthesis with a writable, content-addressed audio cache."""
 
-# online
-# pip3 install gTTS
-
-# offline
-# https://wiki.ubuntuusers.de/eSpeak_NG/
-# sudo apt-get install espeak-ng espeak-ng-espeak mbrola
-
+import hashlib
 import logging
-import re
+import os
+from pathlib import Path
 import subprocess
 import tempfile
-from pathlib import Path
 
 from gtts import gTTS
 
-from rumblex_communication import package_resource_path
 
-class TextToSpeech():
-    def __init__(self, music_player, language, logger=None):
+class TextToSpeech:
+    def __init__(self, language, logger=None):
         self.language = language
-        self.music_player = music_player
         self.logger = logger or logging.getLogger(__name__)
-        self.tts_cache = package_resource_path('tts_cache')
+        self.tts_cache = Path(os.environ.get('XDG_CACHE_HOME', Path.home() / '.cache')) / 'rumblex/tts'
 
-    def run(self, text, cb=None):
-        text_shorten = re.sub("[^a-zA-Z0-9]+", "", text)[:60]
-        text_file = text_shorten.lower() + ".mp3"
-        filename = self.tts_cache / text_file
-
-        try:
-            self.tts_cache.mkdir(parents=True, exist_ok=True)
-            if not filename.exists() or filename.stat().st_size == 0:
-                tts = gTTS(text=text, lang=self.language)
-                # Publish a cache entry only after the download succeeds. gTTS
-                # opens its output before making the request, so a failed
-                # request would otherwise leave a partial or empty MP3.
-                with tempfile.TemporaryDirectory(prefix='.tts-', dir=self.tts_cache) as temp_dir:
-                    download = Path(temp_dir) / text_file
-                    tts.save(str(download))
-                    download.replace(filename)
-
-            self.music_player.play_file(str(filename))
-
-        except Exception as e:
-            self.logger.error(str(e))
-            self.logger.info("Falling back to offline TTS (espeak-ng)")
-            subprocess.call(["espeak-ng", "-v" + self.language + "+f3", text], stderr=subprocess.STDOUT)
-
-        if cb:
-            cb()
-
-if __name__=="__main__":
-    from rumblex_communication.music_player import MusicPlayer
-
-    music_player = MusicPlayer()
-    tts = TextToSpeech(music_player, "de")
-    tts.run("Hallo wie geht es dir")
-
+    def synthesize(self, text):
+        """Return audio to play; call from a worker, never the ROS executor."""
+        digest = hashlib.sha256(f'{self.language}\0{text}'.encode()).hexdigest()
+        self.tts_cache.mkdir(parents=True, exist_ok=True)
+        filename = self.tts_cache / f'{digest}.mp3'
+        if filename.is_file() and filename.stat().st_size:
+            return filename
+        with tempfile.TemporaryDirectory(prefix='.tts-', dir=self.tts_cache) as temp_dir:
+            try:
+                download = Path(temp_dir) / 'speech.mp3'
+                gTTS(text=text, lang=self.language, timeout=10).save(str(download))
+                download.replace(filename)
+                return filename
+            except Exception as exc:
+                self.logger.warning(f'Online TTS failed; using espeak-ng: {exc}')
+                filename = self.tts_cache / f'{digest}.wav'
+                download = Path(temp_dir) / 'speech.wav'
+                subprocess.run(
+                    ['espeak-ng', '-v', self.language + '+f3', '-w', str(download), '--', text],
+                    check=True, timeout=30, capture_output=True)
+                download.replace(filename)
+                return filename

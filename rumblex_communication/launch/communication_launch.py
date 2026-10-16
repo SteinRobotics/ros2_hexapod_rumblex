@@ -16,7 +16,7 @@ def generate_launch_description():
         name='node_communication',
         executable='node_communication',
         output='screen',
-        parameters=[config],
+        parameters=[config, {'robot': robot}],
     )
     return LaunchDescription([
         DeclareLaunchArgument(

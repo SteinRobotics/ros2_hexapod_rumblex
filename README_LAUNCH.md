@@ -17,10 +17,10 @@ The venv must have been created with `--system-site-packages` so ROS modules rem
 
 ```bash
 which python
-python -c 'import rclpy, vosk, speech_recognition, sounddevice, gtts; print("Python dependencies OK")'
+python -c 'import rclpy, openwakeword, speech_recognition, sounddevice, gtts; print("Python dependencies OK")'
 ```
 
-Build Python packages with the active venv using `python -m colcon build`. Their generated executables record the build interpreter, so activating `.venv` afterward does not repair an executable built with `/usr/bin/python3`. If communication reports missing dependencies such as `vosk`, rebuild it:
+Build Python packages with the active venv using `python -m colcon build`. Their generated executables record the build interpreter, so activating `.venv` afterward does not repair an executable built with `/usr/bin/python3`. If communication reports missing dependencies such as `openwakeword`, rebuild it:
 
 ```bash
 python -m colcon build --symlink-install --packages-select rumblex_communication
@@ -58,7 +58,7 @@ ros2 launch rumblex_bringup test_launch.py robot:=nox
 
 This starts offline movement, the brain, simulated HMI and teleoperation, communication, and the mesh model in RViz. It also loads the house-contour map, displays its walls, simulates one-dimensional LiDAR readings, and estimates odometry from supporting feet. The joint-slider GUI is disabled because movement supplies the displayed joint states.
 
-Communication still uses the PC's microphone and audio output. Its offline recognizer expects the `vosk-model-small-en-us-0.15` model under the communication package's `models/` directory; online recognition also requires Google speech credentials.
+Communication still uses the PC's microphone and audio output. Its offline keyword recognizer selects `nox.onnx` or `nira.onnx` using the `robot` launch argument at a 0.5 score threshold (see [communication setup](rumblex_communication/readme.md)); online recognition also requires Google speech credentials.
 
 Disable the simulated teleoperation GUI, or choose a different occupancy-map YAML file:
 
@@ -79,8 +79,8 @@ ros2 launch rumblex_bringup test_launch.py robot:=nox autostart_listening:=true
 
 This forwards the brain's `autostart_listening` parameter and starts offline
 robot-name recognition; recognizing the robot's name then starts online command
-recognition. The microphone, Vosk model, and Google speech credentials described
-above are required. The same option is available in `brain_launch.py` when
+recognition. The microphone, robot-specific ONNX wake-word model, openWakeWord
+feature models, and Google speech credentials described above are required. The same option is available in `brain_launch.py` when
 launching the brain separately.
 
 ## Individual components
@@ -245,3 +245,5 @@ ros2 topic pub --once /joystick_request rumblex_interfaces/msg/JoystickRequest "
 ```
 
 Use `ros2 interface show rumblex_interfaces/msg/JoystickRequest` to inspect the other buttons and stick fields.
+
+For offline robot-name recognition, follow the [openWakeWord ONNX setup](rumblex_communication/readme.md) before launching communication.

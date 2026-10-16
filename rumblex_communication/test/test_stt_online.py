@@ -33,3 +33,21 @@ def test_cloud_request_failure_completes_with_fallback():
         SpeechToTextOnline(callback, logger=Mock()).run()
 
     callback.assert_called_once_with('das habe ich nicht verstanden')
+
+
+def test_microphone_failure_completes_request():
+    callback = Mock()
+    with patch('rumblex_communication.stt_online.sr.Microphone', side_effect=OSError('no microphone')):
+        SpeechToTextOnline(callback, logger=Mock()).run()
+    callback.assert_called_once_with('das habe ich nicht verstanden')
+
+
+def test_cancel_after_capture_skips_network_and_callback():
+    callback = Mock()
+    worker = SpeechToTextOnline(callback, logger=Mock())
+    with patch('rumblex_communication.stt_online.sr.Recognizer') as recognizer, \
+            patch('rumblex_communication.stt_online.sr.Microphone'):
+        recognizer.return_value.listen.side_effect = lambda *args, **kwargs: worker.stop_listening()
+        worker.run()
+    recognizer.return_value.recognize_google_cloud.assert_not_called()
+    callback.assert_not_called()

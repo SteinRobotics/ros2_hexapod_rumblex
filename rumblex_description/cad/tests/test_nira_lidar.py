@@ -4,12 +4,12 @@ import math
 import unittest
 
 from build123d import (
-    Box, BuildPart, BuildSketch, Circle, Cylinder, Locations, Mode, Part, Plane, Polygon, Pos,
+    Box, BuildPart, BuildSketch, Circle, Cylinder, Face, Locations, Mode, Part, Plane, Polygon, Pos,
     insert, extrude,
 )
 
 from robot_nira import (torso_common, chassis_common,
-                        chassis_slope_cover, lidar_ydlidar_tmini, lidar_interface_housing)
+                        chassis_slope_cover, lidar_ydlidar_tmini, lidar_interface_housing, torso_layer_3)
 from robot_nira.assembly_complete import build_assembly
 from robot_nira.lidar_layout import (
     CANOPY_HALF_WIDTH, CANOPY_SHOULDER_X, LIDAR_ASSEMBLY_X, LIDAR_X, LIDAR_Y, canopy_surface,
@@ -22,6 +22,28 @@ def leaves(part):
             yield from leaves(child)
     else:
         yield part
+
+
+class NiraCanopyFrameTests(unittest.TestCase):
+    def test_closed_frame_has_five_mm_front_rail_and_original_outer_dimensions(self):
+        surface = torso_layer_3.build_surface()
+        self.assertEqual(len(surface.faces()), 1)
+        face = surface.faces()[0]
+        opening = max((Face(wire) for wire in face.inner_wires()), key=lambda hole: hole.area)
+        self.assertGreater(opening.area, 1000)
+        self.assertAlmostEqual(opening.bounding_box().max.X, CANOPY_SHOULDER_X - 5.0)
+        bounds = surface.bounding_box()
+        self.assertAlmostEqual(bounds.min.X, -torso_common.rect_w / 2)
+        self.assertAlmostEqual(bounds.max.X, CANOPY_SHOULDER_X)
+        self.assertAlmostEqual(bounds.min.Y, -CANOPY_HALF_WIDTH)
+        self.assertAlmostEqual(bounds.max.Y, CANOPY_HALF_WIDTH)
+        rail = Pos(CANOPY_SHOULDER_X - 2.5, 0, torso_common.THICKNESS / 2) * Box(
+            5, 2 * CANOPY_HALF_WIDTH, torso_common.THICKNESS
+        )
+        model = torso_layer_3.build_model(surface)
+        self.assertTrue(model.is_valid)
+        self.assertEqual(len(model.solids()), 1)
+        self.assertAlmostEqual((rail & model).volume, rail.volume)
 
 
 class NiraLidarHousingCutTests(unittest.TestCase):
@@ -114,7 +136,8 @@ class NiraLidarTests(unittest.TestCase):
                 # The rear frame is behind the sensor; its bounding box's Z
                 # gap does not measure their physical clearance.
                 self.assertGreater(plate.distance_to(self.lidar), 1e-6)
-        roof = self.parts['torso_layer_4']
+        canopy = self.parts['torso_layer_4']
+        roof = canopy.location * canopy.children[0]
         # The roof overhang stays above the complete sensor envelope.
         self.assertGreater(roof.bounding_box().min.Z,
                            self.lidar.bounding_box().max.Z + 1e-6)

@@ -1,6 +1,3 @@
 node_communication:
   ros__parameters:
-    robot_names: ["spider", "robot", "nox"]
-    vosk/model: vosk-model-small-en-us-0.15
-    vosk/sample_rate: 16000
-    vosk/blocksize: 2000
+    keyword_threshold: 0.5

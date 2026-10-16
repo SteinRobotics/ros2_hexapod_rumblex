@@ -145,6 +145,12 @@ alignment, scanner clearance, single-solid components, body collisions,
 and retained tab engagement. This does not verify clearance throughout
 head/leg motion, structural strength, optical tolerances or manufacturing fit.
 
+Layer 4 contains the original 1.5 mm vented roof and a separate 3 mm frame
+on its underside. The frame fits the central opening of layer 3 and has a
+5 mm rim. Running its exporter writes the two-part STEP assembly and the
+separate `torso_layer_4_frame.dxf` in `generated/nira/dxf/dxf_3mm/`;
+the roof DXF remains in `dxf_1p5mm/`.
+
 Export the revised parts and assembly with:
 
 ```bash
@@ -300,8 +306,8 @@ Existing robot output directories are refused: choose a new `--output` root
 for a new job. A job is published only after all geometry, nesting and DXF
 read-back checks pass; a failed job leaves no partial robot output directory.
 
-Nira currently requires **48 laser-cut pieces**: 1 of 1 mm, 38 of 1.5 mm and
-9 of 3 mm. Its BOM includes six of each foot plate, both rear brace variants,
+Nira currently requires **49 laser-cut pieces**: 1 of 1 mm, 38 of 1.5 mm and
+10 of 3 mm. Its BOM includes the roof's underside frame, six of each foot plate, both rear brace variants,
 five lidar housing panels, the sloped speaker cover and three camera cage
 plates. Purchased brackets, servos, electronics, rubber toes and turned
 spacers are outside the laser-cut BOM. Counts for repeated legs and chassis

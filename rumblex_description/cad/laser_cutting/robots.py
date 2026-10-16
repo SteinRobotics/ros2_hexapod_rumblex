@@ -77,6 +77,8 @@ def _rumblex_components(robot):
         chassis = module("chassis_common")
         add("torso_layer_2_addon")
         add("torso_layer_2_cover")
+        roof = module("torso_layer_4")
+        add("torso_layer_4_frame", surface=roof.build_frame_surface(), thickness=roof.FRAME_THICKNESS)
         add("foot_outer", legs)
         for name, quantity in (("chassis_front", sum(p.position.X > 0 for p in ends)),
                                ("chassis_back", sum(p.position.X < 0 for p in ends)),
