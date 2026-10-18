@@ -25,11 +25,30 @@ YDLIDAR-SDK in der venv bereitgestellt.
 Der Build erfolgt paketweise mit maximal zwei parallelen Compilerprozessen.
 Bei wenig RAM kann `CMAKE_BUILD_PARALLEL_LEVEL=1 ./scripts/setup_raspberry_pi.sh nira`
 verwendet werden. Nira erhält zusätzlich das YDLIDAR-SDK unter `vendor/` und den
-ROS-Treiber aus dessen `humble`-Branch unter `src/ydlidar_ros2_driver`. Vorhandene
-Vendor-Checkouts werden bei Wiederholung weiterverwendet, nicht zurückgesetzt oder
-aktualisiert. Der mitgelieferte Patch `scripts/ydlidar_lyrical.patch` portiert
-den Treiber auf C++23 und die CMake-Targets von Lyrical. Er wird genau einmal
-angewendet; bei inkompatiblen lokalen Änderungen bricht das Setup ab.
+ROS-Treiber aus dem `lyrical`-Branch des SteinRobotics-Forks unter
+`src/ydlidar_ros2_driver`. Der SDK-Checkout bleibt bei Wiederholung erhalten.
+Für den ROS-Treiber setzt das Setup `origin` auf
+`git@github.com:SteinRobotics/ydlidar_ros2_driver.git`, wechselt auf `lyrical`
+und übernimmt veröffentlichte Änderungen ausschließlich per Fast-forward.
+Lokale Änderungen oder unveröffentlichte Commits auf `lyrical` führen zum Abbruch;
+sie werden nicht überschrieben. Andere lokale Branches bleiben erhalten.
+Der ausführende Benutzer auf dem Pi benötigt SSH-Zugriff auf GitHub.
+Die Lyrical-Anpassungen sind bereits im Fork enthalten; ein zusätzlicher Patch
+wird nicht mehr angewendet.
+
+Ein vorhandener Checkout aus dem früheren Setup enthält möglicherweise dessen
+lokalen CMake-Patch. Änderungen zuerst prüfen und bei Bedarf sichern:
+
+```bash
+git -C ~/Workspace/colcon_rumblex/src/ydlidar_ros2_driver diff
+git -C ~/Workspace/colcon_rumblex/src/ydlidar_ros2_driver stash push -u -m before-lyrical-migration
+./scripts/update_ydlidar_driver.sh
+```
+
+Den alten Kompatibilitätspatch nicht auf `lyrical` zurückspielen. Eigene Änderungen
+gezielt übernehmen. Anschließend das Setup erneut mit `nira` ausführen.
+Der Aktualisierungshelfer verändert keine Build-Artefakte; ein neuer Build ist nötig.
+
 Bestehende Build-Verzeichnisse müssen zu diesem Pi, Ubuntu und ROS
 Lyrical passen; keine Build-/Install-Artefakte vom Entwicklungsrechner kopieren.
 
@@ -108,4 +127,4 @@ Weitere Details stehen in [rumblex_communication](../../rumblex_communication/re
 
 Grundlagen: [ROS-Installationsanleitung](https://github.com/ros2/ros2_documentation/blob/rolling/source/Get-Started/Installation/Ubuntu-Install-Debs.rst),
 [Lyrical-Plattformen](https://github.com/ros2/ros2_documentation/blob/rolling/source/Get-Started/Releases/lyrical/supported-platforms.rst),
-[YDLIDAR-Treiber](https://github.com/YDLIDAR/ydlidar_ros2_driver/tree/humble).
+[YDLIDAR-Treiber](https://github.com/SteinRobotics/ydlidar_ros2_driver/tree/lyrical).

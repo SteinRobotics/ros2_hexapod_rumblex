@@ -79,8 +79,8 @@ set +u
 source /opt/ros/lyrical/setup.bash
 set -u
 
-# Nira uses YDLIDAR. The vendor recommends its humble branch for modern ROS 2.
-# Keep vendor checkouts on reruns; never overwrite local changes or pull implicitly.
+# Nira uses the SteinRobotics YDLIDAR fork over SSH.
+# Keep the SDK checkout; update the driver to the published lyrical branch safely.
 extra_packages=()
 if [[ $robot == nira ]]; then
     vendor="$workspace/vendor"
@@ -94,17 +94,7 @@ if [[ $robot == nira ]]; then
         -DBUILD_EXAMPLES=OFF -DBUILD_TEST=OFF -DCMAKE_DISABLE_FIND_PACKAGE_SWIG=ON -DSWIG_FOUND=FALSE
     cmake --build "$vendor/ydlidar-build" --parallel "$CMAKE_BUILD_PARALLEL_LEVEL"
     cmake --install "$vendor/ydlidar-build"
-    if [[ ! -d $workspace/src/ydlidar_ros2_driver ]]; then
-        git clone --depth 1 --branch humble https://github.com/YDLIDAR/ydlidar_ros2_driver.git "$workspace/src/ydlidar_ros2_driver"
-    fi
-    # Lyrical removed ament_target_dependencies; apply the imported-target port once.
-    driver="$workspace/src/ydlidar_ros2_driver"
-    if git -C "$driver" apply --reverse --check "$repo/scripts/ydlidar_lyrical.patch" 2>/dev/null; then
-        echo "YDLIDAR Lyrical compatibility patch is already applied."
-    else
-        git -C "$driver" apply --check "$repo/scripts/ydlidar_lyrical.patch"
-        git -C "$driver" apply "$repo/scripts/ydlidar_lyrical.patch"
-    fi
+    "$repo/scripts/update_ydlidar_driver.sh" "$workspace/src/ydlidar_ros2_driver"
     export CMAKE_PREFIX_PATH="$workspace/vendor/install:${CMAKE_PREFIX_PATH:-}"
     extra_packages+=(ydlidar_ros2_driver)
 fi

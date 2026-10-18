@@ -48,3 +48,76 @@ def test_target_imu_configuration_exists(robot):
     parameters = config['bno055']['ros__parameters']
     assert parameters['connection_type'] == 'i2c'
     assert parameters['frame_id'] == 'imu_link'
+
+
+@pytest.fixture
+def driver_repositories(tmp_path):
+    """Redirect the production SSH URL to a local repository for offline tests."""
+    upstream = tmp_path / 'upstream'
+    checkout = tmp_path / 'driver'
+    env = {**os.environ, 'GIT_CONFIG_GLOBAL': str(tmp_path / 'gitconfig'),
+           'GIT_CONFIG_NOSYSTEM': '1'}
+
+    def git(*args, cwd=None):
+        return subprocess.run(['git', *args], cwd=cwd, env=env,
+                              check=True, capture_output=True, text=True).stdout.strip()
+
+    git('config', '--global', 'user.name', 'Setup Test')
+    git('config', '--global', 'user.email', 'setup@example.invalid')
+    git('config', '--global', f'url.{upstream}.insteadOf',
+        'git@github.com:SteinRobotics/ydlidar_ros2_driver.git')
+    git('init', '--initial-branch=master', str(upstream))
+    (upstream / 'driver.txt').write_text('master\n')
+    git('add', '.', cwd=upstream)
+    git('commit', '-m', 'baseline', cwd=upstream)
+    git('switch', '-c', 'lyrical', cwd=upstream)
+    (upstream / 'driver.txt').write_text('lyrical\n')
+    git('commit', '-am', 'lyrical support', cwd=upstream)
+
+    def update():
+        return subprocess.run(
+            ['bash', str(ROOT / 'scripts/update_ydlidar_driver.sh'), str(checkout)],
+            env=env, capture_output=True, text=True, check=False)
+
+    return upstream, checkout, git, update
+
+
+def test_driver_clone_and_fast_forward(driver_repositories):
+    upstream, checkout, git, update = driver_repositories
+    assert update().returncode == 0
+    assert git('branch', '--show-current', cwd=checkout) == 'lyrical'
+    (upstream / 'driver.txt').write_text('new lyrical\n')
+    git('commit', '-am', 'fix', cwd=upstream)
+    assert update().returncode == 0
+    assert git('rev-parse', 'HEAD', cwd=checkout) == git('rev-parse', 'HEAD', cwd=upstream)
+
+
+def test_driver_migrates_clean_master(driver_repositories):
+    upstream, checkout, git, update = driver_repositories
+    git('clone', '--branch', 'master', str(upstream), str(checkout))
+    previous = git('rev-parse', 'master', cwd=checkout)
+    assert update().returncode == 0
+    assert git('branch', '--show-current', cwd=checkout) == 'lyrical'
+    assert git('rev-parse', 'master', cwd=checkout) == previous
+    assert git('remote', 'get-url', 'origin', cwd=checkout) == str(upstream)
+    assert git('config', '--get', 'remote.origin.url', cwd=checkout).startswith('git@github.com:SteinRobotics/')
+
+
+def test_driver_preserves_local_patch(driver_repositories):
+    upstream, checkout, git, update = driver_repositories
+    git('clone', '--branch', 'master', str(upstream), str(checkout))
+    (checkout / 'driver.txt').write_text('local patch\n')
+    before = git('rev-parse', 'HEAD', cwd=checkout)
+    assert update().returncode != 0
+    assert git('rev-parse', 'HEAD', cwd=checkout) == before
+    assert (checkout / 'driver.txt').read_text() == 'local patch\n'
+
+
+def test_driver_preserves_unpublished_commits(driver_repositories):
+    _, checkout, git, update = driver_repositories
+    assert update().returncode == 0
+    (checkout / 'driver.txt').write_text('local change\n')
+    git('commit', '-am', 'unpublished', cwd=checkout)
+    before = git('rev-parse', 'HEAD', cwd=checkout)
+    assert update().returncode != 0
+    assert git('rev-parse', 'HEAD', cwd=checkout) == before

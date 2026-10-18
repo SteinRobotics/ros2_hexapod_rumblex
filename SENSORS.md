@@ -39,12 +39,16 @@ are supplied, but complete Nira bringup still requires the other hardware profil
 ## Nira dependency and configuration
 
 Install/build [YDLIDAR-SDK](https://github.com/YDLIDAR/YDLidar-SDK) and
-[ydlidar_ros2_driver](https://github.com/YDLIDAR/ydlidar_ros2_driver/tree/humble)
-following the upstream instructions. The integration expects the ordinary ROS node
-`ydlidar_ros2_driver_node` used on the upstream `humble` branch. Compatibility with
-ROS Lyrical and the physical T-mini must be checked on the target hardware.
+[ydlidar_ros2_driver](https://github.com/SteinRobotics/ydlidar_ros2_driver/tree/lyrical)
+from the SteinRobotics fork. The setup script selects its `lyrical` branch via
+`git@github.com:SteinRobotics/ydlidar_ros2_driver.git`; GitHub SSH access is required. The integration expects the ordinary ROS node
+`ydlidar_ros2_driver_node`. The fork contains the ROS 2 Lyrical compatibility
+fixes; physical T-mini operation must still be checked on the target hardware.
 This repository declares the driver as an external runtime dependency and does not
-vendor it. A Nox-only installation can skip the `ydlidar_ros2_driver` rosdep key.
+vendor it as a submodule. Keeping one sibling checkout under workspace `src/`
+avoids duplicate colcon package discovery. Existing checkouts are switched to
+`lyrical` and updated only by fast-forward; local changes require manual resolution.
+A Nox-only installation can skip the `ydlidar_ros2_driver` rosdep key.
 
 `rumblex_lidar_2d/config/nira/lidar.yaml` uses the upstream
 [Tmini settings](https://github.com/YDLIDAR/ydlidar_ros2_driver/blob/humble/params/Tmini.yaml),
