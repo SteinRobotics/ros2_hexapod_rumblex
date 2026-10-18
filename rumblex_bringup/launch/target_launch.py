@@ -62,7 +62,7 @@ def generate_launch_description():
             'autostart_listening', default_value='false',
             description='Activate speech-to-text listening when the brain starts'),
         DeclareLaunchArgument(
-            'robot', default_value='nox',
+            'robot', default_value='nox', choices=['nox', 'nira'],
             description='Robot configuration profile (for example: nox or nira)'),
         DeclareLaunchArgument(
             'enable_navigation', default_value='false',

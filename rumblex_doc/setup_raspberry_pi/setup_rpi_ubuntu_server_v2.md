@@ -1,3 +1,6 @@
+> Für Ubuntu Server 26.04 auf dem Raspberry Pi 5: [automatisiertes Setup](setup_ubuntu_26.04.md).
+> Die folgenden manuellen Schritte beschreiben die ältere Kilted-Installation.
+
 # Initial Setup
 ## WiFi Connection
 ```
