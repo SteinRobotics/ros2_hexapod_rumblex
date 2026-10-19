@@ -44,7 +44,7 @@ The commands below assume **Ubuntu 26.04** and **ROS 2 Lyrical** on both machine
 
    `rclpy` and the other ROS Python modules come from apt, not pip. The Google speech service also needs credentials if you enable online recognition; follow the communication package's configuration for that feature.
 
-5. Install the **runtime** ROS dependencies. Include `rumblex_description` because `rumblex_bringup` declares it as a dependency, but skip its RViz and joint slider dependencies on the Pi. The Python rosdep keys listed below are handled by the venv installation above; `magic_enum` and `fonts-liberation` are installed explicitly because their rosdep mappings are missing for Ubuntu 26.04.
+5. Install the **runtime** ROS dependencies. If `usb_cam` has no Lyrical binary, first follow the [camera source-install fallback](rumblex_camera/README.md#dependencies-and-build) and include `src/usb_cam` in the rosdep paths below. Include `rumblex_description` because `rumblex_bringup` declares it as a dependency, but skip its RViz and joint slider dependencies on the Pi. The Python rosdep keys listed below are handled by the venv installation above; `magic_enum` and `fonts-liberation` are installed explicitly because their rosdep mappings are missing for Ubuntu 26.04.
 
    ```bash
    source /opt/ros/lyrical/setup.bash
@@ -58,6 +58,7 @@ The commands below assume **Ubuntu 26.04** and **ROS 2 Lyrical** on both machine
      src/ros2_hexapod_rumblex/rumblex_hmi \
      src/ros2_hexapod_rumblex/rumblex_lidar_1d \
      src/ros2_hexapod_rumblex/rumblex_lidar_2d \
+     src/ros2_hexapod_rumblex/rumblex_camera \
      src/ros2_hexapod_rumblex/rumblex_perception \
      src/ros2_hexapod_rumblex/rumblex_navigation \
      src/ros2_hexapod_rumblex/rumblex_teleop \
@@ -146,6 +147,7 @@ For offline robot-name recognition, follow the [openWakeWord ONNX setup](rumblex
      src/ros2_hexapod_rumblex/rumblex_teleop \
      src/ros2_hexapod_rumblex/rumblex_lidar_1d \
      src/ros2_hexapod_rumblex/rumblex_lidar_2d \
+     src/ros2_hexapod_rumblex/rumblex_camera \
      src/ros2_hexapod_rumblex/rumblex_perception \
      src/ros2_hexapod_rumblex/rumblex_navigation \
      src/ros2_hexapod_rumblex/rumblex_description \

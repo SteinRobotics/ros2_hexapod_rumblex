@@ -1,2 +1,3 @@
 lidar_package: rumblex_lidar_2d
 head_scan: false
+camera_package: rumblex_camera

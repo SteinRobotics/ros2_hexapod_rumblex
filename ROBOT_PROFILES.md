@@ -22,6 +22,7 @@ launches accept the same argument. Each package stores only the settings it owns
 | `rumblex_communication` | `config/<robot>/params.yaml` |
 | `rumblex_movement` | `config/<robot>/servo_description.yaml` |
 | `rumblex_lidar_1d` / `rumblex_lidar_2d` | `config/<robot>/lidar.yaml` |
+| `rumblex_camera` | `config/nira/camera.yaml` (OBSBOT Meet SE) |
 | `rumblex_perception` | `config/<robot>/sensors.yaml`, `config/nox/perception.yaml` (head sweep) |
 | `rumblex_navigation` | `config/<robot>/navigation.yaml` |
 | `rumblex_gazebo` | `config/<robot>/joint_controllers.yaml` |

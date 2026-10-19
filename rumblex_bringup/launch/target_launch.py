@@ -27,7 +27,13 @@ def generate_launch_description():
         FindPackageShare('rumblex_teleop'), '/launch/teleop_launch.py']))
     lidar = IncludeLaunchDescription(PythonLaunchDescriptionSource([
         FindPackageShare('rumblex_bringup'), '/launch/sensors_launch.py']),
-        launch_arguments={'robot': robot, 'enable_head_scan': LaunchConfiguration('enable_navigation')}.items())
+        launch_arguments={
+            'robot': robot, 'enable_head_scan': LaunchConfiguration('enable_navigation'),
+            'enable_camera': LaunchConfiguration('enable_camera'),
+            'camera_device': LaunchConfiguration('camera_device'),
+            'camera_params_file': LaunchConfiguration('camera_params_file'),
+            'camera_info_url': LaunchConfiguration('camera_info_url'),
+        }.items())
 
     bno055_config = PathJoinSubstitution([
         FindPackageShare('rumblex_bringup'), 'config', robot, 'bno055_params.yaml'])
@@ -67,6 +73,11 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'enable_navigation', default_value='false',
             description='Launch rumblex_navigation (robot-specific sensing + reactive nav)'),
+        DeclareLaunchArgument('enable_camera', default_value='false',
+                              description='Enable the head camera for robots with a camera profile'),
+        DeclareLaunchArgument('camera_device', default_value=''),
+        DeclareLaunchArgument('camera_params_file', default_value=''),
+        DeclareLaunchArgument('camera_info_url', default_value=''),
         communication,
         hmi,
         movement,

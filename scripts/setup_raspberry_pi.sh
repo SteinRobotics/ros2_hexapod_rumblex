@@ -82,6 +82,11 @@ set -u
 # Nira uses the SteinRobotics YDLIDAR fork over SSH.
 # Keep the SDK checkout; update the driver to the published lyrical branch safely.
 extra_packages=()
+# A source checkout is supported when usb_cam binaries are unavailable for Lyrical.
+# See rumblex_camera/README.md; leave dependency installation to rosdep otherwise.
+if [[ -f "$workspace/src/usb_cam/package.xml" ]]; then
+    extra_packages+=(usb_cam)
+fi
 if [[ $robot == nira ]]; then
     vendor="$workspace/vendor"
     mkdir -p "$vendor"
@@ -103,7 +108,7 @@ fi
 # are intentionally skipped; pip dependencies above are satisfied in the venv.
 packages=(rumblex_interfaces rumblex_utils rumblex_brain rumblex_movement
     rumblex_description rumblex_bringup rumblex_hmi rumblex_communication
-    rumblex_teleop rumblex_lidar_1d rumblex_lidar_2d rumblex_perception rumblex_navigation)
+    rumblex_teleop rumblex_lidar_1d rumblex_lidar_2d rumblex_camera rumblex_perception rumblex_navigation)
 paths=()
 for package in "${packages[@]}"; do paths+=("$repo/$package"); done
 for package in "${extra_packages[@]}"; do paths+=("$workspace/src/$package"); done

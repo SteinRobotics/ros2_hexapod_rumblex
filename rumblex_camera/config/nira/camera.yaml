@@ -1,0 +1,22 @@
+/camera/node_camera:
+  ros__parameters:
+    # Set the actual /dev/v4l/by-id/... path here or pass video_device at launch.
+    video_device: ""
+    camera_name: nira_head
+    frame_id: camera_optical_frame
+    image_width: 1280
+    image_height: 720
+    framerate: 30.0
+    io_method: mmap
+    pixel_format: mjpeg2rgb
+    # Supply a measured calibration for this resolution; never invent intrinsics.
+    camera_info_url: ""
+    brightness: -1
+    contrast: -1
+    saturation: -1
+    sharpness: -1
+    gain: -1
+    auto_white_balance: true
+    autoexposure: true
+    autofocus: true
+    focus: -1

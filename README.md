@@ -32,6 +32,7 @@ needed to add Nira.
 - `rumblex_lidar_2d/`      — Nira planar lidar integration
 - `rumblex_perception/`    — Head-sweep scan processing
 - `rumblex_navigation/`    — 1D-lidar head-sweep navigation with obstacle avoidance
+- `rumblex_camera/`        — Nira head camera capture and standard controls ([setup](rumblex_camera/README.md))
 - `rumblex_interfaces/`    — Custom ROS2 message and service definitions
 - `rumblex_bringup/`       — Launch and bringup scripts
 - `rumblex_doc/`           — Documentation, diagrams, and hardware info

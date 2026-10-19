@@ -1,7 +1,7 @@
 # Robot sensor pipelines
 
 `rumblex_perception/config/<robot>/sensors.yaml` selects the lidar integration package
-and whether head-sweep processing is needed. Drivers publish relative topic names,
+and whether head-sweep processing is needed, plus an optional camera package. Drivers publish relative topic names,
 so ROS namespaces and remappings remain available. Sensor mounting transforms belong
 to `rumblex_description`; neither lidar integration publishes its own mounting TF.
 
@@ -37,6 +37,12 @@ are supplied, but complete Nira bringup still requires the other hardware profil
 (including its IMU configuration).
 
 ## Nira dependency and configuration
+
+Nira also has an optional OBSBOT Meet SE head camera through `rumblex_camera`.
+Use `enable_camera:=true camera_device:=/dev/v4l/by-id/ACTUAL_MEET_SE_DEVICE` with
+sensor or target bringup; it defaults to disabled. Camera capture is independent
+of lidar's `enable_driver` switch. See [camera setup and commissioning](rumblex_camera/README.md)
+for dependencies, standalone launch, controls, calibration, and PC viewing.
 
 Install/build [YDLIDAR-SDK](https://github.com/YDLIDAR/YDLidar-SDK) and
 [ydlidar_ros2_driver](https://github.com/SteinRobotics/ydlidar_ros2_driver/tree/lyrical)
