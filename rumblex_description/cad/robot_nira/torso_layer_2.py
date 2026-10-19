@@ -10,9 +10,11 @@ if __package__ in (None, ""):
 from robot_nira import EXPORT_DIR, dxf_directory
 from robot_nira.torso_layout import FRONT_DECK_X
 from build123d import *
+from build123d import ColorIndex
 from utils.ocp_utils import show
 
 import robot_nira.torso_common as torso_common
+import robot_nira.torso_layer_2_addon as torso_layer_2_addon
 from robot_nira.lidar_layout import LIDAR_X, LIDAR_ASSEMBLY_X
 from robot_nira.lidar_interface_housing import DECK_TAB_POSITIONS, DECK_TAB_WIDTH, WALL
 
@@ -80,6 +82,11 @@ def main() -> None:
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
+    # Engrave on the underside to locate the addon during assembly.
+    addon_surface = torso_layer_2_addon.build_surface()
+    dxf_export.add_layer("ENGRAVE", color=ColorIndex.BLUE)
+    for face in addon_surface.faces():
+        dxf_export.add_shape(face.outer_wire(), layer="ENGRAVE")
     dxf_export.write(str(dxf_dir / "torso_layer_2.dxf"))
 
     show(result, name="torso_layer_2", clear=True)

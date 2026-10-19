@@ -14,6 +14,7 @@ from build123d import (
     BuildPart,
     BuildSketch,
     Circle,
+    ColorIndex,
     Compound,
     ExportDXF,
     Face,
@@ -103,9 +104,12 @@ def main() -> None:
 
     dxf_export = ExportDXF()
     dxf_export.add_shape(surface)
+    # Engrave on the underside to locate the frame before gluing it in place.
+    frame_surface = build_frame_surface()
+    dxf_export.add_layer("ENGRAVE", color=ColorIndex.BLUE)
+    dxf_export.add_shape(frame_surface.faces()[0].outer_wire(), layer="ENGRAVE")
     dxf_export.write(str(dxf_dir / "torso_layer_4.dxf"))
 
-    frame_surface = build_frame_surface()
     frame_dxf = ExportDXF()
     frame_dxf.add_shape(frame_surface)
     frame_dxf.write(str(dxf_directory(FRAME_THICKNESS) / "torso_layer_4_frame.dxf"))

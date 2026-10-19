@@ -53,7 +53,21 @@ class NiraRoofTests(unittest.TestCase):
                               side_effect=lambda thickness: dxf_directory(thickness, export_dir=destination)), \
                  patch.object(torso_layer_4, 'show'):
                 torso_layer_4.main()
-            self.assertTrue((destination / 'dxf/dxf_1p5mm/torso_layer_4.dxf').is_file())
+            roof_doc = ezdxf.readfile(destination / 'dxf/dxf_1p5mm/torso_layer_4.dxf')
+            engraving = list(roof_doc.modelspace().query('*[layer=="ENGRAVE"]'))
+            self.assertTrue(engraving)
+            self.assertEqual(roof_doc.layers.get('ENGRAVE').color, 5)
+            frame_face = torso_layer_4.build_frame_surface().faces()[0]
+            self.assertAlmostEqual(sum(entity.dxf.start.distance(entity.dxf.end)
+                                       for entity in engraving), frame_face.outer_wire().length)
+            engraving_bounds = extents(engraving)
+            expected = frame_face.bounding_box()
+            for axis in ('x', 'y'):
+                self.assertAlmostEqual(getattr(engraving_bounds.extmin, axis),
+                                       getattr(expected.min, axis.upper()))
+                self.assertAlmostEqual(getattr(engraving_bounds.extmax, axis),
+                                       getattr(expected.max, axis.upper()))
+            self.assertTrue(list(roof_doc.modelspace().query('*[layer=="0"]')))
             doc = ezdxf.readfile(destination / 'dxf/dxf_3mm/torso_layer_4_frame.dxf')
             self.assertEqual(doc.units, ezdxf.units.MM)
             bounds = extents(doc.modelspace())
