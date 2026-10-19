@@ -5,7 +5,7 @@ import unittest
 
 from build123d import (
     Box, BuildPart, BuildSketch, Circle, Cylinder, Face, Locations, Mode, Part, Plane, Polygon, Pos,
-    insert, extrude,
+    Rot, insert, extrude,
 )
 
 from robot_nira import (torso_common, chassis_common,
@@ -47,6 +47,44 @@ class NiraCanopyFrameTests(unittest.TestCase):
 
 
 class NiraLidarHousingCutTests(unittest.TestCase):
+    def test_lidar_is_centered_and_diagonal_mounts_pass_through_lid(self):
+        h = lidar_interface_housing
+        lid = h.lid()
+        sensor = (Pos(h.CENTER_X, 0, h.HEIGHT)
+                  * Rot(Z=90) * lidar_ydlidar_tmini.build_model())
+        self.assertAlmostEqual(sensor.bounding_box().center().X,
+                               lid.bounding_box().center().X)
+        self.assertAlmostEqual(sensor.bounding_box().center().Y,
+                               lid.bounding_box().center().Y)
+        for index in (1, 2):
+            p = sensor.joints[f'mount_{index}'].location.position
+            bore = Pos(p.X, p.Y, h.WALL / 2) * Cylinder(
+                h.LIDAR_MOUNT_DIAMETER / 2, h.WALL)
+            overlap = lid & bore
+            self.assertLess(overlap.volume if overlap else 0, 1e-6)
+            rim = Pos(p.X + h.LIDAR_MOUNT_DIAMETER / 2 + 0.5,
+                      p.Y, h.WALL / 2) * Cylinder(0.2, h.WALL)
+            self.assertAlmostEqual((lid & rim).volume, rim.volume)
+
+    def test_rear_panel_has_separate_usb_openings_and_small_cable_notch(self):
+        h = lidar_interface_housing
+        panel = h.end_wall(True)
+        top = max(panel.faces(), key=lambda face: face.center().Z)
+        self.assertEqual(len(top.inner_wires()), 2)
+        cutouts = (*h.USB_CUTOUTS,
+                   (h.LIDAR_CABLE_Y, h.LIDAR_CABLE_Z, 3.0, 3.0))
+        for y, z, width, height in cutouts:
+            probe = Pos(y, z, h.WALL / 2) * Box(width, height, h.WALL)
+            overlap = panel & probe
+            self.assertLess(overlap.volume if overlap else 0, 1e-6)
+        self.assertEqual(h.LIDAR_CABLE_Y, 0)
+        self.assertAlmostEqual(h.LIDAR_CABLE_Z + 1.5, h.HEIGHT - h.WALL)
+        for y in (-2.0, 2.0):
+            rim = Pos(y, h.LIDAR_CABLE_Z, h.WALL / 2) * Box(0.5, 3, h.WALL)
+            self.assertAlmostEqual((panel & rim).volume, rim.volume)
+        for y in h.END_LID_TAB_Y:
+            self.assertGreater(abs(y) - h.LID_TAB_WIDTH / 2, 1.5)
+
     def test_housing_has_five_flat_interlocking_parts(self):
         panels = lidar_interface_housing.flat_parts()
         self.assertEqual(len(panels), 5)
@@ -68,8 +106,8 @@ class NiraLidarHousingCutTests(unittest.TestCase):
         thickness = lidar_interface_housing.WALL
         lid = panels['lid']
         top = max(lid.faces(), key=lambda face: face.center().Z)
-        # Edge slots are open to the perimeter; the central lid stays solid.
-        self.assertEqual(len(top.inner_wires()), 0)
+        # Edge slots stay open to the perimeter; two bores mount the lidar.
+        self.assertEqual(len(top.inner_wires()), 2)
         for name in ('side_negative_y', 'side_positive_y', 'front', 'back'):
             with self.subTest(panel=name):
                 panel = panels[name]
@@ -78,20 +116,25 @@ class NiraLidarHousingCutTests(unittest.TestCase):
                 band = Pos(bounds.center().X, height - thickness / 2,
                            thickness / 2) * Box(bounds.size.X, thickness, thickness)
                 tabs = panel & band
-                self.assertEqual(len(tabs.solids()), 3)
+                count = (len(lidar_interface_housing.SIDE_LID_TAB_X)
+                         if name.startswith('side_') else len(lidar_interface_housing.END_LID_TAB_Y))
+                self.assertEqual(len(tabs.solids()), count)
                 self.assertAlmostEqual(tabs.volume,
-                                       3 * lidar_interface_housing.LID_TAB_WIDTH * thickness**2)
+                                       count * lidar_interface_housing.LID_TAB_WIDTH * thickness**2)
 
         assembled = lidar_interface_housing.assemble(panels)
-        lid_band = Pos(0, 0, height - thickness / 2) * Box(
-            2 * lidar_interface_housing.HALF_X,
+        lid_band = Pos((lidar_interface_housing.MIN_X + lidar_interface_housing.MAX_X) / 2,
+                       0, height - thickness / 2) * Box(
+            lidar_interface_housing.MAX_X - lidar_interface_housing.MIN_X,
             2 * lidar_interface_housing.HALF_Y, thickness)
         placed_lid = Pos(Z=height - thickness) * lid
-        # All twelve wall tabs occupy the open edge slots and touch the lid.
+        # All wall tabs occupy the open edge slots and touch the lid.
         # The volume check also detects tabs that overlap lid material.
-        expected_tab_volume = 12 * lidar_interface_housing.LID_TAB_WIDTH * thickness**2
+        tab_count = 2 * (len(lidar_interface_housing.SIDE_LID_TAB_X)
+                         + len(lidar_interface_housing.END_LID_TAB_Y))
+        expected_tab_volume = tab_count * lidar_interface_housing.LID_TAB_WIDTH * thickness**2
         wall_tabs = (assembled & lid_band) - placed_lid
-        self.assertEqual(len(wall_tabs.solids()), 12)
+        self.assertEqual(len(wall_tabs.solids()), tab_count)
         self.assertAlmostEqual(wall_tabs.volume, expected_tab_volume)
         for tab in wall_tabs.solids():
             self.assertLess(tab.distance_to(placed_lid), 1e-6)
@@ -117,10 +160,12 @@ class NiraLidarTests(unittest.TestCase):
         self.assertLess(self.lidar.distance_to(housing), 1e-6)
         self.assertGreaterEqual(box.min.Z - lidar_interface_housing.WALL
                                 - interface.bounding_box().max.Z, 1.0 - 1e-6)
-        self.assertAlmostEqual(interface.joints['mount'].location.position.X, box.center().X)
+        self.assertAlmostEqual(interface.joints['mount'].location.position.X
+                               - lidar_interface_housing.CENTER_X, box.center().X)
         self.assertAlmostEqual(interface.joints['mount'].location.position.Y, box.center().Y)
         self.assertGreater(box.min.X, torso_common.rect_w / 6)
-        self.assertAlmostEqual(box.center().X, LIDAR_ASSEMBLY_X)
+        self.assertAlmostEqual(box.center().X,
+                               LIDAR_ASSEMBLY_X - lidar_interface_housing.CENTER_X)
         self.assertAlmostEqual(box.center().Y, LIDAR_Y)
 
     def test_canopy_rear_frame_and_roof_clear_scanner(self):

@@ -122,11 +122,11 @@ def build_assembly() -> Compound:
     z_spacer_1_2 = torso_layout.LAYER_1_TOP
     z_spacer_top = torso_layout.LAYER_2_TOP
 
-    # Face the board connector and housing cable opening toward the robot center (-X).
+    # Face the USB ports rearward (-X), with the lidar connector forward (+X).
+    # The housing retains its cable opening toward the robot center (-X).
     lidar_interface_flip = Rot(Z=180)
     board_interface = (
         Pos(LIDAR_ASSEMBLY_X, LIDAR_Y, z_spacer_top)
-        * lidar_interface_flip
         * Rot(Z=90)
         * board_ydlidar_tmini_interface.build_model()
     )
@@ -138,11 +138,12 @@ def build_assembly() -> Compound:
         * lidar_interface_housing_part
     )
 
+    # Turn the local -Y connector toward the robot's rear (-X).
     lidar = Pos(
-        LIDAR_ASSEMBLY_X,
+        LIDAR_ASSEMBLY_X - lidar_interface_housing.CENTER_X,
         LIDAR_Y,
         z_spacer_top + lidar_interface_housing.HEIGHT,
-    ) * lidar_ydlidar_tmini.build_model()
+    ) * Rot(Z=-90) * lidar_ydlidar_tmini.build_model()
     lidar.label = "lidar_ydlidar_tmini"
 
     torso_layer_1_part = Pos(0, 0, z_layer_1) * torso_layer_1_part

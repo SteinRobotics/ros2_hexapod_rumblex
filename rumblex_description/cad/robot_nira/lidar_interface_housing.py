@@ -13,11 +13,12 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from build123d import (
-    Align, Box, BuildPart, BuildSketch, Compound, ExportDXF, Locations,
+    Align, Box, BuildPart, BuildSketch, Compound, Cylinder, ExportDXF, Locations,
     Mode, Part, Plane, Polygon, Pos, Vector, export_step, export_stl, extrude,
 )
 
 from robot_nira import EXPORT_DIR, dxf_directory, board_ydlidar_tmini_interface as interface
+from robot_nira import lidar_ydlidar_tmini as lidar
 import robot_nira.torso_common as torso_common
 from utils.colors import COLOR_CREAMY_WHITE
 from utils.ocp_utils import show
@@ -25,15 +26,37 @@ from utils.ocp_utils import show
 WALL = 1.5
 CLEARANCE = 1.0
 HEIGHT = interface.TOTAL_HEIGHT + CLEARANCE + WALL + 3.0
-# In this housing's local frame, the board is rotated 90 degrees and its socket faces +X.
-# The body assembly rotates both parts so the socket and cable opening face inward.
+# The housing rotates 180 degrees in the torso: local -X is robot front.
+# Extend that end for the forward-facing lidar plug; keep deck tabs fixed.
 HALF_X = interface.BASE_DEPTH / 2 + CLEARANCE + WALL
+FRONT_EXTENSION = 4.0
+MIN_X = -HALF_X - FRONT_EXTENSION
+MAX_X = HALF_X
+CENTER_X = (MIN_X + MAX_X) / 2
+# Sensor rotation relative to the housing is +90 degrees about Z.
+LIDAR_MOUNT_POSITIONS = tuple(
+    (CENTER_X - y, x) for x, y in lidar.MOUNT_HOLE_POSITIONS
+)
+LIDAR_MOUNT_DIAMETER = lidar.MOUNT_HOLE_DIAMETER + 0.2
 HALF_Y = interface.BASE_WIDTH / 2 + CLEARANCE + WALL
 FINGER_HEIGHT = 2.0
-CORNER_FINGER_Z = (2.0, 6.0)
 LID_TAB_WIDTH = 4.0
-SIDE_LID_TAB_X = (-12.0, 0.0, 12.0)
-END_LID_TAB_Y = (-14.0, 0.0, 14.0)
+SHOULDER = 3.0
+
+
+def apportioned_tabs(start: float, end: float, count: int, width: float) -> tuple[float, ...]:
+    """Place fingers with equal clear gaps, including the two end margins."""
+    gap = (end - start - count * width) / (count + 1)
+    return tuple(start + gap + width / 2 + i * (width + gap) for i in range(count))
+
+
+CORNER_FINGER_Z = tuple(
+    z - FINGER_HEIGHT / 2
+    for z in apportioned_tabs(0, HEIGHT - WALL - SHOULDER, 2, FINGER_HEIGHT)
+)
+SIDE_LID_TAB_X = apportioned_tabs(MIN_X + WALL + 4, MAX_X - WALL - 4, 3, LID_TAB_WIDTH)
+# Four fingers leave the center free for the cable notch.
+END_LID_TAB_Y = apportioned_tabs(-HALF_Y + 4, HALF_Y - 4, 4, LID_TAB_WIDTH)
 DECK_TAB_X = (-12.0, 0.0, 12.0)
 DECK_TAB_WIDTH = 4.0
 DECK_TAB_DEPTH = torso_common.THICKNESS
@@ -42,32 +65,44 @@ DECK_TAB_POSITIONS = tuple(
     (x, y) for x in DECK_TAB_X for y in (-DECK_SLOT_Y, DECK_SLOT_Y)
 )
 BOTTOM = (Align.CENTER, Align.CENTER, Align.MIN)
-SHOULDER = 3.0
+# Extra room around each receptacle for the USB plug nose.
+USB_PLUG_CLEARANCE = 2.0
+# Rear panel is local +X, with +Y to the viewer's right from outside.
+# The board's X coordinates map to housing -Y after assembly rotations.
+USB_CUTOUTS = tuple(
+    (-x, interface.USB_Z, width + 2 * USB_PLUG_CLEARANCE,
+     height + 2 * USB_PLUG_CLEARANCE)
+    for _, x, width, height in interface.USB_PORTS
+)
+LIDAR_CABLE_SIZE = 3.0
+LIDAR_CABLE_Y = 0.0
+LIDAR_CABLE_Z = HEIGHT - WALL - LIDAR_CABLE_SIZE / 2
 
 
-def wall_outline(half_width: float, bottom: float) -> None:
+def wall_outline(half_width: float, bottom: float, center: float = 0.0) -> None:
     """Cut the high corners back while keeping the corner fingers below them."""
     with BuildSketch() as outline:
         Polygon(
-            (-half_width, bottom), (half_width, bottom),
-            (half_width, HEIGHT - WALL - SHOULDER),
-            (half_width - 4, HEIGHT - WALL),
-            (-half_width + 4, HEIGHT - WALL),
-            (-half_width, HEIGHT - WALL - SHOULDER), align=None,
+            (center - half_width, bottom), (center + half_width, bottom),
+            (center + half_width, HEIGHT - WALL - SHOULDER),
+            (center + half_width - 4, HEIGHT - WALL),
+            (center - half_width + 4, HEIGHT - WALL),
+            (center - half_width, HEIGHT - WALL - SHOULDER), align=None,
         )
     extrude(outline.sketch, amount=WALL)
 
-def side_wall() -> Part:
+def side_wall(mirrored: bool = False) -> Part:
     """Flat pattern: horizontal coordinate is X, vertical coordinate is Z."""
-    span = HALF_X - WALL
+    span = (MAX_X - MIN_X) / 2 - WALL
+    center = (MIN_X + MAX_X) / 2 * (-1 if mirrored else 1)
     with BuildPart() as panel:
-        wall_outline(span, 0)
+        wall_outline(span, 0, center)
         for end in (-1, 1):
             for z in CORNER_FINGER_Z:
-                with Locations((end * (span + WALL / 2), z + FINGER_HEIGHT / 2, 0)):
+                with Locations((center + end * (span + WALL / 2), z + FINGER_HEIGHT / 2, 0)):
                     Box(WALL, FINGER_HEIGHT, WALL, align=BOTTOM)
         for x in SIDE_LID_TAB_X:
-            with Locations((x, HEIGHT - WALL / 2, 0)):
+            with Locations((-x if mirrored else x, HEIGHT - WALL / 2, 0)):
                 Box(LID_TAB_WIDTH, WALL, WALL, align=BOTTOM)
         for x in DECK_TAB_X:
             with Locations((x, (WALL - DECK_TAB_DEPTH) / 2, 0)):
@@ -76,7 +111,7 @@ def side_wall() -> Part:
 
 
 def end_wall(front: bool) -> Part:
-    """Flat pattern with side-finger recesses and a bottom cable opening."""
+    """Flat pattern with side fingers and three rear connector cutouts."""
     with BuildPart() as panel:
         wall_outline(HALF_Y, 0)
         for end in (-1, 1):
@@ -87,8 +122,12 @@ def end_wall(front: bool) -> Part:
             with Locations((y, HEIGHT - WALL / 2, 0)):
                 Box(LID_TAB_WIDTH, WALL, WALL, align=BOTTOM)
         if front:
-            with Locations((0, 4, 0)):
-                Box(interface.CONNECTOR_WIDTH + 4, 8, WALL,
+            for y, z, width, height in USB_CUTOUTS:
+                with Locations((y, z, 0)):
+                    Box(width, height, WALL,
+                        align=BOTTOM, mode=Mode.SUBTRACT)
+            with Locations((LIDAR_CABLE_Y, LIDAR_CABLE_Z, 0)):
+                Box(LIDAR_CABLE_SIZE, LIDAR_CABLE_SIZE, WALL,
                     align=BOTTOM, mode=Mode.SUBTRACT)
     return panel.part
 
@@ -98,19 +137,22 @@ def lid() -> Part:
         # The clipped corners and paired swept openings repeat the outer foot.
         with BuildSketch() as surface:
             Polygon(
-                (-HALF_X + 4, -HALF_Y), (HALF_X - 4, -HALF_Y),
-                (HALF_X, -HALF_Y + 4), (HALF_X, HALF_Y - 4),
-                (HALF_X - 4, HALF_Y), (-HALF_X + 4, HALF_Y),
-                (-HALF_X, HALF_Y - 4), (-HALF_X, -HALF_Y + 4),
+                (MIN_X + 4, -HALF_Y), (MAX_X - 4, -HALF_Y),
+                (MAX_X, -HALF_Y + 4), (MAX_X, HALF_Y - 4),
+                (MAX_X - 4, HALF_Y), (MIN_X + 4, HALF_Y),
+                (MIN_X, HALF_Y - 4), (MIN_X, -HALF_Y + 4),
                 align=None,
             )
 
         extrude(amount=WALL)
+        with Locations(*LIDAR_MOUNT_POSITIONS):
+            Cylinder(LIDAR_MOUNT_DIAMETER / 2, WALL,
+                     align=BOTTOM, mode=Mode.SUBTRACT)
         for y in (-HALF_Y + WALL / 2, HALF_Y - WALL / 2):
             for x in SIDE_LID_TAB_X:
                 with Locations((x, y, 0)):
                     Box(LID_TAB_WIDTH, WALL, WALL, align=BOTTOM, mode=Mode.SUBTRACT)
-        for x in (-HALF_X + WALL / 2, HALF_X - WALL / 2):
+        for x in (MIN_X + WALL / 2, MAX_X - WALL / 2):
             for y in END_LID_TAB_Y:
                 with Locations((x, y, 0)):
                     Box(WALL, LID_TAB_WIDTH, WALL, align=BOTTOM, mode=Mode.SUBTRACT)
@@ -122,7 +164,7 @@ def flat_parts() -> dict[str, Part]:
     return {
         "lid": lid(),
         "side_negative_y": side_wall(),
-        "side_positive_y": side_wall(),
+        "side_positive_y": side_wall(mirrored=True),
         "front": end_wall(True),
         "back": end_wall(False),
     }
@@ -139,7 +181,7 @@ def assemble(panels: dict[str, Part]) -> Part:
         origin=(HALF_X - WALL, 0, 0), x_dir=(0, 1, 0), z_dir=(1, 0, 0)
     )
     back = Plane(
-        origin=(-HALF_X + WALL, 0, 0), x_dir=(0, -1, 0), z_dir=(-1, 0, 0)
+        origin=(MIN_X + WALL, 0, 0), x_dir=(0, -1, 0), z_dir=(-1, 0, 0)
     )
     placements = {
         "lid": Pos(0, 0, HEIGHT - WALL),
