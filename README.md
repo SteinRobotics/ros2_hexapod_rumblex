@@ -46,6 +46,8 @@ Follow [README_SETUP.md](README_SETUP.md) to install dependencies, create the RO
 
 See [README_LAUNCH.md](README_LAUNCH.md) for physical robot bringup, offline tests, individual components, RViz previews, Gazebo simulation, and example ROS commands. It includes the terminal environment and venv interpreter checks needed for Python nodes.
 
+See [COMMANDS.md](COMMANDS.md) for terminal setup, build and test commands, launch commands, topic inspection, joystick requests, and direct servo maintenance.
+
 ## Raspberry Pi 5 Pin Layout
 The Raspberry Pi 5 inside Nox hosts most of the human-machine interface hardware that lives in `rumblex_hmi/`. The table follows the standard 40-pin header (odd numbers on the left when the USB ports face you). Pins with descriptions are currently wired up; empty cells are free for experiments.
 

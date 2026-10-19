@@ -172,6 +172,8 @@ commands to the brain. Linear velocity is in metres per second; angular velocity
 is in radians per second:
 
 ```bash
+# Stand up (D-pad up):
+ros2 topic pub --once /joystick_request rumblex_interfaces/msg/JoystickRequest "{dpad_vertical: 1}"
 # Cycle the gait mode:
 ros2 topic pub --once /joystick_request rumblex_interfaces/msg/JoystickRequest "{button_start: true}"
 # Walk with a turn:
@@ -180,7 +182,19 @@ ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.05}, angu
 ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist '{}'
 ```
 
-`/cmd_movement` now carries `rumblex_interfaces/msg/BodyPose`: head orientation,
+For continuous joystick movement, choose a walking gait with Start if necessary
+(Start also cycles through pose mode). Positive vertical stick input means forward.
+Run the publisher below, stop it with **Ctrl+C**, then send neutral input to stop
+walking; stopping the publisher alone does not send a stop request:
+
+```bash
+ros2 topic pub --rate 10 /joystick_request rumblex_interfaces/msg/JoystickRequest \
+  "{left_stick_vertical: 0.4}"
+# After stopping the repeating publisher:
+ros2 topic pub --once /joystick_request rumblex_interfaces/msg/JoystickRequest '{}'
+```
+
+`/cmd_movement` carries `rumblex_interfaces/msg/BodyPose`: head orientation,
 torso pose, and six toe positions. Angles are in degrees and positions in metres;
 toe order is right front, right middle, right back, left front, left middle,
 left back. Inspect an existing target before constructing a complete custom pose:
@@ -190,8 +204,7 @@ ros2 topic echo --once /cmd_movement
 ```
 
 Use offline movement separately when testing custom poses because the active brain
-publishes its own targets. The old `MovementRequest`, `ContinuousMovementUpdate`,
-`/cmd_movement_update`, and `/movement_type_actual` examples are obsolete.
+publishes its own targets.
 
 For a direct hardware servo check with movement running and the brain stopped,
 send an angle in degrees using a name from the selected robot's
@@ -200,4 +213,36 @@ send an angle in degrees using a name from the selected robot's
 ```bash
 ros2 topic pub --once /single_servo_request rumblex_interfaces/msg/ServoAngle \
   "{name: 'LEG_RIGHT_BACK_COXA', angle_deg: 0.0}"
+```
+
+## Direct servo maintenance and status testing
+
+With movement running and the brain stopped, read a servo ID (`cmd: 14`) or
+change it (`cmd: 13`, new ID in `data1`). Names must exist in the selected robot's
+servo description. Choose an unused ID on the bus; after changing it, update the
+matching `servo.serial_ids` entry in
+`rumblex_movement/config/<robot>/servo_description.yaml` before restarting movement.
+The example below changes the left front coxa ID to 10; replace 10 with the
+intended unused ID for your robot.
+
+```bash
+ros2 topic pub --once /servo_direct_request rumblex_interfaces/msg/ServoDirectRequest \
+  "{name: 'LEG_LEFT_FRONT_COXA', cmd: 14}"
+ros2 topic pub --once /servo_direct_request rumblex_interfaces/msg/ServoDirectRequest \
+  "{name: 'LEG_LEFT_FRONT_COXA', cmd: 13, data1: 10, data2: 0}"
+```
+
+Read results appear in the movement node's log. The direct-request callback
+currently handles only ID read/write (14/13) and LED read/write (34/33), even
+though the message defines additional command constants.
+
+For testing status consumers, publish a synthetic status with the real movement
+publisher stopped. This does not command a servo or read hardware:
+
+```bash
+ros2 topic pub --once /servo_status rumblex_interfaces/msg/ServoStatus \
+  "{servo_error_code: 'LEG_LEFT_FRONT_COXA', error_code: 0,
+    servo_max_temperature: 'LEG_LEFT_FRONT_COXA', max_temperature: 40.0,
+    servo_max_voltage: 'LEG_LEFT_FRONT_COXA', max_voltage: 12.0,
+    servo_min_voltage: 'LEG_LEFT_FRONT_COXA', min_voltage: 12.0}"
 ```
