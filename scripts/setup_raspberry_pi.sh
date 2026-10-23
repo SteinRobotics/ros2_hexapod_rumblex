@@ -66,6 +66,9 @@ python3 -m venv --system-site-packages "$workspace/.venv"
 touch "$workspace/.venv/COLCON_IGNORE"
 source "$workspace/.venv/bin/activate"
 python -m pip install --upgrade pip 'setuptools<80' wheel
+# pygame-ce provides the pygame API without pkg_resources, whose legacy entry-point
+# validation rejects openWakeWord's intentionally omitted TFLite backend.
+python -m pip install --only-binary=:all: 'pygame-ce==2.5.8'
 python -m pip install 'cmake>=3.25,<4' \
     numpy scipy scikit-learn requests tqdm onnxruntime \
     SpeechRecognition google-cloud-speech gTTS sounddevice \

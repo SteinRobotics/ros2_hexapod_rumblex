@@ -27,7 +27,7 @@ setup(
         'google-cloud-speech',
         'gTTS',
         'sounddevice',
-        'pygame',
+        'pygame-ce>=2.5.8,<3',
         'PyAudio',
     ],
     zip_safe=True,

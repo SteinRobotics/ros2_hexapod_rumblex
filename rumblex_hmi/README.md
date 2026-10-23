@@ -49,6 +49,14 @@ and GPIO access on the Raspberry Pi. Host shutdown still requires the existing
 sudoers permission for `/sbin/shutdown`. Hardware initialization keeps the relay
 off until OLED and power-monitor setup completes, then turns it on.
 
+Framebuffer writes use 32-byte data chunks, each with an SSD1306 data control
+byte. On Nox's Pi 5, full-frame and 128-byte page transfers failed with I²C
+error 121 and kernel messages reporting `SDA stuck at low`; short transfers
+successfully render the complete display. A responding address at `0x3c` alone
+does not confirm that framebuffer writes work. Snow-like pixels with this error
+are a transfer failure, not a missing font. The renderer separately requires
+`/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf`.
+
 Validate with:
 
 ```bash

@@ -17,6 +17,7 @@ In the ROS Python virtual environment install the ONNX backend:
 ```bash
 python -m pip install 'openwakeword==0.6.0' --no-deps
 python -m pip install onnxruntime numpy scipy scikit-learn requests tqdm sounddevice
+python -m pip install --only-binary=:all: 'pygame-ce==2.5.8'
 python -c 'from openwakeword.utils import download_models; download_models(model_names=["nox", "nira"])'
 ```
 
@@ -25,6 +26,15 @@ The explicit dependency installation avoids openWakeWord 0.6.0's unused Linux
 one-time download installs the shared audio feature models in openWakeWord's package
 resources. The custom Nox and Nira models are included with this ROS package.
 Runtime recognition is offline and requires no access key.
+
+Use Pygame CE in the virtual environment; it supplies the same `pygame` imports.
+The system Pygame 2.6.1 imports `pkg_resources`, which validates the generated
+ROS entry point's complete dependency tree and fails on the intentionally absent
+`tflite-runtime`. Pygame CE uses `importlib.resources` instead. Installing it in
+the virtual environment takes precedence over the system Pygame package and
+survives colcon rebuilds; no generated launcher edits are needed. Avoid installing
+both `pygame` and `pygame-ce` with pip into the same virtual environment, since
+they provide the same module files.
 
 Build with the same Python interpreter and launch:
 

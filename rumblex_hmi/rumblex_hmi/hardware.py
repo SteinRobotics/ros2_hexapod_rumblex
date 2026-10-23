@@ -4,6 +4,7 @@ import subprocess
 import time
 
 from rumblex_hmi.oled import OledRenderer
+from rumblex_hmi.display import create_display
 
 
 class HardwareBackend:
@@ -11,7 +12,6 @@ class HardwareBackend:
         # Import only when hardware is selected; simulation needs none of these drivers.
         import board
         from digitalio import DigitalInOut
-        import adafruit_ssd1306
         import adafruit_ina228
 
         self.relay_pin = None
@@ -21,7 +21,7 @@ class HardwareBackend:
             self.relay_pin = DigitalInOut(board.D16)  # GPIO 16, physical pin 36
             self.relay_pin.switch_to_output(value=False)
             self.i2c = board.I2C()
-            self.display = adafruit_ssd1306.SSD1306_I2C(*OledRenderer.SIZE, self.i2c)
+            self.display = create_display(*OledRenderer.SIZE, self.i2c)
             self.display.fill(0)
             self.display.show()
             self.power_monitor = adafruit_ina228.INA228(self.i2c)

@@ -14,7 +14,7 @@ def drivers(monkeypatch):
     relay, bus, display, monitor = Mock(), Mock(), Mock(), Mock()
     monkeypatch.setitem(sys.modules, 'board', SimpleNamespace(D16=16, I2C=Mock(return_value=bus)))
     monkeypatch.setitem(sys.modules, 'digitalio', SimpleNamespace(DigitalInOut=Mock(return_value=relay)))
-    monkeypatch.setitem(sys.modules, 'adafruit_ssd1306', SimpleNamespace(SSD1306_I2C=Mock(return_value=display)))
+    monkeypatch.setattr('rumblex_hmi.hardware.create_display', Mock(return_value=display))
     monkeypatch.setitem(sys.modules, 'adafruit_ina228', SimpleNamespace(INA228=Mock(return_value=monitor)))
     monkeypatch.setattr('rumblex_hmi.hardware.time.sleep', lambda _: None)
     return relay, bus, display, monitor
