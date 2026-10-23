@@ -41,8 +41,7 @@ class Placement:
 
 
 LOCATION_RPI5 = Placement(-35.0, -6.0)  # rechts unten
-LOCATION_LEFT_SERVO_PLUG = Placement(0.0, 25.0)  # links mitte, sollen zusammengesetzt werden
-LOCATION_RIGHT_SERVO_PLUG = Placement(0.0, 40.0)  # links mitte, sollen zusammengesetzt werden
+LOCATION_SERVO_PLUG = Placement(-2.54, 32.5)  # combined ten-plug board; clears relay
 LOCATION_RELAY = Placement(36.0, 32.0)  # links oben
 LOCATION_BNO055 = Placement(0.0, -2.0, 90.0)  # mitte, ggf leicht verschoben
 LOCATION_INA228 = Placement(-65.0, -6.0, 90.0)  # mitte unten
@@ -119,12 +118,7 @@ def build_surface() -> Sketch:
         )
         place_board_holes(
             board_servo_plug.default_hole_positions(board_servo_plug.cfg),
-            LOCATION_LEFT_SERVO_PLUG,
-            board_servo_plug.cfg.hole_diameter / 2,
-        )
-        place_board_holes(
-            board_servo_plug.default_hole_positions(board_servo_plug.cfg),
-            LOCATION_RIGHT_SERVO_PLUG,
+            LOCATION_SERVO_PLUG,
             board_servo_plug.cfg.hole_diameter / 2,
         )
         place_board_holes(

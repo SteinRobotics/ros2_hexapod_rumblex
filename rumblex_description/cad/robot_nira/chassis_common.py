@@ -26,11 +26,19 @@ SLOPE_START_X = SHOULDER_TOP_X + FRONT_EXTENSION
 SLOPE_END_X = SLOT_FRONT_X + FRONT_EXTENSION
 # The rail sits on layer 2 and reaches the underside of layer 3.
 RAIL_HEIGHT = torso_common.SPACER_LENGTH_TOP
+# Extend the existing slope until the sheet's inner lower corner seats on
+# layer 2. The square-cut edge then stays entirely above the deck.
+_SLOPE_RUN = SLOPE_END_X - SLOPE_START_X
+_SLOPE_DROP = RAIL_HEIGHT - LOW_RAIL_HEIGHT
+_SLOPE_LENGTH = hypot(_SLOPE_RUN, _SLOPE_DROP)
+SLOPE_COVER_DROP = RAIL_HEIGHT - THICKNESS * _SLOPE_RUN / _SLOPE_LENGTH
+SLOPE_COVER_END_X = SLOPE_START_X + SLOPE_COVER_DROP * _SLOPE_RUN / _SLOPE_DROP
+SLOPE_DECK_X = SLOPE_END_X + LOW_RAIL_HEIGHT * _SLOPE_RUN / _SLOPE_DROP
 
 def slope_finger_profiles(z_top: float) -> list[tuple[tuple[float, float], ...]]:
     """Enclosed through-slot profiles behind the sloped XZ edge."""
-    run = SLOPE_END_X - SLOPE_START_X
-    drop = RAIL_HEIGHT - LOW_RAIL_HEIGHT
+    run = SLOPE_COVER_END_X - SLOPE_START_X
+    drop = SLOPE_COVER_DROP
     length = hypot(run, drop)
     inward_x = -THICKNESS * drop / length
     inward_z = -THICKNESS * run / length

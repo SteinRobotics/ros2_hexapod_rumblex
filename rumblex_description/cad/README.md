@@ -116,9 +116,18 @@ motion or manufacturing tolerances.
 Nira's T-mini sits on its interface housing at **(93, 0, 67) mm**
 (+X is forward), with its scan plane at Z=93.3 mm. The interface module
 rests on layer 2 inside a cream, open-bottom `lidar_interface_housing`.
-Its five laser-cut panels have finger joints, a cable opening and six tabs
-that engage the deck. Twelve wall tabs enter the lid's edge slots and finish
-flush with its upper face. The cover exports STEP/STL and five flat-panel
+Its four laser-cut panels have finger joints and six tabs that engage the
+deck. The lid and side walls extend rearward to the slope cover, with an open
+rear end and a matching notch through the slope for USB cables. The scanner
+and wall-to-deck mounts retain their positions. Two wine-red cylindrical
+spacers reuse the foot's 4 mm outer diameter and 2.5 mm bore, shortened to
+14 mm, with 0 mm clearance to the housing side walls. Matching holes in the
+lid and deck secure them. The lid reuses the chamfered-octagon plate
+outline with a square tunnel mouth. Nine wall fingers enter enclosed roof
+slots and finish flush with its upper face. The solid front panel has no
+connector cutout; its corner fingers fit enclosed slots in the side panels.
+The front and side panels meet the roof without upper corner cutbacks, and
+the roof extends over the closed side-slot rims. The cover exports four flat-panel
 DXFs under `generated/nira/dxf/dxf_1p5mm/lidar_interface_housing/`.
 Fits are nominal, without kerf allowance; interface dimensions remain
 photo-based estimates pending hardware measurement.
@@ -306,9 +315,9 @@ Existing robot output directories are refused: choose a new `--output` root
 for a new job. A job is published only after all geometry, nesting and DXF
 read-back checks pass; a failed job leaves no partial robot output directory.
 
-Nira currently requires **49 laser-cut pieces**: 1 of 1 mm, 38 of 1.5 mm and
+Nira currently requires **48 laser-cut pieces**: 1 of 1 mm, 37 of 1.5 mm and
 10 of 3 mm. Its BOM includes the roof's underside frame, six of each foot plate, both rear brace variants,
-five lidar housing panels, the sloped speaker cover and three camera cage
+four lidar housing panels, the sloped speaker cover and three camera cage
 plates. Purchased brackets, servos, electronics, rubber toes and turned
 spacers are outside the laser-cut BOM. Counts for repeated legs and chassis
 plates follow the assembly's servo and slot configurations. Source CAD

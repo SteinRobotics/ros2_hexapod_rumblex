@@ -12,6 +12,7 @@ from collections.abc import Iterable
 from robot_nira import EXPORT_DIR, dxf_directory
 
 from build123d import *
+from build123d.exporters import ColorIndex
 from utils.ocp_utils import show
 
 import robot_nira.torso_common as torso_common
@@ -33,14 +34,7 @@ TOE_MOUNTING_HOLES = [(x, y, TOE_HOLE_RADIUS) for x, y in TOE_MOUNTING_POSITIONS
 
 OUTPUT_DIR = EXPORT_DIR
 OUTPUT_NAME = "torso_layer_0"
-
-
-# TODO: move to generic helper file or to torso_common.py
-def chamfered_octagon(width: float, height: float, chamfer_length: float, rotation: float = 0.0) -> Sketch:
-    with BuildSketch() as sk:
-        Rectangle(width, height, rotation=rotation)
-        chamfer(sk.vertices(), chamfer_length)
-    return sk.sketch
+BOARD_LABEL_FONT_SIZE = 2.5  # mm
 
 
 def place_board_holes(
@@ -88,6 +82,28 @@ def build_model(surface: Sketch) -> Part:
     return model.part
 
 
+def build_board_labels() -> list[Sketch]:
+    """Place engraving outlines at each board center, following its rotation."""
+    return [
+        Pos(mount.placement.x, mount.placement.y)
+        * Rot(Z=mount.placement.rotation)
+        * Text(mount.name, font_size=BOARD_LABEL_FONT_SIZE,
+               font="Arial", align=(Align.CENTER, Align.CENTER))
+        for mount in BOARD_MOUNTS
+    ]
+
+
+def build_dxf(surface: Sketch) -> ExportDXF:
+    """Keep board names on a blue engraving layer separate from the cuts."""
+    drawing = ExportDXF()
+    drawing.add_shape(surface)
+    drawing.add_layer("ENGRAVE", color=ColorIndex.BLUE)
+    for label in build_board_labels():
+        # Include inner glyph contours as well (e.g. the counters in B and O).
+        drawing.add_shape(label, layer="ENGRAVE")
+    return drawing
+
+
 def main() -> None:
     surface = build_surface()
     model = build_model(surface)
@@ -97,8 +113,7 @@ def main() -> None:
     dxf_dir = dxf_directory(torso_common.THICKNESS, export_dir=OUTPUT_DIR)
     export_step(model, str(OUTPUT_DIR / "step" / f"{OUTPUT_NAME}.step"))
 
-    dxf_export = ExportDXF()
-    dxf_export.add_shape(surface)
+    dxf_export = build_dxf(surface)
     dxf_export.write(str(dxf_dir / f"{OUTPUT_NAME}.dxf"))
 
     show(model, name=OUTPUT_NAME, clear=True)

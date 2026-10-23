@@ -16,8 +16,7 @@ from build123d import Compound, Pos, Rot, export_step, export_stl
 from robot_nox.torso_layer_0 import (
     Placement,
     LOCATION_RPI5,
-    LOCATION_LEFT_SERVO_PLUG,
-    LOCATION_RIGHT_SERVO_PLUG,
+    LOCATION_SERVO_PLUG,
     LOCATION_RELAY,
     LOCATION_BNO055,
     LOCATION_INA228,
@@ -109,8 +108,7 @@ def build_assembly() -> Compound:
 
     # add pcbs
     rpi_board = place_board(board_rpi5, LOCATION_RPI5)
-    left_servo_plug_board = place_board(board_servo_plug, LOCATION_LEFT_SERVO_PLUG)
-    right_servo_plug_board = place_board(board_servo_plug, LOCATION_RIGHT_SERVO_PLUG)
+    servo_plug_board = place_board(board_servo_plug, LOCATION_SERVO_PLUG)
     relay_board = place_board(board_relay, LOCATION_RELAY)
     bno055_board = place_board(board_bno055, LOCATION_BNO055)
     ina228_board = place_board(board_ina228, LOCATION_INA228)
@@ -123,8 +121,7 @@ def build_assembly() -> Compound:
             body,
             *servo_instances,
             rpi_board,
-            left_servo_plug_board,
-            right_servo_plug_board,
+            servo_plug_board,
             relay_board,
             bno055_board,
             ina228_board,

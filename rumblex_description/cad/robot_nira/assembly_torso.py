@@ -12,7 +12,7 @@ from robot_nira import EXPORT_DIR
 from build123d import Compound, Pos, Rot, export_step
 from utils.ocp_utils import show
 
-from utils.colors import COLOR_CREAMY_WHITE, COLOR_WINE_RED, COLOR_DARK_GRAY, COLOR_GRAY, COLOR_TITAN_SILVER
+from utils.colors import COLOR_WINE_RED, COLOR_DARK_GRAY, COLOR_TITAN_SILVER
 
 import common.battery as battery
 import common.toe as toe
@@ -94,7 +94,10 @@ def build_assembly() -> Compound:
     for part in chassis_diagonal_parts:
         part.color = COLOR_DARK_GRAY
     chassis_slope_cover_part.color = COLOR_DARK_GRAY
-    lidar_interface_housing_part.color = COLOR_TITAN_SILVER
+    for panel in lidar_interface_housing_part.children:
+        if not panel.label.startswith("lidar_roof_spacer_"):
+            panel.color = COLOR_DARK_GRAY
+            # panel.color = COLOR_TITAN_SILVER
 
     toe_part.color = COLOR_DARK_GRAY
     spacer_part_0_1.color = COLOR_WINE_RED

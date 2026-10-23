@@ -15,8 +15,10 @@ from utils.ocp_utils import show
 
 import robot_nira.torso_common as torso_common
 import robot_nira.torso_layer_2_addon as torso_layer_2_addon
-from robot_nira.lidar_layout import LIDAR_X, LIDAR_ASSEMBLY_X
-from robot_nira.lidar_interface_housing import DECK_TAB_POSITIONS, DECK_TAB_WIDTH, WALL
+from robot_nira.lidar_layout import LIDAR_X, LIDAR_ASSEMBLY_X, LIDAR_Y
+from robot_nira.lidar_interface_housing import (
+    DECK_TAB_POSITIONS, DECK_TAB_WIDTH, WALL, SPACER_POSITIONS, SPACER_INNER_DIAMETER,
+)
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
@@ -30,6 +32,11 @@ def build_surface() -> Sketch:
         # Three fingers on each housing side wall pass through matching deck slots.
         with Locations(*[(LIDAR_ASSEMBLY_X + x, y) for x, y in DECK_TAB_POSITIONS]):
             Rectangle(DECK_TAB_WIDTH, WALL, mode=Mode.SUBTRACT)
+
+        # The housing is rotated 180 degrees on this deck.
+        with Locations(*[(LIDAR_ASSEMBLY_X - x, LIDAR_Y - y)
+                         for x, y in SPACER_POSITIONS]):
+            Circle(SPACER_INNER_DIAMETER / 2, mode=Mode.SUBTRACT)
 
         # Rear braces keep three tabs; the front pair use shorter joints
         # farther outboard to clear the interface housing.

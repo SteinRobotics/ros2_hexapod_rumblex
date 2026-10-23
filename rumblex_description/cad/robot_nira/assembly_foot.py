@@ -11,12 +11,11 @@ from robot_nira import EXPORT_DIR
 
 from build123d import Compound, Pos, Rot, export_step
 
-FOOT_SPACER_OUTER_DIAMETER = 4.0
-FOOT_SPACER_STUD_HOLE_DIAMETER = 2.5
 import robot_nira.foot_back as foot_back
 import robot_nira.foot_connection as foot_connection
 import robot_nira.foot_front as foot_front
 import utils.spacer as spacer
+from utils.spacer import FOOT_SPACER_OUTER_DIAMETER, FOOT_SPACER_STUD_HOLE_DIAMETER
 import common.toe as toe
 import robot_nira.foot_outer as foot_outer
 from robot_nira.foot_common import FOOT_SPACER_OVERALL_LENGTH

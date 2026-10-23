@@ -13,6 +13,7 @@ import robot_nira.torso_common as torso_common
 from utils.ocp_utils import show
 
 FRONT_DIAGONAL_HEIGHT = 10.0
+FRONT_DIAGONAL_WIDTH = 24.0
 
 
 def build_surface(height: float) -> Sketch:
@@ -20,12 +21,13 @@ def build_surface(height: float) -> Sketch:
     if height <= FRONT_DIAGONAL_HEIGHT:
         raise ValueError("Height must leave room for the front diagonal brace")
     tab_depth = chassis_common.TAB_DEPTH
+    half_width = FRONT_DIAGONAL_WIDTH / 2
     with BuildSketch() as sketch:
         Polygon(
-            (0, tab_depth), (0, tab_depth),
-            (13, tab_depth), (13, FRONT_DIAGONAL_HEIGHT - 3),
-            (10, FRONT_DIAGONAL_HEIGHT), (-10, FRONT_DIAGONAL_HEIGHT),
-            (-13, FRONT_DIAGONAL_HEIGHT - 3), (-13, tab_depth),
+            (half_width, tab_depth), (half_width, FRONT_DIAGONAL_HEIGHT - 3),
+            (half_width - 3, FRONT_DIAGONAL_HEIGHT),
+            (-half_width + 3, FRONT_DIAGONAL_HEIGHT),
+            (-half_width, FRONT_DIAGONAL_HEIGHT - 3), (-half_width, tab_depth),
             align=None,
         )
         with Locations(*[(x, tab_depth / 2)

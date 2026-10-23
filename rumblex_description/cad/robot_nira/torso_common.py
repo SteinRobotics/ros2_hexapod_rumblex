@@ -21,6 +21,15 @@ SPACER_LENGTH_TOP = 50.0
 OCTAGON_ROTATION = 22.5  
 
 
+def chamfered_octagon(width: float, height: float, chamfer_length: float,
+                      rotation: float = 0.0) -> Sketch:
+    """Shared straight-edged plate outline with four clipped corners."""
+    with BuildSketch() as sketch:
+        Rectangle(width, height, rotation=rotation)
+        chamfer(sketch.vertices(), chamfer_length)
+    return sketch.sketch
+
+
 class ServoCutoutConfig(NamedTuple):
     start_index: int
     rotation_deg_clockwise: float
@@ -215,12 +224,23 @@ diagonal_slots_locations = [
 front_diagonal_tab_width = 6.0
 front_diagonal_tab_offsets = (-7.0, 7.0)
 front_diagonal_outward_offset = 2.0
+
+
+def _front_diagonal_slot_location(loc: Location) -> Location:
+    """Center the brace along its servo axis, preserving its normal clearance."""
+    x = loc.position.X
+    y = loc.position.Y + math.copysign(front_diagonal_outward_offset, loc.position.Y)
+    servo = SERVO_CUTOUT_CONFIGS["right_up" if y > 0 else "right_down"]
+    angle = math.radians(loc.orientation.Z)
+    tangent_x, tangent_y = math.cos(angle), math.sin(angle)
+    shift = ((servo.offset_x - x) * tangent_x
+             + (servo.offset_y - y) * tangent_y)
+    return Location((x + shift * tangent_x, y + shift * tangent_y),
+                    loc.orientation.Z)
+
+
 front_diagonal_slots_locations = [
-    Location(
-        (loc.position.X,
-         loc.position.Y + math.copysign(front_diagonal_outward_offset, loc.position.Y)),
-        loc.orientation.Z,
-    )
+    _front_diagonal_slot_location(loc)
     for loc in diagonal_slots_locations if loc.position.X > 0
 ]
 

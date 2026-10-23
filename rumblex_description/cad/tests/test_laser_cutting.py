@@ -107,9 +107,9 @@ class LaserCuttingTests(unittest.TestCase):
 
     def test_nira_design_bom_and_all_cutting_faces(self):
         components = robot_components("nira")
-        self.assertEqual(sum(c.quantity for c in components), 49)
+        self.assertEqual(sum(c.quantity for c in components), 48)
         self.assertEqual({t: sum(c.quantity for c in components if c.thickness == t)
-                          for t in (1, 1.5, 3)}, {1: 1, 1.5: 38, 3: 10})
+                          for t in (1, 1.5, 3)}, {1: 1, 1.5: 37, 3: 10})
         by_name = {c.name: c for c in components}
         for name in ("foot_front", "foot_back", "foot_outer", "foot_connection"):
             self.assertEqual(by_name[name].quantity, 6)
@@ -117,7 +117,7 @@ class LaserCuttingTests(unittest.TestCase):
         self.assertEqual(by_name["chassis_slope_cover"].quantity, 1)
         self.assertEqual(by_name["torso_layer_4_frame"].quantity, 1)
         self.assertEqual(by_name["torso_layer_4_frame"].thickness, 3)
-        self.assertEqual(sum(c.quantity for c in components if c.name.startswith("lidar_housing_")), 5)
+        self.assertEqual(sum(c.quantity for c in components if c.name.startswith("lidar_housing_")), 4)
         for component in components:
             with self.subTest(component=component.name):
                 profile = make_profile(component)

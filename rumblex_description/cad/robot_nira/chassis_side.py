@@ -43,15 +43,17 @@ def build_surface(height: float) -> Sketch:
 
         deck_top = height - tab_depth - rail_height
         sill = deck_top + LOW_RAIL_HEIGHT
+        # Clip the pointed nose 3 mm behind the slope/deck intersection.
+        front_tip_x = chassis_common.SLOPE_DECK_X - 3.0
         # Extend only above the deck, leaving the lower front joint in its slot.
         Polygon((chassis_common.SLOT_FRONT_X - 1, deck_top),
-                (chassis_common.SLOPE_END_X, deck_top),
-                (chassis_common.SLOPE_END_X, height - tab_depth),
+                (front_tip_x, deck_top),
+                (front_tip_x, height - tab_depth),
                 (chassis_common.SLOT_FRONT_X - 1, height - tab_depth),
                 align=None)
-        cutter_end_x = max(chassis_common.SLOT_FRONT_X, chassis_common.SLOPE_END_X) + tab_depth
+        cutter_end_x = max(chassis_common.SLOT_FRONT_X, chassis_common.SLOPE_DECK_X) + tab_depth
         Polygon((chassis_common.SLOPE_START_X, height - tab_depth),
-                (chassis_common.SLOPE_END_X, sill), (cutter_end_x, sill),
+                (chassis_common.SLOPE_DECK_X, deck_top), (cutter_end_x, deck_top),
                 (cutter_end_x, height + 1), (chassis_common.SLOPE_START_X, height + 1),
                 align=None, mode=Mode.SUBTRACT)
         for profile in chassis_common.slope_finger_profiles(height - tab_depth):

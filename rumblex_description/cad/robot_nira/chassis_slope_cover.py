@@ -8,7 +8,7 @@ if __package__ in (None, ""):
 
 from math import ceil, cos, hypot, pi, sin, sqrt
 from build123d import (
-    Box, BuildPart, BuildSketch, Mode, Part, Plane, Polygon, Pos, insert,
+    BuildPart, BuildSketch, Mode, Part, Plane, Polygon, Pos, insert,
     export_step, extrude,
 )
 import common.loudspeaker as loudspeaker
@@ -16,10 +16,11 @@ import robot_nira.torso_common as torso_common
 import robot_nira.lidar_interface_housing as lidar_housing
 from robot_nira import EXPORT_DIR
 from robot_nira.chassis_common import (
-    RAIL_HEIGHT, SLOPE_COVER_SETBACK, SLOPE_END_X, SLOPE_START_X, THICKNESS,
+    RAIL_HEIGHT, SLOPE_COVER_DROP, SLOPE_COVER_END_X, SLOPE_COVER_SETBACK,
+    SLOPE_END_X, SLOPE_START_X, THICKNESS,
     slope_finger_profiles,
 )
-from robot_nira.lidar_layout import LOW_RAIL_HEIGHT
+from robot_nira.lidar_layout import LIDAR_Y, LOW_RAIL_HEIGHT
 from utils.colors import COLOR_DARK_GRAY
 from utils.ocp_utils import show
 
@@ -66,9 +67,9 @@ def speaker_octagon_points(across: float, along: float) -> list[tuple[float, flo
 
 
 def build_slope_cover(z_top: float) -> Part:
-    """Bridge the sloped front edges of the two large side plates."""
-    run = SLOPE_END_X - SLOPE_START_X
-    drop = RAIL_HEIGHT - LOW_RAIL_HEIGHT
+    """Bridge the side plates from layer 3 down to the top of layer 2."""
+    run = SLOPE_COVER_END_X - SLOPE_START_X
+    drop = SLOPE_COVER_DROP
     slope_length = hypot(run, drop)
     # Recess the sheet behind the shoulder edges, with its ends against
     # the inner faces of the sides.
@@ -83,8 +84,8 @@ def build_slope_cover(z_top: float) -> Part:
         with BuildSketch(Plane.XZ):
             Polygon(
                 (SLOPE_START_X, z_top),
-                (SLOPE_END_X, z_top - drop),
-                (SLOPE_END_X + inward_x, z_top - drop + inward_z),
+                (SLOPE_COVER_END_X, z_top - drop),
+                (SLOPE_COVER_END_X + inward_x, z_top - drop + inward_z),
                 (SLOPE_START_X + inward_x, z_top + inward_z),
                 align=None,
             )
@@ -102,6 +103,23 @@ def build_slope_cover(z_top: float) -> Part:
 
     with BuildPart() as perforated:
         insert(result)
+        # Open the lower edge up to the tunnel roof. Cut normal to the sheet
+        # so this remains a constant-thickness, laser-cuttable flat panel.
+        # Coordinates remain relative to the original speaker plane.
+        original_drop = RAIL_HEIGHT - LOW_RAIL_HEIGHT
+        original_length = hypot(SLOPE_END_X - SLOPE_START_X, original_drop)
+        notch_top = (
+            lidar_housing.HEIGHT - (RAIL_HEIGHT + LOW_RAIL_HEIGHT) / 2
+        ) * original_length / original_drop
+        notch_bottom = original_length / 2 - slope_length - THICKNESS
+        with BuildSketch(speaker_plane(z_top, LIDAR_Y).offset(0.1)):
+            Polygon(
+                (-lidar_housing.HALF_Y, notch_bottom),
+                (lidar_housing.HALF_Y, notch_bottom),
+                (lidar_housing.HALF_Y, notch_top),
+                (-lidar_housing.HALF_Y, notch_top), align=None,
+            )
+        extrude(amount=-THICKNESS - 0.2, mode=Mode.SUBTRACT)
         for y in SPEAKER_Y_POSITIONS:
             with BuildSketch(speaker_plane(z_top, y).offset(0.1)):
                 for across, along in speaker_slot_positions():
