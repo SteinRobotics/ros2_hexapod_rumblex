@@ -1,0 +1,18 @@
+{
+    "commandLidarOn": {
+        "doing": [ "aktivier", "aktiviere" ],
+        "noun": [ "lidar", "laserscanner" ]
+    },
+    "commandLidarOff": {
+        "doing": [ "deaktivier", "deaktiviere" ],
+        "noun": [ "lidar", "laserscanner" ]
+    },
+    "commandCameraOn": {
+        "doing": [ "aktivier", "aktiviere" ],
+        "noun": [ "kamera", "camera" ]
+    },
+    "commandCameraOff": {
+        "doing": [ "deaktivier", "deaktiviere" ],
+        "noun": [ "kamera", "camera" ]
+    }
+}

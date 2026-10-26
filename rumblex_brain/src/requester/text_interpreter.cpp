@@ -8,6 +8,7 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <sstream>
+#include <stdexcept>
 
 using json = nlohmann::json;
 
@@ -19,27 +20,31 @@ CTextInterpreter::CTextInterpreter(std::shared_ptr<rclcpp::Node> node) : node_(n
 
 void CTextInterpreter::readInterpretation() {
     const auto package_share_path = ament_index_cpp::get_package_share_path("rumblex_brain");
-    const auto file_path = (package_share_path / "config" / "interpretation.json").string();
-    json json_data;
-    std::ifstream json_file(file_path);
-
-    if (!json_file.is_open()) {
-        RCLCPP_ERROR_STREAM(node_->get_logger(), "Unable to open file: " << file_path);
-        return;
-    }
-
-    try {
-        json_file >> json_data;
-        json_file.close();
-    } catch (const std::exception& e) {
-        RCLCPP_ERROR_STREAM(node_->get_logger(), "Error parsing : " << file_path << e.what());
-        return;
-    }
-
+    const auto robot = node_->has_parameter("robot") ? node_->get_parameter("robot").as_string()
+                                                     : node_->declare_parameter<std::string>("robot", "nox");
     std::unordered_map<std::string, json> interpretationJson;
 
-    for (const auto& [key, value] : json_data.items()) {
-        interpretationJson[key] = value;
+    // Merge before building the vocabulary so word indices are unique across both files.
+    // A robot-specific command replaces the complete common definition with the same key.
+    for (const auto& file_path : {package_share_path / "config" / "interpretation_common.json",
+                                  package_share_path / "config" / robot / "interpretation.json"}) {
+        std::ifstream json_file(file_path);
+        if (!json_file.is_open()) {
+            RCLCPP_ERROR_STREAM(node_->get_logger(), "Unable to open file: " << file_path);
+            continue;
+        }
+        try {
+            json json_data;
+            json_file >> json_data;
+            if (!json_data.is_object()) {
+                throw std::invalid_argument("interpretations must be a JSON object");
+            }
+            for (const auto& [key, value] : json_data.items()) {
+                interpretationJson[key] = value;
+            }
+        } catch (const std::exception& e) {
+            RCLCPP_ERROR_STREAM(node_->get_logger(), "Error parsing " << file_path << ": " << e.what());
+        }
     }
 
     // copy the content of interpretationJson as CWord to vocabulary_

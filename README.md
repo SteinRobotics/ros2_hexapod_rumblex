@@ -86,6 +86,8 @@ The Raspberry Pi 5 inside Nox hosts most of the human-machine interface hardware
 
 
 ## Documentation
+
+- Hardware bills of materials: [Nox](BOM_NOX.md) and [Nira](BOM_NIRA.md).
 - See `rumblex_doc/` for hardware pinouts, protocol docs, and setup guides.
 - Diagrams and images are provided for wiring and architecture overview.
 

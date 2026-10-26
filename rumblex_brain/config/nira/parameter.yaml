@@ -1,5 +1,6 @@
 node_brain:
   ros__parameters:
+    robot: nira
     autostart_listening: false
     activate_movement_waiting: false
     max_velocity_linear: 0.10

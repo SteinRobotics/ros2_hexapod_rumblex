@@ -17,7 +17,7 @@ launches accept the same argument. Each package stores only the settings it owns
 
 | Package | Profile files |
 | --- | --- |
-| `rumblex_brain` | `config/<robot>/parameter.yaml`, `gait.yaml` |
+| `rumblex_brain` | `config/<robot>/parameter.yaml`, `gait.yaml`, `interpretation.json` |
 | `rumblex_bringup` | `config/<robot>/bno055_params.yaml` |
 | `rumblex_communication` | `config/<robot>/params.yaml` |
 | `rumblex_movement` | `config/<robot>/servo_description.yaml` |
@@ -31,3 +31,15 @@ launches accept the same argument. Each package stores only the settings it owns
 To add Nira, create the corresponding `config/nira/` files and `nira.urdf.xacro`, then launch with
 `robot:=nira`. Profile names must start with a lowercase letter and contain only lowercase letters,
 digits, and underscores. A missing profile file fails at launch instead of silently using Nox values.
+
+The brain loads shared voice interpretations from `rumblex_brain/config/interpretation_common.json`
+and then `rumblex_brain/config/<robot>/interpretation.json`. The `robot` launch argument selects the
+profile; `robot` is also set in each brain `parameter.yaml` for direct node startup. A robot-specific
+entry replaces the complete common entry with the same command name; other common commands remain
+available. Nox currently uses an empty `{}` file because all its interpretations are shared.
+
+Nira additionally recognizes `aktiviere lidar`, `deaktiviere lidar`, `aktiviere kamera`, and
+`deaktiviere kamera` (including the synonyms in its JSON file) as `commandLidarOn`, `commandLidarOff`,
+`commandCameraOn`, and `commandCameraOff`. These are interpretation definitions only: lidar and camera
+control still require corresponding coordinator handlers or behaviors before voice commands operate
+the hardware.

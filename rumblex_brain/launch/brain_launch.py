@@ -20,7 +20,8 @@ def generate_launch_description():
         parameters=[config,
             PathJoinSubstitution([get_package_share_directory('rumblex_brain'), 'config', robot, 'gait.yaml']),
             PathJoinSubstitution([get_package_share_directory('rumblex_description'), 'config', robot, 'anatomy.yaml']),
-            {'autostart_listening': ParameterValue(
+            {'robot': ParameterValue(robot, value_type=str),
+             'autostart_listening': ParameterValue(
                 LaunchConfiguration('autostart_listening'), value_type=bool)}],
     )
     return LaunchDescription([
