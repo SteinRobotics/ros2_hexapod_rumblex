@@ -57,6 +57,64 @@ vergibt Hardwaregruppen und erlaubt dem HMI ausschließlich
 `sudo shutdown -h now` ohne Passwort. Die Firmwaredatei wird vor der ersten
 Ergänzung als `config.txt.before-rumblex` gesichert. WLAN wird nicht verändert.
 
+## WLAN auf 2,4 GHz begrenzen
+
+Nox verwendet Netplan mit `systemd-networkd` und `wpa_supplicant` auf `wlan0`.
+NetworkManager/`nmcli` ist dafür nicht erforderlich. Das Setup-Skript setzt selbst
+keine Bandbegrenzung; eine Neuinstallation muss sie separat erhalten.
+
+Bei der Prüfung am 26.10.2026 war Nox bereits auf 2,4 GHz begrenzt: Das einzige
+aktive WLAN-Profil `FaSt7` (Netzwerk-ID `0`) enthielt ausschließlich Frequenzen
+zwischen 2412 und 2484 MHz in `freq_list`. Die Verbindung lief auf 2437 MHz
+(Kanal 6). Es wurde keine Netzwerkkonfiguration geändert. Die rootgeschützte
+Netplan-Datei konnte ohne interaktive sudo-Anmeldung nicht zusätzlich geprüft
+werden; dieser Befund bestätigt die aktive Begrenzung, nicht separat deren
+Persistenz nach einem Neustart.
+
+Die aktuelle Verbindung und die erlaubten Frequenzen getrennt prüfen:
+
+```bash
+ssh nox@nox
+wpa_cli -i wlan0 status
+wpa_cli -i wlan0 list_networks
+wpa_cli -i wlan0 get_network 0 freq_list
+```
+
+Die Netzwerk-ID aus `list_networks` übernehmen und bei mehreren Profilen jedes
+prüfen. `freq=2437` allein belegt nur die aktuelle Verbindung. Erst eine
+`freq_list` ausschließlich im 2,4-GHz-Bereich belegt die aktive Bandbegrenzung.
+Eine leere Antwort oder `FAIL` bestätigt keine Begrenzung.
+
+Die persistente Einstellung lässt sich ohne Ausgabe des WLAN-Passworts prüfen:
+
+```bash
+sudo netplan get network.wifis.wlan0.access-points.FaSt7.band
+```
+
+Erwartet wird `2.4GHz`. Falls die Begrenzung fehlt, für das bereits konfigurierte
+WLAN eine separate Netplan-Datei ergänzen (`FaSt7` durch die eigene SSID ersetzen;
+bei mehreren SSIDs jeweils wiederholen):
+
+```bash
+sudo netplan set --origin-hint 90-rumblex-wifi-band \
+  'network.wifis.wlan0.access-points.FaSt7.band=2.4GHz'
+sudo netplan generate
+sudo netplan try --timeout 120
+```
+
+Netplan legt die Ergänzung unter `/etc/netplan/90-rumblex-wifi-band.yaml` ab;
+die vorhandene SSID-, Passwort- und DHCP-Konfiguration bleibt in ihrer bisherigen
+Datei. Einen festen Kanal nicht vorgeben. Während `netplan try` in einem zweiten
+Terminal erneut per SSH verbinden und die Frequenzbegrenzung prüfen, dann im
+ersten Terminal bestätigen. Ohne Bestätigung wird die laufende Konfiguration
+zurückgesetzt; bei einem Abbruch auch die Dateien auf der Platte prüfen, bevor
+der Pi neu gestartet wird. Diese Systemänderung benötigt das sudo-Passwort des
+Roboterbenutzers; die HMI-Freigabe für Shutdown/Reboot genügt dafür nicht.
+
+Referenz: [Netplan-WLAN-Einstellungen](https://netplan.readthedocs.io/en/stable/netplan-yaml/#properties-for-device-type-wifis),
+[`netplan set`](https://netplan.readthedocs.io/en/stable/netplan-set/) und
+[`netplan try`](https://netplan.readthedocs.io/en/stable/netplan-try/).
+
 ## Autostart und Bedienung
 
 Der Dienst wird als **systemd-Benutzerdienst** installiert. Linger startet die

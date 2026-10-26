@@ -6,6 +6,8 @@ The commands below assume **Ubuntu 26.04** and **ROS 2 Lyrical** on both machine
 
 ## Raspberry Pi 5: headless robot
 
+For Nox's 2.4 GHz WiFi restriction, see [band verification and Netplan configuration](rumblex_doc/setup_raspberry_pi/setup_ubuntu_26.04.md#wlan-auf-24-ghz-begrenzen). A current 2.4 GHz connection alone does not prove that the profile excludes 5 GHz; the setup script does not configure this restriction.
+
 1. Flash Ubuntu Server 26.04 (64-bit), configure networking and SSH, boot the Pi, and log in over SSH. Connect the I2C devices, relay, LiDAR, controller, microphone, and speaker according to the hardware documentation in `rumblex_doc/` and the pin table in [README.md](README.md#raspberry-pi-5-pin-layout). Enable I2C in the Pi's boot configuration and reboot; verify the devices with `sudo i2cdetect -y 1` (expected addresses for Nox are `0x29`, `0x3c`, `0x40`, and `0x62`). Give the runtime user access to the relevant I2C, GPIO, and audio devices according to the OS device permissions.
 
 2. After installing `ros-lyrical-ros-base` and the ROS apt repository as linked above, install development and native audio/I2C support:
