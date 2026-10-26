@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <bit>
 #include <cerrno>
 #include <cstring>
 #include <iostream>
@@ -504,8 +505,25 @@ bool CHiwonderProtocol::getMode(uint8_t id, uint8_t& mode) {
     return syntax_check;
 }
 
-bool CHiwonderProtocol::getMotorSpeed([[maybe_unused]] uint8_t id, [[maybe_unused]] int16_t& speed) {
-    return false;
+bool CHiwonderProtocol::setVelocity(uint8_t id, int16_t velocity) {
+    return setMotorMode(id, velocity);
+}
+
+bool CHiwonderProtocol::getVelocity(uint8_t id, int16_t& velocity) {
+    // Broadcast reads do not produce a reply (except SERVO_ID_READ).
+    if (id >= SERVO_Broadcast_ID) {
+        return false;
+    }
+    uint8_t rx_buf[s_servo_mode_read + 3];
+    if (!readCMD(id, SERVO_OR_MOTOR_MODE_READ, sizeof(rx_buf), rx_buf) || rx_buf[5] != 1) {
+        return false;
+    }
+    velocity = std::bit_cast<int16_t>(byteToHW(rx_buf[8], rx_buf[7]));
+    return true;
+}
+
+bool CHiwonderProtocol::getMotorSpeed(uint8_t id, int16_t& speed) {
+    return getVelocity(id, speed);
 }
 
 bool CHiwonderProtocol::setServoMode(uint8_t id) {
@@ -518,7 +536,8 @@ bool CHiwonderProtocol::setServoMode(uint8_t id) {
     buf[5] = 0;
     buf[6] = 0;
     buf[7] = 0;
-    buf[8] = checksum(buf);
+    buf[8] = 0;
+    buf[9] = checksum(buf);
 
     return writeToServo(buf, sizeof(buf));
 }
@@ -527,18 +546,17 @@ bool CHiwonderProtocol::setMotorMode(uint8_t id, int16_t speed) {
     uint8_t buf[s_servo_mode_write + 3];
 
     speed = std::clamp<int16_t>(speed, -1000, 1000);
-    if (speed < 0) {
-        speed += 65536;
-    }
+    const auto raw_speed = static_cast<uint16_t>(speed);
 
     buf[0] = buf[1] = SERVO_FRAME_HEADER;
     buf[2] = id;
     buf[3] = s_servo_mode_write;
     buf[4] = SERVO_OR_MOTOR_MODE_WRITE;
     buf[5] = 1;
-    buf[6] = getLowByte(speed);
-    buf[7] = getHighByte(speed);
-    buf[8] = checksum(buf);
+    buf[6] = 0;  // Reserved parameter required by SERVO_OR_MOTOR_MODE_WRITE.
+    buf[7] = getLowByte(raw_speed);
+    buf[8] = getHighByte(raw_speed);
+    buf[9] = checksum(buf);
 
     return writeToServo(buf, sizeof(buf));
 }

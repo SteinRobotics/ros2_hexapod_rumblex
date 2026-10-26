@@ -83,6 +83,13 @@ class CServoProtocol {
     }
 
     // Motor Control
+    // Protocol-native velocity units and mode behavior are defined by each implementation.
+    virtual bool setVelocity(uint8_t /*id*/, int16_t /*velocity*/) {
+        return false;
+    }
+    virtual bool getVelocity(uint8_t /*id*/, int16_t& /*velocity*/) {
+        return false;
+    }
     virtual bool getMotorSpeed(uint8_t /*id*/, int16_t& /*speed*/) {
         return false;
     }

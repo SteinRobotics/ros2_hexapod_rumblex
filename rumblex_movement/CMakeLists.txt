@@ -87,6 +87,11 @@ install(DIRECTORY
 # Unit tests
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_hiwonder_protocol test/test_hiwonder_protocol.cpp TIMEOUT 30)
+  if(TARGET test_hiwonder_protocol)
+    target_link_libraries(test_hiwonder_protocol rumblex_movement_core util)
+  endif()
+
   ament_add_gtest(test_servo_controller test/test_servo_controller.cpp)
   target_link_libraries(test_servo_controller rumblex_movement_core)
 

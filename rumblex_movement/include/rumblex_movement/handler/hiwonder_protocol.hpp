@@ -39,7 +39,15 @@ class CHiwonderProtocol : public CServoProtocol {
     bool setPositionOffset(uint8_t id, int8_t deviation) override;
     bool savePositionOffset(uint8_t id) override;
 
+    // Enters continuous-rotation motor mode; clamps to [-1000, 1000] native speed units.
+    // Negative reverses direction, zero stops. This is not a position-mode speed limit.
+    bool setVelocity(uint8_t id, int16_t velocity) override;
+    // Reads the configured motor speed, not measured angular velocity. Returns false in
+    // position mode, for invalid/broadcast IDs, or on read failure; leaves velocity unchanged.
+    bool getVelocity(uint8_t id, int16_t& velocity) override;
+    // Compatibility alias for getVelocity.
     bool getMotorSpeed(uint8_t id, int16_t& speed) override;
+    // This 0x55 bus protocol does not specify acceleration read/write commands.
 
     bool getVoltage(uint8_t id, uint16_t& m_v) override;
     bool getVoltageLimits(uint8_t id, uint16_t& m_vmin, uint16_t& m_vmax) override;
