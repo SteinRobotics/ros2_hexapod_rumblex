@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include "handler/i_servo_controller.hpp"
 #include "handler/servo_protocol.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rumblex_interfaces/msg/servo_angle.hpp"
@@ -102,23 +103,18 @@ class CServo {
     double temperature_ = 24.0;
 };
 
-class CServoController {
+class CServoController : public IServoController {
    public:
     CServoController(std::shared_ptr<rclcpp::Node> node);
-    virtual ~CServoController() = default;
+    ~CServoController() override = default;
 
-    void requestAngles(const std::map<uint32_t, double>& target_angles, const double duration_s);
-    // void sendServoRequest(const rumblex_interfaces::msg::ServoRequest& msg);
+    void requestAngles(const std::map<uint32_t, double>& target_angles, const double duration_s) override;
 
-    // void onServoRequestReceived(const rumblex_interfaces::msg::ServoRequest& msg);
     void onSingleServoRequestReceived(const rumblex_interfaces::msg::ServoAngle& msg);
     void onServoDirectRequestReceived(const rumblex_interfaces::msg::ServoDirectRequest& msg);
     void triggerConnection();
 
-    using InitialAnglesCallback =
-        std::function<void(const std::map<rumblex_geometry::ELegIndex, rumblex_geometry::CLegAngles>&,
-                           const rumblex_geometry::COrientation&)>;
-    void setInitialAnglesCallback(InitialAnglesCallback callback);
+    void setInitialAnglesCallback(InitialAnglesCallback callback) override;
 
    private:
     friend class ServoControllerTestAccess;

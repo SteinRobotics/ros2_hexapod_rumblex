@@ -4,8 +4,8 @@
 #include <numbers>
 #include <thread>
 
-#include "handler/servo_handler.hpp"
-#include "mock/mock_servo_handler.hpp"
+#include "handler/leg_servo_conversion.hpp"
+#include "mock/mock_servo_controller.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "requester/requester.hpp"
 #include "test_helpers.hpp"
@@ -20,14 +20,15 @@ class RequesterTest : public ::testing::Test {
             rclcpp::init(0, nullptr);
         }
         rclcpp::NodeOptions options;
-        auto overrides = test_helpers::defaultRobotParameters();
-        overrides.emplace_back("servo.offline", true);
-        options.parameter_overrides(overrides);
+        options.parameter_overrides(test_helpers::defaultKinematicsParameters());
         node_ = std::make_shared<rclcpp::Node>("test_requester_node", options);
         executor_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
         executor_->add_node(node_);
-        servo_handler_mock_ = std::make_shared<CServoHandlerMock>(node_);
-        requester_ = std::make_unique<CRequester>(node_, servo_handler_mock_);
+        servo_controller_mock_ = std::make_shared<CServoControllerMock>();
+        servo_controller_mock_->initial_head_orientation = rumblex_geometry::COrientation(0.0, 7.0, -13.0);
+        servo_controller_mock_->initial_leg_angles[rumblex_geometry::ELegIndex::RightFront] =
+            rumblex_geometry::CLegAngles(5.0, 25.0, -40.0);
+        requester_ = std::make_unique<CRequester>(node_, servo_controller_mock_);
     }
 
     void TearDown() override {
@@ -41,12 +42,13 @@ class RequesterTest : public ::testing::Test {
     std::shared_ptr<rclcpp::Node> node_;
     std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> executor_;
     std::unique_ptr<CRequester> requester_;
-    std::shared_ptr<CServoHandlerMock> servo_handler_mock_;
+    std::shared_ptr<CServoControllerMock> servo_controller_mock_;
 };
 
 TEST_F(RequesterTest, ConstructAndUpdate) {
     // basic smoke test: update should run without throwing
     EXPECT_NO_THROW(requester_->update(std::chrono::milliseconds(0)));
+    EXPECT_FALSE(node_->has_parameter("servo.serial_port"));
 }
 
 TEST_F(RequesterTest, PublishesInitialJointStatesWithoutMovementRequest) {
@@ -69,15 +71,23 @@ TEST_F(RequesterTest, PublishesInitialJointStatesWithoutMovementRequest) {
                               "head_yaw_joint", "head_pitch_joint"}) {
         EXPECT_NE(std::find(received->name.begin(), received->name.end(), joint), received->name.end());
     }
-    const auto femur = std::find(received->name.begin(), received->name.end(), "right_front_femur_joint");
-    ASSERT_NE(femur, received->name.end());
-    const auto index = std::distance(received->name.begin(), femur);
-    EXPECT_NEAR(received->position[index], 70.723 * std::numbers::pi / 180.0, 1e-4);
+    const std::map<std::string, double> initial_angles = {{"right_front_coxa_joint", 5.0},
+                                                          {"right_front_femur_joint", 25.0},
+                                                          {"right_front_tibia_joint", -40.0},
+                                                          {"head_pitch_joint", 7.0},
+                                                          {"head_yaw_joint", -13.0}};
+    for (const auto& [joint, angle] : initial_angles) {
+        const auto found = std::find(received->name.begin(), received->name.end(), joint);
+        ASSERT_NE(found, received->name.end());
+        const auto index = std::distance(received->name.begin(), found);
+        EXPECT_NEAR(received->position[index], angle * std::numbers::pi / 180.0, 1e-4) << joint;
+    }
+    EXPECT_TRUE(servo_controller_mock_->requests.empty());
 }
 
 TEST_F(RequesterTest, IdleDoesNotCommandServos) {
     requester_->update(100ms);
-    EXPECT_TRUE(servo_handler_mock_->getRequests().empty());
+    EXPECT_TRUE(servo_controller_mock_->requests.empty());
 }
 
 TEST_F(RequesterTest, BodyPoseForwardsAllTargetsAndOnlySendsLatestCommand) {
@@ -94,14 +104,17 @@ TEST_F(RequesterTest, BodyPoseForwardsAllTargetsAndOnlySendsLatestCommand) {
     msg = rumblex_geometry::bodyPose(reference);
     requester_->onBodyPose(msg);
     requester_->update(100ms);
-    auto requests = servo_handler_mock_->getRequests();
+    const auto& requests = servo_controller_mock_->requests;
     ASSERT_EQ(requests.size(), 1u);
-    EXPECT_DOUBLE_EQ(requests.back()->duration(), 0.1);
-    expectHeadNear(reference.getHeadOrientation(), requests.back()->getHeadOrientation());
-    for (auto leg : rumblex_geometry::bodyLegOrder)
-        expectAnglesNear(reference.getLegAngles(leg), requests.back()->getLegAngles().at(leg));
+    EXPECT_DOUBLE_EQ(requests.back().duration_s, 0.1);
+    const auto expected =
+        leg_servo_conversion::buildServoTargets(reference.getHeadOrientation(), reference.getLegAngles());
+    ASSERT_EQ(requests.back().target_angles.size(), 20u);
+    for (const auto& [index, angle] : expected) {
+        EXPECT_NEAR(requests.back().target_angles.at(index), angle, 1e-3) << index;
+    }
     requester_->update(100ms);
-    EXPECT_EQ(servo_handler_mock_->getRequests().size(), 1u);
+    EXPECT_EQ(requests.size(), 1u);
 }
 
 TEST_F(RequesterTest, RejectsInvalidPoseWithoutPartialApplication) {
@@ -109,5 +122,5 @@ TEST_F(RequesterTest, RejectsInvalidPoseWithoutPartialApplication) {
     msg.head_pose.yaw = std::numeric_limits<double>::quiet_NaN();
     requester_->onBodyPose(msg);
     requester_->update(100ms);
-    EXPECT_TRUE(servo_handler_mock_->getRequests().empty());
+    EXPECT_TRUE(servo_controller_mock_->requests.empty());
 }

@@ -31,7 +31,6 @@ set(SOURCES
   src/handler/feetech/SCSCL.cpp
   src/handler/feetech/SCSerial.cpp
   src/handler/feetech/SMS_STS.cpp
-  src/handler/servo_handler.cpp
   src/requester/requester.cpp
 )
 

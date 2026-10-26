@@ -18,14 +18,15 @@
 #include "sensor_msgs/msg/joint_state.hpp"
 //
 
-#include "handler/servo_handler.hpp"
+#include "handler/i_servo_controller.hpp"
 #include "rumblex_utils/body_model.hpp"
 
 namespace rumblex_movement {
 
 class CRequester {
    public:
-    CRequester(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CServoHandler> servo_handler = nullptr);
+    CRequester(std::shared_ptr<rclcpp::Node> node,
+               std::shared_ptr<IServoController> servo_controller = nullptr);
     virtual ~CRequester() = default;
 
     void update(std::chrono::milliseconds timeslice);
@@ -43,7 +44,7 @@ class CRequester {
 
     std::shared_ptr<rclcpp::Node> node_;
     std::shared_ptr<rumblex_geometry::CBodyModel> kinematics_;
-    std::shared_ptr<CServoHandler> servo_handler_;
+    std::shared_ptr<IServoController> servo_controller_;
 
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr pub_joint_states_;
     void publishJointStates(const std::map<rumblex_geometry::ELegIndex, rumblex_geometry::CLegAngles>& legs,

@@ -6,6 +6,8 @@
 
 #include <cmath>
 
+#include "handler/leg_servo_conversion.hpp"
+#include "handler/servo_controller.hpp"
 #include "rumblex_utils/units.hpp"
 
 using namespace rumblex_interfaces::msg;
@@ -13,27 +15,25 @@ using std::placeholders::_1;
 
 namespace rumblex_movement {
 
-CRequester::CRequester(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CServoHandler> servo_handler)
+CRequester::CRequester(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<IServoController> servo_controller)
     : node_(node) {
     kinematics_ = std::make_shared<rumblex_geometry::CBodyModel>(node);
-    if (servo_handler) {
-        servo_handler_ = servo_handler;
+    if (servo_controller) {
+        servo_controller_ = std::move(servo_controller);
     } else {
-        servo_handler_ = std::make_shared<CServoHandler>(node);
+        servo_controller_ = std::make_shared<CServoController>(node);
     }
 
-    if (auto servo_controller = servo_handler_->getServoController()) {
-        servo_controller->setInitialAnglesCallback(
-            [this](const std::map<rumblex_geometry::ELegIndex, rumblex_geometry::CLegAngles>& initial_angles,
-                   const rumblex_geometry::COrientation& head) {
-                RCLCPP_INFO_STREAM(node_->get_logger(),
-                                   "on Callback: initial servo angles received, setting kinematics.");
-                kinematics_->setHeadOrientation(head);
-                for (const auto& [leg_index, leg_angles] : initial_angles) {
-                    kinematics_->setLegAngles(leg_index, leg_angles);
-                }
-            });
-    }
+    servo_controller_->setInitialAnglesCallback(
+        [this](const std::map<rumblex_geometry::ELegIndex, rumblex_geometry::CLegAngles>& initial_angles,
+               const rumblex_geometry::COrientation& head) {
+            RCLCPP_INFO_STREAM(node_->get_logger(),
+                               "on Callback: initial servo angles received, setting kinematics.");
+            kinematics_->setHeadOrientation(head);
+            for (const auto& [leg_index, leg_angles] : initial_angles) {
+                kinematics_->setLegAngles(leg_index, leg_angles);
+            }
+        });
 
     sub_body_pose_ = node_->create_subscription<BodyPose>("cmd_movement", rclcpp::QoS(1),
                                                           std::bind(&CRequester::onBodyPose, this, _1));
@@ -46,7 +46,7 @@ CRequester::CRequester(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CServ
 void CRequester::sendServoRequest(const double duration_s) {
     auto head = kinematics_->getHeadOrientation();
     auto legs = kinematics_->getLegAngles();
-    servo_handler_->run(CRequest(head, legs, duration_s));
+    servo_controller_->requestAngles(leg_servo_conversion::buildServoTargets(head, legs), duration_s);
 }
 
 void CRequester::publishJointStates(
