@@ -93,11 +93,13 @@ wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.90
 wpctl status
 ```
 ___  
-## No PW
-```
-sudo visudo
-rumblex ALL=(ALL) NOPASSWD: /sbin/shutdown, /sbin/restart, /usr/sbin/reboot, /bin/systemctl start autostart_ros2.service, /bin/systemctl stop autostart_ros2.service, /bin/systemctl status autostart_ros2.service
-```
+## Shutdown and service permissions
+
+For current user-service commands and password-free shutdown/reboot configuration,
+see [the Ubuntu 26.04 guide](setup_ubuntu_26.04.md#herunterfahren-neustart-und-sudo-rechte).
+Use the actual login user (`nox` on Nox), rather than copying a rule for `rumblex`.
+`NOPASSWD` still requires `sudo`. `/sbin/restart` does not exist on Nox.
+Manage the current robot service with `systemctl --user`, without sudo.
 
 
 ## Autostart Service

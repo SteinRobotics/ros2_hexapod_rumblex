@@ -95,6 +95,52 @@ wpctl status
 ls -l /dev/i2c-1 /dev/gpiochip* /dev/serial/by-id/
 ```
 
+### Herunterfahren, Neustart und sudo-Rechte
+
+Die Servicebefehle oben als Roboterbenutzer ausführen (auf Nox: `ssh nox@nox`).
+Der Benutzer verwaltet seinen Dienst unter `~/.config/systemd/user/` ohne sudo.
+`--user` ist erforderlich: Ohne diese Option wird der systemweite Dienst gesucht.
+
+Herunterfahren und Neustarten betreffen den gesamten Pi und benötigen über SSH
+Administratorrechte. `NOPASSWD` erlaubt einen Aufruf **mit sudo ohne Passwort**;
+es erlaubt nicht automatisch den Aufruf ohne sudo. `/sbin/restart` existiert auf
+Nox nicht; für einen Neustart des Pi `sudo reboot` verwenden.
+`systemctl --user restart autostart_ros2.service` startet nur den Roboterdienst neu.
+
+Das Setup installiert unter `/etc/sudoers.d/rumblex-<benutzer>` ausschließlich die
+Freigabe für `sudo shutdown -h now`, die das Hardware-HMI benötigt. `sudo reboot`
+verlangt weiterhin ein Passwort, sofern es nicht zusätzlich freigegeben wurde.
+Eine Regel für den Benutzer `rumblex` gilt nicht für `nox`.
+
+Fehlt die Freigabe auf einer bestehenden Nox-Installation, die Datei mit visudo
+anlegen bzw. bearbeiten:
+
+```bash
+sudo visudo -f /etc/sudoers.d/rumblex-nox
+```
+
+Für das HMI reicht diese Regel:
+
+```sudoers
+nox ALL=(root) NOPASSWD: /usr/sbin/shutdown -h now
+```
+
+Für einen zusätzlich erlaubten Neustart ohne Passwort stattdessen:
+
+```sudoers
+nox ALL=(root) NOPASSWD: /usr/sbin/shutdown -h now, /usr/sbin/reboot
+```
+
+Bei anderen Login-Benutzern `nox` und den Dateinamen entsprechend ersetzen.
+Ein erneuter Setup-Lauf ersetzt diese Datei wieder durch die reine HMI-Freigabe.
+Auf Nox verweist `/sbin` auf `/usr/sbin`; die Regeln verwenden den vollständigen
+Pfad unter `/usr/sbin`. Keine sudoers-Freigabe für `systemctl` ist zur Verwaltung
+des Benutzerdienstes nötig.
+
+Die Berechtigungen lassen sich mit `sudo -l` prüfen, ohne den Pi herunterzufahren.
+Nach Einrichtung der passenden Freigabe lauten die tatsächlichen Aufrufe
+`sudo shutdown -h now` bzw. `sudo reboot`.
+
 ## Hardwareprofile und Sprachfunktionen
 
 Die Konfigurationen unter `config/nox/` bzw. `config/nira/` müssen der tatsächlichen

@@ -11,10 +11,11 @@ node_movement:
                  'LEG_LEFT_MID_COXA', 'LEG_LEFT_MID_FEMUR', 'LEG_LEFT_MID_TIBIA',
                  'LEG_LEFT_BACK_COXA', 'LEG_LEFT_BACK_FEMUR', 'LEG_LEFT_BACK_TIBIA'] 
 
-    servo.adaptation_deg: [  5.0, -10.0,          # HEAD: YAW, PITCH
+    # Yaw/coxa trims change sign with their joint convention to preserve physical zero.
+    servo.adaptation_deg: [ -5.0, -10.0,          # HEAD: YAW, PITCH
                              0.0,   0.0,   0.0,   # LEG_RIGHT_FRONT: COXA, FEMUR, TIBIA
                              0.0,   0.0,   0.0,   # LEG_RIGHT_MID:   COXA, FEMUR, TIBIA
-                           +10.0,   0.0,   0.0,   # LEG_RIGHT_BACK:  COXA, FEMUR, TIBIA
+                           -10.0,   0.0,   0.0,   # LEG_RIGHT_BACK:  COXA, FEMUR, TIBIA
                              0.0,   0.0,   0.0,   # LEG_LEFT_FRONT:  COXA, FEMUR, TIBIA
                              0.0,   0.0,   0.0,   # LEG_LEFT_MID:    COXA, FEMUR, TIBIA 
                              0.0,   0.0,   0.0]   # LEG_LEFT_BACK:   COXA, FEMUR, TIBIA
@@ -27,13 +28,15 @@ node_movement:
                        0.0, 20.0, -3.0,  # LEG_LEFT_MID:    COXA, FEMUR, TIBIA 
                        0.0, 20.0, -3.0]  # LEG_LEFT_BACK:   COXA, FEMUR, TIBIA
 
-    servo.orientation_clockwise: [False, True,         # HEAD: YAW, PITCH
-                                  True, True, True,  # LEG_RIGHT_FRONT: COXA, FEMUR, TIBIA
-                                  True, True, True,  # LEG_RIGHT_MID:   COXA, FEMUR, TIBIA
-                                  True, True, True,  # LEG_RIGHT_BACK:  COXA, FEMUR, TIBIA
-                                  True, False, False, # LEG_LEFT_FRONT:  COXA, FEMUR, TIBIA
-                                  True, False, False, # LEG_LEFT_MID:    COXA, FEMUR, TIBIA 
-                                  True, False, False] # LEG_LEFT_BACK:   COXA, FEMUR, TIBIA
+    # Hardware directions for the +Y-left torso convention. The Y reflection
+    # reverses head yaw and ALL coxa angles, but leaves femur/tibia/pitch unchanged.
+    servo.orientation_clockwise: [True, True,          # HEAD: YAW, PITCH
+                                  False, True, True,  # LEG_RIGHT_FRONT: COXA, FEMUR, TIBIA
+                                  False, True, True,  # LEG_RIGHT_MID:   COXA, FEMUR, TIBIA
+                                  False, True, True,  # LEG_RIGHT_BACK:  COXA, FEMUR, TIBIA
+                                  False, False, False, # LEG_LEFT_FRONT: COXA, FEMUR, TIBIA
+                                  False, False, False, # LEG_LEFT_MID:   COXA, FEMUR, TIBIA
+                                  False, False, False] # LEG_LEFT_BACK:  COXA, FEMUR, TIBIA
 
 # Servo Serial ID Layout
 #

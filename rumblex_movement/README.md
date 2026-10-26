@@ -21,6 +21,15 @@ Torso coordinates use +X forward, +Y left, and +Z up. Right legs have negative Y
 positive yaw is anticlockwise when viewed from above. ROS `cmd_vel` follows these
 axes, so rightward translation and clockwise rotation use negative `linear.y` and
 `angular.z`, respectively.
+
+Nox's hardware direction mapping is in `config/nox/servo_description.yaml`.
+The migration from +Y right to +Y left reverses head yaw and all six coxa
+angles. Their servo direction flags and nonzero adaptation trims must both
+reverse so the calibrated physical zero positions stay unchanged. Head pitch,
+femur, and tibia mappings retain their existing directions. These settings also
+convert startup servo readings back into model angles; RViz and Gazebo do not
+exercise the hardware tick conversion.
+
 Gait parameters use `gait.<name>.<field>`; servo parameters use `servo.<field>`.
 See [naming conventions and parameter migration](NAMING.md) for the complete
 rename list. Custom configurations must migrate to the new keys.

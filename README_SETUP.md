@@ -85,13 +85,15 @@ For offline robot-name recognition, follow the [openWakeWord ONNX setup](rumblex
    ros2 launch rumblex_bringup target_launch.py robot:=nox enable_navigation:=true
    ```
 
-   Run one launch command at a time. The optional boot service in `rumblex_bringup/autostart/autostart_ros2.service` assumes the Pi user is `rumblex`. Copy it to `/etc/systemd/system/autostart_ros2.service` and edit `User`, `Group`, home paths, and audio session settings to match the Pi. Replace its `ExecStart` with the following line, substituting the actual user's home directory if needed:
+   Run one launch command at a time. For startup at boot, follow the [Ubuntu 26.04 setup guide](rumblex_doc/setup_raspberry_pi/setup_ubuntu_26.04.md). The setup script installs `autostart_ros2.service` as a user service for the login user (`nox` on Nox), with its launcher, environment file, audio services, and lingering.
 
-   ```ini
-   ExecStart=/bin/bash -lc 'source /opt/ros/lyrical/setup.bash && source /home/rumblex/Workspace/colcon_rumblex/.venv/bin/activate && source /home/rumblex/Workspace/colcon_rumblex/install/local_setup.bash && ros2 launch rumblex_bringup target_launch.py robot:=nox'
+   ```bash
+   systemctl --user status autostart_ros2.service
+   systemctl --user stop autostart_ros2.service
+   journalctl --user -u autostart_ros2.service -b
    ```
 
-   Then run `sudo systemctl daemon-reload`, `sudo systemctl enable --now autostart_ros2.service`, and check `sudo systemctl status autostart_ros2.service` or `journalctl -u autostart_ros2.service -b`.
+   These service commands need no sudo. Host shutdown and reboot have separate permissions; see [shutdown and sudo permissions](rumblex_doc/setup_raspberry_pi/setup_ubuntu_26.04.md#herunterfahren-neustart-und-sudo-rechte). `NOPASSWD` permits the listed command through `sudo` without a password.
 
 ## Developer PC: visualization and simulation
 

@@ -1,3 +1,6 @@
+> Historical setup notes. For current service commands and shutdown permissions,
+> see the [Ubuntu 26.04 guide](setup_ubuntu_26.04.md#herunterfahren-neustart-und-sudo-rechte).
+
     4  sudo dpkg-reconfigure keyboard-configuration
     5  reboot
     6  sudo nano /etc/netplan/50-cloud-init.yaml
@@ -61,5 +64,6 @@ pactl set-source-volume alsa_input.usb-C-Media_Electronics_Inc._USB_PnP_Sound_De
 
 ____
 
-sudo visudo
-rumblex ALL=(ALL) NOPASSWD: /sbin/shutdown, /sbin/restart, /bin/systemctl start autostart_ros2.service, /bin/systemctl stop autostart_ros2.service
+Shutdown permissions: use the actual login user and the sudoers instructions in
+[the Ubuntu 26.04 guide](setup_ubuntu_26.04.md#herunterfahren-neustart-und-sudo-rechte).
+`NOPASSWD` requires sudo; the current user service uses `systemctl --user` without sudo.

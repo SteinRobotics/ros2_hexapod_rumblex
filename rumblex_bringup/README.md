@@ -32,6 +32,11 @@ Navigation, the camera, and automatic speech listening retain their launch defau
 
 ### Service commands
 
+On Nox, log in with `ssh nox@nox`. The service belongs to `nox`; omitting `--user`
+queries the system service manager instead. Host shutdown and reboot require
+separate administrator permissions. `NOPASSWD` still requires invoking `sudo`;
+see [shutdown and sudo permissions](../rumblex_doc/setup_raspberry_pi/setup_ubuntu_26.04.md#herunterfahren-neustart-und-sudo-rechte).
+
 Run these commands as the robot's login user, using `--user` without `sudo`:
 
 | Action | Command |

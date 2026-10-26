@@ -45,8 +45,11 @@ ros2 launch rumblex_hmi hmi_launch.py
 
 Hardware additionally needs Adafruit Blinka (`board`/`digitalio`),
 `adafruit-circuitpython-ssd1306`, and `adafruit-circuitpython-ina228`, enabled I²C,
-and GPIO access on the Raspberry Pi. Host shutdown still requires the existing
-sudoers permission for `/sbin/shutdown`. Hardware initialization keeps the relay
+and GPIO access on the Raspberry Pi. Host shutdown calls `sudo shutdown -h now`
+and requires a `NOPASSWD` sudoers rule for the actual robot login user. The setup
+script grants `/usr/sbin/shutdown -h now` only; it does not grant reboot permission.
+See [shutdown and sudo permissions](../rumblex_doc/setup_raspberry_pi/setup_ubuntu_26.04.md#herunterfahren-neustart-und-sudo-rechte)
+to configure an existing installation. Hardware initialization keeps the relay
 off until OLED and power-monitor setup completes, then turns it on.
 
 Framebuffer writes use 32-byte data chunks, each with an SSD1306 data control

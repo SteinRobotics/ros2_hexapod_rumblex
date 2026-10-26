@@ -93,6 +93,9 @@ if(BUILD_TESTING)
 
   ament_add_gtest(test_servo_controller test/test_servo_controller.cpp)
   target_link_libraries(test_servo_controller rumblex_movement_core)
+  target_compile_definitions(test_servo_controller PRIVATE
+    RUMBLEX_CONFIG_DIR="${CMAKE_CURRENT_SOURCE_DIR}/config"
+    RUMBLEX_ANATOMY_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../rumblex_description/config")
 
   ament_add_gtest(test_scserial test/test_scserial.cpp)
   if(TARGET test_scserial)
