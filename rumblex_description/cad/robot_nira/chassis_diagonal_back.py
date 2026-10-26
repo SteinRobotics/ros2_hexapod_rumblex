@@ -31,26 +31,20 @@ def build_model(height: float, *, with_oled: bool = False) -> Part:
 
 
 def build_diagonal_plates(z_bottom: float, z_top: float) -> list[Part]:
-    """Place rear and front diagonal braces in their slots."""
-    from robot_nira import chassis_diagonal_front
-
+    """Place the rear diagonal braces in their slots."""
     height = z_top + torso_common.THICKNESS - z_bottom
     rear = build_model(height)
     rear_left = build_model(height, with_oled=True)
-    front = chassis_diagonal_front.build_model(height)
     upright = Pos(0, chassis_common.THICKNESS / 2, 0) * Rot(X=90)
     plates = []
-    locations = [*(location for location in torso_common.diagonal_slots_locations
-                   if location.position.X < 0),
-                 *torso_common.front_diagonal_slots_locations]
+    locations = [location for location in torso_common.diagonal_slots_locations
+                 if location.position.X < 0]
     for location in locations:
-        is_front = location.position.X > 0
         is_left = location.position.Y > 0
-        model = front if is_front else (rear_left if is_left else rear)
+        model = rear_left if is_left else rear
         plate = Pos(0, 0, z_bottom) * location * upright * model
-        end = "front" if is_front else "back"
         side = "left" if location.position.Y > 0 else "right"
-        plate.label = f"chassis_diagonal_{end}_{side}"
+        plate.label = f"chassis_diagonal_back_{side}"
         plate.color = COLOR_DARK_GRAY
         plates.append(plate)
     return plates

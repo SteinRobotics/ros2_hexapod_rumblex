@@ -38,13 +38,10 @@ def build_surface() -> Sketch:
                          for x, y in SPACER_POSITIONS]):
             Circle(SPACER_INNER_DIAMETER / 2, mode=Mode.SUBTRACT)
 
-        # Rear braces keep three tabs; the front pair use shorter joints
-        # farther outboard to clear the interface housing.
+        # Only the rear diagonal braces need slots in the deck.
         with Locations(*(location for location in torso_common.diagonal_slots_locations
                          if location.position.X < 0)):
             insert(torso_common.rectangle_slots.sketch, mode=Mode.SUBTRACT)
-        with Locations(*torso_common.front_diagonal_slots_locations):
-            insert(torso_common.front_diagonal_slots.sketch, mode=Mode.SUBTRACT)
 
         # The front sill ends at this deck, so its three top fingers need
         # individual slots. The other rows retain their continuous openings.

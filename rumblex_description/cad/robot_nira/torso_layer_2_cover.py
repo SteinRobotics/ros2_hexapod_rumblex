@@ -8,9 +8,12 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import math
+
 from build123d import (
     BuildPart,
     BuildSketch,
+    Circle,
     ExportDXF,
     Locations,
     Mode,
@@ -18,6 +21,7 @@ from build123d import (
     Pos,
     Rectangle,
     Sketch,
+    Vertex,
     insert,
     export_step,
     extrude,
@@ -35,25 +39,51 @@ EDGE_CLEARANCE = 0.2
 SIDE_CABLE_NOTCH_WIDTH = 14.0
 END_CABLE_NOTCH_WIDTH = 54.0  # Both former 10 mm slots at y=+/-20, plus 4 mm
 CABLE_NOTCH_DEPTH = 10.0
+VENT_DIAMETER = 4.0
+VENT_PITCH = 8.0
+VENT_EDGE_DISTANCE = 20.0
 
 
 def build_surface() -> Sketch:
-    """Follow the opening with one end notch and two side notches per edge."""
+    """Notched opening cover with vents clear of every perimeter edge."""
     outline = build_opening_outline()
     cable_cutouts = build_cable_cutouts(outline)
+    plate = outline - cable_cutouts
+    vent_locations = build_vent_locations(plate)
     with BuildSketch() as sketch:
-        insert(outline)
-        insert(cable_cutouts, mode=Mode.SUBTRACT)
+        insert(plate)
+        if vent_locations:
+            with Locations(*vent_locations):
+                Circle(VENT_DIAMETER / 2, mode=Mode.SUBTRACT)
 
     return sketch.sketch
 
 
-def build_opening_outline() -> Sketch:
+def build_vent_locations(plate: Sketch) -> list[tuple[float, float]]:
+    """Keep the hole circumference 20 mm from the outline, including notches."""
+    bounds = plate.bounding_box()
+    faces = plate.faces()
+    boundary = plate.wires()
+    clearance = VENT_EDGE_DISTANCE + VENT_DIAMETER / 2
+    locations = []
+    for ix in range(math.ceil(bounds.min.X / VENT_PITCH),
+                    math.floor(bounds.max.X / VENT_PITCH) + 1):
+        for iy in range(math.ceil(bounds.min.Y / VENT_PITCH),
+                        math.floor(bounds.max.Y / VENT_PITCH) + 1):
+            x, y = ix * VENT_PITCH, iy * VENT_PITCH
+            if (any(face.is_inside((x, y, 0)) for face in faces)
+                    and all(wire.distance_to(Vertex(x, y, 0)) >= clearance
+                            for wire in boundary)):
+                locations.append((x, y))
+    return locations
+
+
+def build_opening_outline(*, clearance: float = EDGE_CLEARANCE) -> Sketch:
     bounds = torso_common.hantel.sketch.bounding_box()
     rear_of_deck = Pos((bounds.min.X + FRONT_EDGE_X) / 2, bounds.center().Y) * Rectangle(
         FRONT_EDGE_X - bounds.min.X, bounds.size.Y)
     opening = torso_common.hantel.sketch & rear_of_deck
-    return offset(opening, amount=-EDGE_CLEARANCE)
+    return offset(opening, amount=-clearance) if clearance else opening
 
 
 def build_cable_cutouts(outline: Sketch, *, stop_at_edge: bool = False) -> Sketch:

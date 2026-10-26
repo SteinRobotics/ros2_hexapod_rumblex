@@ -86,7 +86,7 @@ def build_assembly() -> Compound:
     torso_layer_2_part.color = COLOR_TITAN_SILVER
     torso_layer_2_addon_part.color = COLOR_TITAN_SILVER
     torso_layer_2_cover_part.color = COLOR_TITAN_SILVER
-    torso_layer_3_part.color = COLOR_WINE_RED
+    torso_layer_3_part.color = COLOR_TITAN_SILVER
     torso_layer_4_part.color = COLOR_DARK_GRAY
 
     for part in chassis_side_parts:

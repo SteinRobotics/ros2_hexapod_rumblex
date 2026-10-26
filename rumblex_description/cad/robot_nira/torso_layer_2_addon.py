@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Thin U-shaped plate mounted against the underside of body layer 2."""
+"""Closed support ring mounted against the underside of body layer 2."""
 
 # Allow direct execution as well as package imports.
 if __package__ in (None, ""):
@@ -14,45 +14,34 @@ from build123d import (
     ExportDXF,
     Mode,
     Part,
-    Polygon,
     Sketch,
     insert,
     export_step,
     extrude,
+    offset,
 )
 
 from robot_nira import EXPORT_DIR, dxf_directory
-import robot_nira.torso_common as torso_common
 import robot_nira.torso_layer_2_cover as torso_layer_2_cover
 from utils.ocp_utils import show
 
 
 THICKNESS = 1.0
 FINGER_WIDTH = 6.0
-WIDTH = torso_common.inner_rectangle_width + 12
-REAR_X = -68.0
-BASE_INNER_X = 52.0
-FRONT_X = BASE_INNER_X + FINGER_WIDTH
 
 
 def build_surface() -> Sketch:
-    """Make the open rear profile; +X points toward the U's closed end."""
-    half_width = WIDTH / 2
-    inner_y = half_width - FINGER_WIDTH
-    opening_outline = torso_layer_2_cover.build_opening_outline()
+    """Follow the deck opening with a continuous rim and a cover support ledge."""
+    opening_outline = torso_layer_2_cover.build_opening_outline(clearance=0.0)
+    outer = offset(opening_outline, amount=FINGER_WIDTH / 2)
+    inner = offset(opening_outline, amount=-FINGER_WIDTH / 2)
     cable_cutouts = torso_layer_2_cover.build_cable_cutouts(opening_outline, stop_at_edge=True)
+    # At the angled rear edges, rectangular cutters can cross the outer rim.
+    # Limit reliefs to the opening so the ring remains continuous everywhere.
+    cable_cutouts = cable_cutouts & opening_outline
     with BuildSketch() as sketch:
-        Polygon(
-            (REAR_X, -half_width),
-            (FRONT_X, -half_width),
-            (FRONT_X, half_width),
-            (REAR_X, half_width),
-            (REAR_X, inner_y),
-            (BASE_INNER_X, inner_y),
-            (BASE_INNER_X, -inner_y),
-            (REAR_X, -inner_y),
-            align=None,
-        )
+        insert(outer)
+        insert(inner, mode=Mode.SUBTRACT)
         insert(cable_cutouts, mode=Mode.SUBTRACT)
     return sketch.sketch
 

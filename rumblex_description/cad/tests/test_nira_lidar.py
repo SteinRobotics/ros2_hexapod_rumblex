@@ -439,24 +439,14 @@ class NiraLidarTests(unittest.TestCase):
         z = deck_box.center().Z
         front = self.parts['chassis_front']
         self.assertAlmostEqual(front.bounding_box().max.Z, deck_box.max.Z)
-        for name in ('chassis_front', 'chassis_diagonal_front_left',
-                     'chassis_diagonal_front_right'):
-            with self.subTest(plate=name):
-                fingers = self.parts[name] & Pos(0, 0, z) * Box(300, 200, torso_common.THICKNESS)
-                diagonal = 'diagonal' in name
-                count = 2 if diagonal else 3
-                width = torso_common.front_diagonal_tab_width if diagonal else chassis_common.TAB_WIDTH
-                self.assertEqual(len(fingers.solids()), count)
-                self.assertAlmostEqual(fingers.volume,
-                                       count * width * chassis_common.THICKNESS
-                                       * torso_common.THICKNESS)
-                self.assertLess((fingers & deck).volume, 1e-6)
-
-        housing = self.parts['lidar_interface_housing']
+        fingers = front & Pos(0, 0, z) * Box(300, 200, torso_common.THICKNESS)
+        self.assertEqual(len(fingers.solids()), 3)
+        self.assertAlmostEqual(fingers.volume,
+                               3 * chassis_common.TAB_WIDTH * chassis_common.THICKNESS
+                               * torso_common.THICKNESS)
+        self.assertLess((fingers & deck).volume, 1e-6)
         for name in ('chassis_diagonal_front_left', 'chassis_diagonal_front_right'):
-            with self.subTest(plate=name):
-                plate = self.parts[name]
-                self.assertGreater(plate.distance_to(housing), 1.0)
+            self.assertNotIn(name, self.parts)
 
         for y in (-chassis_common.TAB_PITCH, 0, chassis_common.TAB_PITCH):
             slot = Pos(100, y, z) * Box(torso_common.rectangle_slots_height,
