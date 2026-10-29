@@ -63,12 +63,12 @@ name: first
 trigger: {voice: firstCommand}
 actions:
   - RequestTalking: before
-  - include: ../snippets/outer.yaml
-  - include: ../snippets/inner.yaml
+  - include: snippets/outer.yaml
+  - include: snippets/inner.yaml
   - RequestTalking: after
 )");
-    write("snippets/outer.yaml", "actions:\n  - include: inner.yaml\n");
-    write("snippets/inner.yaml", "actions: [{RequestTalking: inside, RequestMusic: STOP}]\n");
+    write("sequences/snippets/outer.yaml", "actions:\n  - include: inner.yaml\n");
+    write("sequences/snippets/inner.yaml", "actions: [{RequestTalking: inside, RequestMusic: STOP}]\n");
     write("sequences/ignored.txt", "not yaml");
     ASSERT_TRUE(parser_.parseDirectory((directory_ / "sequences").string()));
     ASSERT_EQ(parser_.getSequences().size(), 2u);
@@ -369,11 +369,11 @@ actions:
   - loop:
       times: 3
       actions:
-        - include: ../snippets/outer.yaml
+        - include: snippets/outer.yaml
   - say: after
 )");
-    write("snippets/outer.yaml", "actions: [{include: inner.yaml}]\n");
-    write("snippets/inner.yaml", R"(
+    write("sequences/snippets/outer.yaml", "actions: [{include: inner.yaml}]\n");
+    write("sequences/snippets/inner.yaml", R"(
 actions:
   - body_pose: {head_orientation: {yaw: -12}}
   - body_pose: {head_orientation: {yaw: 12}}

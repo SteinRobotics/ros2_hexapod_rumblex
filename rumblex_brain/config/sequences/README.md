@@ -12,7 +12,7 @@ trigger:
   joystick: button_a
 actions:
   - say: Starting
-  - include: ../snippets/example.yaml
+  - include: snippets/example.yaml
   - say: Finished
 ```
 
@@ -110,11 +110,12 @@ Cancellation clears pending targets and lets the active trajectory stop graceful
 
 ## Snippets and validation
 
-Snippets live in `config/snippets` and contain only an `actions` list. `include`
+Snippets live in `config/sequences/snippets` and contain only an `actions` list. `include`
 must be the only key in its entry. Paths resolve relative to the containing file,
 including nested snippets. Repeated includes are allowed. Circular includes and
-nesting beyond 64 files are rejected. Keep snippets outside `config/sequences`
-so they are not loaded as standalone sequences.
+nesting beyond 64 files are rejected. Keep snippets in this subdirectory so they
+are not loaded as standalone sequences; catalog loading only reads files directly
+in `config/sequences`.
 
 File, directory, and string loads are transactional. Invalid actions, duplicate
 names/keys, conflicting aliases, malformed includes/loops, and expansion-limit

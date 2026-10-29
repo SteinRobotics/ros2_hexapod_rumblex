@@ -2,4 +2,4 @@ name: dance_standard
 trigger:
   voice: commandDance
 actions:
-  - include: ../snippets/dance_hot_dogs_for_breakfast.yaml
+  - include: snippets/dance_hot_dogs_for_breakfast.yaml

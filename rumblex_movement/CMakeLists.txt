@@ -106,7 +106,7 @@ if(BUILD_TESTING)
   if(TARGET test_offline_visualization)
     target_link_libraries(test_offline_visualization rumblex_movement_core)
     target_compile_definitions(test_offline_visualization PRIVATE
-      RUMBLEX_DANCE_FILE="${CMAKE_CURRENT_SOURCE_DIR}/../rumblex_brain/config/snippets/dance_hot_dogs_for_breakfast.yaml"
+      RUMBLEX_DANCE_FILE="${CMAKE_CURRENT_SOURCE_DIR}/../rumblex_brain/config/sequences/snippets/dance_hot_dogs_for_breakfast.yaml"
       RUMBLEX_ANATOMY_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../rumblex_description/config")
   endif()
 
