@@ -83,7 +83,8 @@ TEST_P(RobotTextInterpreterTest, RetainsCommonCommands) {
          std::vector<std::pair<std::string, std::string>>{{"sieh nach links", "commandLookLeft"},
                                                           {"steh auf", "commandStandup"},
                                                           {"leg dich hin", "commandLaydown"},
-                                                          {"spiele musik", "musicOn"}}) {
+                                                          {"spiele musik", "musicOn"},
+                                                          {"teste gang", "commandWalkDemo"}}) {
         auto text = phrase;
         EXPECT_EQ(interpreter_->searchInterpretation(interpreter_->parseText(text)), command) << phrase;
     }

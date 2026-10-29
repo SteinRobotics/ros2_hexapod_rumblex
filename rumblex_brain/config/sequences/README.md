@@ -62,6 +62,11 @@ with all three flags set. Feedback consumers require complete snapshots.
 
 ## Other actions
 
+Say `teste gang` to trigger `walk_demo.yaml` (`commandWalkDemo`). The sequence
+stands up, walks forward at 0.03 m/s for three seconds, then switches to
+`CONTINUOUS_POSE` with zero velocity to stop and hold the pose. Continuous gait
+durations advance the sequence; include an explicit stop action after walking.
+
 | Action | Example |
 | --- | --- |
 | `say` | `say: Hello` |

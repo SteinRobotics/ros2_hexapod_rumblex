@@ -38,6 +38,10 @@
         "doing": [ "fahr", "fahre", "beweg", "bewege", "lauf", "laufe", "dreh", "drehe", "geh", "gehe" ],
         "direction": [ "vorn", "vorne", "hinten", "links", "rechts" ]
     },
+    "commandWalkDemo": {
+        "doing": [ "test", "teste" ],
+        "noun": [ "gang" ]
+    },
     "commandStopMove": {
         "doing": [ "halt", "halte", "stop", "stopp", "stoppe" ],
         "noun": [ "bewegung" ]

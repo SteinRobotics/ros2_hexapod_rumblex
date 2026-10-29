@@ -96,7 +96,7 @@ TEST_F(SequenceFilesTest, RejectsBrokenIncludesWithoutReplacingCatalog) {
           "actions: [", "name: invalid", "actions: [{include: [], RequestTalking: mixed}]"}) {
         write("snippet.yaml", snippet);
         EXPECT_FALSE(parser_.parseFile(file)) << snippet;
-        EXPECT_EQ(parser_.getSequences().size(), 17u);
+        EXPECT_EQ(parser_.getSequences().size(), 18u);
         EXPECT_TRUE(parser_.getSequenceForVoiceRequest("commandStandup"));
     }
 }
@@ -120,7 +120,7 @@ TEST_F(SequenceParserTest, RejectsIncludesWithoutSourceFile) {
 
 TEST_F(SequenceParserTest, LoadsCatalogAndResolvesTriggers) {
     ASSERT_TRUE(parser_.parseDirectory(RUMBLEX_SEQUENCES_DIRECTORY));
-    EXPECT_EQ(parser_.getSequences().size(), 17u);
+    EXPECT_EQ(parser_.getSequences().size(), 18u);
     EXPECT_FALSE(parser_.getSequence("missing"));
     EXPECT_FALSE(parser_.getSequenceForVoiceRequest("missing"));
     rumblex_interfaces::msg::JoystickRequest joystick;
@@ -305,7 +305,7 @@ TEST_F(SequenceParserTest, InvalidActionsRetainPreviousCatalog) {
           "sequences: [{name: valid, actions: [{say: hi}]}, {name: invalid, actions: []}]",
           "name: invalid\nactions: [{movement: {name: SINGLE_POSE, duration_s: invalid}, say: hello}]"}) {
         EXPECT_FALSE(parser_.parseString(text));
-        EXPECT_EQ(parser_.getSequences().size(), 17u);
+        EXPECT_EQ(parser_.getSequences().size(), 18u);
     }
 }
 TEST_F(SequenceParserTest, BodyPoseUsesOneRequestAndPreservesComponentPresence) {
