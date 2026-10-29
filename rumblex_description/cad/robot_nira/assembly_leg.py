@@ -15,7 +15,7 @@ from build123d import Compound, export_step
 import robot_nira.assembly_coxa as assembly_coxa
 import robot_nira.assembly_femur as assembly_femur
 import robot_nira.assembly_tibia as assembly_tibia
-import common.servo_simplified as servo_simplified
+import common.servo_feetech_hls3950m as servo_feetech_hls3950m
 from utils.colors import COLOR_DARK_GRAY
 from utils.ocp_utils import show
 
@@ -43,7 +43,7 @@ def attach_leg(servo, coxa_angle=0.0, femur_angle=0.0, tibia_angle=0.0) -> Compo
 
 
 def build_assembly() -> Compound:
-    servo = servo_simplified.build_model()
+    servo = servo_feetech_hls3950m.build_model()
     servo.color = COLOR_DARK_GRAY
     leg = attach_leg(servo, ANGLE_COXA, ANGLE_FEMUR, ANGLE_TIBIA)
     return Compound(children=[servo, leg])

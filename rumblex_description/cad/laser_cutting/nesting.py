@@ -20,7 +20,7 @@ from shapely.geometry import box
 @dataclass(frozen=True)
 class Settings:
     width: float = 300
-    height: float = 400
+    height: float = 300
     margin: float = 3
     clearance: float = 1
     kerf: float = 0

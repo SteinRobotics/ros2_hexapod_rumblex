@@ -19,7 +19,7 @@ from utils.ocp_utils import show
 from utils.colors import COLOR_CREAMY_WHITE, COLOR_DARK_GRAY, COLOR_WINE_RED, COLOR_TITAN_SILVER
 from utils import spacer
 from robot_nira import webcam_obsbot
-import common.servo_simplified as servo_simplified
+import common.servo_feetech_hls3950m as servo_feetech_hls3950m
 
 from robot_nira import vendor_brackets
 
@@ -140,7 +140,7 @@ def build_assembly(include_servo: bool = True) -> Compound:
     ``include_servo=False`` only when that pitch-servo solid is supplied by
     the parent assembly.
     """
-    servo = servo_simplified.build_model()
+    servo = servo_feetech_hls3950m.build_model()
     servo.color = COLOR_DARK_GRAY
 
     bracket_side_placed = vendor_brackets.build_side_bracket()
@@ -157,7 +157,7 @@ def build_assembly(include_servo: bool = True) -> Compound:
     # ``servo`` is built even when it is not a visible child so this interface
     # remains valid with ``include_servo=False``.
     RigidJoint("servo_mount", head, servo.joints["rotation"].location)
-    RevoluteJoint("pitch", head, axis=servo_simplified.HORN_AXIS)
+    RevoluteJoint("pitch", head, axis=servo_feetech_hls3950m.HORN_AXIS)
     return head
 
 

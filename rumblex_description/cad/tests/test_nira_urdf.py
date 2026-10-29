@@ -18,7 +18,7 @@ spec.loader.exec_module(description)
 
 from robot_nira import assembly_coxa, assembly_femur, assembly_tibia, assembly_head
 from robot_nira import assembly_torso_with_servos, torso_common
-from common import servo_simplified
+from common import servo_feetech_hls3950m
 
 
 def transform(element):
@@ -58,7 +58,7 @@ class NiraCadDescriptionTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.model = description.expand(True)
-        cls.servo = servo_simplified.build_model()
+        cls.servo = servo_feetech_hls3950m.build_model()
         cls.coxa = assembly_coxa.build_assembly()
         cls.femur = assembly_femur.build_assembly()
         cls.tibia = assembly_tibia.build_assembly()

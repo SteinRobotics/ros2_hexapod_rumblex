@@ -10,7 +10,7 @@ from pathlib import Path
 
 from build123d import CenterOf, Face, GeomType, Plane, RigidJoint, Rot, Vector, import_step
 
-from common import servo_simplified as servo
+from common import servo_feetech_hls3950m as servo
 
 FEATURE_TOLERANCE = 0.002
 

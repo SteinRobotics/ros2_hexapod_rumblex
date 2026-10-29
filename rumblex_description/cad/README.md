@@ -295,12 +295,15 @@ whose case and flange overlap slightly; separate tests verify its bore alignment
 ## Complete laser cutting jobs
 
 `generate_dxf.py` builds the selected robot's laser-cut BOM from the current
-parametric CAD and nests every instance on **300 × 400 mm** sheets. Run from
+parametric CAD and nests every instance on **300 × 300 mm (30 × 30 cm)** sheets by default. Run from
 this CAD directory:
 
 ```bash
 .venv/bin/python -m pip install -r requirements-laser.txt
 .venv/bin/python generate_dxf.py --robot nira
+# Optional material sheet dimensions, in millimetres:
+.venv/bin/python generate_dxf.py --robot nira --output output_custom \
+  --sheet-width 300 --sheet-height 400
 # Optional full beam-width compensation and a finer placement search:
 .venv/bin/python generate_dxf.py --robot nira --output output_fine \
   --clearance 1 --margin 3 --kerf 0.15 --resolution 0.5 --rotation-step 15 --trials 5

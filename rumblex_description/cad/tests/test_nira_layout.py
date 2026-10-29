@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from build123d import Cylinder, Pos, Vector
 
-from common import servo_simplified as servo
+from common import servo_feetech_hls3950m as servo
 from robot_nira import (assembly_torso, assembly_torso_with_servos, assembly_femur,
                         torso_layer_0, torso_layout, board_layout, foot_common,
                         foot_connection, vendor_brackets)

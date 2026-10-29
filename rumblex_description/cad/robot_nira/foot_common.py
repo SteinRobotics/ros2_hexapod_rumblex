@@ -23,7 +23,7 @@ from build123d import (
     extrude,
 )
 
-from common import servo_simplified
+from common import servo_feetech_hls3950m
 from robot_nira.armor_style import gill_points
 from utils.colors import COLOR_RED
 from utils.ocp_utils import show
@@ -33,7 +33,7 @@ M2_RADIUS = 1.0
 M2_5_RADIUS = 1.25
 
 # Shared by the cheek slots, outer armor and assembly; nominal laser-cut fit.
-FOOT_SPACER_OVERALL_LENGTH = servo_simplified.BODY_Y + 2 * servo_simplified.CASE_FLANGE_THICKNESS
+FOOT_SPACER_OVERALL_LENGTH = servo_feetech_hls3950m.BODY_Y + 2 * servo_feetech_hls3950m.CASE_FLANGE_THICKNESS
 CHEEK_OUTER_SPAN = FOOT_SPACER_OVERALL_LENGTH + 2 * THICKNESS
 OUTER_PLATE_HEIGHT = CHEEK_OUTER_SPAN
 OUTER_PLATE_Y = -24.25

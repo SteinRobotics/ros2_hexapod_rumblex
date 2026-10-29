@@ -13,7 +13,7 @@ from typing import NamedTuple
 
 from build123d import *
 from utils.ocp_utils import show
-from common.servo_simplified import SERVO_BACK_CUTOUT, SERVO_FRONT_CUTOUT, SERVO_BRACKET_HOLES
+from common.servo_feetech_hls3950m import SERVO_BACK_CUTOUT, SERVO_FRONT_CUTOUT, SERVO_BRACKET_HOLES, SERVO_FRONT_BRACKET_HOLES
 
 THICKNESS = 1.5
 # Clear distance from the top of layer 2 to the underside of layer 3.
@@ -79,11 +79,13 @@ def transform_servo_front_cutout(
 
 def transform_servo_bracket_holes(
     config: ServoCutoutConfig,
+    *, front: bool = False,
 ) -> list[tuple[float, float, float]]:
-    hole_centers = [(x, y) for x, y, _ in SERVO_BRACKET_HOLES]
+    holes = SERVO_FRONT_BRACKET_HOLES if front else SERVO_BRACKET_HOLES
+    hole_centers = [(x, y) for x, y, _ in holes]
     hole_centers = rotate_points_clockwise(hole_centers, config.rotation_deg_clockwise)
     hole_centers = shift_points(hole_centers, config.offset_x, config.offset_y)
-    radii = [radius for _, _, radius in SERVO_BRACKET_HOLES]
+    radii = [radius for _, _, radius in holes]
     return [
         (x, y, radius)
         for (x, y), radius in zip(hole_centers, radii, strict=True)
@@ -173,6 +175,10 @@ SERVO_BRACKET_HOLES_BY_POSITION = {
 
 LIST_SERVO_BRACKET_HOLES = [
     hole for holes in SERVO_BRACKET_HOLES_BY_POSITION.values() for hole in holes
+]
+LIST_SERVO_FRONT_BRACKET_HOLES = [
+    hole for config in SERVO_CUTOUT_CONFIGS.values()
+    for hole in transform_servo_bracket_holes(config, front=True)
 ]
 
 ########## Inner sketch -> rectangle + 2x octagons ##########

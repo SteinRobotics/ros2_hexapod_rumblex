@@ -26,7 +26,7 @@ from build123d import (
 
 from utils.ocp_utils import show
 
-from common.servo_simplified import SERVO_FRONT_CUTOUT, SERVO_BRACKET_HOLES
+from common.servo_feetech_hls3950m import SERVO_FRONT_CUTOUT, SERVO_FRONT_BRACKET_HOLES
 
 from robot_nira.foot_common import THICKNESS, FOOT_MOUNT_HOLES
 from robot_nira.foot_common import build_surface as build_common_surface
@@ -35,9 +35,15 @@ from robot_nira.foot_common import build_surface as build_common_surface
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:
         insert(build_common_surface())
+        # Retain a plate-thickness wall around the raised lower front bores;
+        # the left bore would otherwise sit beyond the original cheek edge.
+        for x, y, radius in SERVO_FRONT_BRACKET_HOLES:
+            if y < 0:
+                with Locations((x, y)):
+                    Circle(radius + THICKNESS)
         Polygon(*SERVO_FRONT_CUTOUT, align=None, mode=Mode.SUBTRACT)
 
-        for x, y, radius in SERVO_BRACKET_HOLES:
+        for x, y, radius in SERVO_FRONT_BRACKET_HOLES:
             with Locations((x, y)):
                 Circle(radius, mode=Mode.SUBTRACT)
 

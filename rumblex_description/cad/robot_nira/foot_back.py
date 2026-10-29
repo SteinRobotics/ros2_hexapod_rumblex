@@ -26,7 +26,7 @@ from build123d import (
 
 from utils.ocp_utils import show
 
-from common.servo_simplified import SERVO_BACK_CUTOUT, SERVO_BRACKET_HOLES
+from common.servo_feetech_hls3950m import SERVO_BACK_CUTOUT, SERVO_BRACKET_HOLES
 
 from robot_nira.foot_common import THICKNESS, FOOT_MOUNT_HOLES
 from robot_nira.foot_common import build_surface as build_common_surface

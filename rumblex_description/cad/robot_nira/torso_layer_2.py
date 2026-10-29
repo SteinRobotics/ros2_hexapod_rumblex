@@ -60,7 +60,7 @@ def build_surface() -> Sketch:
         for points in torso_common.SERVO_FRONT_CUTOUTS.values():
             Polygon(*points, align=None, mode=Mode.SUBTRACT)
 
-        for x, y, radius in torso_common.LIST_SERVO_BRACKET_HOLES:
+        for x, y, radius in torso_common.LIST_SERVO_FRONT_BRACKET_HOLES:
             with Locations((x, y)):
                 Circle(radius, mode=Mode.SUBTRACT)
 

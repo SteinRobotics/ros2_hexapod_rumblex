@@ -15,6 +15,8 @@ def main(argv=None):
     )
     parser.add_argument("--robot", required=True, choices=tuple(ROBOT_BUILDERS))
     parser.add_argument("--output", type=Path, default=Path("output"), help="New output root (default: output)")
+    parser.add_argument("--sheet-width", type=float, default=300, help="Material sheet width, mm (default: 300)")
+    parser.add_argument("--sheet-height", type=float, default=300, help="Material sheet height, mm (default: 300)")
     parser.add_argument("--clearance", type=float, default=1, help="Minimum gap between cuts, mm (default: 1)")
     parser.add_argument("--margin", type=float, default=3, help="Sheet edge margin, mm (default: 3)")
     parser.add_argument("--kerf", type=float, default=0, help="Full beam width, mm; 0 preserves CAD curves")
@@ -28,7 +30,8 @@ def main(argv=None):
         from laser_cutting.nesting import Settings, nest
         from laser_cutting.output import write_job
         from laser_cutting.robots import robot_components
-        settings = Settings(clearance=args.clearance, margin=args.margin, kerf=args.kerf,
+        settings = Settings(width=args.sheet_width, height=args.sheet_height,
+                            clearance=args.clearance, margin=args.margin, kerf=args.kerf,
                             resolution=args.resolution, rotation_step=args.rotation_step,
                             tolerance=args.tolerance, trials=args.trials)
         settings.validate()

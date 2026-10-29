@@ -20,7 +20,7 @@ from utils.ocp_utils import show
 
 import robot_nira.assembly_torso as assembly_torso
 import robot_nira.torso_common as torso_common
-import common.servo_simplified as servo_simplified
+import common.servo_feetech_hls3950m as servo_feetech_hls3950m
 
 
 servo_by_name = {}
@@ -29,11 +29,11 @@ servo_by_name = {}
 #   front horn (local Y < 0) sits inside body layer 2
 #   back  horn (local Y > BODY_Y) sits inside body layer 1
 SERVO_Z = torso_layout.LAYER_2_CENTER - (
-    servo_simplified.HORN_FRONT_Y / 2 + servo_simplified.HORN_DISTANCE_TO_BODY
+    servo_feetech_hls3950m.HORN_FRONT_Y / 2 + servo_feetech_hls3950m.HORN_DISTANCE_TO_BODY
 )
 # Midpoint of the two M2 hole rows along the servo's local Z axis.
 # Used to centre the servo over the body-layer cutout.
-SERVO_Z_MID = (servo_simplified.HOLE_Z_LOW + servo_simplified.HOLE_Z_HIGH) / 2
+SERVO_Z_MID = (servo_feetech_hls3950m.HOLE_Z_LOW + servo_feetech_hls3950m.HOLE_Z_HIGH) / 2
 
 
 def servo_location(config: torso_common.ServoCutoutConfig, z: float = SERVO_Z):
@@ -74,7 +74,7 @@ def build_assembly() -> Compound:
     body = assembly_torso.build_assembly()
 
     # add servos
-    servo_part = servo_simplified.build_model()
+    servo_part = servo_feetech_hls3950m.build_model()
     servo_part.color = COLOR_DARK_GRAY
 
     servo_instances = []

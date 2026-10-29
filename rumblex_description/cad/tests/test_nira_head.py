@@ -6,7 +6,7 @@ from build123d import Box, Cylinder, Pos, Rot
 
 from robot_nira import assembly_head as head
 from robot_nira import webcam_obsbot
-from common import servo_simplified
+from common import servo_feetech_hls3950m
 
 
 class NiraHeadTests(unittest.TestCase):
@@ -57,7 +57,7 @@ class NiraHeadTests(unittest.TestCase):
         self.assertAlmostEqual(mount.position.Y, head.BRACKET_CENTER_Y)
         self.assertAlmostEqual(mount.position.Z,
                                head.BRACKET_CENTER_Z - head.CAMERA_BASE_Z)
-        servo = servo_simplified.build_model()
+        servo = servo_feetech_hls3950m.build_model()
         self.assertEqual(self.parts["head_pitch_servo"].location, servo.location)
         self.assertEqual(self.assembly.joints["servo_mount"].location,
                          servo.joints["rotation"].location)
