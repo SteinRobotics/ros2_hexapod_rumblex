@@ -3,4 +3,4 @@ trigger:
   joystick: button_r2
   voice: commandDanceHotDogsForBreakfast
 actions:
-  - include: ../behavior_fragments/dance_hot_dogs_for_breakfast.yaml
+  - include: ../snippets/dance_hot_dogs_for_breakfast.yaml

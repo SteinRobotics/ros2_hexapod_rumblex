@@ -3,7 +3,7 @@ trigger:
   joystick: dpad_vertical_down
   voice: commandLaydown
 actions:
-  - RequestTalking: ich lege mich hin
-    RequestMovementType:
+  - say: ich lege mich hin
+    movement:
       name: SEQUENCE_LAYDOWN
       duration_s: 1.5

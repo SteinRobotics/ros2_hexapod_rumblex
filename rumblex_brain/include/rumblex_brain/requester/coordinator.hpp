@@ -18,7 +18,7 @@
 
 #include "action/action_planner.hpp"
 #include "irequester.hpp"
-#include "parser/behavior_parser.hpp"
+#include "parser/sequence_parser.hpp"
 #include "requester/error_management.hpp"
 #include "requester/text_interpreter.hpp"
 #include "requester/utility.hpp"
@@ -46,8 +46,8 @@ class CCoordinator {
    private:
     friend class CoordinatorTestAccess;
 
-    void loadBehaviors();
-    void executeBehavior(const Behavior& behavior, Prio prio = Prio::High);
+    void loadSequences();
+    void executeSequence(const Sequence& sequence, Prio prio = Prio::High);
     void submitRequest(std::shared_ptr<RequestBase> request, Prio prio);
 
     struct MovementCommand {
@@ -55,8 +55,7 @@ class CCoordinator {
         units::Duration duration = 0.0 * s;
         std::string comment{};
         Prio priority = Prio::Normal;
-        std::optional<rumblex_interfaces::msg::Pose> body{};
-        std::optional<rumblex_interfaces::msg::Orientation> head{};
+        rumblex_interfaces::msg::BodyPose body_pose{};
         std::optional<geometry_msgs::msg::Twist> velocity{};
         std::optional<uint8_t> direction{};
     };
@@ -85,7 +84,7 @@ class CCoordinator {
     std::shared_ptr<CActionPlanner> actionPlanner_;
     std::shared_ptr<CErrorManagement> errorManagement_;
     std::shared_ptr<CTextInterpreter> textInterpreter_;
-    std::shared_ptr<CBehaviorParser> behaviorParser_;
+    std::shared_ptr<CSequenceParser> sequenceParser_;
     std::shared_ptr<CSimpleTimer> timerErrorRequest_;
     std::shared_ptr<CSimpleTimer> timerNoRequest_;
     struct MovementDeadline {

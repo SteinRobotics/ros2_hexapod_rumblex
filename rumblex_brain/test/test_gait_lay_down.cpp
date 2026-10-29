@@ -50,10 +50,9 @@ TEST_F(GaitLayDownTest, LayDownStopsAtLaydownHeight) {
     // Ensure we start from standing pose.
     kinematics_->moveTorso(standing_targets, CPose());
 
-    CSinglePoseGait gait(
-        node_, kinematics_, params_.single_pose,
-        CSinglePoseGait::Target{kinematics_->getLaydownToePositions(), CPose(),
-                                COrientation(0.0 * deg, -params_.single_pose.head_max_pitch, 0.0 * deg)});
+    CSinglePoseGait gait(node_, kinematics_, params_.single_pose,
+                         bodyPose(kinematics_->getLaydownToePositions(), CPose(),
+                                  COrientation(0.0 * deg, -params_.single_pose.head_max_pitch, 0.0 * deg)));
     EXPECT_EQ(gait.state(), EGaitState::Stopped);
 
     gait.start(3.0 * s, 0);

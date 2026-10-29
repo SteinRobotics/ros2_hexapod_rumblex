@@ -53,14 +53,16 @@ class OfflineOdometry(Node):
     def on_body_pose(self, message):
         toes = [(p.x, p.y, p.z) for p in message.toe_positions]
         p, r = message.torso_pose.position, message.torso_pose.orientation
-        if not all(math.isfinite(v) for v in
-                   [p.x, p.y, p.z, r.roll, r.pitch, r.yaw,
-                    message.head_pose.roll, message.head_pose.pitch, message.head_pose.yaw]
-                   + [v for toe in toes for v in toe]):
+        complete = (message.has_head_orientation and message.has_torso_pose
+                    and message.has_toe_positions)
+        head = message.head_orientation
+        values = ([p.x, p.y, p.z, r.roll, r.pitch, r.yaw, head.roll, head.pitch, head.yaw]
+                  + [v for toe in toes for v in toe])
+        if not complete or not all(math.isfinite(v) for v in values):
             self.previous = None
             self.last_update = None
             self.velocity = Twist()
-            self.get_logger().warning('Ignoring non-finite offline body pose')
+            self.get_logger().warning('Ignoring incomplete or non-finite offline body pose')
             return
         now = self.get_clock().now()
         dt = (now - self.last_update).nanoseconds / 1e9 if self.last_update else 0.0

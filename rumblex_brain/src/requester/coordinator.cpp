@@ -49,7 +49,7 @@ CCoordinator::CCoordinator(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<C
 
     textInterpreter_ = std::make_shared<CTextInterpreter>(node_);
     errorManagement_ = std::make_shared<CErrorManagement>(node_);
-    behaviorParser_ = std::make_shared<CBehaviorParser>(node_);
+    sequenceParser_ = std::make_shared<CSequenceParser>(node_);
 
     if (node->declare_parameter<bool>("autostart_listening")) {
         auto request = std::make_shared<RequestListening>();
@@ -59,33 +59,33 @@ CCoordinator::CCoordinator(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<C
 
     kActivateMovementWaiting_ = node->declare_parameter<bool>("activate_movement_waiting");
 
-    loadBehaviors();
+    loadSequences();
 
     timerErrorRequest_ = std::make_shared<CSimpleTimer>();
     timerNoRequest_ = std::make_shared<CSimpleTimer>(kActivateMovementWaiting_);
 }
 
-void CCoordinator::loadBehaviors() {
+void CCoordinator::loadSequences() {
     const auto package_share_path = ament_index_cpp::get_package_share_path("rumblex_brain");
-    const auto file_path = (package_share_path / "config" / "behaviors").string();
+    const auto file_path = (package_share_path / "config" / "sequences").string();
 
-    if (!behaviorParser_->parseDirectory(file_path)) {
-        RCLCPP_ERROR(node_->get_logger(), "Failed to parse behaviors from: %s", file_path.c_str());
+    if (!sequenceParser_->parseDirectory(file_path)) {
+        RCLCPP_ERROR(node_->get_logger(), "Failed to parse sequences from: %s", file_path.c_str());
         return;
     }
 }
 
-void CCoordinator::executeBehavior(const Behavior& behavior, Prio prio) {
-    RCLCPP_INFO(node_->get_logger(), "Executing behavior: %s", behavior.name.c_str());
+void CCoordinator::executeSequence(const Sequence& sequence, Prio prio) {
+    RCLCPP_INFO(node_->get_logger(), "Executing sequence: %s", sequence.name.c_str());
 
-    if (behavior.name == "standup") {
+    if (sequence.name == "standup") {
         isStanding_ = true;
-    } else if (behavior.name == "laydown") {
+    } else if (sequence.name == "laydown") {
         isStanding_ = false;
     }
 
-    // Submit all action groups from the behavior
-    for (const auto& actionGroup : behavior.actionGroups) {
+    // Submit all action groups from the sequence
+    for (const auto& actionGroup : sequence.actionGroups) {
         std::vector<std::shared_ptr<RequestBase>> requests;
         for (const auto& request : actionGroup) {
             requests.push_back(request);
@@ -123,13 +123,13 @@ void CCoordinator::joystickRequestReceived(const JoystickRequest& msg) {
         return;
     }
 
-    // Check if joystick request matches a behavior from YAML
-    auto behavior = behaviorParser_->getBehaviorForJoystickRequest(msg);
-    if (behavior) {
-        if (behavior->get().name == "standup") {
-            executeBehavior(behavior->get(), Prio::High);
+    // Check if joystick request matches a sequence from YAML
+    auto sequence = sequenceParser_->getSequenceForJoystickRequest(msg);
+    if (sequence) {
+        if (sequence->get().name == "standup") {
+            executeSequence(sequence->get(), Prio::High);
         } else {
-            executeBehavior(behavior->get(), Prio::Normal);
+            executeSequence(sequence->get(), Prio::Normal);
         }
         return;
     }
@@ -174,8 +174,14 @@ CCoordinator::MovementCommand CCoordinator::poseFromJoystick(const JoystickReque
 
     MovementCommand command{.type = MovementRequest::CONTINUOUS_POSE};
     // Neutral sticks leave previously supplied pose targets unchanged.
-    if (body.position.x != 0.0 * m || body.position.y != 0.0 * m) command.body = body.toMsg();
-    if (head.yaw != 0.0 * deg || head.pitch != 0.0 * deg) command.head = head.toMsg();
+    if (body.position.x != 0.0 * m || body.position.y != 0.0 * m) {
+        command.body_pose.has_torso_pose = true;
+        command.body_pose.torso_pose = body.toMsg();
+    }
+    if (head.yaw != 0.0 * deg || head.pitch != 0.0 * deg) {
+        command.body_pose.has_head_orientation = true;
+        command.body_pose.head_orientation = head.toMsg();
+    }
     return command;
 }
 
@@ -191,9 +197,11 @@ CCoordinator::MovementCommand CCoordinator::movementFromJoystick(const JoystickR
     CPose body;
     body.position.z = std::clamp(height * kBodyFactorHeight_, kMinBodyHeight_, kMaxBodyHeight_);
     const bool active = forward != 0.0 || lateral != 0.0 || yaw != 0.0 || height != 0.0;
+    rumblex_interfaces::msg::BodyPose pose;
+    pose.has_torso_pose = pose.has_head_orientation = true;
+    pose.torso_pose = body.toMsg();
     return {.type = active ? gaitModes_[activeGaitIndex_] : uint32_t{MovementRequest::NO_REQUEST},
-            .body = body.toMsg(),
-            .head = COrientation().toMsg(),
+            .body_pose = pose,
             .velocity = velocity.toMsg()};
 }
 
@@ -202,10 +210,10 @@ void CCoordinator::speechRecognized(std::string text) {
     auto command = textInterpreter_->searchInterpretation(identifiedWords);
     RCLCPP_INFO_STREAM(node_->get_logger(), "next command is: " << command);
 
-    // Check if command matches a behavior from YAML
-    auto behavior = behaviorParser_->getBehaviorForVoiceRequest(command);
-    if (behavior) {
-        executeBehavior(behavior->get(), Prio::High);
+    // Check if command matches a sequence from YAML
+    auto sequence = sequenceParser_->getSequenceForVoiceRequest(command);
+    if (sequence) {
+        executeSequence(sequence->get(), Prio::High);
         return;
     }
 
@@ -394,19 +402,10 @@ void CCoordinator::submitRequestMove(const MovementCommand& command) {
         request.direction = command.direction.value();
     }
     request.name = movementTypeToName.at(request.type);
+    request.body_pose = command.body_pose;
     auto moveRequest = std::make_shared<RequestMovementType>();
     moveRequest->movementRequest = request;
     request_v.push_back(moveRequest);
-    if (command.body.has_value()) {
-        auto bodyRequest = std::make_shared<RequestSinglePose>();
-        bodyRequest->pose = command.body.value();
-        request_v.push_back(bodyRequest);
-    }
-    if (command.head.has_value()) {
-        auto headRequest = std::make_shared<RequestHeadOrientation>();
-        headRequest->orientation = command.head.value();
-        request_v.push_back(headRequest);
-    }
     if (command.velocity.has_value()) {
         auto velocityRequest = std::make_shared<RequestVelocity>();
         velocityRequest->velocity = command.velocity.value();

@@ -60,14 +60,6 @@ struct RequestMovementType : RequestBase {
     brain::MovementRequest movementRequest;
 };
 
-struct RequestSinglePose : RequestBase {
-    rumblex_interfaces::msg::Pose pose;
-};
-
-struct RequestHeadOrientation : RequestBase {
-    rumblex_interfaces::msg::Orientation orientation;
-};
-
 struct RequestVelocity : RequestBase {
     geometry_msgs::msg::Twist velocity;
 };

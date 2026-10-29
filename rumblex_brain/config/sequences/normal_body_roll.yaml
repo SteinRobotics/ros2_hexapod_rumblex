@@ -3,7 +3,7 @@ trigger:
   joystick: button_x
   voice: commandBodyRoll
 actions:
-  - RequestTalking: Ich rolle den Rumpf
-    RequestMovementType:
+  - say: Ich rolle den Rumpf
+    movement:
       name: SEQUENCE_BODY_ROLL
       duration_s: 4.0

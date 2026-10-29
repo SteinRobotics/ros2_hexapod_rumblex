@@ -1,0 +1,101 @@
+# Keep torso motion within the standing-leg workspace, including combined rotations.
+actions:
+  - say: Ich tanze
+  - music: musicfox_hot_dogs_for_breakfast.mp3
+    body_pose:
+      duration_s: 1.752
+      torso_pose:
+        position: {x: 0.015, y: 0.015, z: 0.0}
+        orientation: {roll: -3.6, pitch: 2.4, yaw: 2.4}
+      head_orientation: {roll: 0.0, yaw: -10.0, pitch: -4.0}
+  - body_pose:
+      duration_s: 1.752
+      torso_pose:
+        position: {x: 0.015, y: -0.015, z: 0.0}
+        orientation: {roll: 3.6, pitch: 2.4, yaw: -2.4}
+      head_orientation: {roll: 0.0, yaw: 10.0, pitch: -4.0}
+  - body_pose:
+      duration_s: 1.752
+      torso_pose:
+        position: {x: 0.009, y: 0.018, z: -0.006}
+        orientation: {roll: -6.0, pitch: 0.0, yaw: 3.6}
+      head_orientation: {roll: 0.0, yaw: -15.0, pitch: 4.0}
+  - body_pose:
+      duration_s: 1.752
+      torso_pose:
+        position: {x: 0.009, y: -0.018, z: -0.006}
+        orientation: {roll: 6.0, pitch: 0.0, yaw: -3.6}
+      head_orientation: {roll: 0.0, yaw: 15.0, pitch: 4.0}
+  - body_pose:
+      duration_s: 1.752
+      torso_pose:
+        position: {x: 0.0, y: 0.009, z: 0.0}
+        orientation: {roll: -2.4, pitch: 0.0, yaw: 6.0}
+      head_orientation: {roll: 0.0, yaw: -15.0, pitch: 0.0}
+  - body_pose:
+      duration_s: 1.752
+      torso_pose:
+        position: {x: 0.0, y: -0.009, z: -0.009}
+        orientation: {roll: 2.4, pitch: 0.0, yaw: -6.0}
+      head_orientation: {roll: 0.0, yaw: 15.0, pitch: 5.0}
+  - body_pose:
+      duration_s: 1.752
+      torso_pose:
+        position: {x: 0.0, y: 0.009, z: -0.009}
+        orientation: {roll: -2.4, pitch: 0.0, yaw: 6.0}
+      head_orientation: {roll: 0.0, yaw: -15.0, pitch: 5.0}
+  - body_pose:
+      duration_s: 1.752
+      torso_pose:
+        position: {x: 0.0, y: -0.009, z: 0.0}
+        orientation: {roll: 2.4, pitch: 0.0, yaw: -6.0}
+      head_orientation: {roll: 0.0, yaw: 15.0, pitch: 0.0}
+  - body_pose:
+      duration_s: 1.752
+      torso_pose:
+        position: {x: 0.018, y: 0.0, z: -0.006}
+        orientation: {roll: 0.0, pitch: 4.8, yaw: 0.0}
+      head_orientation: {roll: 0.0, yaw: 0.0, pitch: -8.0}
+  - body_pose:
+      duration_s: 1.752
+      torso_pose:
+        position: {x: -0.018, y: 0.0, z: 0.006}
+        orientation: {roll: 0.0, pitch: -4.8, yaw: 0.0}
+      head_orientation: {roll: 0.0, yaw: 0.0, pitch: 8.0}
+  - body_pose:
+      duration_s: 1.752
+      torso_pose:
+        position: {x: 0.0, y: 0.015, z: 0.0}
+        orientation: {roll: -6.0, pitch: 0.0, yaw: 0.0}
+      head_orientation: {roll: 0.0, yaw: -10.0, pitch: 0.0}
+  - body_pose:
+      duration_s: 1.752
+      torso_pose:
+        position: {x: 0.0, y: -0.015, z: 0.0}
+        orientation: {roll: 6.0, pitch: 0.0, yaw: 0.0}
+      head_orientation: {roll: 0.0, yaw: 10.0, pitch: 0.0}
+  - body_pose:
+      duration_s: 1.752
+      torso_pose:
+        position: {x: 0.012, y: 0.015, z: 0.006}
+        orientation: {roll: -4.8, pitch: 2.4, yaw: 4.8}
+      head_orientation: {roll: 0.0, yaw: -12.0, pitch: -4.0}
+  - body_pose:
+      duration_s: 1.752
+      torso_pose:
+        position: {x: 0.012, y: -0.015, z: 0.006}
+        orientation: {roll: 4.8, pitch: 2.4, yaw: -4.8}
+      head_orientation: {roll: 0.0, yaw: 12.0, pitch: -4.0}
+  - body_pose:
+      duration_s: 1.752
+      torso_pose:
+        position: {x: 0.015, y: 0.0, z: -0.009}
+        orientation: {roll: 0.0, pitch: 6.0, yaw: 0.0}
+      head_orientation: {roll: 0.0, yaw: 0.0, pitch: 10.0}
+  - body_pose:
+      duration_s: 1.752
+      torso_pose:
+        position: {x: 0.0, y: 0.0, z: 0.0}
+        orientation: {roll: 0.0, pitch: 0.0, yaw: 0.0}
+      head_orientation: {roll: 0.0, yaw: 0.0, pitch: 0.0}
+  - music: STOP

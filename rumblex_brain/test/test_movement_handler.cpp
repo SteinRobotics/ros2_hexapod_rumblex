@@ -97,7 +97,7 @@ TEST_F(MovementHandlerTest, StartupMovesToLaydownAfterValidFeedback) {
     pump(150ms);
     EXPECT_TRUE(poses.empty());
     auto invalid = initialPose();
-    invalid.head_pose.pitch = std::numeric_limits<double>::quiet_NaN();
+    invalid.head_orientation.pitch = std::numeric_limits<double>::quiet_NaN();
     feedback->publish(invalid);
     pump(150ms);
     EXPECT_TRUE(poses.empty());
@@ -131,12 +131,12 @@ TEST_F(MovementHandlerTest, PublishesHighFiveRestorationAndIgnoresLaterFeedback)
     request(MovementRequest::SEQUENCE_HIGH_FIVE);
     pump(350ms);
     auto unrelated = seed;
-    unrelated.head_pose.yaw = -80.0;
+    unrelated.head_orientation.yaw = -80.0;
     feedback->publish(unrelated);
     pump(4500ms);
     ASSERT_FALSE(poses.empty());
-    EXPECT_NEAR(poses.back().head_pose.yaw, seed.head_pose.yaw, 1e-8);
-    EXPECT_NEAR(poses.back().head_pose.pitch, seed.head_pose.pitch, 1e-8);
+    EXPECT_NEAR(poses.back().head_orientation.yaw, seed.head_orientation.yaw, 1e-8);
+    EXPECT_NEAR(poses.back().head_orientation.pitch, seed.head_orientation.pitch, 1e-8);
     for (size_t i = 0; i < 6; ++i) {
         EXPECT_NEAR(poses.back().toe_positions[i].x, seed.toe_positions[i].x, 1e-8);
         EXPECT_NEAR(poses.back().toe_positions[i].y, seed.toe_positions[i].y, 1e-8);
@@ -272,19 +272,40 @@ TEST_F(MovementHandlerTest, OrientationPublishesFrequentSamplesWithoutCompressin
     const auto seed = initialPose();
     feedback->publish(seed);
     pump(200ms);
-    request(MovementRequest::CONTINUOUS_POSE);
-    auto head = std::make_shared<RequestHeadOrientation>();
-    head->orientation = seed.head_pose;
-    head->orientation.yaw = 23.0;
-    handler->run(head);
+    auto request = std::make_shared<RequestMovementType>();
+    request->movementRequest.type = MovementRequest::CONTINUOUS_POSE;
+    request->movementRequest.body_pose.has_head_orientation = true;
+    request->movementRequest.body_pose.head_orientation = seed.head_orientation;
+    request->movementRequest.body_pose.head_orientation.yaw = 23.0;
+    handler->run(request);
     poses.clear();
     pump(250ms);
     EXPECT_GE(poses.size(), 10u);
     ASSERT_FALSE(poses.empty());
-    EXPECT_GT(poses.back().head_pose.yaw, seed.head_pose.yaw);
-    EXPECT_LT(poses.back().head_pose.yaw, 20.0);
+    EXPECT_GT(poses.back().head_orientation.yaw, seed.head_orientation.yaw);
+    EXPECT_LT(poses.back().head_orientation.yaw, 20.0);
     pump(1100ms);
-    EXPECT_DOUBLE_EQ(poses.back().head_pose.yaw, 23.0);
+    EXPECT_DOUBLE_EQ(poses.back().head_orientation.yaw, 23.0);
+}
+
+TEST_F(MovementHandlerTest, PartialFeedbackCannotInitializeAndPoseRequestRetainsComponents) {
+    auto seed = initialPose();
+    auto partial = seed;
+    partial.has_toe_positions = false;
+    feedback->publish(partial);
+    auto pose = std::make_shared<RequestMovementType>();
+    pose->movementRequest.type = MovementRequest::SINGLE_POSE;
+    pose->movementRequest.body_pose.has_head_orientation = true;
+    pose->movementRequest.body_pose.head_orientation.yaw = 12;
+    handler->run(pose);
+    pump(200ms);
+    EXPECT_TRUE(poses.empty());
+    EXPECT_FALSE(handler->requestFinished());
+    feedback->publish(seed);
+    pump(1200ms);
+    ASSERT_FALSE(poses.empty());
+    EXPECT_TRUE(handler->requestFinished());
+    EXPECT_EQ(poses.back(), resolveBodyPose(seed, pose->movementRequest.body_pose));
 }
 
 }  // namespace

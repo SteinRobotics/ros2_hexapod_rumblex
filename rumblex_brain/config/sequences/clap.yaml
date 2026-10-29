@@ -2,6 +2,6 @@ name: clap
 trigger:
   voice: commandClap
 actions:
-  - RequestMovementType:
+  - movement:
       name: SEQUENCE_CLAP
       duration_s: 4.0

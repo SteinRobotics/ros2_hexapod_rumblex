@@ -3,7 +3,7 @@ trigger:
   joystick: button_y
   voice: commandLegWave
 actions:
-  - RequestTalking: Das ist eine Beinwelle
-    RequestMovementType:
+  - say: Das ist eine Beinwelle
+    movement:
       name: SEQUENCE_LEGS_WAVE
       duration_s: 2.5

@@ -17,6 +17,9 @@ CMovement::CMovement(std::shared_ptr<rclcpp::Node> node) : node_(std::move(node)
         "body_pose_actual", rclcpp::QoS(1).transient_local(),
         [this](const rumblex_interfaces::msg::BodyPose& pose) { onInitialPose(pose); });
     gait_controller_->on_gait_changed = [this](const MovementRequest& request) {
+        const auto target = resolveBodyPose(bodyPose(*pose_model_), request.body_pose);
+        torso_ = CPose(target.torso_pose);
+        head_ = COrientation(target.head_orientation);
         std_msgs::msg::String name;
         name.data = request.name;
         pub_movement_name_->publish(name);
@@ -29,10 +32,12 @@ CMovement::CMovement(std::shared_ptr<rclcpp::Node> node) : node_(std::move(node)
 }
 
 void CMovement::onInitialPose(const rumblex_interfaces::msg::BodyPose& pose) {
-    if (initialized_ || !validBodyPose(pose)) return;
+    if (initialized_ || !completeBodyPose(pose) || !validBodyPose(pose)) return;
     pose_model_->moveTorso(toeTargets(pose), CPose(pose.torso_pose));
-    pose_model_->setHeadOrientation(COrientation(pose.head_pose));
+    pose_model_->setHeadOrientation(COrientation(pose.head_orientation));
     last_pose_ = bodyPose(*pose_model_);
+    torso_ = CPose(pose.torso_pose);
+    head_ = COrientation(pose.head_orientation);
     initialized_ = true;
     if (pending_request_) {
         const auto request = *pending_request_;
@@ -55,22 +60,28 @@ void CMovement::startRequest(const MovementRequest& request) {
         setRequestFinished(true);
         return;
     }
+    // Continuous inputs can change while the same gait remains active.
+    if (!gait_controller_->hasPendingGait() && request.type != MovementRequest::SINGLE_POSE) {
+        if (request.body_pose.has_torso_pose) torso_ = CPose(request.body_pose.torso_pose);
+        if (request.body_pose.has_head_orientation) head_ = COrientation(request.body_pose.head_orientation);
+    }
     tracked_request_ = request;
     updateRequestCompletion();
 }
 
 void CMovement::run(std::shared_ptr<RequestMovementType> request) {
+    const auto& movement = request->movementRequest;
+    if (!validBodyPose(movement.body_pose) || !isfinite(movement.duration_s) ||
+        (movement.type == MovementRequest::SINGLE_POSE && !hasBodyPose(movement.body_pose)) ||
+        (movement.type != MovementRequest::SINGLE_POSE && movement.body_pose.has_toe_positions)) {
+        RCLCPP_WARN(node_->get_logger(), "Ignoring invalid movement pose or duration");
+        return;
+    }
     setRequestFinished(false);
     if (initialized_)
         startRequest(request->movementRequest);
     else
         pending_request_ = request->movementRequest;
-}
-void CMovement::run(std::shared_ptr<RequestSinglePose> request) {
-    torso_ = CPose(request->pose);
-}
-void CMovement::run(std::shared_ptr<RequestHeadOrientation> request) {
-    head_ = COrientation(request->orientation);
 }
 void CMovement::run(std::shared_ptr<RequestVelocity> request) {
     Velocity limited;

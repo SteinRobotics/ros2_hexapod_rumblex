@@ -1,12 +1,12 @@
 #pragma once
 
 #include <memory>
-#include <optional>
 #include <rclcpp/rclcpp.hpp>
 
 #include "gait/gait_interfaces.hpp"
 #include "gait/gait_parameters.hpp"
 #include "gait/pose_model.hpp"
+#include "rumblex_utils/body_pose.hpp"
 #include "rumblex_utils/linear_interpolation.hpp"
 
 namespace brain {
@@ -16,16 +16,15 @@ using namespace mp_units::si::unit_symbols;
 
 class CSinglePoseGait : public IContinuousGait {
    public:
-    struct Target {
-        std::map<ELegIndex, CPosition> toes;
-        CPose torso;
-        COrientation head;
-    };
-
     CSinglePoseGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics,
-                    Parameters::SinglePose& params, std::optional<Target> target = std::nullopt);
+                    Parameters::SinglePose& params,
+                    rumblex_interfaces::msg::BodyPose target = rumblex_interfaces::msg::BodyPose());
     ~CSinglePoseGait() override = default;
 
+    void setTarget(const rumblex_interfaces::msg::BodyPose& target) {
+        target_ = target;
+        skip_if_at_target_ = false;
+    }
     void start(units::Duration duration_s, uint8_t direction) override;
     bool update(const Velocity& velocity, const CPose& torso, const COrientation& head) override;
     bool updateTimed(const Velocity& velocity, const CPose& torso, const COrientation& head,
@@ -39,7 +38,9 @@ class CSinglePoseGait : public IContinuousGait {
    private:
     std::shared_ptr<rclcpp::Node> node_;
     std::shared_ptr<CPoseModel> kinematics_;
-    std::optional<Target> target_;
+    rumblex_interfaces::msg::BodyPose target_;
+    bool skip_if_at_target_;
+    std::map<ELegIndex, CPosition> toe_targets_;
     std::map<ELegIndex, CPosition> toe_origins_;
     EGaitState state_ = EGaitState::Stopped;
 

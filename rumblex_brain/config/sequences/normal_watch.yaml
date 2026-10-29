@@ -3,8 +3,8 @@ trigger:
   joystick: button_a
   voice: commandWatch
 actions:
-  - RequestTalking: ich sehe mich um
-    RequestMovementType:
+  - say: ich sehe mich um
+    movement:
       name: SEQUENCE_WATCH
       duration_s: 5.0
-  - RequestTalking: Fertig mit dem Umschauen.
+  - say: Fertig mit dem Umschauen.

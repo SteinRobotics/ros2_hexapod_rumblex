@@ -45,6 +45,7 @@ class OfflineOdometryTest(unittest.TestCase):
 
     def sample(self, dx=0.0, dy=0.0, yaw=0.0, lift=0.0):
         message = BodyPose()
+        message.has_head_orientation = message.has_torso_pose = message.has_toe_positions = True
         c, s = math.cos(yaw), math.sin(yaw)
         for p, (x, y) in zip(message.toe_positions,
                              [(0.2, 0.16), (0.0, 0.22), (-0.2, 0.16),
@@ -57,6 +58,15 @@ class OfflineOdometryTest(unittest.TestCase):
         self.now = Time(nanoseconds=self.now.nanoseconds + int(dt * 1e9))
         self.node.on_body_pose(message)
         return self.node.odom.publish.call_args.args[0]
+
+    def test_incomplete_feedback_resets_history(self):
+        self.send(self.sample())
+        partial = self.sample(dx=0.01)
+        partial.has_toe_positions = False
+        self.node.on_body_pose(partial)
+        self.assertIsNone(self.node.previous)
+        self.assertIsNone(self.node.last_update)
+        self.assertEqual(self.node.velocity.linear.x, 0.0)
 
     def test_forward_sideways_and_turn(self):
         self.send(self.sample())

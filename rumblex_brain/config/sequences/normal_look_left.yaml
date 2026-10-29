@@ -3,8 +3,8 @@ trigger:
   joystick: button_l1
   voice: commandLookLeft
 actions:
-  - RequestTalking: Ich schaue nach links
-    RequestMovementType:
+  - say: Ich schaue nach links
+    movement:
       name: SEQUENCE_LOOK
       direction: ANTICLOCKWISE
       duration_s: 3.0

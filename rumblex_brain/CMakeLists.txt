@@ -44,7 +44,7 @@ src/requester/text_interpreter.cpp
 src/handler/system.cpp
 src/handler/communication.cpp
 src/handler/movement.cpp
-src/parser/behavior_parser.cpp
+src/parser/sequence_parser.cpp
 )
 add_library(rumblex_brain_lib ${SOURCES})
 target_compile_features(rumblex_brain_lib PUBLIC cxx_std_23)
@@ -98,10 +98,10 @@ install(DIRECTORY
 # Unit tests
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
-  ament_add_gtest(test_behavior_parser test/test_behavior_parser.cpp)
-  target_link_libraries(test_behavior_parser rumblex_brain_lib)
-  target_compile_definitions(test_behavior_parser PRIVATE
-    RUMBLEX_BEHAVIORS_DIRECTORY="${CMAKE_CURRENT_SOURCE_DIR}/config/behaviors")
+  ament_add_gtest(test_sequence_parser test/test_sequence_parser.cpp)
+  target_link_libraries(test_sequence_parser rumblex_brain_lib)
+  target_compile_definitions(test_sequence_parser PRIVATE
+    RUMBLEX_SEQUENCES_DIRECTORY="${CMAKE_CURRENT_SOURCE_DIR}/config/sequences")
   ament_add_gtest(test_orientation_timing test/test_orientation_timing.cpp)
   target_link_libraries(test_orientation_timing rumblex_brain_lib)
 
@@ -129,6 +129,8 @@ if(BUILD_TESTING)
   target_link_libraries(test_movement_handler rumblex_brain_lib)
   ament_add_gtest(test_communication_handler test/test_communication_handler.cpp)
   target_link_libraries(test_communication_handler rumblex_brain_lib)
+  ament_add_gtest(test_single_pose_target test/test_single_pose_target.cpp)
+  target_link_libraries(test_single_pose_target rumblex_brain_lib)
   ament_add_gtest(test_body_pose test/test_body_pose.cpp)
   target_link_libraries(test_body_pose rumblex_brain_lib)
   ament_add_gtest(test_gait_clap test/test_gait_clap.cpp)

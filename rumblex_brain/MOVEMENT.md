@@ -2,7 +2,7 @@
 
 Brain owns gait selection, trajectories, velocity/head/torso inputs, and gait
 transitions. `MovementRequest` is now an internal C++ request with the existing
-behavior IDs. The coordinator receives gait changes through a local callback.
+sequence IDs. The coordinator receives gait changes through a local callback.
 Locomotion, pose/orientation trajectories, and the coordinator run at 50 Hz.
 Other gestures retain their 10 Hz cadence. Pose, yaw and torso-roll trajectories
 use elapsed seconds, so finer sampling preserves their duration.
@@ -42,19 +42,33 @@ hardware motion, and motion state is meaningful only after initial pose feedback
 ## Message contract
 
 ```text
-Orientation head_pose
+bool has_head_orientation
+Orientation head_orientation
+bool has_torso_pose
 Pose torso_pose
+bool has_toe_positions
 geometry_msgs/Vector3[6] toe_positions
 ```
 
 Positions are metres and orientations are degrees. Toe indices are right front,
 right middle, right back, left front, left middle, left back. Targets use the
 robot coordinate frame supplied to `moveTorso`, before the torso transform.
-Every message carries all six toes. Non-finite messages are rejected as a unit.
+Presence flags make each component optional. Supplied components replace their
+whole target; omitted components retain the current pose. Non-finite values in
+supplied components reject the command as a unit. Empty commands are rejected.
+Brain trajectory samples and feedback always supply all components.
+
+`MovementRequest::body_pose` uses this same message. A `SINGLE_POSE` request
+resolves missing components at actual gait activation, then interpolates the
+head, torso, and all six toes together. The target is captured once per segment;
+pending requests cannot change an in-flight endpoint. Stand-up and laydown use
+the same representation for their presets. See [sequence configuration](config/sequences/README.md)
+for YAML, loops, snippets, and compatibility details.
+
 The command topic uses reliable, volatile delivery with depth 1.
 
 `body_pose_actual` carries the same message with reliable, transient-local
- delivery and depth 1. Brain waits for its first valid sample before starting
+ delivery and depth 1. Brain waits for its first complete valid sample before starting
 queued movement and its completion timer. Subsequent feedback does not overwrite
 the running trajectory. This is movement's kinematic estimate, initialized using
 available servo angles; it is not continuous measured toe tracking. A brain
@@ -93,7 +107,8 @@ starts the estimator unless `use_external_odometry:=true`. When using the test
 bringup estimator, pass that option to navigation to keep one odometry publisher. Movement types no longer cross the ROS boundary.
 `MovementRequest.msg`, `ContinuousMovementUpdate.msg`, `cmd_movement_update`, and
 `movement_type_actual` have been removed. Rebuild and restart all consumers
-together; external publishers must migrate to the complete BodyPose contract.
+together; external publishers must migrate to the BodyPose presence flags and
+`head_orientation` field.
 
 ## Build
 
@@ -133,7 +148,7 @@ repeatedly restart an entry blend. A stop completes the current swing, then
 places each group at standing through finite swings while other toes retain
 their current positions. Cancellation finishes any segment already in progress.
 Zero velocity triggers settlement and new velocity resumes locomotion; an
-explicit behavior stop cannot be undone by a stale velocity command.
+explicit sequence stop cannot be undone by a stale velocity command.
 
 Velocity inputs use metres/second for planar translation and radians/second for
 yaw. Joystick inputs are normalized; full stick maps to `max_velocity_linear`
@@ -181,7 +196,7 @@ introduced beyond the existing brain velocity limits.
 Continuity refers to the planned kinematic state, initialized from
 `body_pose_actual`, not continuously measured foot positions. Contact, servo
 tracking, and balance require simulation/hardware validation. The test suite
-covers trajectory derivatives, displaced startup poses, every behavior pair,
+covers trajectory derivatives, displaced startup poses, every sequence pair,
 every walking-pattern pair, direction reversal during swing, settlement,
 resumption, and gesture cancellation regressions.
 
@@ -212,8 +227,8 @@ and suppresses only unchanged tick targets, replacing the previous 0.49-degree
 deadband. One-tick changes remain eligible at every sample; idle targets do not
 restart actions. The existing actuator speed limit remains enforced.
 
-Joystick pose mode activates `CONTINUOUS_POSE` and submits body/head targets in
-one request group. A neutral stick preserves the existing target, as before;
+Joystick pose mode activates `CONTINUOUS_POSE` and submits a single movement
+request containing the optional torso/head components. A neutral stick preserves the existing target, as before;
 orientation targets no longer leave the previous walking gait selected.
 
 Follow-up offline validation after raising the turning limit: a full right-stick

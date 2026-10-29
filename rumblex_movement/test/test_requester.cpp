@@ -119,8 +119,29 @@ TEST_F(RequesterTest, BodyPoseForwardsAllTargetsAndOnlySendsLatestCommand) {
 
 TEST_F(RequesterTest, RejectsInvalidPoseWithoutPartialApplication) {
     rumblex_interfaces::msg::BodyPose msg;
-    msg.head_pose.yaw = std::numeric_limits<double>::quiet_NaN();
+    msg.has_head_orientation = true;
+    msg.head_orientation.yaw = std::numeric_limits<double>::quiet_NaN();
     requester_->onBodyPose(msg);
     requester_->update(100ms);
     EXPECT_TRUE(servo_controller_mock_->requests.empty());
+}
+
+TEST_F(RequesterTest, PartialHeadCommandPreservesAllLegTargets) {
+    rclcpp::NodeOptions options;
+    options.parameter_overrides(test_helpers::defaultKinematicsParameters());
+    auto reference_node = std::make_shared<rclcpp::Node>("partial_reference", options);
+    rumblex_geometry::CBodyModel reference(reference_node);
+    reference.moveTorso(reference.getStandingToePositions(), rumblex_geometry::CPose(0.003, 0, 0, 2, 3, 4));
+    requester_->onBodyPose(rumblex_geometry::bodyPose(reference));
+    rumblex_interfaces::msg::BodyPose partial;
+    partial.has_head_orientation = true;
+    partial.head_orientation.yaw = 12;
+    requester_->onBodyPose(partial);
+    requester_->update(100ms);
+    reference.setHeadOrientation(rumblex_geometry::COrientation(partial.head_orientation));
+    const auto expected =
+        leg_servo_conversion::buildServoTargets(reference.getHeadOrientation(), reference.getLegAngles());
+    ASSERT_EQ(servo_controller_mock_->requests.size(), 1u);
+    for (const auto& [index, angle] : expected)
+        EXPECT_NEAR(servo_controller_mock_->requests.back().target_angles.at(index), angle, 1e-3);
 }

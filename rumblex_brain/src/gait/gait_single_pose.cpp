@@ -12,8 +12,11 @@ using namespace mp_units;
 using namespace mp_units::si::unit_symbols;
 
 CSinglePoseGait::CSinglePoseGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics,
-                                 Parameters::SinglePose& /*params*/, std::optional<Target> target)
-    : node_(node), kinematics_(kinematics), target_(std::move(target)) {
+                                 Parameters::SinglePose& /*params*/, rumblex_interfaces::msg::BodyPose target)
+    : node_(node),
+      kinematics_(kinematics),
+      target_(std::move(target)),
+      skip_if_at_target_(completeBodyPose(target_)) {
 }
 
 void CSinglePoseGait::start(units::Duration duration_s, uint8_t /*direction*/) {
@@ -26,8 +29,14 @@ void CSinglePoseGait::start(units::Duration duration_s, uint8_t /*direction*/) {
     head_origin_ = kinematics_->getHeadOrientation();
 
     toe_origins_ = kinematics_->getToePositions();
-    if (target_ && toe_origins_ == target_->toes && torso_origin_ == target_->torso &&
-        head_origin_ == target_->head) {
+    const auto target = resolveBodyPose(bodyPose(*kinematics_), target_);
+    torso_target_ = CPose(target.torso_pose);
+    head_target_ = COrientation(target.head_orientation);
+    toe_targets_ = toeTargets(target);
+    // Stand-up/laydown can complete immediately when already at their preset.
+    // Ordinary pose actions still consume their duration, including repeated holds.
+    if (skip_if_at_target_ && toe_origins_ == toe_targets_ && torso_origin_ == torso_target_ &&
+        head_origin_ == head_target_) {
         state_ = EGaitState::Stopped;
     }
 }
@@ -36,15 +45,11 @@ bool CSinglePoseGait::update(const Velocity& velocity, const CPose& torso, const
     return updateTimed(velocity, torso, head, 0.1 * s);
 }
 
-bool CSinglePoseGait::updateTimed(const Velocity&, const CPose& torso, const COrientation& head,
+bool CSinglePoseGait::updateTimed(const Velocity&, const CPose&, const COrientation&,
                                   units::Duration elapsed_s) {
     if (!isfinite(elapsed_s) || elapsed_s <= 0.0 * s || elapsed_s > 0.5 * s) return false;
     if (state_ == EGaitState::Stopped) return false;
 
-    if (phase_ == 0.0 * s) {
-        torso_target_ = target_ ? target_->torso : torso;
-        head_target_ = target_ ? target_->head : head;
-    }
     phase_ += elapsed_s;
     const double fraction =
         duration_s_ > 0.0 * s ? std::min((phase_ / duration_s_).numerical_value_in(one), 1.0) : 1.0;
@@ -56,17 +61,13 @@ bool CSinglePoseGait::updateTimed(const Velocity&, const CPose& torso, const COr
     const CPose intermediate_pose = state_ == EGaitState::Stopped
                                         ? target_torso
                                         : torso_origin_.linearInterpolate(target_torso, progress);
-    if (target_) {
-        std::map<ELegIndex, CPosition> toes;
-        for (const auto& [index, position] : target_->toes) {
-            toes[index] = state_ == EGaitState::Stopped
-                              ? position
-                              : toe_origins_.at(index).linearInterpolate(position, progress);
-        }
-        kinematics_->moveTorso(toes, intermediate_pose);
-    } else {
-        kinematics_->moveTorso(toe_origins_, intermediate_pose);
+    std::map<ELegIndex, CPosition> toes;
+    for (const auto& [index, position] : toe_targets_) {
+        toes[index] = state_ == EGaitState::Stopped
+                          ? position
+                          : toe_origins_.at(index).linearInterpolate(position, progress);
     }
+    kinematics_->moveTorso(toes, intermediate_pose);
     kinematics_->setHeadOrientation(
         state_ == EGaitState::Stopped ? target_head : head_origin_.linearInterpolate(target_head, progress));
 

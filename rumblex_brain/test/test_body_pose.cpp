@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <limits>
+
 #include "gait/gait_clap.hpp"
 #include "gait/gait_high_five.hpp"
 #include "gait/gait_test_legs.hpp"
@@ -36,13 +38,13 @@ TEST_F(BodyPoseTest, FullPoseRoundTripUsesMetresDegreesAndStableLegOrder) {
     source->moveTorso(source->getStandingToePositions(), torso);
     source->setHeadOrientation(COrientation(1.0, 12.0, -23.0));
     auto msg = bodyPose(*source);
-    EXPECT_DOUBLE_EQ(msg.head_pose.yaw, -23.0);
+    EXPECT_DOUBLE_EQ(msg.head_orientation.yaw, -23.0);
     EXPECT_DOUBLE_EQ(msg.torso_pose.position.x, 0.005);
     EXPECT_DOUBLE_EQ(msg.toe_positions[0].x, 0.201);
     EXPECT_DOUBLE_EQ(msg.toe_positions[2].x, -0.201);
     EXPECT_DOUBLE_EQ(msg.toe_positions[3].y, 0.160);
     receiver->moveTorso(toeTargets(msg), CPose(msg.torso_pose));
-    receiver->setHeadOrientation(COrientation(msg.head_pose));
+    receiver->setHeadOrientation(COrientation(msg.head_orientation));
     EXPECT_EQ(bodyPose(*receiver), msg);
     for (auto leg : bodyLegOrder) expectAnglesNear(source->getLegAngles(leg), receiver->getLegAngles(leg));
 }
@@ -110,4 +112,36 @@ TEST_F(BodyPoseTest, JointBasedGaitsPreserveEverySampleAcrossMessageBoundary) {
     }
 }
 
+TEST_F(BodyPoseTest, EveryComponentSubsetPreservesOmittedValuesAndAcceptsExplicitZero) {
+    source->moveTorso(source->getStandingToePositions(), CPose(0.005, 0, 0, 2, 3, 4));
+    source->setHeadOrientation(COrientation(0, 10, 12));
+    const auto current = bodyPose(*source);
+    ASSERT_TRUE(completeBodyPose(current));
+    for (unsigned mask = 0; mask < 8; ++mask) {
+        rumblex_interfaces::msg::BodyPose target;
+        target.has_head_orientation = mask & 1;
+        target.has_torso_pose = mask & 2;
+        target.has_toe_positions = mask & 4;
+        target.toe_positions = current.toe_positions;
+        target.toe_positions[0].z += 0.01;
+        auto resolved = resolveBodyPose(current, target);
+        EXPECT_TRUE(completeBodyPose(resolved));
+        EXPECT_EQ(resolved.head_orientation,
+                  target.has_head_orientation ? target.head_orientation : current.head_orientation);
+        EXPECT_EQ(resolved.torso_pose, target.has_torso_pose ? target.torso_pose : current.torso_pose);
+        EXPECT_EQ(resolved.toe_positions,
+                  target.has_toe_positions ? target.toe_positions : current.toe_positions);
+    }
+}
+TEST_F(BodyPoseTest, ValidatesOnlyPresentComponentsAndRequiresCompleteResolutionBase) {
+    rumblex_interfaces::msg::BodyPose target;
+    target.head_orientation.yaw = std::numeric_limits<double>::quiet_NaN();
+    EXPECT_TRUE(validBodyPose(target));
+    EXPECT_EQ(resolveBodyPose(bodyPose(*source), target), bodyPose(*source));
+    target.has_head_orientation = true;
+    EXPECT_FALSE(validBodyPose(target));
+    EXPECT_THROW(resolveBodyPose(bodyPose(*source), target), std::invalid_argument);
+    EXPECT_THROW(resolveBodyPose(rumblex_interfaces::msg::BodyPose(), rumblex_interfaces::msg::BodyPose()),
+                 std::invalid_argument);
+}
 }  // namespace

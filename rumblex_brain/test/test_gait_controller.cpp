@@ -467,9 +467,12 @@ TEST_F(GaitControllerTest, SinglePoseEnforcesMinimumTrajectoryDuration) {
         MovementRequest request;
         request.type = MovementRequestMsg::SINGLE_POSE;
         request.duration_s = duration * s;
-        controller_->setGait(request);
         const CPose target(0.01, 0.0, 0.0, 0.0, 0.0, 0.0);
         const COrientation head(0.0, 0.1, 0.0);
+        request.body_pose.has_torso_pose = request.body_pose.has_head_orientation = true;
+        request.body_pose.torso_pose = target.toMsg();
+        request.body_pose.head_orientation = head.toMsg();
+        controller_->setGait(request);
         int updates = 0;
         while (controller_->updateSelectedGait(createZeroVelocity(), target, head) && updates < 20) {
             ++updates;
@@ -505,8 +508,10 @@ TEST_F(GaitControllerTest, StopIntentSurvivesFiniteGaitUntilRestAndReplacement) 
     MovementRequest pose;
     pose.type = MovementRequest::SINGLE_POSE;
     pose.duration_s = 1.0 * s;
-    ASSERT_TRUE(controller_->setGait(pose));
     const CPose target(0.0, 0.0, 0.02, 0.0, 0.0, 0.0);
+    pose.body_pose.has_torso_pose = true;
+    pose.body_pose.torso_pose = target.toMsg();
+    ASSERT_TRUE(controller_->setGait(pose));
     controller_->updateSelectedGait(createZeroVelocity(), target, COrientation(), 0.1 * s);
     ASSERT_FALSE(controller_->motionStopped());
 

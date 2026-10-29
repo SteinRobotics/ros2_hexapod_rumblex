@@ -86,12 +86,14 @@ void CRequester::publishJointStates(
 }
 
 void CRequester::onBodyPose(const BodyPose& msg) {
-    if (!rumblex_geometry::validBodyPose(msg)) {
-        RCLCPP_WARN(node_->get_logger(), "Ignoring non-finite body pose");
+    if (!rumblex_geometry::hasBodyPose(msg) || !rumblex_geometry::validBodyPose(msg)) {
+        RCLCPP_WARN(node_->get_logger(), "Ignoring empty or non-finite body pose");
         return;
     }
-    kinematics_->moveTorso(rumblex_geometry::toeTargets(msg), rumblex_geometry::CPose(msg.torso_pose));
-    kinematics_->setHeadOrientation(rumblex_geometry::COrientation(msg.head_pose));
+    const auto resolved = rumblex_geometry::resolveBodyPose(rumblex_geometry::bodyPose(*kinematics_), msg);
+    kinematics_->moveTorso(rumblex_geometry::toeTargets(resolved),
+                           rumblex_geometry::CPose(resolved.torso_pose));
+    kinematics_->setHeadOrientation(rumblex_geometry::COrientation(resolved.head_orientation));
     const auto now = std::chrono::steady_clock::now();
     pending_duration_s_.reset();
     if (last_pose_received_) {

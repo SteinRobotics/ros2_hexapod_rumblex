@@ -37,8 +37,8 @@ inline sensor_msgs::msg::JointState visualizationJoints(rumblex_geometry::CBodyM
                                                        angles.femur_tibia.numerical_value_in(units::rad)});
     }
     joints.name.insert(joints.name.end(), {"head_yaw_joint", "head_pitch_joint"});
-    joints.position.insert(joints.position.end(),
-                           {utils::deg2rad(pose.head_pose.yaw), utils::deg2rad(pose.head_pose.pitch)});
+    joints.position.insert(joints.position.end(), {utils::deg2rad(pose.head_orientation.yaw),
+                                                   utils::deg2rad(pose.head_orientation.pitch)});
     return joints;
 }
 }  // namespace rumblex_movement

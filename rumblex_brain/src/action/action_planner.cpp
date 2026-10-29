@@ -121,12 +121,8 @@ void CActionPlanner::execute(std::vector<std::shared_ptr<RequestBase>>& requests
             handler_communication_->run(requestListening);
         } else if (auto requestMovementType = std::dynamic_pointer_cast<RequestMovementType>(request)) {
             handler_movement_->run(requestMovementType);
-        } else if (auto requestMoveBody = std::dynamic_pointer_cast<RequestSinglePose>(request)) {
-            handler_movement_->run(requestMoveBody);
         } else if (auto requestMoveVelocity = std::dynamic_pointer_cast<RequestVelocity>(request)) {
             handler_movement_->run(requestMoveVelocity);
-        } else if (auto requestHeadOrientation = std::dynamic_pointer_cast<RequestHeadOrientation>(request)) {
-            handler_movement_->run(requestHeadOrientation);
         } else {
             RCLCPP_ERROR_STREAM(node_->get_logger(),
                                 "CActionPlanner: RequestType unknown: " << typeid(*request).name());

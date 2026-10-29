@@ -3,7 +3,7 @@ trigger:
   joystick: button_b
   voice: commandHighFive
 actions:
-  - RequestTalking: Ich gebe dir ein High Five
-    RequestMovementType:
+  - say: Ich gebe dir ein High Five
+    movement:
       name: SEQUENCE_HIGH_FIVE
       duration_s: 4.0

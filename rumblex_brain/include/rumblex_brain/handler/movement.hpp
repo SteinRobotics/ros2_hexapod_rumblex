@@ -25,8 +25,6 @@ class CMovement : public IHandler {
         return gait_controller_->stopRequested();
     }
     void run(std::shared_ptr<RequestMovementType> request);
-    void run(std::shared_ptr<RequestSinglePose> request);
-    void run(std::shared_ptr<RequestHeadOrientation> request);
     void run(std::shared_ptr<RequestVelocity> request);
     std::function<void(const MovementRequest&)> on_gait_changed;
 

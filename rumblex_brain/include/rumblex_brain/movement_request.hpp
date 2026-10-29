@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <string>
 
+#include "rumblex_interfaces/msg/body_pose.hpp"
 #include "rumblex_utils/units.hpp"
 namespace brain {
 
@@ -35,5 +36,6 @@ struct MovementRequest {
     uint8_t direction = CLOCKWISE;
     units::Duration duration_s = 1.0 * s;
     std::string name;
+    rumblex_interfaces::msg::BodyPose body_pose{};
 };
 }  // namespace brain

@@ -3,7 +3,7 @@ trigger:
   joystick: dpad_vertical_up
   voice: commandStandup
 actions:
-  - RequestMusic: STOP
-    RequestMovementType:
+  - music: STOP
+    movement:
       name: SEQUENCE_STAND_UP
       duration_s: 1.5

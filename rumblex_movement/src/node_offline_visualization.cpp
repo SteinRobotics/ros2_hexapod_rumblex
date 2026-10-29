@@ -8,7 +8,7 @@ int main(int argc, char** argv) {
     auto subscription = node->create_subscription<rumblex_interfaces::msg::BodyPose>(
         "body_pose_actual", rclcpp::QoS(1).transient_local(),
         [&](const rumblex_interfaces::msg::BodyPose& pose) {
-            if (!rumblex_geometry::validBodyPose(pose)) {
+            if (!rumblex_geometry::completeBodyPose(pose) || !rumblex_geometry::validBodyPose(pose)) {
                 RCLCPP_WARN(node->get_logger(), "Ignoring non-finite offline body pose");
                 return;
             }

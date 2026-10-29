@@ -32,8 +32,8 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
         std::make_shared<CHighFiveGait>(node_, kinematics_, params_.high_five);
     gaits_[MovementRequest::SEQUENCE_LAYDOWN] = std::make_shared<CSinglePoseGait>(
         node_, kinematics_, params_.single_pose,
-        CSinglePoseGait::Target{kinematics_->getLaydownToePositions(), CPose(),
-                                COrientation(0.0 * deg, -params_.single_pose.head_max_pitch, 0.0 * deg)});
+        bodyPose(kinematics_->getLaydownToePositions(), CPose(),
+                 COrientation(0.0 * deg, -params_.single_pose.head_max_pitch, 0.0 * deg)));
     gaits_[MovementRequest::SEQUENCE_LEGS_WAVE] =
         std::make_shared<CLegWaveGait>(node_, kinematics_, params_.leg_wave);
     gaits_[MovementRequest::SEQUENCE_LOOK] =
@@ -45,7 +45,7 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
         std::make_shared<CRunningGait>(node_, kinematics_, params_.running);
     gaits_[MovementRequest::SEQUENCE_STAND_UP] = std::make_shared<CSinglePoseGait>(
         node_, kinematics_, params_.single_pose,
-        CSinglePoseGait::Target{kinematics_->getStandingToePositions(), CPose(), COrientation()});
+        bodyPose(kinematics_->getStandingToePositions(), CPose(), COrientation()));
     gaits_[MovementRequest::SEQUENCE_TESTLEGS] =
         std::make_shared<CTestLegsGait>(node_, kinematics_, params_.test_legs);
     gaits_[MovementRequest::SINGLE_POSE] =
@@ -81,7 +81,16 @@ bool CGaitController::setGait(brain::MovementRequest request) {
     // transient states (Stopped -> start, StopPending/Stopping -> cancelStop) and return.
     if (request.type == active_request_.type) {
         stop_requested_ = false;
+        if (request.type == MovementRequest::SINGLE_POSE && active_gait_->state() != EGaitState::Stopped) {
+            pending_request_ = request;
+            active_gait_->requestStop();
+            stop_requested_ = true;
+            return true;
+        }
         if (active_gait_->state() == EGaitState::Stopped) {
+            if (request.type == MovementRequest::SINGLE_POSE) {
+                std::static_pointer_cast<CSinglePoseGait>(active_gait_)->setTarget(request.body_pose);
+            }
             RCLCPP_INFO(node_->get_logger(), "CGaitController::setGait starting %s", request.name.c_str());
             active_gait_->start(request.duration_s, request.direction);
         }
@@ -113,6 +122,9 @@ void CGaitController::switchGait(brain::MovementRequest request) {
     active_request_ = request;
 
     active_gait_ = gaits_[request.type];
+    if (request.type == MovementRequest::SINGLE_POSE) {
+        std::static_pointer_cast<CSinglePoseGait>(active_gait_)->setTarget(request.body_pose);
+    }
     active_gait_->start(request.duration_s, request.direction);
 
     // Publish the new movement type

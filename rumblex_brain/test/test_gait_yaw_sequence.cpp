@@ -64,7 +64,7 @@ TEST_P(YawSequenceTest, ExcursionPreservesPoseComponentsAndReturnsExactlyToOrigi
     for (int tick = 1; tick <= 20; ++tick) {
         ASSERT_TRUE(gait->update());
         auto pose = bodyPose(*model);
-        const double head_delta = pose.head_pose.yaw - origin.head_pose.yaw;
+        const double head_delta = pose.head_orientation.yaw - origin.head_orientation.yaw;
         const double torso_delta = pose.torso_pose.orientation.yaw - origin.torso_pose.orientation.yaw;
         peak = std::max(peak, sign * head_delta);
         minimum = std::min(minimum, sign * head_delta);
@@ -83,7 +83,7 @@ TEST_P(YawSequenceTest, ExcursionPreservesPoseComponentsAndReturnsExactlyToOrigi
             EXPECT_LE(std::abs(head_delta), 30.0 + 1e-12);
         }
         // All components except the commanded yaw axes stay at their origins.
-        pose.head_pose.yaw = origin.head_pose.yaw;
+        pose.head_orientation.yaw = origin.head_orientation.yaw;
         pose.torso_pose.orientation.yaw = origin.torso_pose.orientation.yaw;
         EXPECT_EQ(pose, origin);
     }
@@ -135,7 +135,7 @@ TEST_P(YawSequenceTest, StopRequestsFinishExcursionAndRestartCapturesNewOrigin) 
     EXPECT_EQ(bodyPose(*model), new_origin);
     ASSERT_TRUE(gait->update());
     const double sign = opposite == MovementRequest::CLOCKWISE ? -1.0 : 1.0;
-    EXPECT_GT(sign * (bodyPose(*model).head_pose.yaw - new_origin.head_pose.yaw), 0.0);
+    EXPECT_GT(sign * (bodyPose(*model).head_orientation.yaw - new_origin.head_orientation.yaw), 0.0);
     for (int i = 0; i < 9; ++i) ASSERT_TRUE(gait->update());
     EXPECT_EQ(gait->state(), EGaitState::Stopped);
     EXPECT_EQ(bodyPose(*model), new_origin);

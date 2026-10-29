@@ -127,16 +127,12 @@ TEST_F(CoordinatorTest, JoystickPoseModeActivatesGaitAndGroupsOrientationTargets
     request.right_stick_horizontal = 0.7;
     coordinator_->joystickRequestReceived(request);
     const auto& group = ActionPlannerTestAccess::latestNormalRequest(*planner_);
-    ASSERT_EQ(group.size(), 3u);
+    ASSERT_EQ(group.size(), 1u);
     const auto gait = std::dynamic_pointer_cast<RequestMovementType>(group[0]);
-    const auto body = std::dynamic_pointer_cast<RequestSinglePose>(group[1]);
-    const auto head = std::dynamic_pointer_cast<RequestHeadOrientation>(group[2]);
     ASSERT_TRUE(gait);
-    ASSERT_TRUE(body);
-    ASSERT_TRUE(head);
     EXPECT_EQ(gait->movementRequest.type, MovementRequest::CONTINUOUS_POSE);
-    EXPECT_NEAR(body->pose.position.y, -0.025, 1e-8);
-    EXPECT_NEAR(head->orientation.yaw, -14.0, 1e-6);
+    EXPECT_NEAR(gait->movementRequest.body_pose.torso_pose.position.y, -0.025, 1e-8);
+    EXPECT_NEAR(gait->movementRequest.body_pose.head_orientation.yaw, -14.0, 1e-6);
     EXPECT_FALSE(CoordinatorTestAccess::locked(*coordinator_));
     request.left_stick_horizontal = 0.0;
     request.right_stick_horizontal = 0.0;
@@ -185,13 +181,11 @@ TEST_F(CoordinatorTest, JoystickDeadzoneBoundaryStopsWalkingWithoutPoseRequests)
     request.right_stick_vertical = 0.5;
     coordinator_->joystickRequestReceived(request);
     const auto& active = ActionPlannerTestAccess::latestNormalRequest(*planner_);
-    ASSERT_EQ(active.size(), 4u);
+    ASSERT_EQ(active.size(), 2u);
     const auto gait = std::dynamic_pointer_cast<RequestMovementType>(active.front());
-    const auto body = std::dynamic_pointer_cast<RequestSinglePose>(active[1]);
     ASSERT_TRUE(gait);
-    ASSERT_TRUE(body);
     EXPECT_EQ(gait->movementRequest.type, MovementRequest::CONTINUOUS_MOVE);
-    EXPECT_GT(body->pose.position.z, 0.0);
+    EXPECT_GT(gait->movementRequest.body_pose.torso_pose.position.z, 0.0);
 }
 
 TEST_F(CoordinatorTest, CmdVelPreservesRosAxisSigns) {

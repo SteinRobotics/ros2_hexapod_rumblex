@@ -1,0 +1,10 @@
+name: calibrate
+trigger:
+  voice: commandCalibrate
+actions:
+  - body_pose:
+      duration_s: 1.5
+      torso_pose:
+        position: {x: 0.0, y: 0.0, z: -0.05}
+        orientation: {roll: 0.0, pitch: 0.0, yaw: 0.0}
+      head_orientation: {pitch: 0.0, yaw: 0.0}

@@ -3,8 +3,8 @@ trigger:
   joystick: button_r1
   voice: commandLookRight
 actions:
-  - RequestTalking: Ich schaue nach rechts
-    RequestMovementType:
+  - say: Ich schaue nach rechts
+    movement:
       name: SEQUENCE_LOOK
       direction: CLOCKWISE
       duration_s: 3.0

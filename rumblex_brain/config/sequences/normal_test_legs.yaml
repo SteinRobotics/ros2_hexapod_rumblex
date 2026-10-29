@@ -3,7 +3,7 @@ trigger:
   joystick: dpad_horizontal_left
   voice: commandTestLegs
 actions:
-  - RequestTalking: Ich teste die Beine
-    RequestMovementType:
+  - say: Ich teste die Beine
+    movement:
       name: SEQUENCE_TESTLEGS
       duration_s: 3.0

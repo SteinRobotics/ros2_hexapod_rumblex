@@ -42,8 +42,14 @@ TEST_F(OrientationTimingTest, PoseSamplingUsesElapsedSecondsAndHasSmallMonotonic
             std::unique_ptr<IContinuousGait> gait;
             if (continuous)
                 gait = std::make_unique<CContinuousPoseGait>(node, model, params.continuous_pose);
-            else
-                gait = std::make_unique<CSinglePoseGait>(node, model, params.single_pose);
+            else {
+                rumblex_interfaces::msg::BodyPose target;
+                target.has_torso_pose = target.has_head_orientation = true;
+                target.torso_pose.orientation.yaw = 20.0;
+                target.head_orientation.pitch = 10.0;
+                target.head_orientation.yaw = 20.0;
+                gait = std::make_unique<CSinglePoseGait>(node, model, params.single_pose, target);
+            }
             gait->start(1.0 * s, 0);
             const CPose torso(0.0, 0.0, 0.0, 0.0, 0.0, 20.0);
             const COrientation head(0.0, 10.0, 20.0);
@@ -52,7 +58,7 @@ TEST_F(OrientationTimingTest, PoseSamplingUsesElapsedSecondsAndHasSmallMonotonic
                 const double dt = jitter ? (i % 2 ? 0.025 : 0.015) : 0.02;
                 ASSERT_TRUE(gait->updateTimed(Velocity(), torso, head, dt * s));
                 const auto pose = bodyPose(*model);
-                const double yaw = pose.head_pose.yaw;
+                const double yaw = pose.head_orientation.yaw;
                 EXPECT_GE(yaw + 1e-12, previous);
                 EXPECT_LT(yaw - previous, 1.0);
                 if (i == 24) {
