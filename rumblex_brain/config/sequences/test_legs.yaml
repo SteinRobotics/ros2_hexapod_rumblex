@@ -1,4 +1,4 @@
-name: normal_test_legs
+name: test_legs
 trigger:
   joystick: dpad_horizontal_left
   voice: commandTestLegs

@@ -1,4 +1,4 @@
-name: normal_test_body
+name: test_body
 trigger:
   joystick: dpad_horizontal_right
   voice: commandTestBody

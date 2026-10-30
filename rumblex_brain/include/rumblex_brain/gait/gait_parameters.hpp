@@ -21,11 +21,7 @@ struct Parameters {
         units::Angle torso_max_pitch = 0.0 * deg;
     };
 
-    struct Clap {};
-
     struct ContinuousPose {};
-
-    struct HighFive {};
 
     struct LegWave {
         units::Length leg_lift_height = 0.0 * m;
@@ -42,11 +38,6 @@ struct Parameters {
         units::Length gait_step_length = 0.0 * m;
         units::Length leg_lift_height = 0.0 * m;
         double rotation_weight{0.7};
-    };
-
-    struct Look {
-        units::Angle torso_max_yaw = 0.0 * deg;
-        units::Angle head_max_yaw = 0.0 * deg;
     };
 
     struct SinglePose {
@@ -88,11 +79,8 @@ struct Parameters {
     };
 
     TorsoRoll torso_roll;
-    Clap clap;
     ContinuousPose continuous_pose;
-    HighFive high_five;
     LegWave leg_wave;
-    Look look;
     Ripple ripple;
     Running running;
     SinglePose single_pose;
@@ -155,10 +143,6 @@ inline Parameters Parameters::declare(std::shared_ptr<rclcpp::Node> node) {
 
     // Leg Wave
     params.leg_wave.leg_lift_height = node->declare_parameter<double>("gait.leg_wave.leg_lift_height_m") * m;
-
-    // Look
-    params.look.torso_max_yaw = node->declare_parameter<double>("gait.look.torso_max_yaw_deg") * deg;
-    params.look.head_max_yaw = node->declare_parameter<double>("gait.look.head_max_yaw_deg") * deg;
 
     // Watch
     params.watch.torso_max_yaw = node->declare_parameter<double>("gait.watch.torso_max_yaw_deg") * deg;

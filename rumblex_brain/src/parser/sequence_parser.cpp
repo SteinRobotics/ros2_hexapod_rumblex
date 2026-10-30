@@ -32,6 +32,22 @@ void keys(const YAML::Node& node, std::initializer_list<std::string> allowed) {
             throw std::runtime_error("Unknown or duplicate field: " + key);
     }
 }
+// Named YAML legs map to the fixed ROS leg order; list input remains compatible.
+template <typename Parse>
+void parseLegs(const YAML::Node& node, Parse parse, bool requireAll = false) {
+    static const std::array<std::string, 6> names = {"right_front", "right_mid", "right_back",
+                                                     "left_front",  "left_mid",  "left_back"};
+    if (node.IsSequence()) {
+        if (node.size() != names.size()) throw std::runtime_error("Leg lists require six entries");
+        for (size_t i = 0; i < names.size(); ++i) parse(i, node[i]);
+        return;
+    }
+    keys(node, {"right_front", "right_mid", "right_back", "left_front", "left_mid", "left_back"});
+    if (node.size() == 0 || (requireAll && node.size() != names.size()))
+        throw std::runtime_error(requireAll ? "All six toe positions are required" : "Empty leg mapping");
+    for (size_t i = 0; i < names.size(); ++i)
+        if (node[names[i]]) parse(i, node[names[i]]);
+}
 void parseVector(const YAML::Node& node, geometry_msgs::msg::Vector3& vector) {
     keys(node, {"x", "y", "z"});
     vector.x = valueOr(node, "x", 0.0);
@@ -60,14 +76,15 @@ rumblex_interfaces::msg::BodyPose parseBodyPose(const YAML::Node& value) {
     }
     if (value["toe_positions"]) {
         const auto toes = value["toe_positions"];
-        if (!toes.IsSequence() || toes.size() != pose.toe_positions.size())
-            throw std::runtime_error("toe_positions requires all six toes in leg order");
         pose.has_toe_positions = true;
-        for (size_t i = 0; i < toes.size(); ++i) {
-            if (!toes[i].IsMap() || toes[i].size() != 3)
-                throw std::runtime_error("Every toe requires x, y and z");
-            parseVector(toes[i], pose.toe_positions[i]);
-        }
+        parseLegs(
+            toes,
+            [&](size_t i, const YAML::Node& toe) {
+                if (!toe.IsMap() || toe.size() != 3)
+                    throw std::runtime_error("Every toe requires x, y and z");
+                parseVector(toe, pose.toe_positions[i]);
+            },
+            true);
     }
     if (!rumblex_geometry::hasBodyPose(pose) || !rumblex_geometry::validBodyPose(pose))
         throw std::runtime_error("body_pose requires at least one finite component");
@@ -409,12 +426,17 @@ std::vector<std::shared_ptr<RequestBase>> CSequenceParser::parseActionGroup(cons
             pose["head_orientation"] = head;
             ordered.erase("RequestHeadOrientation");
         }
-        if (rumblex_geometry::hasBodyPose(movement->movementRequest.body_pose))
+        if (rumblex_geometry::hasBodyPose(movement->movementRequest.body_pose) ||
+            movement->movementRequest.pose_delta)
             throw std::runtime_error("Conflicting legacy and unified pose targets");
         movement->movementRequest.body_pose = parseBodyPose(pose);
     }
+    if (movement && !movement->movementRequest.validPoseOptions())
+        throw std::runtime_error("Invalid pose options");
     if (movement && movement->movementRequest.type == MovementRequest::SINGLE_POSE &&
-        !rumblex_geometry::hasBodyPose(movement->movementRequest.body_pose))
+        !rumblex_geometry::hasBodyPose(movement->movementRequest.body_pose) &&
+        !movement->movementRequest.pose_delta && !movement->movementRequest.hasJointTargets() &&
+        !movement->movementRequest.restore_pose)
         throw std::runtime_error("SINGLE_POSE requires a body_pose target");
     if (movement &&
         (movement->movementRequest.type == MovementRequest::HOLD_DISTANCE ||
@@ -564,13 +586,51 @@ std::shared_ptr<RequestSystem> CSequenceParser::createRequestSystem(const YAML::
 std::shared_ptr<RequestMovementType> CSequenceParser::createRequestMovementType(const YAML::Node& value) {
     try {
         if (value.IsMap()) {
-            keys(value,
-                 {"name", "type", "direction", "duration_s", "minDuration", "body_pose", "distance_m"});
+            keys(value, {"name", "type", "direction", "duration_s", "minDuration", "body_pose", "distance_m",
+                         "pose_delta", "joint_targets", "save_pose", "restore_pose"});
             if (value["name"] && value["type"]) throw std::runtime_error("Duplicate movement name/type");
             brain::MovementRequest movementRequest;
             if (value["body_pose"]) {
                 if (value["body_pose"]["duration_s"]) throw std::runtime_error("Put duration_s on movement");
                 movementRequest.body_pose = parseBodyPose(value["body_pose"]);
+            }
+
+            if (value["pose_delta"]) {
+                const auto delta = value["pose_delta"];
+                keys(delta, {"torso_translation", "toe_translation", "coxa_rotation_deg", "head_rotation",
+                             "torso_rotation"});
+                if (delta.size() == 0) throw std::runtime_error("Empty pose_delta");
+                PoseDelta parsed;
+                if (delta["head_rotation"]) parseOrientation(delta["head_rotation"], parsed.head_rotation);
+                if (delta["torso_rotation"]) parseOrientation(delta["torso_rotation"], parsed.torso_rotation);
+                if (delta["torso_translation"])
+                    parseVector(delta["torso_translation"], parsed.torso_translation);
+                for (const auto* field : {"toe_translation", "coxa_rotation_deg"}) {
+                    if (!delta[field]) continue;
+                    const auto values = delta[field];
+                    parseLegs(values, [&](size_t i, const YAML::Node& leg) {
+                        if (std::string(field) == "toe_translation")
+                            parseVector(leg, parsed.toe_translation[i]);
+                        else
+                            parsed.coxa_rotation_deg[i] = leg.as<double>();
+                    });
+                }
+                if (!parsed.valid()) throw std::runtime_error("Non-finite pose_delta");
+                movementRequest.pose_delta = parsed;
+            }
+
+            movementRequest.save_pose = valueOr(value, "save_pose", false);
+            movementRequest.restore_pose = valueOr(value, "restore_pose", false);
+            if (value["joint_targets"]) {
+                const auto targets = value["joint_targets"];
+                parseLegs(targets, [&](size_t i, const YAML::Node& leg) {
+                    if (targets.IsSequence() && leg.IsNull()) return;
+                    keys(leg, {"torso_coxa", "coxa_femur", "femur_tibia"});
+                    movementRequest.joint_targets[i] =
+                        std::array<double, 3>{leg["torso_coxa"].as<double>(), leg["coxa_femur"].as<double>(),
+                                              leg["femur_tibia"].as<double>()};
+                });
+                if (!movementRequest.hasJointTargets()) throw std::runtime_error("Empty joint_targets");
             }
 
             // Parse movement type from "name" field (or fallback to "type" for backward compatibility)
@@ -626,6 +686,11 @@ std::shared_ptr<RequestMovementType> CSequenceParser::createRequestMovementType(
             if (movementRequest.type != MovementRequest::SINGLE_POSE &&
                 movementRequest.body_pose.has_toe_positions)
                 throw std::runtime_error("Toe targets require SINGLE_POSE");
+            if (movementRequest.pose_delta && (movementRequest.type != MovementRequest::SINGLE_POSE ||
+                                               rumblex_geometry::hasBodyPose(movementRequest.body_pose) ||
+                                               movementRequest.duration_s <= 0.0 * s))
+                throw std::runtime_error(
+                    "pose_delta requires SINGLE_POSE, positive duration and no body_pose");
             auto request = std::make_shared<RequestMovementType>();
             request->movementRequest = movementRequest;
             request->minDuration = valueOr(value, "minDuration", 0.0) * s;

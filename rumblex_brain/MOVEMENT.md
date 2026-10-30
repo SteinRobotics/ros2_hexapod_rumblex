@@ -93,7 +93,7 @@ restart initializes from movement's current estimate. A movement restart during
 an active gait does not perform an automatic trajectory resynchronization.
 
 Shared geometry lives in `rumblex_utils`. Brain and movement own independent pose
-models. Joint-based clap, high-five, and leg-test trajectories are converted to
+models. Joint-based leg-test trajectories and YAML joint pose endpoints are converted to
 toe targets with the current torso transform so the receiver reconstructs the
 joint angles. Stored toe positions remain in the command frame.
 
@@ -200,9 +200,10 @@ rotation weights remain accepted for compatibility but no longer scale physical
 locomotion speed. Hardware servo speed limits and slip can reduce realized speed;
 validate those with measured distance/time before claiming hardware accuracy.
 
-Clap and high-five finish their current sequence/raise before returning;
-leg-wave, waiting, and torso-roll finish their closed cycle. Look and watch
-return to their captured origins. Diagnostic leg motions now interpolate their
+Clap, high-five, and left/right look are YAML pose sequences; cancellation finishes the active pose
+and discards remaining actions, including the return to the starting pose.
+Leg-wave, waiting, and torso-roll finish their closed cycle. Watch returns to its
+captured origin. Diagnostic leg motions now interpolate their
 joint targets rather than issuing instantaneous steps. Continuous pose finishes
 its current segment and holds the endpoint on stop instead of snapping back.
 Stop requests are graceful motion requests, not emergency actuator stops.

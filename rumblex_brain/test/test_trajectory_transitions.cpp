@@ -149,11 +149,10 @@ TEST_F(TrajectoryTransitionTest, AllBehaviorPairsHandOffFromLastCommandedPose) {
     const std::vector<MovementRequest::Type> types = {
         MovementRequest::SEQUENCE_STAND_UP,  MovementRequest::SEQUENCE_LAYDOWN,
         MovementRequest::CONTINUOUS_MOVE,    MovementRequest::CONTINUOUS_RUNNING,
-        MovementRequest::SEQUENCE_BODY_ROLL, MovementRequest::SEQUENCE_CLAP,
-        MovementRequest::SEQUENCE_HIGH_FIVE, MovementRequest::SEQUENCE_LEGS_WAVE,
-        MovementRequest::SEQUENCE_LOOK,      MovementRequest::SEQUENCE_WATCH,
-        MovementRequest::SEQUENCE_WAITING,   MovementRequest::SEQUENCE_TESTLEGS,
-        MovementRequest::SINGLE_POSE,        MovementRequest::CONTINUOUS_POSE};
+        MovementRequest::SEQUENCE_BODY_ROLL, MovementRequest::SEQUENCE_LEGS_WAVE,
+        MovementRequest::SEQUENCE_WATCH,     MovementRequest::SEQUENCE_WAITING,
+        MovementRequest::SEQUENCE_TESTLEGS,  MovementRequest::SINGLE_POSE,
+        MovementRequest::CONTINUOUS_POSE};
     CGaitController controller(node, model);
     ASSERT_EQ(rcl_enable_ros_time_override(node->get_clock()->get_clock_handle()), RCL_RET_OK);
     int64_t time = 1000000000;

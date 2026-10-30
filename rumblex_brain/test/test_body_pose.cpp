@@ -2,8 +2,6 @@
 
 #include <limits>
 
-#include "gait/gait_clap.hpp"
-#include "gait/gait_high_five.hpp"
 #include "gait/gait_test_legs.hpp"
 #include "gait/pose_model.hpp"
 #include "rcl/time.h"
@@ -79,8 +77,6 @@ TEST_F(BodyPoseTest, JointBasedGaitsPreserveEverySampleAcrossMessageBoundary) {
     auto planner = std::shared_ptr<CPoseModel>(std::move(source));
     ASSERT_EQ(rcl_enable_ros_time_override(source_node->get_clock()->get_clock_handle()), RCL_RET_OK);
     std::vector<std::unique_ptr<ISequenceGait>> gaits;
-    gaits.push_back(std::make_unique<CHighFiveGait>(source_node, planner, params.high_five));
-    gaits.push_back(std::make_unique<CClapGait>(source_node, planner, params.clap));
     gaits.push_back(std::make_unique<CTestLegsGait>(source_node, planner, params.test_legs));
     int64_t time = 1000000000;
     for (auto& gait : gaits) {

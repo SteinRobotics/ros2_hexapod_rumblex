@@ -10,6 +10,7 @@ namespace brain {
 
 using namespace mp_units;
 using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::deg;
 
 CSinglePoseGait::CSinglePoseGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics,
                                  Parameters::SinglePose& /*params*/, rumblex_interfaces::msg::BodyPose target)
@@ -23,13 +24,65 @@ void CSinglePoseGait::start(units::Duration duration_s, uint8_t /*direction*/) {
     RCLCPP_INFO(node_->get_logger(), "Starting CSinglePoseGait");
     state_ = EGaitState::Running;
     phase_ = 0.0 * s;
-    duration_s_ = std::max(duration_s, 1.0 * s);
+    duration_s_ = delta_ ? duration_s : std::max(duration_s, 1.0 * s);
 
     torso_origin_ = kinematics_->getTorsoPose();
     head_origin_ = kinematics_->getHeadOrientation();
 
     toe_origins_ = kinematics_->getToePositions();
-    const auto target = resolveBodyPose(bodyPose(*kinematics_), target_);
+    const auto origin = bodyPose(*kinematics_);
+    if (options_.save_pose) saved_pose_ = origin;
+    auto target = resolveBodyPose(origin, target_);
+    if (options_.restore_pose) {
+        if (!saved_pose_) {
+            state_ = EGaitState::Stopped;
+            return;
+        }
+        target = *saved_pose_;
+        saved_pose_.reset();
+    }
+    if (options_.hasJointTargets()) {
+        auto model = *kinematics_;
+        model.moveTorso(toeTargets(target), CPose(target.torso_pose));
+        model.setHeadOrientation(COrientation(target.head_orientation));
+        size_t i = 0;
+        for (const auto& [leg, toe] : toe_origins_) {
+            const auto& angles = options_.joint_targets[i++];
+            if (angles) model.setLegAngles(leg, CLegAngles((*angles)[0], (*angles)[1], (*angles)[2]));
+        }
+        target = bodyPose(model);
+    }
+    if (delta_) {
+        // Work on a copy: computing FK targets must not change the live start pose.
+        auto model = *kinematics_;
+        auto torso = torso_origin_;
+        torso.orientation.roll += delta_->torso_rotation.roll * deg;
+        torso.orientation.pitch += delta_->torso_rotation.pitch * deg;
+        torso.orientation.yaw += delta_->torso_rotation.yaw * deg;
+        auto head = head_origin_;
+        head.roll += delta_->head_rotation.roll * deg;
+        head.pitch += delta_->head_rotation.pitch * deg;
+        head.yaw += delta_->head_rotation.yaw * deg;
+        model.setHeadOrientation(head);
+        torso.position = torso.position + CPosition(delta_->torso_translation.x, delta_->torso_translation.y,
+                                                    delta_->torso_translation.z);
+        auto toes = toe_origins_;
+        size_t i = 0;
+        for (auto& [leg, toe] : toes) {
+            const auto& offset = delta_->toe_translation[i++];
+            toe = toe + CPosition(offset.x, offset.y, offset.z);
+        }
+        model.moveTorso(toes, torso);
+        i = 0;
+        for (const auto& [leg, toe] : toes) {
+            const double rotation = delta_->coxa_rotation_deg[i++];
+            if (rotation == 0.0) continue;
+            auto angles = model.getLegAngles(leg);
+            angles.torso_coxa += rotation * deg;
+            model.setLegAngles(leg, angles);
+        }
+        target = bodyPose(model);
+    }
     torso_target_ = CPose(target.torso_pose);
     head_target_ = COrientation(target.head_orientation);
     toe_targets_ = toeTargets(target);

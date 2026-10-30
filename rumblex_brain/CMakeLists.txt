@@ -26,10 +26,8 @@ find_package(nlohmann_json REQUIRED) # nlohmann_json -> sudo apt install nlohman
 
 ## set sources
 set(SOURCES
-src/gait/gait_clap.cpp
 src/gait/gait_continuous_pose.cpp
 src/gait/gait_controller.cpp
-src/gait/gait_high_five.cpp
 src/gait/gait_leg_wave.cpp
 src/gait/gait_move_combined.cpp
 src/gait/gait_running.cpp
@@ -150,20 +148,20 @@ if(BUILD_TESTING)
   target_compile_definitions(test_robot_configuration PRIVATE RUMBLEX_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/..")
   ament_add_gtest(test_movement_handler test/test_movement_handler.cpp)
   target_link_libraries(test_movement_handler rumblex_brain_lib)
+  target_compile_definitions(test_movement_handler PRIVATE
+    RUMBLEX_SEQUENCES_DIRECTORY="${CMAKE_CURRENT_SOURCE_DIR}/config/sequences")
   ament_add_gtest(test_communication_handler test/test_communication_handler.cpp)
   target_link_libraries(test_communication_handler rumblex_brain_lib)
   ament_add_gtest(test_single_pose_target test/test_single_pose_target.cpp)
   target_link_libraries(test_single_pose_target rumblex_brain_lib)
+  target_compile_definitions(test_single_pose_target PRIVATE
+    RUMBLEX_SEQUENCES_DIRECTORY="${CMAKE_CURRENT_SOURCE_DIR}/config/sequences")
   ament_add_gtest(test_body_pose test/test_body_pose.cpp)
   target_link_libraries(test_body_pose rumblex_brain_lib)
-  ament_add_gtest(test_gait_clap test/test_gait_clap.cpp)
-  target_link_libraries(test_gait_clap rumblex_brain_lib)
   ament_add_gtest(test_gait_yaw_sequence test/test_gait_yaw_sequence.cpp)
   target_link_libraries(test_gait_yaw_sequence rumblex_brain_lib)
   ament_add_gtest(test_gait_controller test/test_gait_controller.cpp)
   target_link_libraries(test_gait_controller rumblex_brain_lib)
-  ament_add_gtest(test_gait_high_five test/test_gait_high_five.cpp)
-  target_link_libraries(test_gait_high_five rumblex_brain_lib)
   ament_add_gtest(test_gait_lay_down test/test_gait_lay_down.cpp)
   target_link_libraries(test_gait_lay_down rumblex_brain_lib)
   ament_add_gtest(test_gait_leg_wave test/test_gait_leg_wave.cpp)

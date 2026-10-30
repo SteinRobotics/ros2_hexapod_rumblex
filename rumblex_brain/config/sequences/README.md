@@ -2,8 +2,12 @@
 
 The brain loads every `.yaml` and `.yml` file directly in `config/sequences`,
 ordered by filename. Each file defines a named sequence, optional voice/joystick
-triggers, and actions. Sequence names and triggers are unchanged from the former
-`config/behaviors` catalog.
+triggers, and actions. The former `normal_` name prefix has been removed: use
+`body_roll`, `high_five`, `leg_wave`, `look_left`, `look_right`, `test_body`,
+`test_legs`, and `watch`. Voice and joystick triggers are unchanged.
+When updating an existing installation, remove the obsolete `normal_*.yaml` files
+from its installed `config/sequences` directory before restarting the brain and
+GUI; incremental installation may otherwise leave both catalogs present.
 
 ```yaml
 name: example
@@ -49,16 +53,124 @@ At least one component is required. `duration_s` defaults to 1.0 seconds and mus
 be finite and at least one second, the existing pose trajectory minimum. Every
 pose action consumes its duration, including repeated identical targets.
 
-When provided, `toe_positions` contains exactly six `{x, y, z}` mappings, with all
-three coordinates required for every toe. Order: right front, right middle,
-right back, left front, left middle, left back. These are targets before the torso
-transformation, matching `BodyPose.msg`. Individual optional toes are not supported.
+When provided, `toe_positions` maps all six leg names to `{x, y, z}` targets,
+with all three coordinates required for every toe. Names are `right_front`,
+`right_mid`, `right_back`, `left_front`, `left_mid`, and `left_back`. These are
+targets before the torso transformation, matching `BodyPose.msg`. Absolute toe
+positions still require all six legs; relative moves can name individual legs.
 Toe motion uses the same interpolation and duration as head and torso motion.
 
 The ROS message encodes optional components with `has_head_orientation`,
 `has_torso_pose`, and `has_toe_positions`. YAML presence sets these flags automatically.
 Published brain trajectory samples and `body_pose_actual` are complete snapshots
 with all three flags set. Feedback consumers require complete snapshots.
+
+## Relative pose movements and clap
+
+`clap.yaml` now contains the choreography directly: shift the torso back 5 cm,
+lift/lower the right and left rear toes by 5 cm, lift the front toes by 10 cm,
+close/open them six times by 30 degrees, lower them and shift forward. Six cycles
+match the former gait's actual counter behavior. Preparation/return actions take
+one second each; close/open actions take half a second each (14 seconds total,
+plus scheduler handoffs). The `commandClap` voice trigger and `clap` sequence name
+are unchanged. The old `SEQUENCE_CLAP` movement selector is removed.
+
+These actions use `movement: {name: SINGLE_POSE, ...}` with `pose_delta` instead
+of `body_pose`. Deltas resolve when the action starts, including after a pending
+outgoing movement completes, so no robot-specific stance coordinates are needed.
+
+```yaml
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5
+    pose_delta:
+      torso_translation: {x: -0.05}
+      toe_translation: {right_back: {z: 0.05}}
+      coxa_rotation_deg: {right_front: -30, left_front: 30}
+```
+
+All delta fields are optional, but at least one must be supplied. Translation
+vectors use metres in the existing BodyPose command frame; omitted coordinates
+are zero. `toe_translation` and `coxa_rotation_deg` map leg names to offsets;
+omitted legs have zero offset. Unknown or duplicate leg names are rejected.
+`head_rotation` and `torso_rotation` contain additive `{roll, pitch, yaw}` offsets
+in degrees. Omitted axes default to zero; these add to the starting Euler angles,
+not a composed local-frame rotation. Translations and torso rotations resolve
+together while keeping toe targets in the existing command frame.
+Coxa rotations are degree offsets from the current joint angles, applied after
+translations and torso rotations. Forward kinematics converts them to toe targets using the selected
+robot's geometry. The trajectory smoothly interpolates toes to those endpoints;
+the clap follows a chord rather than the former joint-space arc. Head pose and
+torso orientation are retained unless their rotation offsets are supplied. `pose_delta` cannot be combined with `body_pose`
+and requires a finite positive duration; unlike absolute poses, it supports
+sub-second motions. Inverse deltas restore the starting pose within numerical
+precision for reachable poses.
+
+As with other YAML sequences, cancellation discards remaining actions and lets
+the active pose finish. It does not run the remaining clap return actions.
+
+## Joint targets and high-five
+
+`high_five.yaml` raises the right-front leg to joint angles
+`(-20, 50, 60)` degrees and looks forward with head pitch `-20` degrees over one
+second, holds for two seconds, then restores the starting pose over one second.
+The spoken announcement, `commandHighFive` voice trigger and `button_b` joystick
+trigger are unchanged. Speech completion can delay the following action, as with
+other grouped actions. The old `SEQUENCE_HIGH_FIVE` movement selector is removed.
+
+`SINGLE_POSE` movements accept `joint_targets` keyed by leg name. Omitted legs
+retain their current toe positions, without placeholder entries:
+
+```yaml
+joint_targets:
+  right_front: {torso_coxa: -20, coxa_femur: 50, femur_tibia: 60}
+```
+
+Each supplied leg requires
+all three finite angles in degrees: `torso_coxa`, `coxa_femur`, `femur_tibia`.
+Targets use the selected robot's forward kinematics and current torso transform.
+They can accompany a `body_pose` head/torso target, but cannot be combined with
+explicit toe targets or `pose_delta`. As with clap, toes interpolate to the joint
+pose endpoint rather than following the old joint-space arc.
+
+Use `save_pose: true` on the outgoing pose action to capture the complete current
+pose when it starts (after any pending motion completes). A later
+`movement: {name: SINGLE_POSE, duration_s: 1.0, restore_pose: true}` returns to that
+snapshot and consumes it. Restore actions cannot carry other pose targets or
+save again. There is one saved-pose slot per controller; another save replaces
+it, so nested save/restore pairs are not supported. A restore without a saved
+pose is rejected. Saving/restoring requires a finite positive duration and uses
+the ordinary absolute-pose minimum of one second.
+
+Cancellation follows normal YAML sequence behavior: finish the active pose and
+discard remaining actions, including the return. A new high-five invocation
+captures its own starting pose, replacing any snapshot left by cancellation.
+
+## Look left and right
+
+`look_left.yaml` and `look_right.yaml` are two-action pose sequences.
+The first action saves the starting pose and turns the head by 25 degrees and
+torso by 20 degrees over 1.5 seconds (positive yaw for left, negative for right).
+The second restores the saved pose over 1.5 seconds, without a hold. Toe positions,
+torso translation and the original roll/pitch angles stay unchanged. The smooth
+pose interpolation replaces the previous sinusoidal excursion.
+
+```yaml
+movement:
+  name: SINGLE_POSE
+  duration_s: 1.5
+  save_pose: true
+  pose_delta:
+    head_rotation: {yaw: 25}
+    torso_rotation: {yaw: 20}
+```
+
+Sequence names, spoken announcements, voice commands and shoulder-button triggers
+are unchanged. Speech remains grouped with the outward motion and can delay the
+return. Cancellation finishes the active pose and discards remaining actions,
+including restoration, as with high-five. Angles now live in the sequence YAML;
+the `gait.look.*` parameters and `SEQUENCE_LOOK` selector are removed. The watch
+sequence continues to use its existing two-sided yaw gait.
 
 ## Other actions
 
@@ -234,3 +346,7 @@ interface. Rebuild and restart all consumers together, including movement,
 visualization, and navigation. External publishers must set presence flags;
 an all-false command is empty and rejected. Old installed `config/behaviors`
 files are not loaded by the new coordinator.
+
+Legacy six-entry lists remain accepted for leg fields, in the leg order listed
+above. Prefer named mappings in new YAML; `null` placeholders are only supported
+in legacy `joint_targets` lists.

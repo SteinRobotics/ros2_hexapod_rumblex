@@ -289,7 +289,7 @@ TEST_F(CoordinatorTest, NamedSequenceUsesNormalPriorityAndExactName) {
     ASSERT_FALSE(group.empty());
     const auto gait = std::dynamic_pointer_cast<RequestMovementType>(group.front());
     ASSERT_TRUE(gait);
-    EXPECT_EQ(gait->movementRequest.type, MovementRequest::SEQUENCE_CLAP);
+    EXPECT_EQ(gait->movementRequest.type, MovementRequest::SINGLE_POSE);
     EXPECT_EQ(ActionPlannerTestAccess::highCount(*planner_), highCount);
 }
 
@@ -319,13 +319,13 @@ TEST_F(CoordinatorTest, UnknownNamedSequenceDoesNotQueueActions) {
     EXPECT_EQ(ActionPlannerTestAccess::highCount(*planner_), highCount);
 }
 
-TEST_F(CoordinatorTest, VoiceClapSelectsImplementedGait) {
+TEST_F(CoordinatorTest, VoiceClapSelectsPoseSequence) {
     create();
     coordinator_->speechRecognized("klatsche");
     const auto& group = ActionPlannerTestAccess::latestHighRequest(*planner_);
     const auto gait = std::dynamic_pointer_cast<RequestMovementType>(group.front());
     ASSERT_TRUE(gait);
-    EXPECT_EQ(gait->movementRequest.type, MovementRequest::SEQUENCE_CLAP);
+    EXPECT_EQ(gait->movementRequest.type, MovementRequest::SINGLE_POSE);
 }
 
 TEST_F(CoordinatorTest, VoiceStandardDanceQueuesChoreography) {
@@ -352,11 +352,11 @@ TEST_F(CoordinatorTest, NewRequestReplacesExpiredDeadline) {
     create();
     CoordinatorTestAccess::submit(*coordinator_, MovementRequest::SEQUENCE_WAITING, 10.0);
     CoordinatorTestAccess::expire(*coordinator_);
-    CoordinatorTestAccess::submit(*coordinator_, MovementRequest::SEQUENCE_LOOK, 20.0);
-    feedback(MovementRequest::SEQUENCE_LOOK);
+    CoordinatorTestAccess::submit(*coordinator_, MovementRequest::SEQUENCE_WATCH, 20.0);
+    feedback(MovementRequest::SEQUENCE_WATCH);
     coordinator_->update();
     EXPECT_TRUE(CoordinatorTestAccess::locked(*coordinator_));
-    EXPECT_EQ(CoordinatorTestAccess::actualType(*coordinator_), MovementRequest::SEQUENCE_LOOK);
+    EXPECT_EQ(CoordinatorTestAccess::actualType(*coordinator_), MovementRequest::SEQUENCE_WATCH);
     CoordinatorTestAccess::expire(*coordinator_);
     coordinator_->update();
     EXPECT_EQ(CoordinatorTestAccess::actualType(*coordinator_), MovementRequest::NO_REQUEST);
@@ -365,11 +365,11 @@ TEST_F(CoordinatorTest, NewRequestReplacesExpiredDeadline) {
 TEST_F(CoordinatorTest, ExpirationPreservesNewerFeedback) {
     create();
     CoordinatorTestAccess::submit(*coordinator_, MovementRequest::SEQUENCE_WAITING, 10.0);
-    feedback(MovementRequest::SEQUENCE_LOOK);
+    feedback(MovementRequest::SEQUENCE_WATCH);
     CoordinatorTestAccess::expire(*coordinator_);
     coordinator_->update();
     EXPECT_FALSE(CoordinatorTestAccess::locked(*coordinator_));
-    EXPECT_EQ(CoordinatorTestAccess::actualType(*coordinator_), MovementRequest::SEQUENCE_LOOK);
+    EXPECT_EQ(CoordinatorTestAccess::actualType(*coordinator_), MovementRequest::SEQUENCE_WATCH);
 }
 
 TEST_F(CoordinatorTest, WalkingAndRunningClearPreviousDeadline) {
@@ -403,7 +403,7 @@ TEST_F(CoordinatorTest, RejectsNonfiniteDurationWithoutReplacingDeadline) {
     feedback(MovementRequest::SEQUENCE_WAITING);
     for (double seconds : {std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::infinity(),
                            -std::numeric_limits<double>::infinity()}) {
-        EXPECT_THROW(CoordinatorTestAccess::submit(*coordinator_, MovementRequest::SEQUENCE_LOOK, seconds),
+        EXPECT_THROW(CoordinatorTestAccess::submit(*coordinator_, MovementRequest::SEQUENCE_WATCH, seconds),
                      std::invalid_argument);
     }
     CoordinatorTestAccess::expire(*coordinator_);

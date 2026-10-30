@@ -6,6 +6,7 @@
 #include "gait/gait_interfaces.hpp"
 #include "gait/gait_parameters.hpp"
 #include "gait/pose_model.hpp"
+#include "movement_request.hpp"
 #include "rumblex_utils/body_pose.hpp"
 #include "rumblex_utils/linear_interpolation.hpp"
 
@@ -21,9 +22,19 @@ class CSinglePoseGait : public IContinuousGait {
                     rumblex_interfaces::msg::BodyPose target = rumblex_interfaces::msg::BodyPose());
     ~CSinglePoseGait() override = default;
 
-    void setTarget(const rumblex_interfaces::msg::BodyPose& target) {
+    void setTarget(const rumblex_interfaces::msg::BodyPose& target,
+                   std::optional<PoseDelta> delta = std::nullopt) {
+        options_ = MovementRequest();
+        delta_ = std::move(delta);
         target_ = target;
         skip_if_at_target_ = false;
+    }
+    void setRequest(const MovementRequest& request) {
+        setTarget(request.body_pose, request.pose_delta);
+        options_ = request;
+    }
+    bool hasSavedPose() const {
+        return saved_pose_.has_value();
     }
     void start(units::Duration duration_s, uint8_t direction) override;
     bool update(const Velocity& velocity, const CPose& torso, const COrientation& head) override;
@@ -40,6 +51,9 @@ class CSinglePoseGait : public IContinuousGait {
     std::shared_ptr<CPoseModel> kinematics_;
     rumblex_interfaces::msg::BodyPose target_;
     bool skip_if_at_target_;
+    std::optional<PoseDelta> delta_;
+    MovementRequest options_;
+    std::optional<rumblex_interfaces::msg::BodyPose> saved_pose_;
     std::map<ELegIndex, CPosition> toe_targets_;
     std::map<ELegIndex, CPosition> toe_origins_;
     EGaitState state_ = EGaitState::Stopped;

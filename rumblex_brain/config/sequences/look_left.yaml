@@ -1,0 +1,17 @@
+name: look_left
+trigger:
+  joystick: button_l1
+  voice: commandLookLeft
+actions:
+  - say: Ich schaue nach links
+    movement:
+      name: SINGLE_POSE
+      duration_s: 1.5
+      save_pose: true
+      pose_delta:
+        head_rotation: {yaw: 25}
+        torso_rotation: {yaw: 20}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.5
+      restore_pose: true

@@ -1,0 +1,22 @@
+name: high_five
+trigger:
+  joystick: button_b
+  voice: commandHighFive
+actions:
+  - say: Ich gebe dir ein High Five
+    movement:
+      name: SINGLE_POSE
+      duration_s: 1.0
+      save_pose: true
+      body_pose:
+        head_orientation: {yaw: 0, pitch: -20}
+      joint_targets:
+        right_front: {torso_coxa: -20, coxa_femur: 50, femur_tibia: 60}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 2.0
+      pose_delta: {torso_translation: {}}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.0
+      restore_pose: true

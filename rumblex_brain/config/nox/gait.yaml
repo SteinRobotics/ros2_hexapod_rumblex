@@ -31,10 +31,6 @@ node_brain:
     #### GAIT LEG WAVE PARAMETERS ####
     gait.leg_wave.leg_lift_height_m: 0.03 # m
 
-    #### GAIT LOOK PARAMETERS ####
-    gait.look.torso_max_yaw_deg: 20.0 # degree
-    gait.look.head_max_yaw_deg: 25.0     # degree
-
     #### GAIT WATCH PARAMETERS ####
     gait.watch.torso_max_yaw_deg: 10.0     # degree
 

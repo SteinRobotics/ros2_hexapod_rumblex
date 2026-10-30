@@ -14,8 +14,7 @@ using mp_units::angular::unit_symbols::rad;
 // Finite yaw excursions return to the captured pose before handing off.
 class CYawSequenceGait : public ISequenceGait {
    public:
-    enum class Sweep { OneSide, BothSides };
-    CYawSequenceGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics, Sweep sweep,
+    CYawSequenceGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics,
                      units::Angle head_amplitude, units::Angle torso_amplitude);
 
     void start(units::Duration duration_s, uint8_t direction) override;

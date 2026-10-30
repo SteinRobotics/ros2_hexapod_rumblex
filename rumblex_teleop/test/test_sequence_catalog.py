@@ -14,7 +14,7 @@ def test_repository_catalog():
         'calibrate', 'clap', 'dance_dancing_street', 'dance_standard', 'hold_distance',
         'level_torso', 'neutral', 'run_demo', 'waiting', 'walk_demo')
     assert len(catalog.captions) == 12
-    assert catalog.captions['a'] == 'normal_watch'
+    assert catalog.captions['a'] == 'watch'
     assert catalog.captions['dpad_up'] == 'standup'
     assert catalog.captions['r2'] == 'dance_hot_dogs_for_breakfast'
 

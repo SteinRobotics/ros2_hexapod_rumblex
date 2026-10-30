@@ -108,15 +108,14 @@ TEST_F(OrientationTimingTest, YawAndTorsoSequencesKeepDurationAtHigherSamplingRa
         model->setHeadOrientation(COrientation());
         const auto origin = bodyPose(*model);
         if (yaw)
-            gait = std::make_unique<CYawSequenceGait>(node, model, CYawSequenceGait::Sweep::OneSide,
-                                                      25.0 * deg, 20.0 * deg);
+            gait = std::make_unique<CYawSequenceGait>(node, model, 30.0 * deg, 0.0 * deg);
         else
             gait = std::make_unique<CTorsoRollGait>(node, model, params.torso_roll);
         gait->start(1.0 * s, MovementRequest::CLOCKWISE);
         for (int i = 0; i < 50; ++i) {
             const double dt = i % 2 ? 0.025 : 0.015;
             ASSERT_TRUE(gait->updateTimed(dt * s));
-            if (i == 24) {
+            if (i == 12) {
                 EXPECT_NE(bodyPose(*model), origin);
             }
             if (i < 49) {

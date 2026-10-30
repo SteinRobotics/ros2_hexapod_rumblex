@@ -1,0 +1,17 @@
+name: look_right
+trigger:
+  joystick: button_r1
+  voice: commandLookRight
+actions:
+  - say: Ich schaue nach rechts
+    movement:
+      name: SINGLE_POSE
+      duration_s: 1.5
+      save_pose: true
+      pose_delta:
+        head_rotation: {yaw: -25}
+        torso_rotation: {yaw: -20}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.5
+      restore_pose: true

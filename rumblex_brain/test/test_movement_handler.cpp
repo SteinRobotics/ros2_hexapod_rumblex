@@ -1,4 +1,5 @@
 #include "movement_handler_test_fixture.hpp"
+#include "parser/sequence_parser.hpp"
 
 namespace {
 TEST_F(MovementHandlerTest, WaitsForFeedbackAndDoesNotStartDurationEarly) {
@@ -57,12 +58,29 @@ TEST_F(MovementHandlerTest, PublishesHighFiveRestorationAndIgnoresLaterFeedback)
     const auto seed = initialPose();
     feedback->publish(seed);
     pump(200ms);
-    request(MovementRequest::SEQUENCE_HIGH_FIVE);
+    CSequenceParser parser(node);
+    ASSERT_TRUE(parser.parseFile(std::string(RUMBLEX_SEQUENCES_DIRECTORY) + "/high_five.yaml"));
+    const auto sequence = parser.getSequence("high_five");
+    ASSERT_TRUE(sequence);
+    auto movementAt = [&](size_t index) {
+        for (const auto& action : sequence->get().actionGroups[index])
+            if (auto movement = std::dynamic_pointer_cast<RequestMovementType>(action)) return movement;
+        return std::shared_ptr<RequestMovementType>();
+    };
+    ASSERT_TRUE(movementAt(0));
+    handler->run(movementAt(0));
     pump(350ms);
     auto unrelated = seed;
     unrelated.head_orientation.yaw = -80.0;
     feedback->publish(unrelated);
-    pump(4500ms);
+    pump(800ms);
+    ASSERT_TRUE(handler->requestFinished());
+    handler->run(movementAt(1));
+    pump(2100ms);
+    ASSERT_TRUE(handler->requestFinished());
+    handler->run(movementAt(2));
+    pump(1100ms);
+    ASSERT_TRUE(handler->requestFinished());
     ASSERT_FALSE(poses.empty());
     EXPECT_NEAR(poses.back().head_orientation.yaw, seed.head_orientation.yaw, 1e-8);
     EXPECT_NEAR(poses.back().head_orientation.pitch, seed.head_orientation.pitch, 1e-8);
@@ -121,10 +139,10 @@ TEST_F(MovementHandlerTest, PendingRepeatingGaitGetsFullDurationAfterActivation)
 TEST_F(MovementHandlerTest, FiniteGaitWaitsForActualCompletion) {
     feedback->publish(initialPose());
     pump(150ms);
-    request(MovementRequest::SEQUENCE_HIGH_FIVE, 0.1);
+    request(MovementRequest::SEQUENCE_STAND_UP, 0.1);
     pump(300ms);
     EXPECT_FALSE(handler->requestFinished());
-    pump(4200ms);
+    pump(1000ms);
     EXPECT_TRUE(handler->requestFinished());
 }
 

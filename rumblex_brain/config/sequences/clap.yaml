@@ -1,7 +1,57 @@
 name: clap
 trigger:
   voice: commandClap
+# Relative targets retain the starting stance, torso orientation and head pose.
 actions:
   - movement:
-      name: SEQUENCE_CLAP
-      duration_s: 4.0
+      name: SINGLE_POSE
+      duration_s: 1.0
+      pose_delta: {torso_translation: {x: -0.05}}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.0
+      pose_delta:
+        toe_translation: {right_back: {z: 0.05}}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.0
+      pose_delta:
+        toe_translation: {right_back: {z: -0.05}}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.0
+      pose_delta:
+        toe_translation: {left_back: {z: 0.05}}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.0
+      pose_delta:
+        toe_translation: {left_back: {z: -0.05}}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.0
+      pose_delta:
+        toe_translation: {right_front: {z: 0.1}, left_front: {z: 0.1}}
+  # The former gait performed six close/open cycles (its counter decremented only on closing).
+  - loop:
+      times: 6
+      actions:
+        - movement:
+            name: SINGLE_POSE
+            duration_s: 0.5
+            pose_delta:
+              coxa_rotation_deg: {right_front: -30, left_front: 30}
+        - movement:
+            name: SINGLE_POSE
+            duration_s: 0.5
+            pose_delta:
+              coxa_rotation_deg: {right_front: 30, left_front: -30}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.0
+      pose_delta:
+        toe_translation: {right_front: {z: -0.1}, left_front: {z: -0.1}}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.0
+      pose_delta: {torso_translation: {x: 0.05}}

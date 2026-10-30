@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <tuple>
 
 #include "gait/gait_yaw_sequence.hpp"
 #include "movement_request.hpp"
@@ -16,7 +15,7 @@ using namespace mp_units::si::unit_symbols;
 using mp_units::angular::unit_symbols::deg;
 using namespace brain;
 
-class YawSequenceTest : public ::testing::TestWithParam<std::tuple<bool, uint8_t>> {
+class YawSequenceTest : public ::testing::TestWithParam<uint8_t> {
    protected:
     void SetUp() override {
         rclcpp::init(0, nullptr);
@@ -26,12 +25,7 @@ class YawSequenceTest : public ::testing::TestWithParam<std::tuple<bool, uint8_t
         model = std::make_shared<CPoseModel>(node);
         resetPose();
         auto params = test_helpers::makeDeclaredParameters(node);
-        if (isLook())
-            gait = std::make_unique<CYawSequenceGait>(node, model, CYawSequenceGait::Sweep::OneSide,
-                                                      params.look.head_max_yaw, params.look.torso_max_yaw);
-        else
-            gait = std::make_unique<CYawSequenceGait>(node, model, CYawSequenceGait::Sweep::BothSides,
-                                                      params.watch.head_max_yaw, 0.0 * deg);
+        gait = std::make_unique<CYawSequenceGait>(node, model, params.watch.head_max_yaw, 0.0 * deg);
     }
     void TearDown() override {
         gait.reset();
@@ -43,11 +37,8 @@ class YawSequenceTest : public ::testing::TestWithParam<std::tuple<bool, uint8_t
         model->moveTorso(model->getStandingToePositions(), CPose(0.002, -0.003, 0.001, 2.0, -1.0, 3.0));
         model->setHeadOrientation(COrientation(1.0, 4.0, -2.0));
     }
-    bool isLook() const {
-        return std::get<0>(GetParam());
-    }
     uint8_t direction() const {
-        return std::get<1>(GetParam());
+        return GetParam();
     }
     std::shared_ptr<rclcpp::Node> node;
     std::shared_ptr<CPoseModel> model;
@@ -65,32 +56,20 @@ TEST_P(YawSequenceTest, ExcursionPreservesPoseComponentsAndReturnsExactlyToOrigi
         ASSERT_TRUE(gait->update());
         auto pose = bodyPose(*model);
         const double head_delta = pose.head_orientation.yaw - origin.head_orientation.yaw;
-        const double torso_delta = pose.torso_pose.orientation.yaw - origin.torso_pose.orientation.yaw;
         peak = std::max(peak, sign * head_delta);
         minimum = std::min(minimum, sign * head_delta);
-        if (isLook()) {
-            EXPECT_GE(sign * head_delta, -1e-12);
-            EXPECT_NEAR(torso_delta, head_delta * 20.0 / 25.0, 1e-10);
-            if (tick == 10) {
-                EXPECT_NEAR(sign * head_delta, 25.0, 1e-10);
-                EXPECT_NEAR(sign * torso_delta, 20.0, 1e-10);
-            }
-        } else {
-            EXPECT_EQ(pose.torso_pose, origin.torso_pose);
-            if (tick == 1) {
-                EXPECT_GT(sign * head_delta, 0.0);
-            }
-            EXPECT_LE(std::abs(head_delta), 30.0 + 1e-12);
+        EXPECT_EQ(pose.torso_pose, origin.torso_pose);
+        if (tick == 1) {
+            EXPECT_GT(sign * head_delta, 0.0);
         }
+        EXPECT_LE(std::abs(head_delta), 30.0 + 1e-12);
         // All components except the commanded yaw axes stay at their origins.
         pose.head_orientation.yaw = origin.head_orientation.yaw;
         pose.torso_pose.orientation.yaw = origin.torso_pose.orientation.yaw;
         EXPECT_EQ(pose, origin);
     }
-    EXPECT_GT(peak, isLook() ? 24.9 : 29.0);
-    if (!isLook()) {
-        EXPECT_LT(minimum, -29.0);
-    }
+    EXPECT_GT(peak, 29.0);
+    EXPECT_LT(minimum, -29.0);
     EXPECT_EQ(gait->state(), EGaitState::Stopped);
     EXPECT_EQ(bodyPose(*model), origin);
     EXPECT_FALSE(gait->update());
@@ -141,10 +120,8 @@ TEST_P(YawSequenceTest, StopRequestsFinishExcursionAndRestartCapturesNewOrigin) 
     EXPECT_EQ(bodyPose(*model), new_origin);
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    LookAndWatchBothDirections, YawSequenceTest,
-    ::testing::Combine(::testing::Bool(),
-                       ::testing::Values(static_cast<uint8_t>(MovementRequest::CLOCKWISE),
-                                         static_cast<uint8_t>(MovementRequest::ANTICLOCKWISE))));
+INSTANTIATE_TEST_SUITE_P(WatchBothDirections, YawSequenceTest,
+                         ::testing::Values(static_cast<uint8_t>(MovementRequest::CLOCKWISE),
+                                           static_cast<uint8_t>(MovementRequest::ANTICLOCKWISE)));
 
 }  // namespace

@@ -1,4 +1,4 @@
-name: normal_leg_wave
+name: leg_wave
 trigger:
   joystick: button_y
   voice: commandLegWave

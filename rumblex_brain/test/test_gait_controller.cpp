@@ -216,8 +216,8 @@ TEST_F(GaitControllerTest, SwitchToLaydown) {
     EXPECT_EQ(controller_->currentGait(), MovementRequestMsg::SEQUENCE_LAYDOWN);
 }
 
-// Test: Switch to HIGH_FIVE
-TEST_F(GaitControllerTest, SwitchToHighFive) {
+// Test: Switch to an explicit pose
+TEST_F(GaitControllerTest, SwitchToSinglePose) {
     auto vel = createZeroVelocity();
 
     controller_->requestStopSelectedGait();
@@ -226,9 +226,10 @@ TEST_F(GaitControllerTest, SwitchToHighFive) {
     }
 
     brain::MovementRequest request;
-    request.type = MovementRequestMsg::SEQUENCE_HIGH_FIVE;
+    request.type = MovementRequestMsg::SINGLE_POSE;
+    request.body_pose.has_head_orientation = true;
     controller_->setGait(request);
-    EXPECT_EQ(controller_->currentGait(), MovementRequestMsg::SEQUENCE_HIGH_FIVE);
+    EXPECT_EQ(controller_->currentGait(), MovementRequestMsg::SINGLE_POSE);
 }
 
 // Test: Request same gait twice (should not switch)

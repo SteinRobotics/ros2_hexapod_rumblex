@@ -71,8 +71,10 @@ void CMovement::startRequest(const MovementRequest& request) {
 
 void CMovement::run(std::shared_ptr<RequestMovementType> request) {
     const auto& movement = request->movementRequest;
-    if (!validBodyPose(movement.body_pose) || !isfinite(movement.duration_s) ||
-        (movement.type == MovementRequest::SINGLE_POSE && !hasBodyPose(movement.body_pose)) ||
+    if (!movement.validPoseOptions() || !validBodyPose(movement.body_pose) ||
+        !isfinite(movement.duration_s) ||
+        (movement.type == MovementRequest::SINGLE_POSE && !hasBodyPose(movement.body_pose) &&
+         !movement.pose_delta && !movement.hasJointTargets() && !movement.restore_pose) ||
         (movement.type != MovementRequest::SINGLE_POSE && movement.body_pose.has_toe_positions)) {
         RCLCPP_WARN(node_->get_logger(), "Ignoring invalid movement pose or duration");
         return;
@@ -134,8 +136,7 @@ void CMovement::update() {
         gait == MovementRequest::CONTINUOUS_MOVE || gait == MovementRequest::CONTINUOUS_RUNNING ||
         gait == MovementRequest::CONTINUOUS_POSE || gait == MovementRequest::SINGLE_POSE ||
         gait == MovementRequest::SEQUENCE_STAND_UP || gait == MovementRequest::SEQUENCE_LAYDOWN ||
-        gait == MovementRequest::SEQUENCE_LOOK || gait == MovementRequest::SEQUENCE_WATCH ||
-        gait == MovementRequest::SEQUENCE_BODY_ROLL;
+        gait == MovementRequest::SEQUENCE_WATCH || gait == MovementRequest::SEQUENCE_BODY_ROLL;
     const auto period = std::chrono::milliseconds(frequent ? 20 : 100);
     const units::Duration elapsed_s =
         (last_update_ ? std::chrono::duration<double>(now - *last_update_).count()

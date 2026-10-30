@@ -1,4 +1,4 @@
-name: normal_body_roll
+name: body_roll
 trigger:
   joystick: button_x
   voice: commandBodyRoll

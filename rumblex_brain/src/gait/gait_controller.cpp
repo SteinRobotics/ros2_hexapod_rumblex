@@ -30,18 +30,12 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
     // Create all gait instances
     gaits_[MovementRequest::SEQUENCE_BODY_ROLL] =
         std::make_shared<CTorsoRollGait>(node_, kinematics_, params_.torso_roll);
-    gaits_[MovementRequest::SEQUENCE_CLAP] = std::make_shared<CClapGait>(node_, kinematics_, params_.clap);
-    gaits_[MovementRequest::SEQUENCE_HIGH_FIVE] =
-        std::make_shared<CHighFiveGait>(node_, kinematics_, params_.high_five);
     gaits_[MovementRequest::SEQUENCE_LAYDOWN] = std::make_shared<CSinglePoseGait>(
         node_, kinematics_, params_.single_pose,
         bodyPose(kinematics_->getLaydownToePositions(), CPose(),
                  COrientation(0.0 * deg, -params_.single_pose.head_max_pitch, 0.0 * deg)));
     gaits_[MovementRequest::SEQUENCE_LEGS_WAVE] =
         std::make_shared<CLegWaveGait>(node_, kinematics_, params_.leg_wave);
-    gaits_[MovementRequest::SEQUENCE_LOOK] =
-        std::make_shared<CYawSequenceGait>(node_, kinematics_, CYawSequenceGait::Sweep::OneSide,
-                                           params_.look.head_max_yaw, params_.look.torso_max_yaw);
     gaits_[MovementRequest::CONTINUOUS_MOVE] = std::make_shared<CMoveCombinedGait>(
         node_, kinematics_, params_.wave, params_.ripple, params_.tripod, params_.move_combined);
     gaits_[MovementRequest::CONTINUOUS_RUNNING] =
@@ -57,8 +51,8 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
         std::make_shared<CContinuousPoseGait>(node_, kinematics_, params_.continuous_pose);
     gaits_[MovementRequest::SEQUENCE_WAITING] =
         std::make_shared<CWaitingGait>(node_, kinematics_, params_.waiting);
-    gaits_[MovementRequest::SEQUENCE_WATCH] = std::make_shared<CYawSequenceGait>(
-        node_, kinematics_, CYawSequenceGait::Sweep::BothSides, params_.watch.head_max_yaw, 0.0 * deg);
+    gaits_[MovementRequest::SEQUENCE_WATCH] =
+        std::make_shared<CYawSequenceGait>(node_, kinematics_, params_.watch.head_max_yaw, 0.0 * deg);
 
     gaits_[MovementRequest::HOLD_DISTANCE] = std::make_shared<CHoldDistanceGait>(node_, kinematics_, params_);
     gaits_[MovementRequest::LEVEL_TORSO] = std::make_shared<CLevelTorsoGait>(node_, kinematics_);
@@ -80,6 +74,15 @@ bool CGaitController::setGait(brain::MovementRequest request) {
         RCLCPP_DEBUG(node_->get_logger(), "CGaitController::setGait ignoring NO_REQUEST message");
         return false;
     }
+
+    if (!request.validPoseOptions()) return false;
+    if (request.restore_pose &&
+        !std::static_pointer_cast<CSinglePoseGait>(gaits_.at(MovementRequest::SINGLE_POSE))->hasSavedPose())
+        return false;
+    if (request.pose_delta &&
+        (request.type != MovementRequest::SINGLE_POSE || hasBodyPose(request.body_pose) ||
+         !request.pose_delta->valid() || !isfinite(request.duration_s) || request.duration_s <= 0.0 * s))
+        return false;
 
     const bool sensor_gait =
         request.type == MovementRequest::HOLD_DISTANCE || request.type == MovementRequest::LEVEL_TORSO;
@@ -148,7 +151,7 @@ void CGaitController::switchGait(brain::MovementRequest request) {
 
 void CGaitController::configureGait(const MovementRequest& request) {
     if (request.type == MovementRequest::SINGLE_POSE)
-        std::static_pointer_cast<CSinglePoseGait>(active_gait_)->setTarget(request.body_pose);
+        std::static_pointer_cast<CSinglePoseGait>(active_gait_)->setRequest(request);
     else if (request.type == MovementRequest::HOLD_DISTANCE)
         std::static_pointer_cast<CHoldDistanceGait>(active_gait_)->setDistance(*request.distance_m);
 }
@@ -177,10 +180,7 @@ bool CGaitController::finishesAutomatically() const {
         case MovementRequest::SINGLE_POSE:
         case MovementRequest::SEQUENCE_LAYDOWN:
         case MovementRequest::SEQUENCE_STAND_UP:
-        case MovementRequest::SEQUENCE_LOOK:
         case MovementRequest::SEQUENCE_WATCH:
-        case MovementRequest::SEQUENCE_CLAP:
-        case MovementRequest::SEQUENCE_HIGH_FIVE:
         case MovementRequest::SEQUENCE_TESTLEGS:
             return true;
         default:

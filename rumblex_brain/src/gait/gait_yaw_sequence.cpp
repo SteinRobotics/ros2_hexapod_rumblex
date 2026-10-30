@@ -14,10 +14,10 @@ using namespace mp_units::si::unit_symbols;
 using mp_units::angular::unit_symbols::rad;
 
 CYawSequenceGait::CYawSequenceGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics,
-                                   Sweep sweep, units::Angle head_amplitude, units::Angle torso_amplitude)
+                                   units::Angle head_amplitude, units::Angle torso_amplitude)
     : node_(std::move(node)),
       kinematics_(std::move(kinematics)),
-      phase_limit_((sweep == Sweep::OneSide ? M_PI : 2.0 * M_PI) * rad),
+      phase_limit_(2.0 * M_PI * rad),
       head_amplitude_(head_amplitude),
       torso_amplitude_(torso_amplitude) {
 }

@@ -37,6 +37,122 @@ class SequenceParserTest : public ::testing::Test {
     }
 };
 
+TEST_F(SequenceParserTest, RotationDeltasDefaultOmittedAxesToZeroAndRejectInvalidValues) {
+    ASSERT_TRUE(parser_.parseString(R"(
+name: rotate
+actions:
+  - movement:
+      name: SINGLE_POSE
+      pose_delta:
+        head_rotation: {yaw: 25}
+        torso_rotation: {pitch: -2}
+)"));
+    const auto action = request<RequestMovementType>("rotate", 0, 0);
+    ASSERT_TRUE(action);
+    ASSERT_TRUE(action->movementRequest.pose_delta);
+    const auto& delta = *action->movementRequest.pose_delta;
+    EXPECT_DOUBLE_EQ(delta.head_rotation.yaw, 25);
+    EXPECT_DOUBLE_EQ(delta.head_rotation.roll, 0);
+    EXPECT_DOUBLE_EQ(delta.head_rotation.pitch, 0);
+    EXPECT_DOUBLE_EQ(delta.torso_rotation.pitch, -2);
+    EXPECT_DOUBLE_EQ(delta.torso_rotation.roll, 0);
+    EXPECT_DOUBLE_EQ(delta.torso_rotation.yaw, 0);
+    for (const auto* field :
+         {"head_rotation: {yaw: .nan}", "torso_rotation: {roll: .inf}", "head_rotation: {angle: 1}",
+          "torso_rotation: {yaw: 1, yaw: 2}", "head_rotation: []"}) {
+        SCOPED_TRACE(field);
+        EXPECT_FALSE(parser_.parseString(
+            std::string(
+                "name: invalid\nactions:\n  - movement:\n      name: SINGLE_POSE\n      pose_delta: {") +
+            field + "}"));
+    }
+    EXPECT_FALSE(parser_.parseString("name: removed\nactions: [{movement: {name: SEQUENCE_LOOK}}]"));
+}
+
+TEST_F(SequenceParserTest, NamedLegsResolveByNameAndLeaveOmittedLegsUnchanged) {
+    ASSERT_TRUE(parser_.parseString(R"(
+name: named
+actions:
+  - movement:
+      name: SINGLE_POSE
+      joint_targets:
+        left_back: {torso_coxa: 1, coxa_femur: 2, femur_tibia: 3}
+        right_front: {torso_coxa: -20, coxa_femur: 50, femur_tibia: 60}
+  - movement:
+      name: SINGLE_POSE
+      pose_delta:
+        toe_translation: {left_mid: {z: 0.02}, right_back: {x: 0.03}}
+        coxa_rotation_deg: {left_front: 30, right_front: -30}
+)"));
+    const auto joints = request<RequestMovementType>("named", 0, 0);
+    ASSERT_TRUE(joints);
+    ASSERT_TRUE(joints->movementRequest.joint_targets[0]);
+    ASSERT_TRUE(joints->movementRequest.joint_targets[5]);
+    EXPECT_EQ(*joints->movementRequest.joint_targets[0], (std::array<double, 3>{-20, 50, 60}));
+    EXPECT_EQ(*joints->movementRequest.joint_targets[5], (std::array<double, 3>{1, 2, 3}));
+    for (size_t i = 1; i < 5; ++i) EXPECT_FALSE(joints->movementRequest.joint_targets[i]);
+    const auto movement = request<RequestMovementType>("named", 1, 0);
+    ASSERT_TRUE(movement);
+    ASSERT_TRUE(movement->movementRequest.pose_delta);
+    const auto& delta = *movement->movementRequest.pose_delta;
+    EXPECT_DOUBLE_EQ(delta.toe_translation[4].z, 0.02);
+    EXPECT_DOUBLE_EQ(delta.toe_translation[2].x, 0.03);
+    EXPECT_DOUBLE_EQ(delta.coxa_rotation_deg[0], -30);
+    EXPECT_DOUBLE_EQ(delta.coxa_rotation_deg[3], 30);
+    EXPECT_EQ(delta.toe_translation[0], geometry_msgs::msg::Vector3());
+    EXPECT_DOUBLE_EQ(delta.coxa_rotation_deg[5], 0);
+}
+
+TEST_F(SequenceParserTest, RejectsUnknownDuplicateAndMalformedNamedLegs) {
+    for (const auto* field : {"joint_targets: {front: {torso_coxa: 0, coxa_femur: 0, femur_tibia: 0}}",
+                              "joint_targets: {right_front: null}", "joint_targets: {}",
+                              "joint_targets: {right_front: {torso_coxa: 0}}",
+                              "pose_delta: {toe_translation: {right_back: {}, right_back: {z: 1}}}",
+                              "pose_delta: {toe_translation: {left_middle: {z: 1}}}",
+                              "pose_delta: {toe_translation: {right_front: {z: .nan}}}",
+                              "pose_delta: {coxa_rotation_deg: {right_front: .inf}}",
+                              "pose_delta: {coxa_rotation_deg: {left_front: 1, left_front: 2}}",
+                              "pose_delta: {toe_translation: {}}",
+                              "body_pose: {toe_positions: {right_front: {x: 0, y: 0, z: 0}}}"}) {
+        SCOPED_TRACE(field);
+        EXPECT_FALSE(parser_.parseString(
+            std::string("name: invalid\nactions:\n  - movement:\n      name: SINGLE_POSE\n      ") + field));
+    }
+}
+
+TEST_F(SequenceParserTest, RejectsInvalidJointTargetsAndPoseRestoration) {
+    for (const auto* movement :
+         {"{name: SEQUENCE_HIGH_FIVE}", "{name: SINGLE_POSE, joint_targets: []}",
+          "{name: SINGLE_POSE, joint_targets: [null, null, null, null, null, null]}",
+          "{name: SINGLE_POSE, joint_targets: [{torso_coxa: 0}, null, null, null, null, null]}",
+          "{name: SINGLE_POSE, joint_targets: [{torso_coxa: .nan, coxa_femur: 0, femur_tibia: 0}, null, "
+          "null, null, null, null]}",
+          "{name: CONTINUOUS_POSE, restore_pose: true}",
+          "{name: SINGLE_POSE, restore_pose: true, duration_s: 0}",
+          "{name: SINGLE_POSE, restore_pose: true, save_pose: true}",
+          "{name: SINGLE_POSE, restore_pose: true, body_pose: {head_orientation: {}}}",
+          "{name: SINGLE_POSE, restore_pose: true, pose_delta: {torso_translation: {}}}"}) {
+        SCOPED_TRACE(movement);
+        EXPECT_FALSE(parser_.parseString(std::string("name: invalid\nactions:\n  - movement: ") + movement));
+    }
+}
+
+TEST_F(SequenceParserTest, RejectsInvalidRelativePoseTargets) {
+    for (const auto* movement :
+         {"{name: SINGLE_POSE, pose_delta: {}}", "{name: SINGLE_POSE, pose_delta: {toe_translation: [{}]}}",
+          "{name: SINGLE_POSE, pose_delta: {coxa_rotation_deg: [0, 0, 0, 0, 0]}}",
+          "{name: SINGLE_POSE, pose_delta: {torso_translation: {x: .nan}}}",
+          "{name: SINGLE_POSE, pose_delta: {coxa_rotation_deg: [0, 0, 0, .inf, 0, 0]}}",
+          "{name: SINGLE_POSE, pose_delta: {unknown: 1}}",
+          "{name: CONTINUOUS_POSE, pose_delta: {torso_translation: {x: 0.01}}}",
+          "{name: SINGLE_POSE, duration_s: 0, pose_delta: {torso_translation: {x: 0.01}}}",
+          "{name: SINGLE_POSE, body_pose: {torso_pose: {}}, pose_delta: {torso_translation: {}}}",
+          "{name: SEQUENCE_CLAP}"}) {
+        SCOPED_TRACE(movement);
+        EXPECT_FALSE(parser_.parseString(std::string("name: invalid\nactions:\n  - movement: ") + movement));
+    }
+}
+
 TEST_F(SequenceParserTest, SensorGaitsUseStandardMovementRequests) {
     ASSERT_TRUE(parser_.parseString(R"(
 name: sensors
@@ -186,7 +302,7 @@ TEST_F(SequenceParserTest, LoadsCatalogAndResolvesTriggers) {
     joystick.button_a = true;
     const auto watch = parser_.getSequenceForJoystickRequest(joystick);
     ASSERT_TRUE(watch);
-    EXPECT_EQ(watch->get().name, "normal_watch");
+    EXPECT_EQ(watch->get().name, "watch");
     EXPECT_EQ(watch->get().actionGroups.size(), 2u);
     const auto standup = parser_.getSequenceForVoiceRequest("commandStandup");
     ASSERT_TRUE(standup);
@@ -323,7 +439,7 @@ sequences:
         RequestSystem: {turnOffServoRelay: true, systemShutdown: true, minDuration: 0.7}
         RequestSinglePose: {position: {z: -0.05}, orientation: {pitch: 15}, minDuration: 0.6}
         RequestMusic: {song: dance.mp3, volume: 0.3, minDuration: 0.5}
-        RequestMovementType: {type: SEQUENCE_LOOK, direction: ANTICLOCKWISE, duration_s: 3, minDuration: 0.4}
+        RequestMovementType: {type: SEQUENCE_WATCH, direction: ANTICLOCKWISE, duration_s: 3, minDuration: 0.4}
         RequestListening: {active: true, minDuration: 0.3}
         RequestHeadOrientation: {yaw: -12, minDuration: 0.2}
         RequestChat: {text: Question, language: en, minDuration: 0.1}
@@ -348,7 +464,7 @@ sequences:
     EXPECT_DOUBLE_EQ(pose.head_orientation.yaw, -12);
     EXPECT_DOUBLE_EQ(pose.head_orientation.pitch, 0);
     EXPECT_TRUE(listening->active);
-    EXPECT_EQ(movement->movementRequest.type, MovementRequest::SEQUENCE_LOOK);
+    EXPECT_EQ(movement->movementRequest.type, MovementRequest::SEQUENCE_WATCH);
     EXPECT_EQ(movement->movementRequest.direction, MovementRequest::ANTICLOCKWISE);
     EXPECT_DOUBLE_EQ(movement->movementRequest.duration_s.numerical_value_in(s), 3);
     EXPECT_EQ(music->song, "dance.mp3");
@@ -438,12 +554,12 @@ actions:
       duration_s: 2
       body_pose:
         toe_positions:
-          - {x: 0.2, y: -0.16, z: -0.05}
-          - {x: 0, y: -0.22, z: -0.05}
-          - {x: -0.2, y: -0.16, z: -0.05}
-          - {x: 0.2, y: 0.16, z: -0.05}
-          - {x: 0, y: 0.22, z: -0.05}
-          - {x: -0.2, y: 0.16, z: -0.05}
+          right_front: {x: 0.2, y: -0.16, z: -0.05}
+          right_mid: {x: 0, y: -0.22, z: -0.05}
+          right_back: {x: -0.2, y: -0.16, z: -0.05}
+          left_front: {x: 0.2, y: 0.16, z: -0.05}
+          left_mid: {x: 0, y: 0.22, z: -0.05}
+          left_back: {x: -0.2, y: 0.16, z: -0.05}
 )"));
     const auto head = request<RequestMovementType>("poses", 0, 0);
     const auto torso = request<RequestMovementType>("poses", 1, 0);

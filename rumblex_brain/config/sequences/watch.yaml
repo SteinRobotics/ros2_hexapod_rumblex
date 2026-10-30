@@ -1,4 +1,4 @@
-name: normal_watch
+name: watch
 trigger:
   joystick: button_a
   voice: commandWatch
