@@ -20,7 +20,7 @@ CCommunication::CCommunication(std::shared_ptr<rclcpp::Node> node) : node_(node)
 
 void CCommunication::onCommunicationStatus(const rumblex_interfaces::msg::CommunicationStatus& msg) {
     auto status_string = std::to_string(msg.status);
-    RCLCPP_INFO_STREAM(node_->get_logger(), "onCommunicationStatus |" << status_string.c_str() << "|");
+    // RCLCPP_INFO_STREAM(node_->get_logger(), "onCommunicationStatus |" << status_string.c_str() << "|");
     m_communication.status = msg.status;
     awaiting_status_ = false;
     if (!requestFinished() && msg.status == rumblex_interfaces::msg::CommunicationStatus::OFF) {

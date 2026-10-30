@@ -76,7 +76,7 @@ void CCoordinator::loadSequences() {
 }
 
 void CCoordinator::executeSequence(const Sequence& sequence, Prio prio) {
-    RCLCPP_INFO(node_->get_logger(), "Executing sequence: %s", sequence.name.c_str());
+    RCLCPP_INFO(node_->get_logger(), "Starting sequence from catalog: %s", sequence.name.c_str());
 
     if (sequence.name == "standup") {
         isStanding_ = true;
@@ -310,7 +310,7 @@ void CCoordinator::servoStatusReceived(const ServoStatus& msg) {
 }
 
 void CCoordinator::movementTypeActualReceived(const MovementRequest& msg) {
-    RCLCPP_INFO_STREAM(node_->get_logger(), "movementTypeActualReceived: " << msg.name);
+    // RCLCPP_INFO_STREAM(node_->get_logger(), "movementTypeActualReceived: " << msg.name);
     actualMovementType_ = msg.type;
     if (actualMovementType_ == MovementRequest::SEQUENCE_STAND_UP) {
         isStanding_ = true;

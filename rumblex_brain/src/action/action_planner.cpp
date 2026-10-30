@@ -19,8 +19,8 @@ CActionPlanner::CActionPlanner(std::shared_ptr<rclcpp::Node> node) : node_(node)
 
 void CActionPlanner::request(std::vector<std::shared_ptr<RequestBase>> input, Prio prio, InvocationId id) {
     RequestGroup requests(input, id);
-    RCLCPP_INFO_STREAM(node_->get_logger(),
-                       "CActionPlanner:: new requests with prio " << std::to_underlying(prio));
+    // RCLCPP_INFO_STREAM(node_->get_logger(),
+    //                    "CActionPlanner:: new requests with prio " << std::to_underlying(prio));
 
     // Priority handling:
     // - Highest: Interrupts everything, clears all queues, cancels running requests, and executes immediately.

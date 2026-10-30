@@ -53,39 +53,43 @@ TEST_P(OfflineVisualizationTest, RotatedTorsoKeepsToeTargetsFixed) {
             world_toe, "toe " + std::to_string(i), 1e-9);
     }
 }
-TEST_P(OfflineVisualizationTest, BreakfastDanceKeepsEveryInterpolatedFootReachable) {
-    rclcpp::NodeOptions options;
-    options.arguments({"--ros-args", "--params-file",
-                       std::string(RUMBLEX_ANATOMY_DIR) + "/" + GetParam() + "/anatomy.yaml"});
-    auto node = std::make_shared<rclcpp::Node>("test_dance_workspace", options);
-    rumblex_geometry::CBodyModel model(node);
-    model.moveTorso(model.getStandingToePositions());
-    auto pose = rumblex_geometry::bodyPose(model);
-    rumblex_geometry::CPose previous;
-    const auto actions = YAML::LoadFile(RUMBLEX_DANCE_FILE)["actions"];
-    for (size_t action = 0; action < actions.size(); ++action) {
-        const auto body = actions[action]["body_pose"];
-        if (!body) continue;
-        const auto position = body["torso_pose"]["position"];
-        const auto orientation = body["torso_pose"]["orientation"];
-        const rumblex_geometry::CPose target(position["x"].as<double>(), position["y"].as<double>(),
-                                             position["z"].as<double>(), orientation["roll"].as<double>(),
-                                             orientation["pitch"].as<double>(),
-                                             orientation["yaw"].as<double>());
-        // Sampling the complete path also catches an unreachable intermediate pose.
-        for (int step = 0; step <= 100; ++step) {
-            SCOPED_TRACE(GetParam() + " action " + std::to_string(action) + " step " + std::to_string(step));
-            pose.torso_pose = previous.linearInterpolate(target, step / 100.0).toMsg();
-            rumblex_movement::visualizationJoints(model, pose);
-            const auto expected = model.getToePositions();
-            for (const auto index : rumblex_geometry::bodyLegOrder) {
-                model.setLegAngles(index, model.getLegAngles(index));
-                // A clamped IK solution cannot reconstruct the requested foot position.
-                expectPositionNear(expected.at(index), model.getToePositions().at(index),
-                                   "dance foot target cannot be reached", 1e-9);
+TEST_P(OfflineVisualizationTest, DancesKeepEveryInterpolatedFootReachable) {
+    for (const auto* dance : {"snippets/dance_hot_dogs_for_breakfast.yaml", "dance_dancing_street.yaml"}) {
+        SCOPED_TRACE(dance);
+        rclcpp::NodeOptions options;
+        options.arguments({"--ros-args", "--params-file",
+                           std::string(RUMBLEX_ANATOMY_DIR) + "/" + GetParam() + "/anatomy.yaml"});
+        auto node = std::make_shared<rclcpp::Node>("test_dance_workspace", options);
+        rumblex_geometry::CBodyModel model(node);
+        model.moveTorso(model.getStandingToePositions());
+        auto pose = rumblex_geometry::bodyPose(model);
+        rumblex_geometry::CPose previous;
+        const auto actions = YAML::LoadFile(std::string(RUMBLEX_SEQUENCE_DIR) + "/" + dance)["actions"];
+        for (size_t action = 0; action < actions.size(); ++action) {
+            const auto body = actions[action]["body_pose"];
+            if (!body) continue;
+            const auto position = body["torso_pose"]["position"];
+            const auto orientation = body["torso_pose"]["orientation"];
+            const rumblex_geometry::CPose target(position["x"].as<double>(), position["y"].as<double>(),
+                                                 position["z"].as<double>(), orientation["roll"].as<double>(),
+                                                 orientation["pitch"].as<double>(),
+                                                 orientation["yaw"].as<double>());
+            // Sampling the complete path also catches an unreachable intermediate pose.
+            for (int step = 0; step <= 100; ++step) {
+                SCOPED_TRACE(GetParam() + " action " + std::to_string(action) + " step " +
+                             std::to_string(step));
+                pose.torso_pose = previous.linearInterpolate(target, step / 100.0).toMsg();
+                rumblex_movement::visualizationJoints(model, pose);
+                const auto expected = model.getToePositions();
+                for (const auto index : rumblex_geometry::bodyLegOrder) {
+                    model.setLegAngles(index, model.getLegAngles(index));
+                    // A clamped IK solution cannot reconstruct the requested foot position.
+                    expectPositionNear(expected.at(index), model.getToePositions().at(index),
+                                       "dance foot target cannot be reached", 1e-9);
+                }
             }
+            previous = target;
         }
-        previous = target;
     }
 }
 
