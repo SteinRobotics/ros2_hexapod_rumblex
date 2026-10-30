@@ -18,6 +18,19 @@ def expand(mesh=True, sim=False):
 
 
 class NoxDescriptionTests(unittest.TestCase):
+    def test_imu_frame_matches_primitive_mount(self):
+        for mesh in (False, True):
+            with self.subTest(mesh=mesh):
+                model = expand(mesh)
+                joint = model.find("joint[@name='imu_joint']")
+                self.assertIsNotNone(joint)
+                self.assertEqual(joint.get('type'), 'fixed')
+                self.assertEqual(joint.find('parent').get('link'), 'base_link')
+                self.assertEqual(joint.find('child').get('link'), 'imu_link')
+                self.assertEqual(joint.find('origin').get('xyz'), '0 0 0.0075')
+                self.assertEqual(joint.find('origin').get('rpy'), '0 0 0')
+                self.assertIsNotNone(model.find("link[@name='imu_link']"))
+
     def test_gazebo_resource_export_resolves_mesh_uris(self):
         share = ROOT / 'rumblex_description'
         manifest = ET.parse(share / 'package.xml')
