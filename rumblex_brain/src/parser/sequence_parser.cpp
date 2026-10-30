@@ -416,6 +416,12 @@ std::vector<std::shared_ptr<RequestBase>> CSequenceParser::parseActionGroup(cons
     if (movement && movement->movementRequest.type == MovementRequest::SINGLE_POSE &&
         !rumblex_geometry::hasBodyPose(movement->movementRequest.body_pose))
         throw std::runtime_error("SINGLE_POSE requires a body_pose target");
+    if (movement &&
+        (movement->movementRequest.type == MovementRequest::HOLD_DISTANCE ||
+         movement->movementRequest.type == MovementRequest::LEVEL_TORSO) &&
+        (ordered.contains("RequestVelocity") ||
+         rumblex_geometry::hasBodyPose(movement->movementRequest.body_pose)))
+        throw std::runtime_error("Sensor gaits own their velocity and pose targets");
     std::vector<std::shared_ptr<RequestBase>> requests;
     // Canonical names preserve dispatch order even when YAML aliases change.
     for (const auto& [type, value] : ordered) {
@@ -558,7 +564,8 @@ std::shared_ptr<RequestSystem> CSequenceParser::createRequestSystem(const YAML::
 std::shared_ptr<RequestMovementType> CSequenceParser::createRequestMovementType(const YAML::Node& value) {
     try {
         if (value.IsMap()) {
-            keys(value, {"name", "type", "direction", "duration_s", "minDuration", "body_pose"});
+            keys(value,
+                 {"name", "type", "direction", "duration_s", "minDuration", "body_pose", "distance_m"});
             if (value["name"] && value["type"]) throw std::runtime_error("Duplicate movement name/type");
             brain::MovementRequest movementRequest;
             if (value["body_pose"]) {
@@ -601,6 +608,19 @@ std::shared_ptr<RequestMovementType> CSequenceParser::createRequestMovementType(
                 movementRequest.duration_s = value["duration_s"].as<double>() * s;
             }
 
+            if (value["distance_m"]) movementRequest.distance_m = value["distance_m"].as<double>() * m;
+            const bool sensor_gait = movementRequest.type == MovementRequest::HOLD_DISTANCE ||
+                                     movementRequest.type == MovementRequest::LEVEL_TORSO;
+            if (movementRequest.type == MovementRequest::HOLD_DISTANCE) {
+                if (!movementRequest.distance_m || !isfinite(*movementRequest.distance_m) ||
+                    *movementRequest.distance_m <= 0.0 * m)
+                    throw std::runtime_error("HOLD_DISTANCE requires positive finite distance_m");
+            } else if (movementRequest.distance_m) {
+                throw std::runtime_error("distance_m requires HOLD_DISTANCE");
+            }
+            if (sensor_gait && (movementRequest.duration_s <= 0.0 * s ||
+                                rumblex_geometry::hasBodyPose(movementRequest.body_pose)))
+                throw std::runtime_error("Sensor gaits require positive duration and own their pose targets");
             if (!isfinite(movementRequest.duration_s) || movementRequest.duration_s < 0.0 * s)
                 throw std::runtime_error("Invalid movement duration");
             if (movementRequest.type != MovementRequest::SINGLE_POSE &&

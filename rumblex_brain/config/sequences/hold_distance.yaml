@@ -1,0 +1,14 @@
+name: hold_distance
+actions:
+  - movement:
+      name: SEQUENCE_STAND_UP
+      duration_s: 1.5
+  - movement:
+      name: HOLD_DISTANCE
+      distance_m: 0.6
+      duration_s: 10.0
+  - movement:
+      name: CONTINUOUS_POSE
+    velocity:
+      linear: {x: 0.0}
+      angular: {z: 0.0}

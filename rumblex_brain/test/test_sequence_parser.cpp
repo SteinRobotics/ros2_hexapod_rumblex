@@ -37,6 +37,50 @@ class SequenceParserTest : public ::testing::Test {
     }
 };
 
+TEST_F(SequenceParserTest, SensorGaitsUseStandardMovementRequests) {
+    ASSERT_TRUE(parser_.parseString(R"(
+name: sensors
+actions:
+  - movement: {name: HOLD_DISTANCE, distance_m: 0.6, duration_s: 10}
+  - movement: {name: LEVEL_TORSO, duration_s: 2}
+)"));
+    const auto hold = request<RequestMovementType>("sensors", 0, 0);
+    const auto level = request<RequestMovementType>("sensors", 1, 0);
+    ASSERT_TRUE(hold);
+    ASSERT_TRUE(level);
+    EXPECT_EQ(hold->movementRequest.type, MovementRequest::HOLD_DISTANCE);
+    ASSERT_TRUE(hold->movementRequest.distance_m);
+    EXPECT_DOUBLE_EQ(hold->movementRequest.distance_m->numerical_value_in(m), 0.6);
+    EXPECT_EQ(hold->movementRequest.duration_s, 10.0 * s);
+    EXPECT_EQ(level->movementRequest.type, MovementRequest::LEVEL_TORSO);
+    EXPECT_FALSE(level->movementRequest.distance_m);
+    EXPECT_EQ(level->movementRequest.duration_s, 2.0 * s);
+    for (const auto* action :
+         {"{movement: {name: HOLD_DISTANCE}}", "{movement: {name: HOLD_DISTANCE, distance_m: 0}}",
+          "{movement: {name: HOLD_DISTANCE, distance_m: .nan}}",
+          "{movement: {name: HOLD_DISTANCE, distance_m: 0.6, duration_s: 0}}",
+          "{movement: {name: LEVEL_TORSO, duration_s: .nan}}",
+          "{movement: {name: LEVEL_TORSO, distance_m: 0.6}}",
+          "{movement: {name: CONTINUOUS_MOVE, distance_m: 0.6}}",
+          "{movement: {name: LEVEL_TORSO, body_pose: {head_orientation: {}}}}",
+          "{movement: {name: HOLD_DISTANCE, distance_m: 0.6}, velocity: {linear: {x: 0.1}}}",
+          "{hold_distance: {distance_m: 0.6, duration_s: 1}}", "{level_torso: {duration_s: 1}}"}) {
+        EXPECT_FALSE(parser_.parseString(std::string("name: invalid\nactions: [") + action + "]"));
+        EXPECT_TRUE(parser_.getSequence("sensors"));
+    }
+    ASSERT_TRUE(parser_.parseString(R"(
+name: loop
+actions:
+  - loop:
+      times: 2
+      actions:
+        - movement: {name: HOLD_DISTANCE, distance_m: 0.7}
+        - movement: {name: LEVEL_TORSO}
+)"));
+    EXPECT_NE(request<RequestMovementType>("loop", 0, 0), request<RequestMovementType>("loop", 2, 0));
+    EXPECT_NE(request<RequestMovementType>("loop", 1, 0), request<RequestMovementType>("loop", 3, 0));
+}
+
 class SequenceFilesTest : public SequenceParserTest {
    protected:
     void SetUp() override {
@@ -55,6 +99,20 @@ class SequenceFilesTest : public SequenceParserTest {
     }
     std::filesystem::path directory_;
 };
+
+TEST_F(SequenceFilesTest, LoadsFeedbackFromSnippetWithIndependentLoopRequests) {
+    write("hold.yaml", "name: hold\nactions: [{include: snippets/hold.yaml}]\n");
+    write("snippets/hold.yaml",
+          "actions:\n  - loop:\n      times: 2\n      actions: [{movement: {name: HOLD_DISTANCE, distance_m: "
+          "0.6, "
+          "duration_s: 1}}]\n");
+    ASSERT_TRUE(parser_.parseFile((directory_ / "hold.yaml").string()));
+    const auto first = request<RequestMovementType>("hold", 0, 0);
+    const auto second = request<RequestMovementType>("hold", 1, 0);
+    ASSERT_TRUE(first);
+    ASSERT_TRUE(second);
+    EXPECT_NE(first, second);
+}
 
 TEST_F(SequenceFilesTest, LoadsAllFilesAndNestedSnippetsInOrder) {
     write("sequences/b.yml", "name: second\nactions: [{RequestTalking: second}]\n");
@@ -96,7 +154,7 @@ TEST_F(SequenceFilesTest, RejectsBrokenIncludesWithoutReplacingCatalog) {
           "actions: [", "name: invalid", "actions: [{include: [], RequestTalking: mixed}]"}) {
         write("snippet.yaml", snippet);
         EXPECT_FALSE(parser_.parseFile(file)) << snippet;
-        EXPECT_EQ(parser_.getSequences().size(), 18u);
+        EXPECT_EQ(parser_.getSequences().size(), 22u);
         EXPECT_TRUE(parser_.getSequenceForVoiceRequest("commandStandup"));
     }
 }
@@ -120,7 +178,7 @@ TEST_F(SequenceParserTest, RejectsIncludesWithoutSourceFile) {
 
 TEST_F(SequenceParserTest, LoadsCatalogAndResolvesTriggers) {
     ASSERT_TRUE(parser_.parseDirectory(RUMBLEX_SEQUENCES_DIRECTORY));
-    EXPECT_EQ(parser_.getSequences().size(), 18u);
+    EXPECT_EQ(parser_.getSequences().size(), 22u);
     EXPECT_FALSE(parser_.getSequence("missing"));
     EXPECT_FALSE(parser_.getSequenceForVoiceRequest("missing"));
     rumblex_interfaces::msg::JoystickRequest joystick;
@@ -140,6 +198,64 @@ TEST_F(SequenceParserTest, LoadsCatalogAndResolvesTriggers) {
     auto music = request<RequestMusic>("standup", 0, 1);
     ASSERT_TRUE(music);
     EXPECT_EQ(music->song, "STOP");
+}
+
+TEST_F(SequenceParserTest, CatalogPresetsPrepareStandupAndFinishStationary) {
+    ASSERT_TRUE(parser_.parseDirectory(RUMBLEX_SEQUENCES_DIRECTORY));
+    struct Preset {
+        const char* name;
+        uint8_t gait;
+        double seconds;
+    };
+    for (const auto& preset : {Preset{"hold_distance", MovementRequest::HOLD_DISTANCE, 10.0},
+                               Preset{"level_torso", MovementRequest::LEVEL_TORSO, 5.0},
+                               Preset{"waiting", MovementRequest::SEQUENCE_WAITING, 5.0},
+                               Preset{"run_demo", MovementRequest::CONTINUOUS_RUNNING, 3.0}}) {
+        SCOPED_TRACE(preset.name);
+        const auto sequence = parser_.getSequence(preset.name);
+        ASSERT_TRUE(sequence);
+        ASSERT_EQ(sequence->get().actionGroups.size(), 3u);
+        EXPECT_EQ(sequence->get().actionGroups[0].size(), 1u);
+        const auto standup = request<RequestMovementType>(preset.name, 0, 0);
+        ASSERT_TRUE(standup);
+        EXPECT_EQ(standup->movementRequest.type, MovementRequest::SEQUENCE_STAND_UP);
+        EXPECT_EQ(standup->movementRequest.duration_s, 1.5 * s);
+
+        const auto movement = request<RequestMovementType>(preset.name, 1, 0);
+        ASSERT_TRUE(movement);
+        EXPECT_EQ(movement->movementRequest.type, preset.gait);
+        EXPECT_EQ(movement->movementRequest.duration_s, preset.seconds * s);
+        EXPECT_FALSE(movement->movementRequest.body_pose.has_head_orientation);
+        EXPECT_FALSE(movement->movementRequest.body_pose.has_torso_pose);
+        EXPECT_FALSE(movement->movementRequest.body_pose.has_toe_positions);
+        if (preset.gait == MovementRequest::HOLD_DISTANCE) {
+            ASSERT_TRUE(movement->movementRequest.distance_m);
+            EXPECT_EQ(*movement->movementRequest.distance_m, 0.6 * m);
+        } else {
+            EXPECT_FALSE(movement->movementRequest.distance_m);
+        }
+        if (preset.gait == MovementRequest::CONTINUOUS_RUNNING) {
+            EXPECT_EQ(sequence->get().actionGroups[1].size(), 2u);
+            const auto velocity = request<RequestVelocity>(preset.name, 1, 1);
+            ASSERT_TRUE(velocity);
+            geometry_msgs::msg::Twist expected;
+            expected.linear.x = 0.03;
+            EXPECT_EQ(velocity->velocity, expected);
+        } else {
+            EXPECT_EQ(sequence->get().actionGroups[1].size(), 1u);
+        }
+
+        EXPECT_EQ(sequence->get().actionGroups[2].size(), 2u);
+        const auto stationary = request<RequestMovementType>(preset.name, 2, 0);
+        const auto stop = request<RequestVelocity>(preset.name, 2, 1);
+        ASSERT_TRUE(stationary);
+        ASSERT_TRUE(stop);
+        EXPECT_EQ(stationary->movementRequest.type, MovementRequest::CONTINUOUS_POSE);
+        EXPECT_FALSE(stationary->movementRequest.body_pose.has_head_orientation);
+        EXPECT_FALSE(stationary->movementRequest.body_pose.has_torso_pose);
+        EXPECT_FALSE(stationary->movementRequest.body_pose.has_toe_positions);
+        EXPECT_EQ(stop->velocity, geometry_msgs::msg::Twist());
+    }
 }
 
 TEST_F(SequenceParserTest, PreservesDanceGroupsAndPoseUnits) {
@@ -305,7 +421,7 @@ TEST_F(SequenceParserTest, InvalidActionsRetainPreviousCatalog) {
           "sequences: [{name: valid, actions: [{say: hi}]}, {name: invalid, actions: []}]",
           "name: invalid\nactions: [{movement: {name: SINGLE_POSE, duration_s: invalid}, say: hello}]"}) {
         EXPECT_FALSE(parser_.parseString(text));
-        EXPECT_EQ(parser_.getSequences().size(), 18u);
+        EXPECT_EQ(parser_.getSequences().size(), 22u);
     }
 }
 TEST_F(SequenceParserTest, BodyPoseUsesOneRequestAndPreservesComponentPresence) {

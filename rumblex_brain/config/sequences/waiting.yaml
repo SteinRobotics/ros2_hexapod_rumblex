@@ -1,0 +1,13 @@
+name: waiting
+actions:
+  - movement:
+      name: SEQUENCE_STAND_UP
+      duration_s: 1.5
+  - movement:
+      name: SEQUENCE_WAITING
+      duration_s: 5.0
+  - movement:
+      name: CONTINUOUS_POSE
+    velocity:
+      linear: {x: 0.0}
+      angular: {z: 0.0}

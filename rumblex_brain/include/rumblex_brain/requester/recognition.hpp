@@ -29,11 +29,13 @@ class CRecognition {
     void onSupplyVoltage(const std_msgs::msg::Float32& msg) const;
     void onSpeechRecognition(const std_msgs::msg::String& msg) const;
     void onJoystickRequest(const rumblex_interfaces::msg::JoystickRequest& msg) const;
+    void onSequenceRequest(const std_msgs::msg::String& msg) const;
     void onCmdVel(const geometry_msgs::msg::Twist& msg) const;
     void onServoStatus(const rumblex_interfaces::msg::ServoStatus& msg) const;
 
    private:
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subSpeechRecognition_;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subSequenceRequest_;
     rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr subSupplyVoltage_;
     rclcpp::Subscription<rumblex_interfaces::msg::JoystickRequest>::SharedPtr subJoystick_;
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr subCmdVel_;

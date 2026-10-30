@@ -37,6 +37,7 @@ class CCoordinator {
     void update();
 
     void joystickRequestReceived(const rumblex_interfaces::msg::JoystickRequest& msg);
+    void sequenceRequested(const std::string& name);
     void cmdVelReceived(const geometry_msgs::msg::Twist& msg);
     void speechRecognized(std::string text);
     void supplyVoltageReceived(float voltage);

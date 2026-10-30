@@ -5,7 +5,8 @@ using namespace mp_units;
 using namespace mp_units::si::unit_symbols;
 CMoveCombinedGait::CMoveCombinedGait(std::shared_ptr<rclcpp::Node>, std::shared_ptr<CPoseModel> model,
                                      Parameters::Wave& wave, Parameters::Ripple& ripple,
-                                     Parameters::Tripod& tripod, Parameters::MoveCombined& combined)
+                                     Parameters::Tripod& tripod, Parameters::MoveCombined& combined,
+                                     bool scan_head)
     : planner_(std::move(model)), combined_params_(combined) {
     using enum ELegIndex;
     patterns_[EMoveCombinedGaitType::Wave] = {
@@ -23,6 +24,10 @@ CMoveCombinedGait::CMoveCombinedGait(std::shared_ptr<rclcpp::Node>, std::shared_
         tripod.gait_step_length,
         tripod.leg_lift_height,
         tripod.head_yaw_amplitude};
+    if (!scan_head) {
+        using mp_units::angular::unit_symbols::deg;
+        for (auto& [type, pattern] : patterns_) pattern.head_yaw = 0.0 * deg;
+    }
 }
 EMoveCombinedGaitType CMoveCombinedGait::selectGait(double combined_mag) const {
     const double hyst = combined_params_.hysteresis_margin;

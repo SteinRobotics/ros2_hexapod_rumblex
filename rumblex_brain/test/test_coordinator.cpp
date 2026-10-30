@@ -17,6 +17,12 @@ using namespace mp_units::si::unit_symbols;
 // Inspect scheduling in tests without exposing planner state to callers.
 class ActionPlannerTestAccess {
    public:
+    static size_t normalCount(const CActionPlanner& planner) {
+        return planner.requests_normal_prio_.size();
+    }
+    static size_t highCount(const CActionPlanner& planner) {
+        return planner.requests_high_prio_.size();
+    }
     static CMovement& movement(CActionPlanner& planner) {
         return *planner.handler_movement_;
     }
@@ -79,6 +85,53 @@ class CoordinatorTest : public ::testing::Test {
     std::shared_ptr<CActionPlanner> planner_;
     std::unique_ptr<CCoordinator> coordinator_;
 };
+
+TEST_F(CoordinatorTest, GaitFailureRemovesOnlyItsSequenceInvocation) {
+    create();
+    auto publisher = node_->create_publisher<rumblex_interfaces::msg::BodyPose>(
+        "body_pose_actual", rclcpp::QoS(1).transient_local());
+    rclcpp::NodeOptions options;
+    options.parameter_overrides(test_helpers::defaultKinematicsParameters());
+    auto seed = std::make_shared<rclcpp::Node>("failure_seed", options);
+    CPoseModel model(seed);
+    model.moveTorso(model.getLaydownToePositions(), CPose());
+    model.setHeadOrientation(
+        COrientation(0.0, -node_->get_parameter("gait.generic.head_max_pitch_deg").as_double(), 0.0));
+    publisher->publish(bodyPose(model));
+    rclcpp::executors::SingleThreadedExecutor executor;
+    executor.add_node(node_);
+    for (int i = 0; i < 20; ++i) {
+        executor.spin_some();
+        planner_->update();
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+    const auto first = planner_->nextInvocationId();
+    const auto other = planner_->nextInvocationId();
+    auto hold = std::make_shared<RequestMovementType>();
+    hold->movementRequest.type = MovementRequest::HOLD_DISTANCE;
+    hold->movementRequest.distance_m = 0.6 * m;
+    auto own_next = std::make_shared<RequestTalking>();
+    own_next->text = "must not run";
+    auto unrelated = std::make_shared<RequestTalking>();
+    unrelated->text = "other sequence";
+    std::vector<std::string> spoken;
+    auto speech = node_->create_subscription<std_msgs::msg::String>(
+        "request_talking", 10, [&](const std_msgs::msg::String& msg) { spoken.push_back(msg.data); });
+    planner_->request({hold}, Prio::Normal, first);
+    planner_->request({own_next}, Prio::Normal, first);
+    planner_->request({unrelated}, Prio::Normal, other);
+    // Gait activation fails from a non-standing pose and reports through the normal movement path.
+    for (int i = 0; i < 20; ++i) {
+        executor.spin_some();
+        planner_->update();
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+    EXPECT_EQ(ActionPlannerTestAccess::normalCount(*planner_), 0u);
+    ASSERT_FALSE(ActionPlannerTestAccess::activeRequests(*planner_).empty());
+    EXPECT_EQ(ActionPlannerTestAccess::activeRequests(*planner_).front(), unrelated);
+    EXPECT_EQ(*hold->movementRequest.distance_m, 0.6 * m);
+    EXPECT_EQ(std::count(spoken.begin(), spoken.end(), "must not run"), 0);
+}
 
 TEST_F(CoordinatorTest, CancellationAllowsSchedulingBeforeMotionStops) {
     create();
@@ -226,6 +279,44 @@ TEST_F(CoordinatorTest, VoiceRunningUsesRequestedDirectionAndStops) {
     const auto velocity = std::dynamic_pointer_cast<RequestVelocity>(group.back());
     ASSERT_TRUE(velocity);
     EXPECT_EQ(velocity->velocity, geometry_msgs::msg::Twist());
+}
+
+TEST_F(CoordinatorTest, NamedSequenceUsesNormalPriorityAndExactName) {
+    create();
+    const auto highCount = ActionPlannerTestAccess::highCount(*planner_);
+    coordinator_->sequenceRequested("clap");
+    const auto& group = ActionPlannerTestAccess::latestNormalRequest(*planner_);
+    ASSERT_FALSE(group.empty());
+    const auto gait = std::dynamic_pointer_cast<RequestMovementType>(group.front());
+    ASSERT_TRUE(gait);
+    EXPECT_EQ(gait->movementRequest.type, MovementRequest::SEQUENCE_CLAP);
+    EXPECT_EQ(ActionPlannerTestAccess::highCount(*planner_), highCount);
+}
+
+TEST_F(CoordinatorTest, NamedStandupUsesHighPriority) {
+    create();
+    const auto normalCount = ActionPlannerTestAccess::normalCount(*planner_);
+    const auto highCount = ActionPlannerTestAccess::highCount(*planner_);
+    coordinator_->sequenceRequested("standup");
+    EXPECT_GT(ActionPlannerTestAccess::highCount(*planner_), highCount);
+    EXPECT_EQ(ActionPlannerTestAccess::normalCount(*planner_), normalCount);
+    const auto& group = ActionPlannerTestAccess::latestHighRequest(*planner_);
+    const auto gait = std::find_if(group.begin(), group.end(), [](const auto& request) {
+        return std::dynamic_pointer_cast<RequestMovementType>(request) != nullptr;
+    });
+    ASSERT_NE(gait, group.end());
+    EXPECT_EQ(std::dynamic_pointer_cast<RequestMovementType>(*gait)->movementRequest.type,
+              MovementRequest::SEQUENCE_STAND_UP);
+}
+
+TEST_F(CoordinatorTest, UnknownNamedSequenceDoesNotQueueActions) {
+    create();
+    const auto normalCount = ActionPlannerTestAccess::normalCount(*planner_);
+    const auto highCount = ActionPlannerTestAccess::highCount(*planner_);
+    coordinator_->sequenceRequested("missing_sequence");
+    coordinator_->sequenceRequested("");
+    EXPECT_EQ(ActionPlannerTestAccess::normalCount(*planner_), normalCount);
+    EXPECT_EQ(ActionPlannerTestAccess::highCount(*planner_), highCount);
 }
 
 TEST_F(CoordinatorTest, VoiceClapSelectsImplementedGait) {

@@ -4,6 +4,9 @@
 
 #include "gait/gait_controller.hpp"
 
+#include "gait/gait_hold_distance.hpp"
+#include "gait/gait_level_torso.hpp"
+
 using brain::MovementRequest;
 
 namespace brain {
@@ -57,6 +60,9 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
     gaits_[MovementRequest::SEQUENCE_WATCH] = std::make_shared<CYawSequenceGait>(
         node_, kinematics_, CYawSequenceGait::Sweep::BothSides, params_.watch.head_max_yaw, 0.0 * deg);
 
+    gaits_[MovementRequest::HOLD_DISTANCE] = std::make_shared<CHoldDistanceGait>(node_, kinematics_, params_);
+    gaits_[MovementRequest::LEVEL_TORSO] = std::make_shared<CLevelTorsoGait>(node_, kinematics_);
+
     // Default active gait (robot starts laying down)
     active_gait_ = gaits_[MovementRequest::SEQUENCE_LAYDOWN];
     active_request_ = createMsg("SEQUENCE_LAYDOWN", MovementRequest::SEQUENCE_LAYDOWN);
@@ -75,24 +81,35 @@ bool CGaitController::setGait(brain::MovementRequest request) {
         return false;
     }
 
+    const bool sensor_gait =
+        request.type == MovementRequest::HOLD_DISTANCE || request.type == MovementRequest::LEVEL_TORSO;
+    if ((sensor_gait && (!isfinite(request.duration_s) || request.duration_s <= 0.0 * s ||
+                         hasBodyPose(request.body_pose))) ||
+        (request.type == MovementRequest::HOLD_DISTANCE &&
+         (!request.distance_m || !isfinite(*request.distance_m) || *request.distance_m <= 0.0 * m)) ||
+        (request.type != MovementRequest::HOLD_DISTANCE && request.distance_m)) {
+        RCLCPP_WARN(node_->get_logger(), "Invalid sensor gait parameters");
+        return false;
+    }
     pending_request_ = createMsg("NO_REQUEST", MovementRequest::NO_REQUEST);
 
     // If there's an active gait and the same gait is requested again, handle
     // transient states (Stopped -> start, StopPending/Stopping -> cancelStop) and return.
     if (request.type == active_request_.type) {
         stop_requested_ = false;
-        if (request.type == MovementRequest::SINGLE_POSE && active_gait_->state() != EGaitState::Stopped) {
+        if ((request.type == MovementRequest::SINGLE_POSE || sensor_gait) &&
+            active_gait_->state() != EGaitState::Stopped) {
             pending_request_ = request;
             active_gait_->requestStop();
             stop_requested_ = true;
             return true;
         }
         if (active_gait_->state() == EGaitState::Stopped) {
-            if (request.type == MovementRequest::SINGLE_POSE) {
-                std::static_pointer_cast<CSinglePoseGait>(active_gait_)->setTarget(request.body_pose);
-            }
+            configureGait(request);
+            if (sensor_gait) active_request_ = request;
             RCLCPP_INFO(node_->get_logger(), "CGaitController::setGait starting %s", request.name.c_str());
             active_gait_->start(request.duration_s, request.direction);
+            if (sensor_gait && on_gait_changed) on_gait_changed(request);
         }
         if (active_gait_->state() == EGaitState::StopPending ||
             active_gait_->state() == EGaitState::Stopping) {
@@ -122,13 +139,18 @@ void CGaitController::switchGait(brain::MovementRequest request) {
     active_request_ = request;
 
     active_gait_ = gaits_[request.type];
-    if (request.type == MovementRequest::SINGLE_POSE) {
-        std::static_pointer_cast<CSinglePoseGait>(active_gait_)->setTarget(request.body_pose);
-    }
+    configureGait(request);
     active_gait_->start(request.duration_s, request.direction);
 
     // Publish the new movement type
     if (on_gait_changed) on_gait_changed(request);
+}
+
+void CGaitController::configureGait(const MovementRequest& request) {
+    if (request.type == MovementRequest::SINGLE_POSE)
+        std::static_pointer_cast<CSinglePoseGait>(active_gait_)->setTarget(request.body_pose);
+    else if (request.type == MovementRequest::HOLD_DISTANCE)
+        std::static_pointer_cast<CHoldDistanceGait>(active_gait_)->setDistance(*request.distance_m);
 }
 
 bool CGaitController::updateSelectedGait(const Velocity& velocity, CPose torso, COrientation head,
@@ -150,6 +172,8 @@ bool CGaitController::updateSelectedGait(const Velocity& velocity, CPose torso, 
 
 bool CGaitController::finishesAutomatically() const {
     switch (currentGait()) {
+        case MovementRequest::HOLD_DISTANCE:
+        case MovementRequest::LEVEL_TORSO:
         case MovementRequest::SINGLE_POSE:
         case MovementRequest::SEQUENCE_LAYDOWN:
         case MovementRequest::SEQUENCE_STAND_UP:

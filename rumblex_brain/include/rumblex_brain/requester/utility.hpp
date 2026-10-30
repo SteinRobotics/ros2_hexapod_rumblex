@@ -16,6 +16,8 @@ namespace brain {
 // Both maps must share linkage so reverse-map initialization cannot select an
 // uninitialized translation-unit-local forward map in a shared-library build.
 inline const std::map<const uint32_t, const std::string> movementTypeToName = {
+    {brain::MovementRequest::HOLD_DISTANCE, "HOLD_DISTANCE"},
+    {brain::MovementRequest::LEVEL_TORSO, "LEVEL_TORSO"},
     {brain::MovementRequest::NO_REQUEST, "NO_REQUEST"},
     {brain::MovementRequest::SEQUENCE_LAYDOWN, "SEQUENCE_LAYDOWN"},
     {brain::MovementRequest::SEQUENCE_STAND_UP, "SEQUENCE_STAND_UP"},

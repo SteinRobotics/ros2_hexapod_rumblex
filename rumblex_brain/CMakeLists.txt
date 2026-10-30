@@ -15,6 +15,9 @@ find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rumblex_interfaces REQUIRED)
 find_package(rumblex_utils REQUIRED)
@@ -44,6 +47,10 @@ src/requester/text_interpreter.cpp
 src/handler/system.cpp
 src/handler/communication.cpp
 src/handler/movement.cpp
+src/gait/hold_distance_control.cpp
+src/gait/level_torso_control.cpp
+src/gait/gait_hold_distance.cpp
+src/gait/gait_level_torso.cpp
 src/parser/sequence_parser.cpp
 )
 add_library(rumblex_brain_lib ${SOURCES})
@@ -54,6 +61,9 @@ target_include_directories(rumblex_brain_lib PUBLIC
 )
 target_link_libraries(rumblex_brain_lib PUBLIC
   rumblex_utils::rumblex_geometry
+  ${sensor_msgs_TARGETS}
+  tf2::tf2
+  tf2_ros::tf2_ros
   rclcpp::rclcpp
   ament_index_cpp::ament_index_cpp
   ${rumblex_interfaces_TARGETS}
@@ -67,6 +77,9 @@ add_executable(node_brain
 )
 target_link_libraries(node_brain PRIVATE
   rumblex_brain_lib
+  ${sensor_msgs_TARGETS}
+  tf2::tf2
+  tf2_ros::tf2_ros
   rclcpp::rclcpp
   ${std_msgs_TARGETS}
   ${geometry_msgs_TARGETS}
@@ -98,6 +111,16 @@ install(DIRECTORY
 # Unit tests
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_sensor_gaits test/test_sensor_gaits.cpp)
+  target_link_libraries(test_sensor_gaits rumblex_brain_lib)
+  ament_add_gtest(test_leveling_movement_handler test/test_leveling_movement_handler.cpp)
+  target_link_libraries(test_leveling_movement_handler rumblex_brain_lib)
+  ament_add_gtest(test_feedback_movement_handler test/test_feedback_movement_handler.cpp)
+  target_link_libraries(test_feedback_movement_handler rumblex_brain_lib)
+  ament_add_gtest(test_hold_distance_control test/test_hold_distance_control.cpp)
+  target_link_libraries(test_hold_distance_control rumblex_brain_lib)
+  ament_add_gtest(test_level_torso_control test/test_level_torso_control.cpp)
+  target_link_libraries(test_level_torso_control rumblex_brain_lib)
   ament_add_gtest(test_sequence_parser test/test_sequence_parser.cpp)
   target_link_libraries(test_sequence_parser rumblex_brain_lib)
   target_compile_definitions(test_sequence_parser PRIVATE

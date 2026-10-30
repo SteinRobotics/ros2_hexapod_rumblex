@@ -169,16 +169,17 @@
       </gazebo>
     </xacro:if>
 
-    <!-- BNO055 board origin: board_layout and place_board(), including the flip. -->
+    <!-- BNO055 measurement frame: upright sensor, independent of the CAD envelope flip. -->
     <joint name="imu_joint" type="fixed">
       <parent link="base_link"/><child link="imu_link"/>
-      <origin xyz="0 -0.002 0.0185" rpy="${pi} 0 ${-pi/2}"/>
+      <origin xyz="0 -0.002 0.0185" rpy="0 0 ${-pi/2}"/>
     </joint>
     <link name="imu_link">
       <!-- Mesh torso already includes this CAD board envelope (not chip dimensions). -->
       <xacro:unless value="${meshes}">
         <visual>
-          <origin xyz="0 0 0.0075"/>
+          <!-- Keep the board envelope placement separate from the upright measurement frame. -->
+          <origin xyz="0 0 -0.0075" rpy="${pi} 0 0"/>
           <geometry><box size="0.026 0.016 0.015"/></geometry>
           <material name="bno055_board"><color rgba="0.05 0.3 0.1 1"/></material>
         </visual>
@@ -186,7 +187,7 @@
     </link>
     <xacro:if value="$(arg use_sim)">
       <gazebo reference="imu_link">
-        <!-- Ideal IMU in CAD board axes; no BNO055 chip-axis remap or
+        <!-- Ideal IMU in upright measurement axes; no BNO055 chip-axis remap or
              calibration model. Acceleration includes gravity. -->
         <sensor name="imu_bno055" type="imu">
           <pose>0 0 0 0 0 0</pose>

@@ -8,7 +8,7 @@ class CMoveCombinedGait : public IContinuousGait {
    public:
     CMoveCombinedGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> model,
                       Parameters::Wave& wave, Parameters::Ripple& ripple, Parameters::Tripod& tripod,
-                      Parameters::MoveCombined& combined);
+                      Parameters::MoveCombined& combined, bool scan_head = true);
     void start(units::Duration, uint8_t) override {
         planner_.start();
     }

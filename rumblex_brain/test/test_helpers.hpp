@@ -16,6 +16,28 @@ using namespace mp_units;
 using namespace mp_units::si::unit_symbols;
 using mp_units::angular::unit_symbols::deg;
 
+inline std::vector<rclcpp::Parameter> holdDistanceParameters() {
+    return {rclcpp::Parameter("hold_distance.range_topic", "test_range"),
+            rclcpp::Parameter("hold_distance.body_frame", "base_link"),
+            rclcpp::Parameter("hold_distance.distance_gain", 0.2),
+            rclcpp::Parameter("hold_distance.distance_deadband_m", 0.02),
+            rclcpp::Parameter("hold_distance.max_speed_m_s", 0.02),
+            rclcpp::Parameter("hold_distance.max_acceleration_m_s2", 0.02),
+            rclcpp::Parameter("hold_distance.freshness_s", 0.5),
+            rclcpp::Parameter("hold_distance.startup_timeout_s", 2.0)};
+}
+
+inline std::vector<rclcpp::Parameter> levelTorsoParameters() {
+    return {rclcpp::Parameter("level_torso.imu_topic", "test_imu"),
+            rclcpp::Parameter("level_torso.body_frame", "base_link"),
+            rclcpp::Parameter("level_torso.tilt_gain", 0.3),
+            rclcpp::Parameter("level_torso.tilt_deadband_rad", 0.017),
+            rclcpp::Parameter("level_torso.max_tilt_rad", 0.14),
+            rclcpp::Parameter("level_torso.max_tilt_rate_rad_s", 0.035),
+            rclcpp::Parameter("level_torso.freshness_s", 0.5),
+            rclcpp::Parameter("level_torso.startup_timeout_s", 2.0)};
+}
+
 inline std::vector<rclcpp::Parameter> defaultKinematicsParameters() {
     std::vector<rclcpp::Parameter> params = {
         rclcpp::Parameter("coxa_length_m", 0.050), rclcpp::Parameter("femur_length_m", 0.063),

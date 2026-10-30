@@ -84,6 +84,101 @@ Velocity uses metres/second and radians/second. `movement` can carry a nested
 Continuous joystick commands retain previously supplied targets when a stick is
 released while the same gait remains active.
 
+## Sensor feedback gaits
+
+The catalog includes these directly launchable presets. Each begins with a
+1.5-second standup and ends with `CONTINUOUS_POSE` and zero velocity, stopping
+gracefully while retaining the resulting pose.
+
+| Sequence | Preset | Required sensor |
+| --- | --- | --- |
+| `hold_distance` | Maintain 0.6 m for 10 seconds | 1D lidar |
+| `level_torso` | Level torso for 5 seconds | IMU |
+| `waiting` | Waiting motion for 5 seconds | None |
+| `run_demo` | Run forward at 0.03 m/s for 3 seconds | None |
+
+These sequences have no joystick or voice triggers. The virtual controller adds
+named buttons automatically from the installed catalog; they can also be launched
+by publishing the exact name as `std_msgs/msg/String` on `sequence_request`.
+Install updated catalog files as needed, then restart the brain and GUI.
+Sensor failures retain the abort behavior described below, including stopping
+generated movement and removing the invocation's remaining actions.
+
+Two independent gaits use the existing `movement` action and `RequestMovementType`:
+
+```yaml
+name: sensor_demo
+actions:
+  - movement: {name: SEQUENCE_STAND_UP, duration_s: 1.5}
+  - movement: {name: HOLD_DISTANCE, distance_m: 0.6, duration_s: 10.0}
+  - movement: {name: LEVEL_TORSO, duration_s: 5.0}
+  - say: Finished
+```
+
+- `HOLD_DISTANCE` uses **only 1D lidar** to walk forward/backward toward the target
+  distance. It keeps the torso pose fixed, prepares the head to forward-neutral
+  over one second, and suppresses gait head scanning. It needs no IMU data or IMU
+  configuration.
+- `LEVEL_TORSO` uses **only IMU orientation** to level torso roll/pitch while
+  standing. The feet, torso position/yaw, and head pose are retained. It starts no
+  walking gait and needs no lidar data or lidar configuration.
+
+Both gaits require the robot to be standing at a rest endpoint. `duration_s`
+defaults to 1.0 seconds, as for other movements, and must be positive and finite.
+`distance_m` is required only for `HOLD_DISTANCE` and must be positive and finite;
+other gaits reject it. Loops and snippets work through the usual movement parser.
+These gaits own their velocity and pose targets: do not combine them with a
+`velocity` action or `body_pose` target. Communication actions can share the group.
+The former standalone `hold_distance`/`level_torso` action keys are removed.
+
+The duration starts after the preceding gait settles, required preparation
+finishes, and the required sensor/TF is available. The gait reports completion
+through its normal stopped state after its duration and graceful stopping. The final torso pose is retained. Cancellation
+clears controller state and generated velocity.
+
+Configure each gait separately under `hold_distance.*` and `level_torso.*` in
+`config/<robot>/gait.yaml`. Parameters are read when the gait starts;
+restart the node after changing its parameter file. Both profiles have
+`body_frame: base_link`, `freshness_s: 0.5`, and `startup_timeout_s: 2.0`.
+Startup timeout applies while the gait waits for its required sensor and mounting
+TF, after any head preparation. Before initial pose feedback, requests use the
+same deferred-start behavior as all other movement requests. Freshness checks both
+message age and steady-clock reception age, so paused simulation or replayed readings
+cannot sustain control.
+
+| Config prefix | Parameter suffix | Default |
+| --- | --- | --- |
+| `hold_distance` | `range_topic` | `scan_1d` |
+| `hold_distance` | `distance_gain` | 0.2 (1/s) |
+| `hold_distance` | `distance_deadband_m` | 0.02 |
+| `hold_distance` | `max_speed_m_s` | 0.02, also capped by the robot velocity limit |
+| `hold_distance` | `max_acceleration_m_s2` | 0.02 |
+| `level_torso` | `imu_topic` | `bno055/imu` |
+| `level_torso` | `tilt_gain` | 0.3 (1/s) |
+| `level_torso` | `tilt_deadband_rad` | 0.01745 (about 1 degree) |
+| `level_torso` | `max_tilt_rad` | 0.13963 (about 8 degrees), also capped by gait limits |
+| `level_torso` | `max_tilt_rate_rad_s` | 0.03491 (about 2 degrees/s) |
+
+Positive distance error commands forward motion. The lidar's +X beam must point
+within 15 degrees of body +X, with valid TF at the reading timestamp. Distance is
+measured from the lidar along its beam; keep a stationary target in that beam.
+A `sensor_msgs/Range` publisher is required; Nira's normal 2D lidar does not
+supply `scan_1d` automatically.
+
+Positive measured tilt produces a negative torso correction. Commands integrate
+bounded correction rates and stop at the absolute tilt limits. IMU orientation
+is transformed into the body frame using mounting TF; acceleration is not used.
+Hardware axis remapping must agree with the IMU header frame. Nira's measurement
+frame is upright, with roll/pitch/yaw `(0, 0, -pi/2)`. Nox's primitive URDF includes
+`imu_link`; its mesh URDF needs a verified mounting TF supplied separately.
+For simulation, override `level_torso.imu_topic` with `/imu/data` at startup and
+use the simulation clock consistently. These gains still require physical tuning.
+
+Missing, stale, invalid, or misaligned required sensor data during control aborts
+that sequence invocation: generated speed becomes zero, walking stops gracefully,
+and remaining groups belonging to that invocation are removed. Other queued
+invocations are retained. Failure of the unused sensor has no effect.
+
 ## Loops
 
 ```yaml

@@ -11,6 +11,25 @@ For headless test bringup, add `enable_simulated_teleop:=false`.
 The GUI requires a desktop display and uses the existing Pygame dependency;
 no physical joystick is needed.
 
+The GUI reads the installed `rumblex_brain/config/sequences` YAML catalog at
+startup. Each mapped controller button shows its exact sequence name underneath.
+The **Additional sequences** panel provides a named button for every sequence
+without an available controller mapping. Click and release a button to run it;
+scroll within the panel when the list exceeds the visible area. Releasing outside
+the button or losing focus cancels the click. New sequence buttons have no
+long-press action or keyboard shortcut.
+
+These buttons publish the exact sequence name as `std_msgs/msg/String` on
+`sequence_request` (queue depth 10). The brain executes the named sequence with
+normal joystick priority (`standup` uses high priority); unknown names are logged
+and ignored. Start remains reserved for gait cycling. Sequences assigned to Start,
+unsupported triggers, or shadowed mappings receive separate buttons as well.
+
+The simulated controller additionally requires `ament_index_python`, PyYAML
+(`python3-yaml`), and the installed `rumblex_brain` catalog. Build/install changed
+catalog files as needed and restart both the GUI and brain to pick up changes.
+Catalog errors appear in the panel and node log; joystick controls remain usable.
+
 Click and hold buttons, or drag either stick. Sticks return to center when
 released. Keyboard and mouse inputs can be combined; dragging overrides the
 keyboard for that stick until release. Keyboard directions use full deflection,

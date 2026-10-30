@@ -1,5 +1,8 @@
 #pragma once
 
+#include <optional>
+#include <utility>
+
 #include "gait/pose_model.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "velocity.hpp"
@@ -20,6 +23,17 @@ class IGait {
     virtual void requestStop() = 0;
     virtual void cancelStop() = 0;
     virtual EGaitState state() const = 0;
+    // Autonomous gaits can report their own velocity.
+    virtual std::optional<Velocity> commandedVelocity() const {
+        return std::nullopt;
+    }
+    // Consumed by the planner before another step from the sequence is dispatched.
+    bool takeSequenceAbort() {
+        return std::exchange(abort_sequence_, false);
+    }
+
+   protected:
+    bool abort_sequence_ = false;
 };
 
 class IContinuousGait : public IGait {

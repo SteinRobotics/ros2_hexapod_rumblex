@@ -25,7 +25,11 @@ class CActionPlanner {
         handler_movement_->on_gait_changed = std::move(callback);
     }
     void update();
-    void request(std::vector<std::shared_ptr<RequestBase>> requests_v, Prio prio);
+    using InvocationId = uint64_t;
+    InvocationId nextInvocationId() {
+        return ++last_invocation_id_;
+    }
+    void request(std::vector<std::shared_ptr<RequestBase>> requests_v, Prio prio, InvocationId id = 0);
     void execute(std::vector<std::shared_ptr<RequestBase>>& requests_v);
     void cancelRunningRequest();
     // Cached result from the last handler update, before dispatching the next
@@ -34,12 +38,21 @@ class CActionPlanner {
 
    private:
     friend class ActionPlannerTestAccess;
+    struct RequestGroup : std::vector<std::shared_ptr<RequestBase>> {
+        RequestGroup() = default;
+        RequestGroup(const std::vector<std::shared_ptr<RequestBase>>& requests, InvocationId invocation = 0)
+            : std::vector<std::shared_ptr<RequestBase>>(requests), id(invocation) {
+        }
+        InvocationId id = 0;
+    };
+    void abortActiveSequence();
+    InvocationId last_invocation_id_ = 0;
     std::shared_ptr<rclcpp::Node> node_;
-    std::list<std::vector<std::shared_ptr<RequestBase>>> requests_highest_prio_;
-    std::list<std::vector<std::shared_ptr<RequestBase>>> requests_high_prio_;
-    std::list<std::vector<std::shared_ptr<RequestBase>>> requests_normal_prio_;
-    std::vector<std::shared_ptr<RequestBase>> active_requests_;
-    std::vector<std::shared_ptr<RequestBase>> request_background_;
+    std::list<RequestGroup> requests_highest_prio_;
+    std::list<RequestGroup> requests_high_prio_;
+    std::list<RequestGroup> requests_normal_prio_;
+    RequestGroup active_requests_;
+    RequestGroup request_background_;
     Prio active_prio_ = Prio::Background;
 
     std::vector<std::shared_ptr<IHandler>> handlers_;

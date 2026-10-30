@@ -3,12 +3,11 @@
 ## BNO055 IMU
 
 Nira's `imu_link` follows the CAD board origin at `(0, -0.002, 0.0185)` metres
-from `base_link`. Its roll/pitch/yaw is `(pi, 0, -pi/2)`, equivalent to the
-CAD's 180-degree Y flip followed by a 90-degree Z rotation. Local X points
-toward robot -Y, local Y toward robot -X, and local Z downward. The mesh torso
-already contains the board; the primitive model uses the CAD board envelope.
-This registration describes the board model, not a measured chip location or
-verified hardware axis-remap setting.
+from `base_link`. Its measurement-frame roll/pitch/yaw is `(0, 0, -pi/2)`:
+local X points toward robot -Y, local Y toward robot +X, and local Z upward.
+The physical IMU is upright. The CAD board envelope's assembly flip is a geometry
+placement convention and does not describe the sensor's measurement axes. Hardware
+axis remapping must agree with this measurement frame.
 
 Both Nira variants include an ideal Gazebo IMU when `use_sim:=true`, and both
 supplied worlds load the Imu system. Both simulation launches bridge
@@ -19,7 +18,7 @@ magnetic disturbances, temperature, or fusion algorithm. See the
 [Gazebo IMU reference](https://gazebosim.org/api/sensors/10/classgz_1_1sensors_1_1ImuSensor.html).
 
 Acceleration includes gravity: a level stationary robot reports approximately
-`(0, 0, -9.8)` m/s² in this upside-down sensor frame. The installed hardware
+`(0, 0, 9.8)` m/s² in this upright sensor frame. The installed hardware
 driver publishes gravity-removed acceleration on `/bno055/imu`, so simulation
 data deliberately uses `/imu/data`; it is not a direct replacement for that
 driver topic or the navigation node's subscription.

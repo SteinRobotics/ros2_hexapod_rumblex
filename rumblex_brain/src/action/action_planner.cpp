@@ -17,7 +17,8 @@ CActionPlanner::CActionPlanner(std::shared_ptr<rclcpp::Node> node) : node_(node)
     handlers_.push_back(handler_movement_);
 }
 
-void CActionPlanner::request(std::vector<std::shared_ptr<RequestBase>> requests, Prio prio) {
+void CActionPlanner::request(std::vector<std::shared_ptr<RequestBase>> input, Prio prio, InvocationId id) {
+    RequestGroup requests(input, id);
     RCLCPP_INFO_STREAM(node_->get_logger(),
                        "CActionPlanner:: new requests with prio " << std::to_underlying(prio));
 
@@ -81,6 +82,7 @@ void CActionPlanner::update() {
             request_group_finished = false;
         }
     }
+    if (handler_movement_->takeSequenceAbort()) abortActiveSequence();
     request_group_finished_ = request_group_finished;
     if (!request_group_finished_) {
         return;
@@ -127,7 +129,24 @@ void CActionPlanner::execute(std::vector<std::shared_ptr<RequestBase>>& requests
             RCLCPP_ERROR_STREAM(node_->get_logger(),
                                 "CActionPlanner: RequestType unknown: " << typeid(*request).name());
         }
+        if (handler_movement_->takeSequenceAbort()) {
+            abortActiveSequence();
+            break;
+        }
     }
+}
+
+void CActionPlanner::abortActiveSequence() {
+    const auto id = active_requests_.id;
+    if (id != 0) {
+        const auto belongs = [id](const auto& group) { return group.id == id; };
+        requests_highest_prio_.remove_if(belongs);
+        requests_high_prio_.remove_if(belongs);
+        requests_normal_prio_.remove_if(belongs);
+        if (request_background_.id == id) request_background_.clear();
+    }
+    handler_system_->cancel();
+    handler_communication_->cancel();
 }
 
 void CActionPlanner::cancelRunningRequest() {

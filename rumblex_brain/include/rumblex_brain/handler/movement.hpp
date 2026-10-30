@@ -26,6 +26,9 @@ class CMovement : public IHandler {
     }
     void run(std::shared_ptr<RequestMovementType> request);
     void run(std::shared_ptr<RequestVelocity> request);
+    bool takeSequenceAbort() {
+        return gait_controller_->takeSequenceAbort();
+    }
     std::function<void(const MovementRequest&)> on_gait_changed;
 
    private:

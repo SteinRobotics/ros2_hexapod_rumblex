@@ -84,14 +84,24 @@ void CCoordinator::executeSequence(const Sequence& sequence, Prio prio) {
         isStanding_ = false;
     }
 
+    const auto invocation = actionPlanner_->nextInvocationId();
     // Submit all action groups from the sequence
     for (const auto& actionGroup : sequence.actionGroups) {
         std::vector<std::shared_ptr<RequestBase>> requests;
         for (const auto& request : actionGroup) {
             requests.push_back(request);
         }
-        actionPlanner_->request(requests, prio);
+        actionPlanner_->request(requests, prio, invocation);
     }
+}
+
+void CCoordinator::sequenceRequested(const std::string& name) {
+    const auto sequence = sequenceParser_->getSequence(name);
+    if (!sequence) {
+        RCLCPP_WARN(node_->get_logger(), "Unknown sequence requested: %s", name.c_str());
+        return;
+    }
+    executeSequence(sequence->get(), name == "standup" ? Prio::High : Prio::Normal);
 }
 
 void CCoordinator::cycleGaitMode() {

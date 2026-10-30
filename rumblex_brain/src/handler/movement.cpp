@@ -130,6 +130,7 @@ void CMovement::update() {
     if (now < next_update_) return;
     const auto gait = gait_controller_->currentGait();
     const bool frequent =
+        gait == MovementRequest::HOLD_DISTANCE || gait == MovementRequest::LEVEL_TORSO ||
         gait == MovementRequest::CONTINUOUS_MOVE || gait == MovementRequest::CONTINUOUS_RUNNING ||
         gait == MovementRequest::CONTINUOUS_POSE || gait == MovementRequest::SINGLE_POSE ||
         gait == MovementRequest::SEQUENCE_STAND_UP || gait == MovementRequest::SEQUENCE_LAYDOWN ||
@@ -156,7 +157,7 @@ void CMovement::update() {
             pub_body_pose_->publish(pose);
             last_pose_ = pose;
         }
-        if (gait_controller_->moving()) effective_velocity = velocity_.toMsg();
+        effective_velocity = gait_controller_->commandedVelocity(velocity_).toMsg();
     }
     pub_movement_velocity_->publish(effective_velocity);
 }

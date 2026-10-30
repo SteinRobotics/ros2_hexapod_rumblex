@@ -44,9 +44,17 @@ class CGaitController {
     using MovementRequestType = brain::MovementRequest::_type_type;
 
     std::function<void(const MovementRequest&)> on_gait_changed;
+    bool takeSequenceAbort() {
+        return active_gait_->takeSequenceAbort();
+    }
+    Velocity commandedVelocity(const Velocity& input) const {
+        if (const auto own = active_gait_->commandedVelocity()) return *own;
+        return moving() ? input : Velocity();
+    }
     bool moving() const {
         return (currentGait() == MovementRequest::CONTINUOUS_MOVE ||
-                currentGait() == MovementRequest::CONTINUOUS_RUNNING) &&
+                currentGait() == MovementRequest::CONTINUOUS_RUNNING ||
+                currentGait() == MovementRequest::HOLD_DISTANCE) &&
                active_gait_->state() != EGaitState::Stopped;
     }
     bool setGait(brain::MovementRequest request);
@@ -74,6 +82,7 @@ class CGaitController {
 
    private:
     void switchGait(brain::MovementRequest request);
+    void configureGait(const MovementRequest& request);
     static brain::MovementRequest createMsg(std::string name, MovementRequestType type);
 
     std::shared_ptr<rclcpp::Node> node_;

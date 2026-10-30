@@ -22,17 +22,21 @@ def expand(mesh=False, sim=False):
 
 
 class NiraDescriptionTests(unittest.TestCase):
-    def test_imu_mount_matches_flipped_cad_board(self):
+    def test_imu_measurement_frame_is_upright(self):
         for mesh in (False, True):
             model = expand(mesh, True)
             joint = model.find("joint[@name='imu_joint']")
             self.assertEqual(joint.find('parent').get('link'), 'base_link')
             self.assertEqual(joint.find('origin').get('xyz'), '0 -0.002 0.0185')
-            # Rz(90) Ry(180) in CAD equals Rz(-90) Rx(180) in URDF.
+            # Sensor Z points upward; the CAD envelope flip is not a measurement-axis transform.
             roll, pitch, yaw = map(float, joint.find('origin').get('rpy').split())
-            self.assertAlmostEqual(roll, math.pi)
+            self.assertAlmostEqual(roll, 0)
             self.assertAlmostEqual(pitch, 0)
             self.assertAlmostEqual(yaw, -math.pi / 2)
+            if not mesh:
+                visual = model.find("link[@name='imu_link']/visual/origin")
+                self.assertEqual(visual.get('xyz'), '0 0 -0.0075')
+                self.assertAlmostEqual(float(visual.get('rpy').split()[0]), math.pi)
             sensor = model.find("gazebo[@reference='imu_link']/sensor")
             self.assertEqual(sensor.get('type'), 'imu')
             self.assertEqual(sensor.findtext('gz_frame_id'), 'imu_link')
@@ -55,7 +59,7 @@ class NiraDescriptionTests(unittest.TestCase):
             pose = list(map(float, sensor.findtext('pose').split()))
             for actual, expected in zip(pose[:3], [0, -0.002, 0.0185]):
                 self.assertAlmostEqual(actual, expected)
-            self.assertAlmostEqual(abs(pose[3]), math.pi, places=5)
+            self.assertAlmostEqual(pose[3], 0, places=5)
             self.assertAlmostEqual(pose[4], 0)
             self.assertAlmostEqual(pose[5], -math.pi / 2, places=5)
 

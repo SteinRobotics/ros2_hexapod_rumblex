@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <optional>
 #include <string>
 
 #include "rumblex_interfaces/msg/body_pose.hpp"
@@ -29,6 +30,8 @@ struct MovementRequest {
         CONTINUOUS_POSE = 30,
         CONTINUOUS_MOVE = 31,
         CONTINUOUS_RUNNING = 32,
+        HOLD_DISTANCE = 33,
+        LEVEL_TORSO = 34,
     };
     enum Direction : uint8_t { CLOCKWISE = 0, ANTICLOCKWISE = 1 };
     using _type_type = uint8_t;
@@ -36,6 +39,7 @@ struct MovementRequest {
     uint8_t direction = CLOCKWISE;
     units::Duration duration_s = 1.0 * s;
     std::string name;
+    std::optional<units::Length> distance_m;
     rumblex_interfaces::msg::BodyPose body_pose{};
 };
 }  // namespace brain
