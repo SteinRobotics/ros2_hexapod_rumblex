@@ -13,13 +13,11 @@ from robot_nira import EXPORT_DIR, dxf_directory
 from build123d import (
     BuildPart,
     BuildSketch,
-    Circle,
     ColorIndex,
     Compound,
     ExportDXF,
     Face,
     Kind,
-    Locations,
     Mode,
     Part,
     Polygon,
@@ -49,11 +47,6 @@ def build_surface() -> Sketch:
                 Polygon((x - 5, side * 12), (x + 2, side * 12),
                         (x - 16, side * 39), (x - 23, side * 39),
                         align=None, mode=Mode.SUBTRACT)
-        for location in torso_common.hole_locations:
-            if location.position.X < 0:
-                with Locations(location):
-                    Circle(torso_common.hole_radius, mode=Mode.SUBTRACT)
-
     return sketch.sketch
 
 
