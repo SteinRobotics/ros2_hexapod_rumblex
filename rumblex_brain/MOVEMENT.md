@@ -149,7 +149,11 @@ then starts the incoming gait from that endpoint. Fixed poses and gestures use
 `trajectoryProgress(t) = 10t³ - 15t⁴ + 6t⁵`, with zero velocity and acceleration
 at both ends. Pose requests are captured once per finite segment; changing a
 request cannot move an existing segment's destination. Pose transitions retain
-their minimum duration of one second, sampled at 50 Hz.
+their minimum duration of one second, sampled at 50 Hz. In `CONTINUOUS_POSE`,
+the head completes its smooth trajectory in 0.5 seconds and holds its target
+while the torso finishes the one-second segment. Both targets are captured at
+the segment boundary; this preserves zero velocity and acceleration at handoff
+without requiring mid-motion trajectory replanning.
 
 Walking and running share `CStridePlanner`. Patterns specify ordered swing
 leg groups, step reach, lift height, and head amplitude. A segment

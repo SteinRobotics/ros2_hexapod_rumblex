@@ -60,17 +60,45 @@ TEST_F(OrientationTimingTest, PoseSamplingUsesElapsedSecondsAndHasSmallMonotonic
                 const auto pose = bodyPose(*model);
                 const double yaw = pose.head_orientation.yaw;
                 EXPECT_GE(yaw + 1e-12, previous);
-                EXPECT_LT(yaw - previous, 1.0);
+                EXPECT_LT(yaw - previous, continuous ? 2.0 : 1.0);
                 if (i == 24) {
-                    EXPECT_NEAR(yaw, 10.0, 0.25);
+                    EXPECT_NEAR(yaw, continuous ? 20.0 : 10.0, 0.25);
                 }
-                EXPECT_NEAR(pose.torso_pose.orientation.yaw, yaw, 1e-10);
+                if (!continuous) {
+                    EXPECT_NEAR(pose.torso_pose.orientation.yaw, yaw, 1e-10);
+                }
                 previous = yaw;
             }
             EXPECT_EQ(model->getHeadOrientation(), head);
             EXPECT_EQ(model->getTorsoPose(), torso);
         }
     }
+}
+
+TEST_F(OrientationTimingTest, ContinuousHeadAcceleratesSoonerAndHoldsUntilSegmentBoundary) {
+    CContinuousPoseGait gait(node, model, params.continuous_pose);
+    const CPose torso(0.0, 0.0, 0.0, 0.0, 0.0, 20.0);
+    const COrientation head(0.0, 0.0, 20.0);
+    const COrientation next_head(0.0, 0.0, -20.0);
+    gait.start(1.0 * s, 0);
+    ASSERT_TRUE(gait.updateTimed(Velocity(), torso, head, 0.1 * s));
+    EXPECT_NEAR(bodyPose(*model).head_orientation.yaw, 1.1584, 1e-10);
+    EXPECT_NEAR(bodyPose(*model).torso_pose.orientation.yaw, 0.1712, 1e-10);
+
+    // A replacement target must not alter the captured trajectory.
+    for (int i = 0; i < 4; ++i) ASSERT_TRUE(gait.updateTimed(Velocity(), torso, next_head, 0.1 * s));
+    EXPECT_EQ(model->getHeadOrientation(), head);
+    EXPECT_NEAR(bodyPose(*model).torso_pose.orientation.yaw, 10.0, 1e-10);
+    gait.requestStop();
+    for (int i = 0; i < 5; ++i) {
+        ASSERT_TRUE(gait.updateTimed(Velocity(), torso, next_head, 0.1 * s));
+        EXPECT_EQ(model->getHeadOrientation(), head);
+        if (i < 4) {
+            EXPECT_EQ(gait.state(), EGaitState::Stopping);
+        }
+    }
+    EXPECT_EQ(model->getTorsoPose(), torso);
+    EXPECT_EQ(gait.state(), EGaitState::Stopped);
 }
 
 TEST_F(OrientationTimingTest, YawAndTorsoSequencesKeepDurationAtHigherSamplingRate) {

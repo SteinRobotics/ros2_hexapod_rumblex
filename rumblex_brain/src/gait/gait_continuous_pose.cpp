@@ -51,11 +51,15 @@ bool CContinuousPoseGait::updateTimed(const Velocity&, const CPose& torso, const
     elapsed_s_ = std::min(elapsed_s_ + elapsed_s, 1.0 * s);
     if (elapsed_s_ >= (1.0 - 1e-12) * s) elapsed_s_ = 1.0 * s;
     const double progress = trajectoryProgress((elapsed_s_ / (1.0 * s)).numerical_value_in(one));
+    // Reach the head target sooner while retaining a rest-to-rest trajectory.
+    constexpr auto head_duration = 0.5 * s;
+    const double head_progress = trajectoryProgress((elapsed_s_ / head_duration).numerical_value_in(one));
     kinematics_->moveTorso(toe_origins_, elapsed_s_ >= 1.0 * s
                                              ? torso_target_
                                              : torso_origin_.linearInterpolate(torso_target_, progress));
-    kinematics_->setHeadOrientation(
-        elapsed_s_ >= 1.0 * s ? head_target_ : head_origin_.linearInterpolate(head_target_, progress));
+    kinematics_->setHeadOrientation(elapsed_s_ >= head_duration
+                                        ? head_target_
+                                        : head_origin_.linearInterpolate(head_target_, head_progress));
     if (elapsed_s_ >= 1.0 * s && state_ == EGaitState::Stopping) state_ = EGaitState::Stopped;
     return true;
 }
