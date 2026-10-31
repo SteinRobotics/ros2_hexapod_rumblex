@@ -4,6 +4,7 @@
 
 #include "requester/coordinator.hpp"
 
+#include <algorithm>
 #include <ament_index_cpp/get_package_share_path.hpp>
 #include <cmath>
 #include <format>
@@ -111,9 +112,7 @@ void CCoordinator::cycleGaitMode() {
     RCLCPP_INFO(node_->get_logger(), "Gait mode switched to: %s", gaitName.c_str());
     auto request = std::make_shared<RequestTalking>();
     request->text = gaitName;
-    std::erase_if(request->text, [](unsigned char c) {
-        return !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9'));
-    });
+    std::replace(request->text.begin(), request->text.end(), '_', ' ');
     submitRequest(request, Prio::High);
 }
 
