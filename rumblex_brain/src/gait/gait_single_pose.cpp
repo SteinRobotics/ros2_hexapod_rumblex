@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
-#include "gait/trajectory.hpp"
+#include "interpolation.hpp"
 
 using namespace rumblex_interfaces::msg;
 namespace brain {
@@ -108,7 +108,7 @@ bool CSinglePoseGait::updateTimed(const Velocity&, const CPose&, const COrientat
         duration_s_ > 0.0 * s ? std::min((phase_ / duration_s_).numerical_value_in(one), 1.0) : 1.0;
     if (fraction >= 1.0 - 1e-12) state_ = EGaitState::Stopped;
     double progress = state_ == EGaitState::Stopped ? 1.0 : fraction;
-    progress = trajectoryProgress(progress);
+    progress = interpolationProgress(progress, options_.interpolation);
     const auto& target_torso = torso_target_;
     const auto& target_head = head_target_;
     const CPose intermediate_pose = state_ == EGaitState::Stopped

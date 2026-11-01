@@ -60,6 +60,23 @@ targets before the torso transformation, matching `BodyPose.msg`. Absolute toe
 positions still require all six legs; relative moves can name individual legs.
 Toe motion uses the same interpolation and duration as head and torso motion.
 
+Set `interpolation` alongside `duration_s` in a `body_pose` shorthand action or
+in a `movement` with `name: SINGLE_POSE` (not inside its nested `body_pose`).
+It applies to absolute targets, relative deltas, joint-derived toe targets, and
+saved-pose restoration. Each action defaults independently to `linear`.
+
+| Value | Progress for elapsed fraction `t` | Motion |
+|---|---|---|
+| `linear` | `t` | Constant speed |
+| `sin_squared` | `sin²(πt/2)` | Slow start and finish |
+| `sin` | `1 − cos(πt/2)` | Slow start, no slowdown at finish |
+| `cos` | `sin(πt/2)` | Immediate speed, slow finish |
+
+For example: `body_pose: {duration_s: 1.5, interpolation: sin_squared, head_orientation: {yaw: 25}}`.
+Unknown values and explicit interpolation on other movement types are errors.
+The default replaces the previous implicit quintic easing for single poses;
+continuous control and walking retain their existing trajectories.
+
 The ROS message encodes optional components with `has_head_orientation`,
 `has_torso_pose`, and `has_toe_positions`. YAML presence sets these flags automatically.
 Published brain trajectory samples and `body_pose_actual` are complete snapshots
@@ -169,8 +186,8 @@ high-five, the next invocation replaces any saved snapshot left by cancellation.
 The first action saves the starting pose and turns the head by 25 degrees and
 torso by 20 degrees over 1.5 seconds (positive yaw for left, negative for right).
 The second restores the saved pose over 1.5 seconds, without a hold. Toe positions,
-torso translation and the original roll/pitch angles stay unchanged. The smooth
-pose interpolation replaces the previous sinusoidal excursion.
+torso translation and the original roll/pitch angles stay unchanged. Both actions use
+`interpolation: sin_squared` for a slow start and finish.
 
 ```yaml
 movement:
@@ -367,3 +384,17 @@ files are not loaded by the new coordinator.
 Legacy six-entry lists remain accepted for leg fields, in the leg order listed
 above. Prefer named mappings in new YAML; `null` placeholders are only supported
 in legacy `joint_targets` lists.
+
+## Flying
+
+`flying.yaml` is selectable by sequence name, with no voice or joystick trigger.
+It raises both middle legs, performs three synchronized down/up wing beats
+(femur elevation -10 to +25 degrees), then extends them horizontally
+with joint angles `(0, 0, 90)` degrees. The torso sways twice between
++/-1 cm lateral displacement relative to its starting pose,
+carrying the extended middle legs along with it. Torso orientation is retained
+so the fully extended wings are not stretched beyond their reach. It recentres and restores the complete
+saved starting pose. Head pose and the four outer toe targets remain unchanged.
+All actions use `sin_squared`; the 15 expanded actions take 19.5 seconds plus
+scheduler handoffs. Geometry comes from the selected robot's forward kinematics.
+As with high-five, cancellation finishes the active action and skips the return.

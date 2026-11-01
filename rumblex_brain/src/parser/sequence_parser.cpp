@@ -48,6 +48,15 @@ void parseLegs(const YAML::Node& node, Parse parse, bool requireAll = false) {
     for (size_t i = 0; i < names.size(); ++i)
         if (node[names[i]]) parse(i, node[names[i]]);
 }
+InterpolationType parseInterpolation(const YAML::Node& value) {
+    if (!value["interpolation"]) return InterpolationType::Linear;
+    const auto name = value["interpolation"].as<std::string>();
+    if (name == "linear") return InterpolationType::Linear;
+    if (name == "sin_squared") return InterpolationType::SinSquared;
+    if (name == "sin") return InterpolationType::Sin;
+    if (name == "cos") return InterpolationType::Cos;
+    throw std::runtime_error("Unknown interpolation: " + name);
+}
 void parseVector(const YAML::Node& node, geometry_msgs::msg::Vector3& vector) {
     keys(node, {"x", "y", "z"});
     vector.x = valueOr(node, "x", 0.0);
@@ -61,7 +70,7 @@ void parseOrientation(const YAML::Node& node, rumblex_interfaces::msg::Orientati
     orientation.yaw = valueOr(node, "yaw", 0.0);
 }
 rumblex_interfaces::msg::BodyPose parseBodyPose(const YAML::Node& value) {
-    keys(value, {"duration_s", "torso_pose", "head_orientation", "toe_positions"});
+    keys(value, {"duration_s", "interpolation", "torso_pose", "head_orientation", "toe_positions"});
     rumblex_interfaces::msg::BodyPose pose;
     if (value["torso_pose"]) {
         pose.has_torso_pose = true;
@@ -399,6 +408,7 @@ std::vector<std::shared_ptr<RequestBase>> CSequenceParser::parseActionGroup(cons
         const auto value = ordered.at("body_pose");
         movement = std::make_shared<RequestMovementType>();
         movement->movementRequest.body_pose = parseBodyPose(value);
+        movement->movementRequest.interpolation = parseInterpolation(value);
         movement->movementRequest.type = MovementRequest::SINGLE_POSE;
         movement->movementRequest.name = "SINGLE_POSE";
         const double duration = valueOr(value, "duration_s", 1.0);
@@ -587,11 +597,14 @@ std::shared_ptr<RequestMovementType> CSequenceParser::createRequestMovementType(
     try {
         if (value.IsMap()) {
             keys(value, {"name", "type", "direction", "duration_s", "minDuration", "body_pose", "distance_m",
-                         "pose_delta", "joint_targets", "save_pose", "restore_pose"});
+                         "pose_delta", "joint_targets", "save_pose", "restore_pose", "interpolation"});
             if (value["name"] && value["type"]) throw std::runtime_error("Duplicate movement name/type");
             brain::MovementRequest movementRequest;
+            movementRequest.interpolation = parseInterpolation(value);
             if (value["body_pose"]) {
                 if (value["body_pose"]["duration_s"]) throw std::runtime_error("Put duration_s on movement");
+                if (value["body_pose"]["interpolation"])
+                    throw std::runtime_error("Put interpolation on movement");
                 movementRequest.body_pose = parseBodyPose(value["body_pose"]);
             }
 
@@ -653,6 +666,8 @@ std::shared_ptr<RequestMovementType> CSequenceParser::createRequestMovementType(
             }
 
             if (typeStr.empty()) throw std::runtime_error("Missing movement name");
+            if (value["interpolation"] && movementRequest.type != MovementRequest::SINGLE_POSE)
+                throw std::runtime_error("interpolation requires SINGLE_POSE");
             // Parse direction if present
             if (value["direction"]) {
                 std::string directionStr = value["direction"].as<std::string>();

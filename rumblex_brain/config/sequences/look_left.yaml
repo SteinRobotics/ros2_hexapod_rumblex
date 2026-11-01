@@ -7,6 +7,7 @@ actions:
     movement:
       name: SINGLE_POSE
       duration_s: 1.5
+      interpolation: sin_squared
       save_pose: true
       pose_delta:
         head_rotation: {yaw: 25}
@@ -14,4 +15,5 @@ actions:
   - movement:
       name: SINGLE_POSE
       duration_s: 1.5
+      interpolation: sin_squared
       restore_pose: true

@@ -1,0 +1,74 @@
+name: flying
+# The four outer legs retain their toe targets throughout the gesture.
+actions:
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.5
+      interpolation: sin_squared
+      save_pose: true
+      joint_targets:
+        right_mid: {torso_coxa: 0, coxa_femur: 25, femur_tibia: 90}
+        left_mid: {torso_coxa: 0, coxa_femur: 25, femur_tibia: 90}
+  # Three synchronized down/up wing beats.
+  - loop:
+      times: 3
+      actions:
+        - movement:
+            name: SINGLE_POSE
+            duration_s: 1.0
+            interpolation: sin_squared
+            joint_targets:
+              right_mid: {torso_coxa: 0, coxa_femur: -10, femur_tibia: 90}
+              left_mid: {torso_coxa: 0, coxa_femur: -10, femur_tibia: 90}
+        - movement:
+            name: SINGLE_POSE
+            duration_s: 1.0
+            interpolation: sin_squared
+            joint_targets:
+              right_mid: {torso_coxa: 0, coxa_femur: 25, femur_tibia: 90}
+              left_mid: {torso_coxa: 0, coxa_femur: 25, femur_tibia: 90}
+  # Zero femur elevation and a 90-degree knee extend each wing horizontally.
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.5
+      interpolation: sin_squared
+      joint_targets:
+        right_mid: {torso_coxa: 0, coxa_femur: 0, femur_tibia: 90}
+        left_mid: {torso_coxa: 0, coxa_femur: 0, femur_tibia: 90}
+  # Move the extended wings with the torso; keep the four support toes fixed.
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.5
+      interpolation: sin_squared
+      pose_delta:
+        torso_translation: {y: 0.01}
+        toe_translation: {right_mid: {y: 0.01}, left_mid: {y: 0.01}}
+  - loop:
+      times: 2
+      actions:
+        - movement:
+            name: SINGLE_POSE
+            duration_s: 1.5
+            interpolation: sin_squared
+            pose_delta:
+              torso_translation: {y: -0.02}
+              toe_translation: {right_mid: {y: -0.02}, left_mid: {y: -0.02}}
+        - movement:
+            name: SINGLE_POSE
+            duration_s: 1.5
+            interpolation: sin_squared
+            pose_delta:
+              torso_translation: {y: 0.02}
+              toe_translation: {right_mid: {y: 0.02}, left_mid: {y: 0.02}}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.5
+      interpolation: sin_squared
+      pose_delta:
+        torso_translation: {y: -0.01}
+        toe_translation: {right_mid: {y: -0.01}, left_mid: {y: -0.01}}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.5
+      interpolation: sin_squared
+      restore_pose: true

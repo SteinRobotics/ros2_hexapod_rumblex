@@ -82,6 +82,10 @@ pending requests cannot change an in-flight endpoint. Stand-up and laydown use
 the same representation for their presets. See [sequence configuration](config/sequences/README.md)
 for YAML, loops, snippets, and compatibility details.
 
+Single-pose actions select `linear` (default), `sin_squared`, `sin`, or `cos`
+interpolation per request. This replaces their previous implicit quintic time
+law; continuous control and walking retain their existing trajectories.
+
 The command topic uses reliable, volatile delivery with depth 1.
 
 `body_pose_actual` carries the same message with reliable, transient-local

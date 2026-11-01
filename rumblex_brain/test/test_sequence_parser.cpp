@@ -37,6 +37,45 @@ class SequenceParserTest : public ::testing::Test {
     }
 };
 
+TEST_F(SequenceParserTest, InterpolationDefaultsAndExplicitCurves) {
+    const std::vector<std::pair<std::string, InterpolationType>> cases = {
+        {"", InterpolationType::Linear},
+        {"linear", InterpolationType::Linear},
+        {"sin_squared", InterpolationType::SinSquared},
+        {"sin", InterpolationType::Sin},
+        {"cos", InterpolationType::Cos}};
+    for (const auto& [name, expected] : cases) {
+        for (bool shorthand : {true, false}) {
+            const std::string curve = name.empty() ? "" : ", interpolation: " + name;
+            const std::string action =
+                shorthand
+                    ? "body_pose: {head_orientation: {yaw: 10}" + curve + "}"
+                    : "movement: {name: SINGLE_POSE, body_pose: {head_orientation: {yaw: 10}}" + curve + "}";
+            ASSERT_TRUE(parser_.parseString("name: curve\nactions: [{" + action + "}]"));
+            const auto parsed = request<RequestMovementType>("curve", 0, 0);
+            ASSERT_TRUE(parsed);
+            EXPECT_EQ(parsed->movementRequest.interpolation, expected);
+        }
+    }
+    for (const std::string invalid : {"bogus", "null", "[]", "{}", "1", "SIN"}) {
+        for (const std::string prefix :
+             {"body_pose: {head_orientation: {yaw: 10}, ",
+              "movement: {name: SINGLE_POSE, body_pose: {head_orientation: {yaw: 10}}, "}) {
+            EXPECT_FALSE(parser_.parseString("name: invalid\nactions: [{" + prefix +
+                                             "interpolation: " + invalid + "}}]"));
+            EXPECT_TRUE(parser_.getSequence("curve"));
+        }
+    }
+    for (const std::string action :
+         {"movement: {name: CONTINUOUS_POSE, interpolation: linear}",
+          "movement: {name: MOVE_TRIPOD, interpolation: sin}",
+          "movement: {name: SINGLE_POSE, body_pose: {head_orientation: {}, interpolation: cos}}",
+          "body_pose: {head_orientation: {}, interpolation: sin, interpolation: cos}"}) {
+        EXPECT_FALSE(parser_.parseString("name: invalid\nactions: [{" + action + "}]"));
+        EXPECT_TRUE(parser_.getSequence("curve"));
+    }
+}
+
 TEST_F(SequenceParserTest, RotationDeltasDefaultOmittedAxesToZeroAndRejectInvalidValues) {
     ASSERT_TRUE(parser_.parseString(R"(
 name: rotate
@@ -270,7 +309,7 @@ TEST_F(SequenceFilesTest, RejectsBrokenIncludesWithoutReplacingCatalog) {
           "actions: [", "name: invalid", "actions: [{include: [], RequestTalking: mixed}]"}) {
         write("snippet.yaml", snippet);
         EXPECT_FALSE(parser_.parseFile(file)) << snippet;
-        EXPECT_EQ(parser_.getSequences().size(), 24u);
+        EXPECT_EQ(parser_.getSequences().size(), 25u);
         EXPECT_TRUE(parser_.getSequenceForVoiceRequest("commandStandup"));
     }
 }
@@ -294,7 +333,7 @@ TEST_F(SequenceParserTest, RejectsIncludesWithoutSourceFile) {
 
 TEST_F(SequenceParserTest, LoadsCatalogAndResolvesTriggers) {
     ASSERT_TRUE(parser_.parseDirectory(RUMBLEX_SEQUENCES_DIRECTORY));
-    EXPECT_EQ(parser_.getSequences().size(), 24u);
+    EXPECT_EQ(parser_.getSequences().size(), 25u);
     EXPECT_FALSE(parser_.getSequence("missing"));
     EXPECT_FALSE(parser_.getSequenceForVoiceRequest("missing"));
     rumblex_interfaces::msg::JoystickRequest joystick;
@@ -537,7 +576,7 @@ TEST_F(SequenceParserTest, InvalidActionsRetainPreviousCatalog) {
           "sequences: [{name: valid, actions: [{say: hi}]}, {name: invalid, actions: []}]",
           "name: invalid\nactions: [{movement: {name: SINGLE_POSE, duration_s: invalid}, say: hello}]"}) {
         EXPECT_FALSE(parser_.parseString(text));
-        EXPECT_EQ(parser_.getSequences().size(), 24u);
+        EXPECT_EQ(parser_.getSequences().size(), 25u);
     }
 }
 TEST_F(SequenceParserTest, BodyPoseUsesOneRequestAndPreservesComponentPresence) {
