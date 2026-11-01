@@ -177,7 +177,7 @@ actions:
           "{movement: {name: HOLD_DISTANCE, distance_m: 0.6, duration_s: 0}}",
           "{movement: {name: LEVEL_TORSO, duration_s: .nan}}",
           "{movement: {name: LEVEL_TORSO, distance_m: 0.6}}",
-          "{movement: {name: CONTINUOUS_MOVE, distance_m: 0.6}}",
+          "{movement: {name: MOVE_COMBINED, distance_m: 0.6}}",
           "{movement: {name: LEVEL_TORSO, body_pose: {head_orientation: {}}}}",
           "{movement: {name: HOLD_DISTANCE, distance_m: 0.6}, velocity: {linear: {x: 0.1}}}",
           "{hold_distance: {distance_m: 0.6, duration_s: 1}}", "{level_torso: {duration_s: 1}}"}) {
@@ -270,7 +270,7 @@ TEST_F(SequenceFilesTest, RejectsBrokenIncludesWithoutReplacingCatalog) {
           "actions: [", "name: invalid", "actions: [{include: [], RequestTalking: mixed}]"}) {
         write("snippet.yaml", snippet);
         EXPECT_FALSE(parser_.parseFile(file)) << snippet;
-        EXPECT_EQ(parser_.getSequences().size(), 22u);
+        EXPECT_EQ(parser_.getSequences().size(), 24u);
         EXPECT_TRUE(parser_.getSequenceForVoiceRequest("commandStandup"));
     }
 }
@@ -294,7 +294,7 @@ TEST_F(SequenceParserTest, RejectsIncludesWithoutSourceFile) {
 
 TEST_F(SequenceParserTest, LoadsCatalogAndResolvesTriggers) {
     ASSERT_TRUE(parser_.parseDirectory(RUMBLEX_SEQUENCES_DIRECTORY));
-    EXPECT_EQ(parser_.getSequences().size(), 22u);
+    EXPECT_EQ(parser_.getSequences().size(), 24u);
     EXPECT_FALSE(parser_.getSequence("missing"));
     EXPECT_FALSE(parser_.getSequenceForVoiceRequest("missing"));
     rumblex_interfaces::msg::JoystickRequest joystick;
@@ -326,7 +326,7 @@ TEST_F(SequenceParserTest, CatalogPresetsPrepareStandupAndFinishStationary) {
     for (const auto& preset : {Preset{"hold_distance", MovementRequest::HOLD_DISTANCE, 10.0},
                                Preset{"level_torso", MovementRequest::LEVEL_TORSO, 5.0},
                                Preset{"waiting", MovementRequest::SEQUENCE_WAITING, 5.0},
-                               Preset{"run_demo", MovementRequest::CONTINUOUS_RUNNING, 3.0}}) {
+                               Preset{"run_demo", MovementRequest::MOVE_TRIPOD, 3.0}}) {
         SCOPED_TRACE(preset.name);
         const auto sequence = parser_.getSequence(preset.name);
         ASSERT_TRUE(sequence);
@@ -350,7 +350,7 @@ TEST_F(SequenceParserTest, CatalogPresetsPrepareStandupAndFinishStationary) {
         } else {
             EXPECT_FALSE(movement->movementRequest.distance_m);
         }
-        if (preset.gait == MovementRequest::CONTINUOUS_RUNNING) {
+        if (preset.gait == MovementRequest::MOVE_TRIPOD) {
             EXPECT_EQ(sequence->get().actionGroups[1].size(), 2u);
             const auto velocity = request<RequestVelocity>(preset.name, 1, 1);
             ASSERT_TRUE(velocity);
@@ -537,7 +537,7 @@ TEST_F(SequenceParserTest, InvalidActionsRetainPreviousCatalog) {
           "sequences: [{name: valid, actions: [{say: hi}]}, {name: invalid, actions: []}]",
           "name: invalid\nactions: [{movement: {name: SINGLE_POSE, duration_s: invalid}, say: hello}]"}) {
         EXPECT_FALSE(parser_.parseString(text));
-        EXPECT_EQ(parser_.getSequences().size(), 22u);
+        EXPECT_EQ(parser_.getSequences().size(), 24u);
     }
 }
 TEST_F(SequenceParserTest, BodyPoseUsesOneRequestAndPreservesComponentPresence) {

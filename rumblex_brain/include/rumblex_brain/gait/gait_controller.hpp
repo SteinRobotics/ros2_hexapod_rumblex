@@ -16,8 +16,10 @@
 #include "gait/gait_interfaces.hpp"
 #include "gait/gait_leg_wave.hpp"
 #include "gait/gait_move_combined.hpp"
+#include "gait/gait_move_ripple.hpp"
+#include "gait/gait_move_tripod.hpp"
+#include "gait/gait_move_wave.hpp"
 #include "gait/gait_parameters.hpp"
-#include "gait/gait_running.hpp"
 #include "gait/gait_single_pose.hpp"
 #include "gait/gait_test_legs.hpp"
 #include "gait/gait_torso_roll.hpp"
@@ -50,9 +52,7 @@ class CGaitController {
         return moving() ? input : Velocity();
     }
     bool moving() const {
-        return (currentGait() == MovementRequest::CONTINUOUS_MOVE ||
-                currentGait() == MovementRequest::CONTINUOUS_RUNNING ||
-                currentGait() == MovementRequest::HOLD_DISTANCE) &&
+        return (isLocomotion(currentGait()) || currentGait() == MovementRequest::HOLD_DISTANCE) &&
                active_gait_->state() != EGaitState::Stopped;
     }
     bool setGait(brain::MovementRequest request);

@@ -218,7 +218,7 @@ TEST_F(CoordinatorTest, JoystickDeadzoneBoundaryStopsWalkingWithoutPoseRequests)
             parameter = rclcpp::Parameter("joystick_deadzone", 0.25);
     }
     create(parameters);
-    feedback(MovementRequest::CONTINUOUS_MOVE);
+    feedback(MovementRequest::MOVE_COMBINED);
     rumblex_interfaces::msg::JoystickRequest request;
     request.left_stick_vertical = 0.25;
     request.left_stick_horizontal = -0.25;
@@ -237,7 +237,7 @@ TEST_F(CoordinatorTest, JoystickDeadzoneBoundaryStopsWalkingWithoutPoseRequests)
     ASSERT_EQ(active.size(), 2u);
     const auto gait = std::dynamic_pointer_cast<RequestMovementType>(active.front());
     ASSERT_TRUE(gait);
-    EXPECT_EQ(gait->movementRequest.type, MovementRequest::CONTINUOUS_MOVE);
+    EXPECT_EQ(gait->movementRequest.type, MovementRequest::MOVE_COMBINED);
     EXPECT_GT(gait->movementRequest.body_pose.torso_pose.position.z, 0.0);
 }
 
@@ -270,7 +270,7 @@ TEST_F(CoordinatorTest, VoiceRunningUsesRequestedDirectionAndStops) {
         const auto velocity = std::dynamic_pointer_cast<RequestVelocity>(group.back());
         ASSERT_TRUE(gait);
         ASSERT_TRUE(velocity);
-        EXPECT_EQ(gait->movementRequest.type, MovementRequest::CONTINUOUS_RUNNING);
+        EXPECT_EQ(gait->movementRequest.type, MovementRequest::MOVE_TRIPOD);
         EXPECT_DOUBLE_EQ(velocity->velocity.linear.x, x);
         EXPECT_DOUBLE_EQ(velocity->velocity.linear.y, y);
     }
@@ -374,7 +374,8 @@ TEST_F(CoordinatorTest, ExpirationPreservesNewerFeedback) {
 
 TEST_F(CoordinatorTest, WalkingAndRunningClearPreviousDeadline) {
     create();
-    for (auto type : {MovementRequest::CONTINUOUS_MOVE, MovementRequest::CONTINUOUS_RUNNING}) {
+    for (auto type : {MovementRequest::MOVE_COMBINED, MovementRequest::MOVE_TRIPOD,
+                      MovementRequest::MOVE_RIPPLE, MovementRequest::MOVE_WAVE}) {
         CoordinatorTestAccess::submit(*coordinator_, MovementRequest::SEQUENCE_WAITING, 10.0);
         CoordinatorTestAccess::expire(*coordinator_);
         CoordinatorTestAccess::submit(*coordinator_, type, 0.0);

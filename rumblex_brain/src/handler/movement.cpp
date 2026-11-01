@@ -133,10 +133,10 @@ void CMovement::update() {
     const auto gait = gait_controller_->currentGait();
     const bool frequent =
         gait == MovementRequest::HOLD_DISTANCE || gait == MovementRequest::LEVEL_TORSO ||
-        gait == MovementRequest::CONTINUOUS_MOVE || gait == MovementRequest::CONTINUOUS_RUNNING ||
-        gait == MovementRequest::CONTINUOUS_POSE || gait == MovementRequest::SINGLE_POSE ||
-        gait == MovementRequest::SEQUENCE_STAND_UP || gait == MovementRequest::SEQUENCE_LAYDOWN ||
-        gait == MovementRequest::SEQUENCE_WATCH || gait == MovementRequest::SEQUENCE_BODY_ROLL;
+        isLocomotion(gait) || gait == MovementRequest::CONTINUOUS_POSE ||
+        gait == MovementRequest::SINGLE_POSE || gait == MovementRequest::SEQUENCE_STAND_UP ||
+        gait == MovementRequest::SEQUENCE_LAYDOWN || gait == MovementRequest::SEQUENCE_WATCH ||
+        gait == MovementRequest::SEQUENCE_BODY_ROLL;
     const auto period = std::chrono::milliseconds(frequent ? 20 : 100);
     const units::Duration elapsed_s =
         (last_update_ ? std::chrono::duration<double>(now - *last_update_).count()

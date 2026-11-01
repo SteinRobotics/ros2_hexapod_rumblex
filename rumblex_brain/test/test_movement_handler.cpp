@@ -96,7 +96,7 @@ TEST_F(MovementHandlerTest, VelocityIsZeroDuringNonWalkingGait) {
     auto velocity = std::make_shared<RequestVelocity>();
     velocity->velocity.linear.x = 0.01;
     handler->run(velocity);
-    request(MovementRequest::CONTINUOUS_MOVE);
+    request(MovementRequest::MOVE_COMBINED);
     pump(300ms);
     ASSERT_FALSE(velocities.empty());
     EXPECT_DOUBLE_EQ(velocities.back().linear.x, 0.01);

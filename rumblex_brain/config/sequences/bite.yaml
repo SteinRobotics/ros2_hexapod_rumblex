@@ -1,0 +1,14 @@
+name: bite
+# Suggested gesture; start standing. No automatic voice or joystick trigger.
+actions:
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.0
+      save_pose: true
+      pose_delta:
+        torso_translation: {x: 0.015}
+        head_rotation: {pitch: 10}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.0
+      restore_pose: true

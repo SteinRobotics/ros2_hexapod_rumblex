@@ -56,7 +56,6 @@ bool CMoveCombinedGait::updateTimed(const Velocity& velocity, const CPose& torso
                      abs(velocity.angular.z) / combined_params_.max_angular_velocity);
         active_gait_type_ = selectGait(std::clamp(demand.numerical_value_in(one), 0.0, 1.0));
     }
-    return planner_.update(patterns_.at(active_gait_type_), velocity, combined_params_.rotation_weight, torso,
-                           elapsed_s);
+    return planner_.update(patterns_.at(active_gait_type_), velocity, torso, elapsed_s);
 }
 }  // namespace brain

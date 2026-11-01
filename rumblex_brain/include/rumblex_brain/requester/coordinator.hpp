@@ -100,9 +100,9 @@ class CCoordinator {
 
     // Gait cycling: button_start iterates through these modes
     const std::vector<uint32_t> gaitModes_ = {
-        brain::MovementRequest::CONTINUOUS_MOVE,
-        brain::MovementRequest::CONTINUOUS_POSE,
-        brain::MovementRequest::CONTINUOUS_RUNNING,
+        brain::MovementRequest::MOVE_COMBINED, brain::MovementRequest::CONTINUOUS_POSE,
+        brain::MovementRequest::MOVE_TRIPOD,   brain::MovementRequest::MOVE_RIPPLE,
+        brain::MovementRequest::MOVE_WAVE,
     };
     size_t activeGaitIndex_ = 0;
 

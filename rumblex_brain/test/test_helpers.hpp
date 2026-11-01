@@ -91,7 +91,6 @@ inline std::vector<rclcpp::Parameter> defaultGaitParameters() {
             rclcpp::Parameter("gait.generic.leg_lift_height_m", 0.025),
             rclcpp::Parameter("gait.generic.step_length_m", 0.03),
             rclcpp::Parameter("gait.tripod.head_max_yaw_deg", 15.0),
-            rclcpp::Parameter("gait.running.head_max_yaw_deg", 5.0),
             rclcpp::Parameter("gait.leg_wave.leg_lift_height_m", 0.03),
             rclcpp::Parameter("gait.watch.torso_max_yaw_deg", 10.0),
             rclcpp::Parameter("gait.test_legs.torso_coxa_delta_deg", 10.0),

@@ -147,6 +147,48 @@ TEST_F(SinglePoseTargetTest, PendingRotationDeltaCapturesEndpointAndAddsAllAxes)
     EXPECT_EQ(bodyPose(*model), origin);
 }
 
+TEST_F(SinglePoseTargetTest, BiteAndStompExamplesRestoreStartingPoseWithoutVoiceTriggers) {
+    CSequenceParser parser(node);
+    ASSERT_TRUE(parser.parseDirectory(RUMBLEX_SEQUENCES_DIRECTORY));
+    EXPECT_FALSE(parser.getSequenceForVoiceRequest("commandBite"));
+    EXPECT_FALSE(parser.getSequenceForVoiceRequest("commandStomp"));
+    for (const std::string name : {"bite", "stomp"}) {
+        SCOPED_TRACE(name);
+        const auto sequence = parser.getSequence(name);
+        ASSERT_TRUE(sequence);
+        const auto& groups = sequence->get().actionGroups;
+        ASSERT_EQ(groups.size(), name == "bite" ? 2u : 4u);
+        const auto origin = bodyPose(*model);
+        for (size_t i = 0; i < groups.size(); ++i) {
+            ASSERT_EQ(groups[i].size(), 1u);
+            const auto action = std::dynamic_pointer_cast<RequestMovementType>(groups[i][0]);
+            ASSERT_TRUE(action);
+            const auto& request = action->movementRequest;
+            EXPECT_EQ(request.type, MovementRequest::SINGLE_POSE);
+            EXPECT_EQ(request.duration_s, 1.0 * s);
+            EXPECT_EQ(request.save_pose, i == 0);
+            EXPECT_EQ(request.restore_pose, i == groups.size() - 1);
+            if (!request.restore_pose) {
+                ASSERT_TRUE(request.pose_delta);
+                if (name == "bite") {
+                    EXPECT_DOUBLE_EQ(request.pose_delta->torso_translation.x, 0.015);
+                    EXPECT_DOUBLE_EQ(request.pose_delta->head_rotation.pitch, 10.0);
+                } else {
+                    const auto leg = i == 2 ? ELegIndex::LeftFront : ELegIndex::RightFront;
+                    EXPECT_DOUBLE_EQ(request.pose_delta->toe_translation[static_cast<size_t>(leg)].z,
+                                     i == 1 ? -0.02 : 0.02);
+                }
+            }
+            ASSERT_TRUE(controller->setGait(request));
+            advance(49);
+            EXPECT_FALSE(controller->motionStopped());
+            advance(1);
+            EXPECT_TRUE(controller->motionStopped());
+        }
+        EXPECT_EQ(bodyPose(*model), origin);
+    }
+}
+
 TEST_F(SinglePoseTargetTest, HighFiveCatalogRaisesHoldsAndRestoresEachInvocation) {
     CSequenceParser parser(node);
     ASSERT_TRUE(parser.parseFile(std::string(RUMBLEX_SEQUENCES_DIRECTORY) + "/high_five.yaml"));

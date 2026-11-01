@@ -4,6 +4,11 @@ This guide sets up **Nox**, the current RumbleX robot, on a headless Raspberry P
 
 The commands below assume **Ubuntu 26.04** and **ROS 2 Lyrical** on both machines. Use the Ubuntu system Python (3.14 on Ubuntu 26.04) for ROS and the virtual environment; mixing Python versions can break ROS Python extensions. Install ROS from the [official Lyrical Ubuntu instructions](https://docs.ros.org/en/lyrical/Get-Started/Installation/Ubuntu-Install-Debs.html) before continuing. Choose `ros-lyrical-ros-base` on the Pi and `ros-lyrical-desktop` on the PC. Both machines need the same ROS distribution to share topics reliably. The C++ packages require a C++23-capable compiler and CMake 3.25 or newer; Ubuntu 26.04 supplies both.
 
+Before compiling or testing, use the [resource-limited build/test guide](rumblex_doc/BUILD_AND_TEST.md).
+It has separate amd64 and Raspberry Pi 5 limits and explains Codex permission
+escalation. Define its `rumblex_limited` wrapper with the appropriate profile;
+use it for the build commands below.
+
 ## Raspberry Pi 5: headless robot
 
 For Nox's 2.4 GHz WiFi restriction, see [band verification and Netplan configuration](rumblex_doc/setup_raspberry_pi/setup_ubuntu_26.04.md#wlan-auf-24-ghz-begrenzen). A current 2.4 GHz connection alone does not prove that the profile excludes 5 GHz; the setup script does not configure this restriction.
@@ -68,7 +73,7 @@ For Nox's 2.4 GHz WiFi restriction, see [band verification and Netplan configura
      src/ros2_hexapod_rumblex/rumblex_bringup \
      --ignore-src -r -y \
      --skip-keys 'ydlidar_ros2_driver rviz2 joint_state_publisher_gui magic_enum fonts-liberation python-google-cloud-speech-pip python3-sounddevice-pip python-gTTS-pip'
-   python -m colcon build --symlink-install --packages-up-to rumblex_bringup
+   rumblex_limited python -m colcon build --executor sequential --symlink-install --packages-up-to rumblex_bringup
    source install/local_setup.bash
    ```
 
@@ -158,7 +163,7 @@ For offline robot-name recognition, follow the [openWakeWord ONNX setup](rumblex
      src/ros2_hexapod_rumblex/rumblex_gazebo \
      --ignore-src -r -y \
      --skip-keys 'ydlidar_ros2_driver magic_enum fonts-liberation python-google-cloud-speech-pip python3-sounddevice-pip python-gTTS-pip'
-   python -m colcon build --symlink-install \
+   rumblex_limited python -m colcon build --executor sequential --symlink-install \
      --packages-up-to rumblex_gazebo rumblex_description rumblex_navigation
    source install/local_setup.bash
    ```
@@ -183,7 +188,7 @@ After upgrading to Ubuntu 26.04 and installing ROS 2 Lyrical, open a fresh termi
 
 Archive the existing `build/`, `install/`, and `log/` directories before rebuilding. Recreate `.venv` with `/usr/bin/python3` on Ubuntu 26.04 and reinstall its Python dependencies using the steps above. Then rerun `rosdep install` and the build command for the Pi or PC. Source the new `install/local_setup.bash` after the build completes.
 
-If an existing build reports `Could NOT find Python3` even though the system Python development headers and NumPy are installed, its CMake cache may still contain Python 3.12 metadata from Jazzy. Reconfigure all packages with `python -m colcon build --symlink-install --cmake-clean-cache` (include the package selection from the Pi or PC instructions if needed). This refreshes cached Python and ROS dependency paths. Archiving the old build and install directories as described above also removes obsolete installed files after a distribution upgrade.
+If an existing build reports `Could NOT find Python3` even though the system Python development headers and NumPy are installed, its CMake cache may still contain Python 3.12 metadata from Jazzy. Reconfigure all packages with `rumblex_limited python -m colcon build --executor sequential --symlink-install --cmake-clean-cache` (include the package selection from the Pi or PC instructions if needed). This refreshes cached Python and ROS dependency paths. Archiving the old build and install directories as described above also removes obsolete installed files after a distribution upgrade.
 
 ## Every new terminal
 
@@ -201,7 +206,7 @@ Check the interpreter with `which python` and `python -c 'import rclpy; print(rc
 If a communication node reports `ModuleNotFoundError: No module named 'openwakeword'` even though it is installed in `.venv`, rebuild the package with the venv's Python:
 
 ```bash
-python -m colcon build --symlink-install --packages-select rumblex_communication
+rumblex_limited python -m colcon build --executor sequential --symlink-install --packages-select rumblex_communication
 source install/local_setup.bash
 head -n 1 install/rumblex_communication/lib/rumblex_communication/node_communication
 ```

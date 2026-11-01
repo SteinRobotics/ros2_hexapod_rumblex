@@ -9,9 +9,8 @@ using namespace mp_units;
 using namespace mp_units::si::unit_symbols;
 
 CContinuousPoseGait::CContinuousPoseGait(std::shared_ptr<rclcpp::Node> node,
-                                         std::shared_ptr<CPoseModel> kinematics,
-                                         Parameters::ContinuousPose& params)
-    : node_(node), kinematics_(kinematics), params_(params) {
+                                         std::shared_ptr<CPoseModel> kinematics)
+    : node_(node), kinematics_(kinematics) {
 }
 
 void CContinuousPoseGait::start(units::Duration /*duration_s*/, uint8_t /*direction*/) {

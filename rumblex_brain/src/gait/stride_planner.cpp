@@ -100,8 +100,8 @@ void CStridePlanner::plan(const StridePattern& pattern, const Velocity& velocity
     cycle_ += 1.0 / count;
 }
 
-bool CStridePlanner::update(const StridePattern& pattern, const Velocity& velocity,
-                            double /*rotation_weight*/, const CPose& torso, units::Duration elapsed_s) {
+bool CStridePlanner::update(const StridePattern& pattern, const Velocity& velocity, const CPose& torso,
+                            units::Duration elapsed_s) {
     if (!isfinite(elapsed_s) || elapsed_s <= 0.0 * s || elapsed_s > 0.5 * s) {
         carry_s_ = 0.0 * s;
         return false;

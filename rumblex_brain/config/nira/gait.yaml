@@ -11,10 +11,6 @@ node_brain:
     #### GAIT TRIPOD PARAMETERS ####
     gait.tripod.head_max_yaw_deg: 15.0 # deg
 
-    #### GAIT RUNNING PARAMETERS ####
-    gait.running.head_max_yaw_deg: 5.0                    # deg, minimal head sway at high speed
-    gait.running.rotation_weight: 0.7
-
     #### GAIT RIPPLE PARAMETERS ####
     gait.ripple.head_max_yaw_deg: 10.0                   # deg
 

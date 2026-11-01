@@ -37,7 +37,7 @@ class OfflineOdometryTest(unittest.TestCase):
         self.node.odom = Mock()
         self.node.tf = Mock()
         self.node.estimated_velocity = Mock()
-        self.node.on_movement_name(String(data='CONTINUOUS_MOVE'))
+        self.node.on_movement_name(String(data='MOVE_COMBINED'))
 
     def tearDown(self):
         self.clock_patch.stop()
@@ -135,7 +135,7 @@ class OfflineOdometryTest(unittest.TestCase):
 
     def test_movement_change_resets_displacement(self):
         self.send(self.sample())
-        self.node.on_movement_name(String(data='CONTINUOUS_RUNNING'))
+        self.node.on_movement_name(String(data='MOVE_TRIPOD'))
         odom = self.send(self.sample(dx=0.01))
         self.assertEqual(odom.pose.pose.position.x, 0.0)
 

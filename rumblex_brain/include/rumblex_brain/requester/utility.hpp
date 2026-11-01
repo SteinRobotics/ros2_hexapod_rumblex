@@ -31,8 +31,10 @@ inline const std::map<const uint32_t, const std::string> movementTypeToName = {
     {brain::MovementRequest::CONTINUOUS_POSE, "CONTINUOUS_POSE"},
     {brain::MovementRequest::SINGLE_POSE, "SINGLE_POSE"},
     {brain::MovementRequest::SEQUENCE_TESTLEGS, "SEQUENCE_TESTLEGS"},
-    {brain::MovementRequest::CONTINUOUS_MOVE, "CONTINUOUS_MOVE"},
-    {brain::MovementRequest::CONTINUOUS_RUNNING, "CONTINUOUS_RUNNING"},
+    {brain::MovementRequest::MOVE_COMBINED, "MOVE_COMBINED"},
+    {brain::MovementRequest::MOVE_TRIPOD, "MOVE_TRIPOD"},
+    {brain::MovementRequest::MOVE_RIPPLE, "MOVE_RIPPLE"},
+    {brain::MovementRequest::MOVE_WAVE, "MOVE_WAVE"},
 };
 
 // Auto-generated reverse map from movementTypeToName

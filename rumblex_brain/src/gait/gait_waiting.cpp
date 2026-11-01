@@ -8,9 +8,7 @@ namespace brain {
 using namespace mp_units;
 using namespace mp_units::si::unit_symbols;
 using mp_units::angular::unit_symbols::rad;
-CWaitingGait::CWaitingGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics,
-                           Parameters::Waiting& params)
-    : node_(node), kinematics_(kinematics), params_(params) {
+CWaitingGait::CWaitingGait(std::shared_ptr<CPoseModel> kinematics) : kinematics_(kinematics) {
 }
 
 void CWaitingGait::start(units::Duration /*duration_s*/, uint8_t /*direction*/) {

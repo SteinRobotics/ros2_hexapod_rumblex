@@ -36,10 +36,13 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
                  COrientation(0.0 * deg, -params_.single_pose.head_max_pitch, 0.0 * deg)));
     gaits_[MovementRequest::SEQUENCE_LEGS_WAVE] =
         std::make_shared<CLegWaveGait>(node_, kinematics_, params_.leg_wave);
-    gaits_[MovementRequest::CONTINUOUS_MOVE] = std::make_shared<CMoveCombinedGait>(
+    gaits_[MovementRequest::MOVE_COMBINED] = std::make_shared<CMoveCombinedGait>(
         node_, kinematics_, params_.wave, params_.ripple, params_.tripod, params_.move_combined);
-    gaits_[MovementRequest::CONTINUOUS_RUNNING] =
-        std::make_shared<CRunningGait>(node_, kinematics_, params_.running);
+    gaits_[MovementRequest::MOVE_TRIPOD] =
+        std::make_shared<CMoveTripodGait>(node_, kinematics_, params_.tripod);
+    gaits_[MovementRequest::MOVE_RIPPLE] =
+        std::make_shared<CMoveRippleGait>(node_, kinematics_, params_.ripple);
+    gaits_[MovementRequest::MOVE_WAVE] = std::make_shared<CMoveWaveGait>(node_, kinematics_, params_.wave);
     gaits_[MovementRequest::SEQUENCE_STAND_UP] = std::make_shared<CSinglePoseGait>(
         node_, kinematics_, params_.single_pose,
         bodyPose(kinematics_->getStandingToePositions(), CPose(), COrientation()));
@@ -47,10 +50,8 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
         std::make_shared<CTestLegsGait>(node_, kinematics_, params_.test_legs);
     gaits_[MovementRequest::SINGLE_POSE] =
         std::make_shared<CSinglePoseGait>(node_, kinematics_, params_.single_pose);
-    gaits_[MovementRequest::CONTINUOUS_POSE] =
-        std::make_shared<CContinuousPoseGait>(node_, kinematics_, params_.continuous_pose);
-    gaits_[MovementRequest::SEQUENCE_WAITING] =
-        std::make_shared<CWaitingGait>(node_, kinematics_, params_.waiting);
+    gaits_[MovementRequest::CONTINUOUS_POSE] = std::make_shared<CContinuousPoseGait>(node_, kinematics_);
+    gaits_[MovementRequest::SEQUENCE_WAITING] = std::make_shared<CWaitingGait>(kinematics_);
     gaits_[MovementRequest::SEQUENCE_WATCH] =
         std::make_shared<CYawSequenceGait>(node_, kinematics_, params_.watch.head_max_yaw, 0.0 * deg);
 

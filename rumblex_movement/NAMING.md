@@ -42,12 +42,10 @@ describe the torso center to coxa mount offset.
 | `GAIT_MOVE_COMBINED_HYSTERESIS_MARGIN` | `gait.move_combined.hysteresis_margin` |
 | `GAIT_MOVE_COMBINED_MAX_VELOCITY_LINEAR` | `gait.move_combined.max_linear_velocity_m_s` |
 | `GAIT_MOVE_COMBINED_MAX_VELOCITY_ROTATION` | `gait.move_combined.max_angular_velocity_rad_s` |
-| `GAIT_MOVE_COMBINED_ROTATION_WEIGHT` | `gait.move_combined.rotation_weight` |
 | `GAIT_MOVE_COMBINED_THRESHOLD_RIPPLE_TRIPOD` | `gait.move_combined.velocity_threshold_ripple_tripod` |
 | `GAIT_MOVE_COMBINED_THRESHOLD_WAVE_RIPPLE` | `gait.move_combined.velocity_threshold_wave_ripple` |
 | `GAIT_RIPPLE_HEAD_MAX_YAW` | `gait.ripple.head_max_yaw_deg` |
-| `GAIT_RUNNING_HEAD_MAX_YAW` | `gait.running.head_max_yaw_deg` |
-| `GAIT_RUNNING_ROTATION_WEIGHT` | `gait.running.rotation_weight` |
+| `GAIT_RUNNING_HEAD_MAX_YAW` | `gait.tripod.head_max_yaw_deg` |
 | `GAIT_TRIPOD_HEAD_MAX_YAW` | `gait.tripod.head_max_yaw_deg` |
 | `GAIT_WATCH_BODY_MAX_YAW` | `gait.watch.torso_max_yaw_deg` |
 | `GAIT_WAVE_HEAD_MAX_YAW` | `gait.wave.head_max_yaw_deg` |

@@ -15,20 +15,25 @@ Nira is the planned second robot. Runtime packages are organized by responsibili
 
 ## Build, Test, and Development Commands
 
-From the workspace root, install dependencies and build with:
+Follow [resource-limited builds and tests](rumblex_doc/BUILD_AND_TEST.md) before
+running builds, tests, simulations, or CAD workloads. It documents separate amd64
+and Raspberry Pi 5 budgets, user-systemd access from Codex, and recovery after
+interruptions. Run heavy jobs sequentially across sessions and verify limits.
 
-```bash
-rosdep install --from-paths . --ignore-src -r -y
-colcon build --symlink-install
-source install/local_setup.bash
-```
+For the approximately 30 GiB amd64 host, start with MemoryHigh=6G, MemoryMax=8G,
+MemorySwapMax=1G and a five-minute timeout. On Pi 5, use the guide's RAM-relative
+budget and one compiler worker. Keep memory-pressure protection enabled.
 
-Build one package with `colcon build --packages-select <package_name>`. Run its tests and display output with:
+Use `--executor sequential` with colcon and set **both** `MAKEFLAGS="-j2 -l2"`
+and `CMAKE_BUILD_PARALLEL_LEVEL=2` (use 1 for both on Pi or recovery batches).
+This colcon version otherwise adds CPU-count-based Make parallelism, overriding
+the intended CMake worker limit. Run tests with one worker as well.
 
-```bash
-colcon test --packages-select <package_name> --event-handlers console_direct+
-colcon test-result --verbose
-```
+If the sandbox cannot connect to the systemd user bus, request tool escalation
+for the bounded `systemd-run --user --scope ...` command; do not silently run
+without limits. If access is rejected or limits cannot be verified, report the
+blocker. Inspect surviving processes and logs before retrying interrupted jobs;
+never automatically restart the full workload or raise limits after an OOM/timeout.
 
 Use package launch files for local checks, for example `ros2 launch rumblex_movement movement_launch.py` or `ros2 launch rumblex_gazebo simulation_gazebo.launch.py`.
 

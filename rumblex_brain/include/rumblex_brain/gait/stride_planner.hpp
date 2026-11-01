@@ -25,8 +25,8 @@ class CStridePlanner {
     explicit CStridePlanner(std::shared_ptr<CPoseModel> model) : model_(std::move(model)) {
     }
     void start();
-    bool update(const StridePattern& pattern, const Velocity& velocity, double rotation_weight,
-                const CPose& torso, units::Duration elapsed_s = 0.1 * s);
+    bool update(const StridePattern& pattern, const Velocity& velocity, const CPose& torso,
+                units::Duration elapsed_s = 0.1 * s);
     void requestStop();
     void cancelStop();
     EGaitState state() const {

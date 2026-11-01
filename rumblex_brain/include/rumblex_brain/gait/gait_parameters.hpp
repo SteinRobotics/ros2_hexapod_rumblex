@@ -21,8 +21,6 @@ struct Parameters {
         units::Angle torso_max_pitch = 0.0 * deg;
     };
 
-    struct ContinuousPose {};
-
     struct LegWave {
         units::Length leg_lift_height = 0.0 * m;
     };
@@ -31,13 +29,6 @@ struct Parameters {
         units::Angle head_yaw_amplitude = 0.0 * deg;
         units::Length gait_step_length = 0.0 * m;
         units::Length leg_lift_height = 0.0 * m;
-    };
-
-    struct Running {
-        units::Angle head_yaw_amplitude = 0.0 * deg;
-        units::Length gait_step_length = 0.0 * m;
-        units::Length leg_lift_height = 0.0 * m;
-        double rotation_weight{0.7};
     };
 
     struct SinglePose {
@@ -56,8 +47,6 @@ struct Parameters {
         units::Length leg_lift_height = 0.0 * m;
     };
 
-    struct Waiting {};
-
     struct Wave {
         units::Angle head_yaw_amplitude = 0.0 * deg;
         units::Length gait_step_length = 0.0 * m;
@@ -73,20 +62,16 @@ struct Parameters {
         double velocity_threshold_wave_ripple{0.3};
         double velocity_threshold_ripple_tripod{0.6};
         double hysteresis_margin{0.05};
-        double rotation_weight{0.7};
         units::LinearVelocity max_linear_velocity = 0.01 * m / s;
         units::AngularVelocity max_angular_velocity = 0.01 * rad / s;
     };
 
     TorsoRoll torso_roll;
-    ContinuousPose continuous_pose;
     LegWave leg_wave;
     Ripple ripple;
-    Running running;
     SinglePose single_pose;
     TestLegs test_legs;
     Tripod tripod;
-    Waiting waiting;
     Wave wave;
     Watch watch;
     MoveCombined move_combined;
@@ -120,13 +105,6 @@ inline Parameters Parameters::declare(std::shared_ptr<rclcpp::Node> node) {
     params.tripod.gait_step_length = step_length;
     params.tripod.leg_lift_height = leg_lift_height;
 
-    // Running
-    params.running.head_yaw_amplitude =
-        node->declare_parameter<double>("gait.running.head_max_yaw_deg", 5.0) * deg;
-    params.running.gait_step_length = step_length;
-    params.running.leg_lift_height = leg_lift_height;
-    params.running.rotation_weight = node->declare_parameter<double>("gait.running.rotation_weight", 0.7);
-
     // Ripple
     params.ripple.head_yaw_amplitude =
         node->declare_parameter<double>("gait.ripple.head_max_yaw_deg", 10.0) * deg;
@@ -155,8 +133,6 @@ inline Parameters Parameters::declare(std::shared_ptr<rclcpp::Node> node) {
         node->declare_parameter<double>("gait.move_combined.velocity_threshold_ripple_tripod", 0.6);
     params.move_combined.hysteresis_margin =
         node->declare_parameter<double>("gait.move_combined.hysteresis_margin", 0.05);
-    params.move_combined.rotation_weight =
-        node->declare_parameter<double>("gait.move_combined.rotation_weight", 0.7);
     params.move_combined.max_linear_velocity = velocityLimit<m / s>(node, "max_velocity_linear");
     params.move_combined.max_angular_velocity = velocityLimit<rad / s>(node, "max_velocity_rotation");
     for (const auto& [name, limit] :

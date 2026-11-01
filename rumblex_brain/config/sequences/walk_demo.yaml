@@ -6,7 +6,7 @@ actions:
       name: SEQUENCE_STAND_UP
       duration_s: 1.5
   - movement:
-      name: CONTINUOUS_MOVE
+      name: MOVE_COMBINED
       duration_s: 3.0
     velocity:
       linear: {x: 0.03}

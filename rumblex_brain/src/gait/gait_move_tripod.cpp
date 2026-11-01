@@ -1,8 +1,8 @@
-#include "gait/gait_running.hpp"
+#include "gait/gait_move_tripod.hpp"
 namespace brain {
-CRunningGait::CRunningGait(std::shared_ptr<rclcpp::Node>, std::shared_ptr<CPoseModel> model,
-                           Parameters::Running& params)
-    : planner_(std::move(model)), rotation_weight_(params.rotation_weight) {
+CMoveTripodGait::CMoveTripodGait(std::shared_ptr<rclcpp::Node>, std::shared_ptr<CPoseModel> model,
+                                 Parameters::Tripod& params)
+    : planner_(std::move(model)) {
     using enum ELegIndex;
     pattern_ = {{{RightFront, LeftMid, RightBack}, {LeftFront, RightMid, LeftBack}},
                 params.gait_step_length,

@@ -52,10 +52,12 @@ struct MovementRequest {
         // 21 was the retired clap gait; clap is now a named sequence.
         SEQUENCE_TESTLEGS = 22,
         CONTINUOUS_POSE = 30,
-        CONTINUOUS_MOVE = 31,
-        CONTINUOUS_RUNNING = 32,
+        MOVE_COMBINED = 31,
+        MOVE_TRIPOD = 32,
         HOLD_DISTANCE = 33,
         LEVEL_TORSO = 34,
+        MOVE_RIPPLE = 35,
+        MOVE_WAVE = 36,
     };
     enum Direction : uint8_t { CLOCKWISE = 0, ANTICLOCKWISE = 1 };
     using _type_type = uint8_t;
@@ -90,4 +92,8 @@ struct MovementRequest {
     }
     rumblex_interfaces::msg::BodyPose body_pose{};
 };
+constexpr bool isLocomotion(uint32_t type) {
+    return type == MovementRequest::MOVE_COMBINED || type == MovementRequest::MOVE_TRIPOD ||
+           type == MovementRequest::MOVE_RIPPLE || type == MovementRequest::MOVE_WAVE;
+}
 }  // namespace brain

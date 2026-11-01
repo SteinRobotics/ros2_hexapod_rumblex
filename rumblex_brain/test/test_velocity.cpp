@@ -4,7 +4,7 @@
 #include <limits>
 
 #include "gait/gait_move_combined.hpp"
-#include "gait/gait_running.hpp"
+#include "gait/gait_move_tripod.hpp"
 #include "test_helpers.hpp"
 #include "velocity.hpp"
 
@@ -217,7 +217,7 @@ TEST_F(VelocityTest, SupportingFootMotionMatchesPhysicalCommandsAndElapsedTime) 
                 model->moveTorso(model->getStandingToePositions());
                 std::unique_ptr<IContinuousGait> walking;
                 if (running)
-                    walking = std::make_unique<CRunningGait>(node, model, params.running);
+                    walking = std::make_unique<CMoveTripodGait>(node, model, params.tripod);
                 else
                     walking = std::make_unique<CMoveCombinedGait>(gait());
                 walking->start(0.0 * s, 0);

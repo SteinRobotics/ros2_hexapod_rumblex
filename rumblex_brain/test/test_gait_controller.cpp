@@ -319,9 +319,9 @@ TEST_F(GaitControllerTest, MultipleConsecutiveSwitches) {
     for (int i = 0; i < kMaxIterations; ++i) {
         controller_->updateSelectedGait(vel);
     }
-    request.type = MovementRequestMsg::CONTINUOUS_MOVE;
+    request.type = MovementRequestMsg::MOVE_COMBINED;
     controller_->setGait(request);
-    EXPECT_EQ(controller_->currentGait(), MovementRequestMsg::CONTINUOUS_MOVE);
+    EXPECT_EQ(controller_->currentGait(), MovementRequestMsg::MOVE_COMBINED);
 }
 
 // Test: Update gait after switch
@@ -365,9 +365,9 @@ TEST_F(GaitControllerTest, SwitchBackToMoveWithVelocity) {
     for (int i = 0; i < kMaxIterations; ++i) {
         controller_->updateSelectedGait(vel);
     }
-    request.type = MovementRequestMsg::CONTINUOUS_MOVE;
+    request.type = MovementRequestMsg::MOVE_COMBINED;
     controller_->setGait(request);
-    EXPECT_EQ(controller_->currentGait(), MovementRequestMsg::CONTINUOUS_MOVE);
+    EXPECT_EQ(controller_->currentGait(), MovementRequestMsg::MOVE_COMBINED);
 
     // Update with forward velocity - should work
     EXPECT_NO_THROW({
@@ -378,7 +378,8 @@ TEST_F(GaitControllerTest, SwitchBackToMoveWithVelocity) {
 }
 
 TEST_F(GaitControllerTest, StartupWithoutVelocityDoesNotBlockPendingSwitch) {
-    for (auto type : {MovementRequest::CONTINUOUS_MOVE, MovementRequest::CONTINUOUS_RUNNING}) {
+    for (auto type : {MovementRequest::MOVE_COMBINED, MovementRequest::MOVE_TRIPOD,
+                      MovementRequest::MOVE_RIPPLE, MovementRequest::MOVE_WAVE}) {
         SCOPED_TRACE(type);
         brain::MovementRequest request;
         request.type = type;
@@ -395,7 +396,8 @@ TEST_F(GaitControllerTest, StartupWithoutVelocityDoesNotBlockPendingSwitch) {
 }
 
 TEST_F(GaitControllerTest, SameGaitRequestCancelsPendingStop) {
-    for (auto type : {MovementRequest::CONTINUOUS_MOVE, MovementRequest::CONTINUOUS_RUNNING}) {
+    for (auto type : {MovementRequest::MOVE_COMBINED, MovementRequest::MOVE_TRIPOD,
+                      MovementRequest::MOVE_RIPPLE, MovementRequest::MOVE_WAVE}) {
         SCOPED_TRACE(type);
         brain::MovementRequest request;
         request.type = type;
@@ -415,7 +417,7 @@ TEST_F(GaitControllerTest, SameGaitRequestCancelsPendingStop) {
 
 TEST_F(GaitControllerTest, NoRequestPreservesPendingSwitch) {
     brain::MovementRequest request;
-    request.type = MovementRequest::CONTINUOUS_MOVE;
+    request.type = MovementRequest::MOVE_COMBINED;
     controller_->setGait(request);
     request.type = MovementRequest::SEQUENCE_WAITING;
     controller_->setGait(request);
@@ -428,13 +430,13 @@ TEST_F(GaitControllerTest, NoRequestPreservesPendingSwitch) {
 
 TEST_F(GaitControllerTest, CancellationDiscardsPendingSwitch) {
     brain::MovementRequest request;
-    request.type = MovementRequest::CONTINUOUS_MOVE;
+    request.type = MovementRequest::MOVE_COMBINED;
     controller_->setGait(request);
     request.type = MovementRequest::SEQUENCE_WAITING;
     controller_->setGait(request);
     controller_->requestStopSelectedGait();
     for (int i = 0; i < kMaxIterations; ++i) controller_->updateSelectedGait(createZeroVelocity());
-    EXPECT_EQ(controller_->currentGait(), MovementRequest::CONTINUOUS_MOVE);
+    EXPECT_EQ(controller_->currentGait(), MovementRequest::MOVE_COMBINED);
     EXPECT_FALSE(controller_->moving());
 }
 

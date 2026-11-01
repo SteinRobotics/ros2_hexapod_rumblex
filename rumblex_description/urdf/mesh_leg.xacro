@@ -41,7 +41,8 @@
         <geometry><mesh filename="${mesh_directory}/assembly_femur.stl" scale="${mesh_scale}"/></geometry>
         <material name="dark_blue"/>
       </visual>
-      <collision><origin xyz="-0.0325302233968 0.00458351350954 0.0185"/><geometry><box size="0.0850604467937 0.0378201245829 0.041"/></geometry></collision>
+      <!-- Box X follows the hip-to-knee line; bounds include 0.1 mm per face. -->
+      <collision><origin xyz="-0.0321686833997 0.00184637341052 0.0185" rpy="0 0 -0.173951227164"/><geometry><box size="0.0882306030331 0.0357824108515 0.0412"/></geometry></collision>
       <inertial><origin xyz="-0.0325302233968 0.00458351350954 0.0185"/><mass value="0.12"/><inertia ixx="4.0e-05" ixy="0" ixz="0" iyy="4.0e-05" iyz="0" izz="4.0e-05"/></inertial>
     </link>
 

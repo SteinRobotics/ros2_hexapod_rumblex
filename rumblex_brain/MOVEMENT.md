@@ -155,7 +155,7 @@ while the torso finishes the one-second segment. Both targets are captured at
 the segment boundary; this preserves zero velocity and acceleration at handoff
 without requiring mid-motion trajectory replanning.
 
-Walking and running share `CStridePlanner`. Patterns specify ordered swing
+All locomotion gaits share `CStridePlanner`. Patterns specify ordered swing
 leg groups, step reach, lift height, and head amplitude. A segment
 captures the actual current planned toe, torso, and head poses, then generates
 a complete swing/support trajectory. Swing lift is `64t³(1-t)³`, also with zero
@@ -183,7 +183,13 @@ The authoritative limits also drive gait selection. Legacy
 Gait demand is the larger of normalized planar speed and normalized yaw speed.
 The wave/ripple and ripple/tripod thresholds remain 0.3 and 0.6, with hysteresis.
 A full single-axis input selects tripod directly at the next contact boundary.
-Running also uses the physical velocity contract and alternating tripod support.
+`MOVE_COMBINED` keeps automatic selection through `gait_move_combined`.
+`MOVE_TRIPOD` (formerly `CONTINUOUS_RUNNING`) fixes alternating three-leg support,
+`MOVE_RIPPLE` cycles three pairs, and `MOVE_WAVE` swings one leg at a time.
+These fixed gaits use the same physical velocity contract and their respective
+`gait.tripod`, `gait.ripple`, and `gait.wave` parameters. The retired
+`gait.running` parameters are replaced by `gait.tripod`; fixed tripod now shares
+the configured tripod head amplitude with the combined gait.
 
 Each stance follows a planar rigid-body transform derived from the requested
 twist and segment duration. Rotational foot speed uses the foot radius in metres.
@@ -259,3 +265,7 @@ command requested 0.4000 rad/s and supporting-foot odometry estimated 0.4012 rad
 for a one-second head trajectory to 14 degrees, with a largest adjacent yaw step
 of 0.535 degrees. All 197 package tests passed, including elapsed-time orientation
 checks, one-tick servo commands, and pose-mode request grouping.
+
+The former `gait.*.rotation_weight` settings have been removed: the physical
+stride planner did not use them. Translation and rotation are determined by
+the requested physical velocity. Remove these unused settings from custom configurations.

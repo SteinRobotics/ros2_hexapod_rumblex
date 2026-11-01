@@ -117,7 +117,7 @@ void CCoordinator::cycleGaitMode() {
 }
 
 void CCoordinator::cmdVelReceived(const geometry_msgs::msg::Twist& msg) {
-    submitRequestMove({.type = MovementRequest::CONTINUOUS_MOVE,
+    submitRequestMove({.type = MovementRequest::MOVE_COMBINED,
                        .duration = 0.0 * s,
                        .priority = Prio::High,
                        .velocity = msg});
@@ -157,7 +157,7 @@ void CCoordinator::joystickRequestReceived(const JoystickRequest& msg) {
         RCLCPP_WARN_STREAM(node_->get_logger(), "movement request is locked, ignoring joystick request");
         return;
     }
-    if (actualMovementType_ == MovementRequest::CONTINUOUS_MOVE &&
+    if (actualMovementType_ == MovementRequest::MOVE_COMBINED &&
         command.type == MovementRequest::NO_REQUEST) {
         RCLCPP_INFO_STREAM(node_->get_logger(), "end move request");
         auto request = std::make_shared<RequestVelocity>();
@@ -246,18 +246,17 @@ void CCoordinator::speechRecognized(std::string text) {
         }
         RCLCPP_INFO_STREAM(node_->get_logger(), "submit move request");
         const bool running = command == "commandRun";
-        submitRequestMove(
-            {.type = running ? MovementRequest::CONTINUOUS_RUNNING : MovementRequest::CONTINUOUS_MOVE,
-             .duration = 0 * s,
-             .comment = running ? "ich renne los" : "ich laufe los",
-             .priority = Prio::Normal,
-             .velocity = velocity.toMsg()});
+        submitRequestMove({.type = running ? MovementRequest::MOVE_TRIPOD : MovementRequest::MOVE_COMBINED,
+                           .duration = 0 * s,
+                           .comment = running ? "ich renne los" : "ich laufe los",
+                           .priority = Prio::Normal,
+                           .velocity = velocity.toMsg()});
     } else if (command == "commandBite" || command == "commandStomp") {
         RCLCPP_WARN_STREAM(node_->get_logger(), "No gait implemented for voice command: " << command);
     } else if (command == "commandStopMove") {
         RCLCPP_INFO_STREAM(node_->get_logger(), "submit stop move request");
         Velocity velocity;
-        submitRequestMove({.type = MovementRequest::CONTINUOUS_MOVE,
+        submitRequestMove({.type = MovementRequest::MOVE_COMBINED,
                            .duration = 0 * s,
                            .comment = "ich halte an",
                            .priority = Prio::Normal,
@@ -397,8 +396,7 @@ void CCoordinator::submitRequestMove(const MovementCommand& command) {
         request_v.push_back(talkRequest);
     }
     // If we are not standing, we need to stand up first
-    if (!isStanding_ && (command.type == MovementRequest::CONTINUOUS_MOVE ||
-                         command.type == MovementRequest::CONTINUOUS_RUNNING)) {
+    if (!isStanding_ && isLocomotion(command.type)) {
         RCLCPP_INFO_STREAM(node_->get_logger(), "standup before move request");
         isStanding_ = true;
         // recursive call to first stand up
@@ -426,8 +424,7 @@ void CCoordinator::submitRequestMove(const MovementCommand& command) {
     }
     actionPlanner_->request(request_v, command.priority);
 
-    if (command.type == MovementRequest::CONTINUOUS_MOVE ||
-        command.type == MovementRequest::CONTINUOUS_RUNNING ||
+    if (isLocomotion(command.type) ||
         (command.type == MovementRequest::CONTINUOUS_POSE && command.duration <= 0.0 * s)) {
         movement_deadline_.reset();
         return;

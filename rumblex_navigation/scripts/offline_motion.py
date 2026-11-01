@@ -4,7 +4,7 @@ import math
 
 LEG_NAMES = ('right_front', 'right_mid', 'right_back',
              'left_front', 'left_mid', 'left_back')
-LOCOMOTION = ('CONTINUOUS_MOVE', 'CONTINUOUS_RUNNING')
+LOCOMOTION = ('MOVE_COMBINED', 'MOVE_TRIPOD', 'MOVE_RIPPLE', 'MOVE_WAVE')
 
 
 def support_displacement(previous, current, heights, tolerance):

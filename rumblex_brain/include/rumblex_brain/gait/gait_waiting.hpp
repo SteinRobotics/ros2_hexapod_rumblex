@@ -1,10 +1,8 @@
 #pragma once
 
 #include <memory>
-#include <rclcpp/rclcpp.hpp>
 
 #include "gait/gait_interfaces.hpp"
-#include "gait/gait_parameters.hpp"
 #include "gait/pose_model.hpp"
 #include "rumblex_utils/geometry.hpp"
 
@@ -18,8 +16,7 @@ using mp_units::angular::unit_symbols::rad;
 // Initially copied from CLegRollGait and renamed. Behavior can be specialized later.
 class CWaitingGait : public ISequenceGait {
    public:
-    CWaitingGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics,
-                 Parameters::Waiting& params);
+    explicit CWaitingGait(std::shared_ptr<CPoseModel> kinematics);
     ~CWaitingGait() override = default;
 
     void start(units::Duration duration_s, uint8_t direction) override;
@@ -31,9 +28,7 @@ class CWaitingGait : public ISequenceGait {
     }
 
    private:
-    std::shared_ptr<rclcpp::Node> node_;
     std::shared_ptr<CPoseModel> kinematics_;
-    Parameters::Waiting params_;
 
     EGaitState state_ = EGaitState::Stopped;
 

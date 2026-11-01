@@ -41,7 +41,7 @@ TEST_F(OrientationTimingTest, PoseSamplingUsesElapsedSecondsAndHasSmallMonotonic
             model->setHeadOrientation(COrientation());
             std::unique_ptr<IContinuousGait> gait;
             if (continuous)
-                gait = std::make_unique<CContinuousPoseGait>(node, model, params.continuous_pose);
+                gait = std::make_unique<CContinuousPoseGait>(node, model);
             else {
                 rumblex_interfaces::msg::BodyPose target;
                 target.has_torso_pose = target.has_head_orientation = true;
@@ -76,7 +76,7 @@ TEST_F(OrientationTimingTest, PoseSamplingUsesElapsedSecondsAndHasSmallMonotonic
 }
 
 TEST_F(OrientationTimingTest, ContinuousHeadAcceleratesSoonerAndHoldsUntilSegmentBoundary) {
-    CContinuousPoseGait gait(node, model, params.continuous_pose);
+    CContinuousPoseGait gait(node, model);
     const CPose torso(0.0, 0.0, 0.0, 0.0, 0.0, 20.0);
     const COrientation head(0.0, 0.0, 20.0);
     const COrientation next_head(0.0, 0.0, -20.0);

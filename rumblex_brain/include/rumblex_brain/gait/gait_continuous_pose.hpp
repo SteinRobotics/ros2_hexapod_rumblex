@@ -4,7 +4,6 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include "gait/gait_interfaces.hpp"
-#include "gait/gait_parameters.hpp"
 #include "gait/pose_model.hpp"
 #include "rumblex_utils/linear_interpolation.hpp"
 
@@ -15,8 +14,7 @@ using namespace mp_units::si::unit_symbols;
 
 class CContinuousPoseGait : public IContinuousGait {
    public:
-    CContinuousPoseGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics,
-                        Parameters::ContinuousPose& params);
+    CContinuousPoseGait(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics);
     ~CContinuousPoseGait() override = default;
 
     void start(units::Duration duration_s, uint8_t direction) override;
@@ -32,7 +30,6 @@ class CContinuousPoseGait : public IContinuousGait {
    private:
     std::shared_ptr<rclcpp::Node> node_;
     std::shared_ptr<CPoseModel> kinematics_;
-    Parameters::ContinuousPose params_;
     EGaitState state_ = EGaitState::Stopped;
 
     units::Duration elapsed_s_ = 1.0 * s;

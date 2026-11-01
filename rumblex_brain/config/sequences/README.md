@@ -146,6 +146,23 @@ Cancellation follows normal YAML sequence behavior: finish the active pose and
 discard remaining actions, including the return. A new high-five invocation
 captures its own starting pose, replacing any snapshot left by cancellation.
 
+## Bite and stomp examples
+
+`bite.yaml` and `stomp.yaml` are selectable suggested gestures with no voice or
+joystick triggers. Start from a standing pose; they do not automatically stand up.
+The existing `commandBite` and `commandStomp` voice commands remain unconnected.
+
+`bite` saves the starting pose, moves the torso forward 15 mm and adds 10 degrees
+of head pitch over one second, then restores the saved pose over one second.
+`stomp` saves the starting pose while lifting the right-front toe 20 mm, lowers
+it by 20 mm, lifts the left-front toe 20 mm, then restores the saved pose.
+Each stomp action takes one second. These use relative targets rather than
+robot-specific stance coordinates and are suggestions, not hardware-validated motions.
+
+Normal completion restores the full starting pose. Cancellation finishes the
+active action and discards remaining actions, including restoration. As with
+high-five, the next invocation replaces any saved snapshot left by cancellation.
+
 ## Look left and right
 
 `look_left.yaml` and `look_right.yaml` are two-action pose sequences.

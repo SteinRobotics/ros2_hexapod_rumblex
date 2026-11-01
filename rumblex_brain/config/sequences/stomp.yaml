@@ -1,0 +1,23 @@
+name: stomp
+# Suggested gesture; start standing. No automatic voice or joystick trigger.
+actions:
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.0
+      save_pose: true
+      pose_delta:
+        toe_translation: {right_front: {z: 0.02}}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.0
+      pose_delta:
+        toe_translation: {right_front: {z: -0.02}}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.0
+      pose_delta:
+        toe_translation: {left_front: {z: 0.02}}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.0
+      restore_pose: true
