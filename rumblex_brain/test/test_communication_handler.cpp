@@ -2,7 +2,9 @@
 
 #include <thread>
 
+#include "action/action_planner.hpp"
 #include "handler/communication.hpp"
+#include "test_helpers.hpp"
 
 using namespace brain;
 using namespace std::chrono_literals;
@@ -61,4 +63,79 @@ TEST_F(CommunicationHandlerTest, NewRequestRequiresFreshAcknowledgment) {
     std::this_thread::sleep_for(5100ms);
     handler.update();
     EXPECT_TRUE(handler.requestFinished());
+}
+
+TEST_F(CommunicationHandlerTest, BackgroundMusicReleasesPlannerAndSurvivesCancellation) {
+    CCommunication handler(node);
+    auto request = std::make_shared<RequestMusic>();
+    request->song = "musicfox_excess_party.mp3";
+    request->background = true;
+    handler.run(request);
+    EXPECT_TRUE(handler.requestFinished());
+
+    // An interruption can arrive before or after the playback status.
+    handler.cancel();
+    EXPECT_TRUE(handler.requestFinished());
+    rumblex_interfaces::msg::CommunicationStatus status;
+    status.status = rumblex_interfaces::msg::CommunicationStatus::PLAYING_MUSIC;
+    handler.onCommunicationStatus(status);
+    handler.update();
+    EXPECT_TRUE(handler.requestFinished());
+    handler.cancel();
+    EXPECT_TRUE(handler.requestFinished());
+
+    // Standup's explicit stop still runs and waits for acknowledgment.
+    auto stop = std::make_shared<RequestMusic>();
+    stop->song = "STOP";
+    handler.run(stop);
+    EXPECT_FALSE(handler.requestFinished());
+    status.status = rumblex_interfaces::msg::CommunicationStatus::OFF;
+    handler.onCommunicationStatus(status);
+    EXPECT_TRUE(handler.requestFinished());
+}
+
+TEST_F(CommunicationHandlerTest, ForegroundMusicStillWaitsAndCanBeCancelled) {
+    CCommunication handler(node);
+    auto request = std::make_shared<RequestMusic>();
+    request->song = "dance.mp3";
+    handler.run(request);
+    EXPECT_FALSE(handler.requestFinished());
+    rumblex_interfaces::msg::CommunicationStatus status;
+    status.status = rumblex_interfaces::msg::CommunicationStatus::PLAYING_MUSIC;
+    handler.onCommunicationStatus(status);
+    handler.cancel();
+    EXPECT_FALSE(handler.requestFinished());
+    status.status = rumblex_interfaces::msg::CommunicationStatus::OFF;
+    handler.onCommunicationStatus(status);
+    EXPECT_TRUE(handler.requestFinished());
+}
+
+TEST_F(CommunicationHandlerTest, BackgroundMusicDoesNotFinishPendingSpeech) {
+    CCommunication handler(node);
+    handler.run(std::make_shared<RequestTalking>());
+    auto request = std::make_shared<RequestMusic>();
+    request->song = "musicfox_excess_party.mp3";
+    request->background = true;
+    handler.run(request);
+    EXPECT_FALSE(handler.requestFinished());
+}
+
+TEST_F(CommunicationHandlerTest, PlannerStartsNextSequenceWhileBackgroundMusicPlays) {
+    rclcpp::NodeOptions options;
+    options.parameter_overrides(test_helpers::defaultRobotParameters());
+    auto planner_node = std::make_shared<rclcpp::Node>("music_planner_test", options);
+    CActionPlanner planner(planner_node);
+    auto music = std::make_shared<RequestMusic>();
+    music->song = "musicfox_excess_party.mp3";
+    music->background = true;
+    planner.request({music}, Prio::Normal, planner.nextInvocationId());
+    planner.update();
+
+    auto speech = std::make_shared<RequestTalking>();
+    speech->text = "Next sequence";
+    planner.request({speech}, Prio::Normal, planner.nextInvocationId());
+    planner.update();
+    planner.update();
+    // The next sequence has started and is waiting for its speech response.
+    EXPECT_FALSE(planner.requestGroupFinished());
 }

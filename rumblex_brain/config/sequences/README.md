@@ -224,6 +224,14 @@ durations advance the sequence; include an explicit stop action after walking.
 | `system` | `system: {turnOffServoRelay: true}` |
 
 Existing mapping forms for speech/music/system requests remain available.
+
+Use `music: {song: musicfox_excess_party.mp3, background: true}` to start music
+and immediately continue scheduling other actions and sequences. Planner
+cancellation leaves background music playing; `music: STOP` (as in `standup`)
+stops it explicitly. The default `background: false` waits for playback to finish.
+Background music uses a separate audio channel so speech and listening can run
+while it plays. Starting another music track replaces the previous track.
+
 Velocity uses metres/second and radians/second. `movement` can carry a nested
 `body_pose` with the same component fields; its duration goes on `movement`.
 `body_pose` shorthand always selects `SINGLE_POSE`. Toe targets require that mode.

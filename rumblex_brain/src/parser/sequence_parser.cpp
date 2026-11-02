@@ -463,7 +463,7 @@ std::vector<std::shared_ptr<RequestBase>> CSequenceParser::parseActionGroup(cons
                 if (type == "RequestTalking" || type == "RequestChat")
                     keys(value, {"text", "language", "minDuration"});
                 else if (type == "RequestMusic")
-                    keys(value, {"song", "volume", "minDuration"});
+                    keys(value, {"song", "volume", "minDuration", "background"});
                 else if (type == "RequestListening")
                     keys(value, {"active", "minDuration"});
                 else if (type == "RequestSystem")
@@ -545,6 +545,7 @@ std::shared_ptr<RequestMusic> CSequenceParser::createRequestMusic(const YAML::No
             request->song = value.as<std::string>();
         } else if (value.IsMap()) {
             request->song = valueOr<std::string>(value, "song", "");
+            request->background = valueOr(value, "background", false);
             request->volume = valueOr(value, "volume", 0.8f);
             if (!std::isfinite(request->volume)) throw std::runtime_error("Non-finite music volume");
             request->minDuration = valueOr(value, "minDuration", 0.0) * s;

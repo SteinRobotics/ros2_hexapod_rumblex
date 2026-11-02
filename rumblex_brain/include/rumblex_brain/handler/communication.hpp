@@ -37,6 +37,7 @@ class CCommunication : public IHandler {
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr m_pubChat;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr m_pubListening;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr m_pubMusic;
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_background_music_;
     rclcpp::Subscription<rumblex_interfaces::msg::CommunicationStatus>::SharedPtr m_subStatus;
 
     rumblex_interfaces::msg::CommunicationStatus m_communication =
@@ -45,6 +46,7 @@ class CCommunication : public IHandler {
     static constexpr std::chrono::seconds kTimeout{5};
     std::chrono::steady_clock::time_point request_time_{};
     bool awaiting_status_ = false;
+    bool background_music_ = false;
 };
 
 }  // namespace brain

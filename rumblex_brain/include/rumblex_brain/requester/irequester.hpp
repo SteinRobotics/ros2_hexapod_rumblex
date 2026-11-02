@@ -50,6 +50,7 @@ struct RequestChat : RequestBase {
 struct RequestMusic : RequestBase {
     std::string song;
     float volume = 0.8f;
+    bool background = false;
 };
 
 struct RequestListening : RequestBase {

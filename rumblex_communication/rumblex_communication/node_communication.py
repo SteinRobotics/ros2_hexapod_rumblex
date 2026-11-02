@@ -32,6 +32,7 @@ class NodeCommunication(Node):
         self._closed = False
 
         self.create_subscription(String, 'request_music', self.callback_music, 10)
+        self.create_subscription(String, 'request_background_music', self.callback_background_music, 10)
         self.create_subscription(String, 'request_talking', self.callback_talking, 10)
         self.create_subscription(String, 'request_chat', self.callback_chatbot, 10)
         self.create_subscription(Bool, 'request_listening', self.callback_listening, 10)
@@ -133,6 +134,7 @@ class NodeCommunication(Node):
 
     def callback_music(self, msg):
         self._cancel()
+        self.music_player.stop_background()
         if msg.data == 'STOP':
             self._set_status(CommunicationStatus.OFF)
             return
@@ -141,6 +143,13 @@ class NodeCommunication(Node):
             self.music_player.play(msg.data, cb=self.callback_done)
         except Exception as exc:
             self._audio_failed(str(exc))
+
+    def callback_background_music(self, msg):
+        # Background playback has no foreground request/status lifecycle.
+        try:
+            self.music_player.play(msg.data, background=True)
+        except Exception as exc:
+            self.get_logger().error(f'Background music failed: {exc}')
 
     def callback_talking(self, msg):
         self._cancel()

@@ -16,6 +16,7 @@ CCommunication::CCommunication(std::shared_ptr<rclcpp::Node> node) : node_(node)
     m_pubChat = node_->create_publisher<std_msgs::msg::String>("request_chat", 10);
     m_pubListening = node_->create_publisher<std_msgs::msg::Bool>("request_listening", 10);
     m_pubMusic = node_->create_publisher<std_msgs::msg::String>("request_music", 10);
+    pub_background_music_ = node_->create_publisher<std_msgs::msg::String>("request_background_music", 10);
 }
 
 void CCommunication::onCommunicationStatus(const rumblex_interfaces::msg::CommunicationStatus& msg) {
@@ -62,6 +63,13 @@ void CCommunication::run(std::shared_ptr<RequestMusic> request) {
     RCLCPP_INFO_STREAM(node_->get_logger(), "CCommunication::run Music |" << request->song.c_str());
     std_msgs::msg::String msg;
     msg.data = request->song;
+    background_music_ = request->background && request->song != "STOP";
+    // Background playback outlives this action and must not block the planner.
+    // Leave any speech/listening request in the same group pending.
+    if (background_music_) {
+        pub_background_music_->publish(msg);
+        return;
+    }
     m_pubMusic->publish(msg);
     setRequestFinished(false);
     request_time_ = std::chrono::steady_clock::now();
@@ -74,7 +82,8 @@ void CCommunication::cancel() {
         request->active = false;
         run(request);
     }
-    if (m_communication.status == rumblex_interfaces::msg::CommunicationStatus::PLAYING_MUSIC) {
+    if (!background_music_ &&
+        m_communication.status == rumblex_interfaces::msg::CommunicationStatus::PLAYING_MUSIC) {
         auto request = std::make_shared<RequestMusic>();
         request->song = "STOP";
         run(request);

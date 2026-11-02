@@ -80,3 +80,37 @@ def test_talking_sets_active_before_starting_worker():
     node.callback_talking(Mock(data='Hallo'))
     assert node.status == CommunicationStatus.TTS_ACTIVE
     assert node._pending is not None
+
+
+def test_background_music_does_not_interrupt_foreground_request():
+    node = make_node()
+    node.callback_talking(Mock(data='Hallo'))
+    pending = node._pending
+    generation = node._generation
+    node.music_player.reset_mock()
+    node.callback_background_music(Mock(data='party.mp3'))
+    node.music_player.play.assert_called_once_with('party.mp3', background=True)
+    node.music_player.stop_playing.assert_not_called()
+    assert node._pending is pending
+    assert node._generation == generation
+    assert node.status == CommunicationStatus.TTS_ACTIVE
+
+
+def test_foreground_cancellation_preserves_background_but_explicit_stop_ends_it():
+    node = make_node()
+    node.callback_background_music(Mock(data='party.mp3'))
+    node.callback_talking(Mock(data='Hallo'))
+    node._cancel()
+    node.music_player.stop_background.assert_not_called()
+    node.callback_music(Mock(data='STOP'))
+    node.music_player.stop_background.assert_called_once_with()
+    assert node.status == CommunicationStatus.OFF
+
+
+def test_background_music_failure_does_not_finish_foreground_request():
+    node = make_node()
+    node.status = CommunicationStatus.STT_OFFLINE_ACTIVE
+    node.music_player.play.side_effect = RuntimeError('audio error')
+    node.callback_background_music(Mock(data='party.mp3'))
+    node.get_logger().error.assert_called_once()
+    assert node.status == CommunicationStatus.STT_OFFLINE_ACTIVE

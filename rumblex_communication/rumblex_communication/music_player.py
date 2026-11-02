@@ -15,13 +15,31 @@ class MusicPlayer:
         self.logger = logger or logging.getLogger(__name__)
         self.sound_dir = package_resource_path('soundfiles')
         self._callback = None
+        self._background_channel = None
         mixer.init()
 
-    def play(self, filename, volume=0.5, cb=None):
+    def play(self, filename, volume=0.5, cb=None, *, background=False):
         extension = Path(filename).suffix.lower().lstrip('.')
         if extension not in ('wav', 'mp3') or Path(filename).name != filename:
             raise ValueError(f'Unsupported audio filename: {filename}')
-        self.play_file(self.sound_dir / extension / filename, volume, cb)
+        filepath = self.sound_dir / extension / filename
+        if not background:
+            self.play_file(filepath, volume, cb)
+            return
+
+        # A separate mixer channel lets announcements use the streamed audio
+        # player without interrupting this track.
+        sound = mixer.Sound(str(filepath))
+        sound.set_volume(volume)
+        self.stop_background()
+        self._background_channel = sound.play()
+        if self._background_channel is None:
+            raise RuntimeError('No audio channel available for background music')
+
+    def stop_background(self):
+        if self._background_channel is not None:
+            self._background_channel.stop()
+            self._background_channel = None
 
     def play_file(self, filepath, volume=0.5, cb=None):
         self.stop_playing()
@@ -44,4 +62,5 @@ class MusicPlayer:
 
     def close(self):
         self.stop_playing()
+        self.stop_background()
         mixer.quit()

@@ -353,6 +353,11 @@ TEST_F(SequenceParserTest, LoadsCatalogAndResolvesTriggers) {
     auto music = request<RequestMusic>("standup", 0, 1);
     ASSERT_TRUE(music);
     EXPECT_EQ(music->song, "STOP");
+    EXPECT_FALSE(music->background);
+    auto party = request<RequestMusic>("dance_excess_party", 0, 0);
+    ASSERT_TRUE(party);
+    EXPECT_EQ(party->song, "musicfox_excess_party.mp3");
+    EXPECT_TRUE(party->background);
 }
 
 TEST_F(SequenceParserTest, CatalogPresetsPrepareStandupAndFinishStationary) {
