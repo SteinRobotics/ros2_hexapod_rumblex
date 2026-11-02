@@ -115,23 +115,24 @@ TEST_F(KinematicsTest, TorsoRotationPreservesLegLocalTarget) {
     kin_->moveTorso(kin_->getStandingToePositions());
     const auto standing_angles = kin_->getLegAngles(rumblex_geometry::ELegIndex::RightFront);
 
-    // Rotate the coxa mount by 90 degrees about each axis and keep the same
-    // leg-local toe target: (92, -92, -50) mm relative to the mount.
+    // Rotate the entire standing toe (201, -160, -50) mm with the torso.
+    // The joint angles must remain unchanged, including the leg vector rotation.
     const std::array<std::pair<rumblex_geometry::COrientation, rumblex_geometry::CPosition>, 3> cases = {{
         {rumblex_geometry::COrientation(90.0 * rumblex_geometry::units::deg,
                                         0.0 * rumblex_geometry::units::rad,
                                         0.0 * rumblex_geometry::units::rad),
-         rumblex_geometry::CPosition(201.0 * rumblex_geometry::units::mm, -92.0 * rumblex_geometry::units::mm,
-                                     -118.0 * rumblex_geometry::units::mm)},
+         rumblex_geometry::CPosition(201.0 * rumblex_geometry::units::mm, 50.0 * rumblex_geometry::units::mm,
+                                     -160.0 * rumblex_geometry::units::mm)},
         {rumblex_geometry::COrientation(0.0 * rumblex_geometry::units::rad,
                                         90.0 * rumblex_geometry::units::deg,
                                         0.0 * rumblex_geometry::units::rad),
-         rumblex_geometry::CPosition(92.0 * rumblex_geometry::units::mm, -160.0 * rumblex_geometry::units::mm,
-                                     -159.0 * rumblex_geometry::units::mm)},
+         rumblex_geometry::CPosition(-50.0 * rumblex_geometry::units::mm,
+                                     -160.0 * rumblex_geometry::units::mm,
+                                     -201.0 * rumblex_geometry::units::mm)},
         {rumblex_geometry::COrientation(0.0 * rumblex_geometry::units::rad,
                                         0.0 * rumblex_geometry::units::rad,
                                         90.0 * rumblex_geometry::units::deg),
-         rumblex_geometry::CPosition(160.0 * rumblex_geometry::units::mm, 17.0 * rumblex_geometry::units::mm,
+         rumblex_geometry::CPosition(160.0 * rumblex_geometry::units::mm, 201.0 * rumblex_geometry::units::mm,
                                      -50.0 * rumblex_geometry::units::mm)},
     }};
 

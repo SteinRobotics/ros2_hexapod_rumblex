@@ -10,8 +10,9 @@ actions:
       save_pose: true
       body_pose:
         head_orientation: {yaw: 0, pitch: -20}
+        torso_pose: {orientation: {pitch: -8}}
       joint_targets:
-        right_front: {torso_coxa: -20, coxa_femur: 50, femur_tibia: 60}
+        right_front: {torso_coxa: -25, coxa_femur: 50, femur_tibia: 60}
   - movement:
       name: SINGLE_POSE
       duration_s: 2.0

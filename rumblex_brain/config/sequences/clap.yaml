@@ -1,57 +1,85 @@
 name: clap
 trigger:
   voice: commandClap
-# Relative targets retain the starting stance, torso orientation and head pose.
+# Start standing. Relative targets preserve the starting orientation and head pose.
 actions:
+  # Step the middle feet forward individually to extend the four-foot support
+  # polygon toward the head. Lift before translating; never drag a planted toe.
   - movement:
       name: SINGLE_POSE
-      duration_s: 1.0
-      pose_delta: {torso_translation: {x: -0.05}}
-  - movement:
-      name: SINGLE_POSE
-      duration_s: 1.0
+      duration_s: 0.3
+      interpolation: sin_squared
+      save_pose: true
       pose_delta:
-        toe_translation: {right_back: {z: 0.05}}
+        toe_translation: {right_mid: {z: 0.02}, left_mid: {z: 0.02}}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 0.4
+      interpolation: sin_squared
+      pose_delta:
+        toe_translation: {right_mid: {x: 0.06}, left_mid: {x: 0.06}}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 0.3
+      interpolation: sin_squared
+      pose_delta:
+        toe_translation: {right_mid: {z: -0.02}, left_mid: {z: -0.02}}
+  # Settle back and down with all six feet planted before lifting the front pair.
+  # Keep this torso position and all four support toes fixed throughout the clap.
   - movement:
       name: SINGLE_POSE
       duration_s: 1.0
-      pose_delta:
-        toe_translation: {right_back: {z: -0.05}}
+      interpolation: sin_squared
+      pose_delta: {torso_translation: {x: -0.06, z: -0.01}}
   - movement:
       name: SINGLE_POSE
-      duration_s: 1.0
+      duration_s: 0.8
+      interpolation: sin_squared
       pose_delta:
-        toe_translation: {left_back: {z: 0.05}}
-  - movement:
-      name: SINGLE_POSE
-      duration_s: 1.0
-      pose_delta:
-        toe_translation: {left_back: {z: -0.05}}
-  - movement:
-      name: SINGLE_POSE
-      duration_s: 1.0
-      pose_delta:
-        toe_translation: {right_front: {z: 0.1}, left_front: {z: 0.1}}
-  # The former gait performed six close/open cycles (its counter decremented only on closing).
+        toe_translation: {right_front: {z: 0.08}, left_front: {z: 0.08}}
+  # A brisk close and a more relaxed opening, with eased reversals.
   - loop:
       times: 6
       actions:
         - movement:
             name: SINGLE_POSE
-            duration_s: 0.5
+            duration_s: 0.24
+            interpolation: sin_squared
             pose_delta:
               coxa_rotation_deg: {right_front: -30, left_front: 30}
         - movement:
             name: SINGLE_POSE
-            duration_s: 0.5
+            duration_s: 0.4
+            interpolation: sin_squared
             pose_delta:
               coxa_rotation_deg: {right_front: 30, left_front: -30}
+  # Land both front feet before bringing the body forward or resetting support.
   - movement:
       name: SINGLE_POSE
       duration_s: 1.0
+      interpolation: sin_squared
       pose_delta:
-        toe_translation: {right_front: {z: -0.1}, left_front: {z: -0.1}}
+        toe_translation: {right_front: {z: -0.08}, left_front: {z: -0.08}}
   - movement:
       name: SINGLE_POSE
       duration_s: 1.0
-      pose_delta: {torso_translation: {x: 0.05}}
+      interpolation: sin_squared
+      pose_delta: {torso_translation: {x: 0.04, z: 0.01}}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 0.3
+      interpolation: sin_squared
+      pose_delta:
+        toe_translation: {right_mid: {z: 0.02}, left_mid: {z: 0.02}}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 0.4
+      interpolation: sin_squared
+      pose_delta:
+        toe_translation: {right_mid: {x: -0.06}, left_mid: {x: -0.06}}
+  # Only the left-middle and right-middle toes remain raised; land them gently and remove any drift.
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 1.0
+      interpolation: sin_squared
+      restore_pose: true

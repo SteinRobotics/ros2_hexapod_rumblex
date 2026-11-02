@@ -97,9 +97,11 @@ restart initializes from movement's current estimate. A movement restart during
 an active gait does not perform an automatic trajectory resynchronization.
 
 Shared geometry lives in `rumblex_utils`. Brain and movement own independent pose
-models. Joint-based leg-test trajectories and YAML joint pose endpoints are converted to
-toe targets with the current torso transform so the receiver reconstructs the
-joint angles. Stored toe positions remain in the command frame.
+models. Joint-based leg-test trajectories and YAML joint targets interpolate joint
+angles and convert each sample to toe targets with the current torso transform,
+so the receiver reconstructs the joint angles. FK rotates the entire leg vector
+with the torso; IK applies the inverse rotation before solving the leg. Stored
+toe positions remain in the command frame. Omitted legs retain their toe targets.
 
 ## Configuration and telemetry
 

@@ -65,6 +65,7 @@ class CBodyModel {
     void calcLegInverseKinematics(const CPosition& target_toe_pos, CLeg& leg, const ELegIndex& leg_index);
     void calcLegForwardKinematics(const CLegAngles target, CLeg& leg);
     CPosition rotate(const CPosition& point, const COrientation& rot);
+    CPosition inverseRotate(const CPosition& point, const COrientation& rot);
 
     std::shared_ptr<rclcpp::Node> node_;
 
@@ -200,7 +201,7 @@ inline void CBodyModel::initializeLegs(const std::map<ELegIndex, CPosition>& toe
         CPosition coxa_position(torso_center_offsets_.at(leg_index).x, torso_center_offsets_.at(leg_index).y,
                                 0.0 * m);
         CPosition leg_base = rotate(coxa_position, torso.orientation) + torso.position;
-        CPosition toe_rel = toe_target - leg_base;
+        CPosition toe_rel = inverseRotate(toe_target - leg_base, torso.orientation);
         calcLegInverseKinematics(toe_rel, leg, leg_index);
         leg.toe_position = toe_target;
         legs[leg_index] = leg;
@@ -216,7 +217,7 @@ inline void CBodyModel::moveTorso(const std::map<ELegIndex, CPosition>& toe_targ
         CPosition coxa_position(torso_center_offsets_.at(leg_index).x, torso_center_offsets_.at(leg_index).y,
                                 0.0 * m);
         CPosition leg_base = rotate(coxa_position, torso.orientation) + torso.position;
-        CPosition toe_rel = toe_target - leg_base;
+        CPosition toe_rel = inverseRotate(toe_target - leg_base, torso.orientation);
         calcLegInverseKinematics(toe_rel, leg, leg_index);
         leg.toe_position = toe_target;
     }
@@ -233,7 +234,7 @@ inline void CBodyModel::moveTorso(const CPose torso) {
         CPosition coxa_position(torso_center_offsets_.at(leg_index).x, torso_center_offsets_.at(leg_index).y,
                                 0.0 * m);
         CPosition leg_base = rotate(coxa_position, torso.orientation) + torso.position;
-        CPosition toe_rel = toe_target - leg_base;
+        CPosition toe_rel = inverseRotate(toe_target - leg_base, torso.orientation);
         calcLegInverseKinematics(toe_rel, leg, leg_index);
         leg.toe_position = toe_target;
     }
@@ -266,6 +267,13 @@ inline CPosition CBodyModel::rotate(const CPosition& point, const COrientation& 
     return {rotated_x, rotated_y, rotated_z};
 }
 
+inline CPosition CBodyModel::inverseRotate(const CPosition& point, const COrientation& orientation) {
+    // Invert Rz(yaw) Ry(pitch) Rx(roll) in reverse order.
+    auto result = rotate(point, COrientation(0.0 * deg, 0.0 * deg, -orientation.yaw));
+    result = rotate(result, COrientation(0.0 * deg, -orientation.pitch, 0.0 * deg));
+    return rotate(result, COrientation(-orientation.roll, 0.0 * deg, 0.0 * deg));
+}
+
 inline void CBodyModel::calcLegInverseKinematics(const CPosition& target_toe_pos, CLeg& leg,
                                                  const ELegIndex& leg_index) {
     leg.toe_position = target_toe_pos;
@@ -280,7 +288,7 @@ inline void CBodyModel::calcLegInverseKinematics(const CPosition& target_toe_pos
     const auto L = mp_units::sqrt(sq_l);
 
     auto coxa_femur_cosine = (sq_tibia_length_ - sq_femur_length_ - sq_l) / (-2 * femur_length_ * L);
-    if (mp_units::abs(coxa_femur_cosine) > 1.0 * mp_units::one) {
+    if (mp_units::abs(coxa_femur_cosine) > (1.0 + 1e-12) * mp_units::one) {
         RCLCPP_ERROR_STREAM(node_->get_logger(),
                             "calcLegInverseKinematics: clamping coxa_femur input "
                                 << coxa_femur_cosine.numerical_value_in(mp_units::one) << " for leg "
@@ -288,14 +296,14 @@ inline void CBodyModel::calcLegInverseKinematics(const CPosition& target_toe_pos
                                 << " (target x: " << target_toe_pos.x.numerical_value_in(m)
                                 << ", y: " << target_toe_pos.y.numerical_value_in(m)
                                 << ", z: " << target_toe_pos.z.numerical_value_in(m) << ")");
-        coxa_femur_cosine = std::clamp(coxa_femur_cosine, -1.0 * mp_units::one, 1.0 * mp_units::one);
     }
+    coxa_femur_cosine = std::clamp(coxa_femur_cosine, -1.0 * mp_units::one, 1.0 * mp_units::one);
     const auto coxa_femur =
         mp_units::angular::acos(z_offset / L) + mp_units::angular::acos(coxa_femur_cosine) - 90.0 * deg;
 
     auto femur_tibia_cosine =
         (sq_l - sq_tibia_length_ - sq_femur_length_) / (-2 * femur_length_ * tibia_length_);
-    if (mp_units::abs(femur_tibia_cosine) > 1.0 * mp_units::one) {
+    if (mp_units::abs(femur_tibia_cosine) > (1.0 + 1e-12) * mp_units::one) {
         RCLCPP_ERROR_STREAM(node_->get_logger(),
                             "calcLegInverseKinematics: clamping femur_tibia input "
                                 << femur_tibia_cosine.numerical_value_in(mp_units::one) << " for leg "
@@ -303,8 +311,8 @@ inline void CBodyModel::calcLegInverseKinematics(const CPosition& target_toe_pos
                                 << " (target x: " << target_toe_pos.x.numerical_value_in(m)
                                 << ", y: " << target_toe_pos.y.numerical_value_in(m)
                                 << ", z: " << target_toe_pos.z.numerical_value_in(m) << ")");
-        femur_tibia_cosine = std::clamp(femur_tibia_cosine, -1.0 * mp_units::one, 1.0 * mp_units::one);
     }
+    femur_tibia_cosine = std::clamp(femur_tibia_cosine, -1.0 * mp_units::one, 1.0 * mp_units::one);
     const auto femur_tibia = mp_units::angular::acos(femur_tibia_cosine) - 90.0 * deg;
 
     leg.angles = CLegAngles(torso_coxa_heading - 90.0 * deg, coxa_femur, femur_tibia);
@@ -352,7 +360,7 @@ inline void CBodyModel::setLegAngles(const ELegIndex index, const CLegAngles& an
 
     // transform back to robot coordinate system by adding torso center offset and adding psi
     leg.toe_position =
-        leg.toe_position +
+        rotate(leg.toe_position, torso_pose_.orientation) +
         rotate(CPosition(torso_center_offsets_[index].x, torso_center_offsets_[index].y, 0.0 * m),
                torso_pose_.orientation) +
         torso_pose_.position;

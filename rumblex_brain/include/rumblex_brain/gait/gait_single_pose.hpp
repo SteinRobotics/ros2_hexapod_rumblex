@@ -56,6 +56,7 @@ class CSinglePoseGait : public IContinuousGait {
     std::optional<rumblex_interfaces::msg::BodyPose> saved_pose_;
     std::map<ELegIndex, CPosition> toe_targets_;
     std::map<ELegIndex, CPosition> toe_origins_;
+    std::map<ELegIndex, CLegAngles> joint_origins_;
     EGaitState state_ = EGaitState::Stopped;
 
     CPose torso_target_;

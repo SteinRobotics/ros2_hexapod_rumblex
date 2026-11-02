@@ -93,7 +93,9 @@ The Raspberry Pi 5 inside Nox hosts most of the human-machine interface hardware
 
 
 ## Music
-https://www.musicfox.com/info/kostenlose-gemafreie-musik/
+[musicfox](https://www.musicfox.com/info/kostenlose-gemafreie-musik/)
+or
+[lovemusic.ai/](https://lovemusic.ai/ai-music-generator)
 
 ## Contributing
 This is a maker project—experimentation, hacking, and learning are encouraged! Contributions, bug reports, and feature requests are welcome. Please open issues or pull requests for improvements.

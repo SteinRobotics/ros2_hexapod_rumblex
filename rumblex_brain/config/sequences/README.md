@@ -84,13 +84,22 @@ with all three flags set. Feedback consumers require complete snapshots.
 
 ## Relative pose movements and clap
 
-`clap.yaml` now contains the choreography directly: shift the torso back 5 cm,
-lift/lower the right and left rear toes by 5 cm, lift the front toes by 10 cm,
-close/open them six times by 30 degrees, lower them and shift forward. Six cycles
-match the former gait's actual counter behavior. Preparation/return actions take
-one second each; close/open actions take half a second each (14 seconds total,
+`clap.yaml` starts from a standing pose and steps each middle foot forward 4 cm,
+one at a time with 2 cm clearance. With all feet planted it shifts the torso back
+4 cm and down 1 cm, then raises the front toes 8 cm. This moves the front edge of
+the four-foot support polygon forward while moving the body rearward. The middle
+and rear toes and torso stay fixed during all six 30-degree close/open cycles.
+The front toes land before the torso recenters and the middle feet step back.
+The final landing restores the saved starting pose, including head and torso orientation.
+
+All actions use `sin_squared` easing. Middle-foot steps take 0.3/0.4/0.3 seconds
+for lift/transfer/landing, with a gentle one-second final landing. Torso shifts
+and front-foot landing take one second, front-foot lift takes 0.8 seconds, and
+each clap closes in 0.24 seconds and opens in 0.4 seconds (12.34 seconds total,
 plus scheduler handoffs). The `commandClap` voice trigger and `clap` sequence name
 are unchanged. The old `SEQUENCE_CLAP` movement selector is removed.
+This improves the geometric support margin; actual center of gravity depends on
+payload and starting posture, and the motion still requires hardware validation.
 
 These actions use `movement: {name: SINGLE_POSE, ...}` with `pose_delta` instead
 of `body_pose`. Deltas resolve when the action starts, including after a pending
@@ -145,10 +154,12 @@ joint_targets:
 
 Each supplied leg requires
 all three finite angles in degrees: `torso_coxa`, `coxa_femur`, `femur_tibia`.
-Targets use the selected robot's forward kinematics and current torso transform.
+Targets interpolate joint angles using the selected curve and duration. Each sample
+uses the selected robot's forward kinematics and interpolated torso transform.
 They can accompany a `body_pose` head/torso target, but cannot be combined with
-explicit toe targets or `pose_delta`. As with clap, toes interpolate to the joint
-pose endpoint rather than following the old joint-space arc.
+explicit toe targets or `pose_delta`. Equal starting and target joint angles stay
+fixed throughout the action. Repeat joint targets in torso actions to carry those
+legs with the torso; omitted legs keep their toes fixed in the command frame.
 
 Use `save_pose: true` on the outgoing pose action to capture the complete current
 pose when it starts (after any pending motion completes). A later
@@ -398,11 +409,11 @@ in legacy `joint_targets` lists.
 `flying.yaml` is selectable by sequence name, with no voice or joystick trigger.
 It raises both middle legs, performs three synchronized down/up wing beats
 (femur elevation -10 to +25 degrees), then extends them horizontally
-with joint angles `(0, 0, 90)` degrees. The torso sways twice between
-+/-1 cm lateral displacement relative to its starting pose,
-carrying the extended middle legs along with it. Torso orientation is retained
-so the fully extended wings are not stretched beyond their reach. It recentres and restores the complete
-saved starting pose. Head pose and the four outer toe targets remain unchanged.
-All actions use `sin_squared`; the 15 expanded actions take 19.5 seconds plus
-scheduler handoffs. Geometry comes from the selected robot's forward kinematics.
+with joint angles `(0, 0, 90)` degrees. The torso rolls twice between
+-6 and +6 degrees, carrying the extended middle legs with it while all three
+middle-leg joint angles stay fixed. The roll actions also look straight ahead.
+The four outer toe targets remain unchanged. Finally it restores the complete
+saved starting pose. All actions use `sin_squared`; the 13 expanded actions take
+16 seconds plus scheduler handoffs. Geometry comes from the selected robot's
+forward kinematics. The knees remain at 90 degrees throughout the wing beats.
 As with high-five, cancellation finishes the active action and skips the return.

@@ -59,6 +59,27 @@ TEST_F(BodyPoseTest, JointTargetsRoundTripWithNonzeroTorso) {
     receiver->moveTorso(toeTargets(msg), CPose(msg.torso_pose));
     for (auto leg : bodyLegOrder) expectAnglesNear(source->getLegAngles(leg), receiver->getLegAngles(leg));
 }
+TEST_F(BodyPoseTest, FixedJointsRotateWholeLegWithTorso) {
+    const CLegAngles angles(0, 0, 90);
+    for (auto leg : bodyLegOrder) source->setLegAngles(leg, angles);
+    const auto neutral = source->getToePositions();
+    const CPose torso(0.003, -0.002, 0.001, 6, 0, 0);
+    source->moveTorso({}, torso);
+    for (auto leg : bodyLegOrder) {
+        source->setLegAngles(leg, angles);
+        const auto before = neutral.at(leg);
+        const auto after = source->getToePositions().at(leg);
+        const auto c = angular::cos(6.0 * deg);
+        const auto s = angular::sin(6.0 * deg);
+        EXPECT_NEAR(after.x.numerical_value_in(m), (before.x + torso.position.x).numerical_value_in(m),
+                    1e-12);
+        EXPECT_NEAR(after.y.numerical_value_in(m),
+                    (c * before.y - s * before.z + torso.position.y).numerical_value_in(m), 1e-12);
+        EXPECT_NEAR(after.z.numerical_value_in(m),
+                    (s * before.y + c * before.z + torso.position.z).numerical_value_in(m), 1e-12);
+    }
+}
+
 TEST_F(BodyPoseTest, PartialLegUpdateRetainsOtherTargets) {
     const auto before = bodyPose(*source);
     source->setToePosition(ELegIndex::LeftMid, CPosition(0.0, -0.19, -0.01));

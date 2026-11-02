@@ -30,6 +30,7 @@ void CSinglePoseGait::start(units::Duration duration_s, uint8_t /*direction*/) {
     head_origin_ = kinematics_->getHeadOrientation();
 
     toe_origins_ = kinematics_->getToePositions();
+    joint_origins_ = kinematics_->getLegAngles();
     const auto origin = bodyPose(*kinematics_);
     if (options_.save_pose) saved_pose_ = origin;
     auto target = resolveBodyPose(origin, target_);
@@ -40,17 +41,6 @@ void CSinglePoseGait::start(units::Duration duration_s, uint8_t /*direction*/) {
         }
         target = *saved_pose_;
         saved_pose_.reset();
-    }
-    if (options_.hasJointTargets()) {
-        auto model = *kinematics_;
-        model.moveTorso(toeTargets(target), CPose(target.torso_pose));
-        model.setHeadOrientation(COrientation(target.head_orientation));
-        size_t i = 0;
-        for (const auto& [leg, toe] : toe_origins_) {
-            const auto& angles = options_.joint_targets[i++];
-            if (angles) model.setLegAngles(leg, CLegAngles((*angles)[0], (*angles)[1], (*angles)[2]));
-        }
-        target = bodyPose(model);
     }
     if (delta_) {
         // Work on a copy: computing FK targets must not change the live start pose.
@@ -120,7 +110,24 @@ bool CSinglePoseGait::updateTimed(const Velocity&, const CPose&, const COrientat
                           ? position
                           : toe_origins_.at(index).linearInterpolate(position, progress);
     }
+    // Joint-controlled legs follow an angle-space arc, carried by the torso.
+    // Exclude them from IK: their old world targets may be unreachable after a roll.
+    for (size_t i = 0; i < bodyLegOrder.size(); ++i) {
+        if (options_.joint_targets[i]) toes.erase(bodyLegOrder[i]);
+    }
     kinematics_->moveTorso(toes, intermediate_pose);
+    for (size_t i = 0; i < bodyLegOrder.size(); ++i) {
+        if (!options_.joint_targets[i]) continue;
+        const auto leg = bodyLegOrder[i];
+        const auto& origin = joint_origins_.at(leg);
+        const auto& target = *options_.joint_targets[i];
+        const auto blend = [progress](units::Angle from, double to) {
+            return from + (to * deg - from) * progress;
+        };
+        kinematics_->setLegAngles(
+            leg, CLegAngles(blend(origin.torso_coxa, target[0]), blend(origin.coxa_femur, target[1]),
+                            blend(origin.femur_tibia, target[2])));
+    }
     kinematics_->setHeadOrientation(
         state_ == EGaitState::Stopped ? target_head : head_origin_.linearInterpolate(target_head, progress));
 

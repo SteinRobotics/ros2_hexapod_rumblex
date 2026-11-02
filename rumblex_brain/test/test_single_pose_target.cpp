@@ -9,6 +9,7 @@ namespace {
 using namespace brain;
 using namespace mp_units;
 using namespace mp_units::si::unit_symbols;
+using mp_units::angular::unit_symbols::deg;
 
 class SinglePoseTargetTest : public ::testing::Test {
    protected:
@@ -93,20 +94,19 @@ TEST_F(SinglePoseTargetTest, AllCurvesSynchronizeComponentsAndReachExactTargets)
 
 TEST_F(SinglePoseTargetTest, JointTargetsAndRestorationUseSelectedCurves) {
     const auto origin = bodyPose(*model);
-    auto target_model = *model;
-    target_model.setLegAngles(ELegIndex::RightFront, CLegAngles(-20, 50, 60));
-    const auto target = bodyPose(target_model);
+    const auto initial_angles = model->getLegAngles(ELegIndex::RightFront);
     auto request = poseRequest();
     request.save_pose = true;
     request.interpolation = InterpolationType::Sin;
     request.joint_targets[0] = std::array<double, 3>{-20, 50, 60};
     ASSERT_TRUE(controller->setGait(request));
     advance(10);
-    const auto intermediate = bodyPose(*model);
     const double progress = 1 - std::cos(std::numbers::pi * 0.1);
-    EXPECT_NEAR(
-        intermediate.toe_positions[0].z,
-        origin.toe_positions[0].z + (target.toe_positions[0].z - origin.toe_positions[0].z) * progress, 1e-9);
+    const auto actual_angles = model->getLegAngles(ELegIndex::RightFront);
+    EXPECT_NEAR(actual_angles.coxa_femur.numerical_value_in(deg),
+                initial_angles.coxa_femur.numerical_value_in(deg) * (1 - progress) + 50 * progress, 1e-9);
+    EXPECT_NEAR(actual_angles.femur_tibia.numerical_value_in(deg),
+                initial_angles.femur_tibia.numerical_value_in(deg) * (1 - progress) + 60 * progress, 1e-9);
     advance(40);
     const auto raised = bodyPose(*model);
     auto restore = poseRequest();
@@ -140,57 +140,58 @@ TEST_F(SinglePoseTargetTest, PendingRequestUsesItsOwnDefaultLinearCurve) {
     EXPECT_NEAR(bodyPose(*model).head_orientation.yaw, origin.head_orientation.yaw + 20, 1e-9);
 }
 
-TEST_F(SinglePoseTargetTest, FlyingFlapsMiddleLegsSailsAndRestoresStartingPose) {
+TEST_F(SinglePoseTargetTest, FlyingKeepsKneesStraightAndWingsAttachedThroughoutRolls) {
     CSequenceParser parser(node);
     ASSERT_TRUE(parser.parseFile(std::string(RUMBLEX_SEQUENCES_DIRECTORY) + "/flying.yaml"));
     const auto sequence = parser.getSequence("flying");
     ASSERT_TRUE(sequence);
     const auto& groups = sequence->get().actionGroups;
-    ASSERT_EQ(groups.size(), 15u);
+    ASSERT_EQ(groups.size(), 13u);
     const auto origin = bodyPose(*model);
-    auto horizontal = origin;
+    auto receiver = *model;
     double duration = 0;
     for (size_t i = 0; i < groups.size(); ++i) {
-        ASSERT_EQ(groups[i].size(), 1u);
-        const auto action = std::dynamic_pointer_cast<RequestMovementType>(groups[i][0]);
+        SCOPED_TRACE(i);
+        const auto action = std::dynamic_pointer_cast<RequestMovementType>(groups[i].at(0));
         ASSERT_TRUE(action);
         const auto& request = action->movementRequest;
-        EXPECT_EQ(request.interpolation, InterpolationType::SinSquared);
-        EXPECT_EQ(request.save_pose, i == 0);
-        EXPECT_EQ(request.restore_pose, i == 14);
         ASSERT_TRUE(controller->setGait(request));
         const double seconds = request.duration_s.numerical_value_in(s);
         duration += seconds;
-        advance(static_cast<int>(std::lround(seconds / 0.02)));
+        for (int tick = 0; tick < std::lround(seconds / 0.02); ++tick) {
+            advance(1);
+            const auto actual = bodyPose(*model);
+            // Exercise the BodyPose -> IK boundary used by movement and visualization.
+            receiver.moveTorso(toeTargets(actual), CPose(actual.torso_pose));
+            for (size_t leg : {0u, 2u, 3u, 5u})
+                EXPECT_EQ(actual.toe_positions[leg], origin.toe_positions[leg]);
+            for (auto leg : {ELegIndex::RightMid, ELegIndex::LeftMid}) {
+                const auto angles = receiver.getLegAngles(leg);
+                if (i >= 1 && i <= 11) {
+                    EXPECT_NEAR(angles.femur_tibia.numerical_value_in(deg), 90, 1e-5);
+                }
+                if (i >= 8 && i <= 11) {
+                    EXPECT_NEAR(angles.torso_coxa.numerical_value_in(deg), 0, 1e-5);
+                    EXPECT_NEAR(angles.coxa_femur.numerical_value_in(deg), 0, 1e-5);
+                }
+                // Reconstructed FK must reach the requested toe, not a clamped approximation.
+                auto reconstructed = receiver;
+                reconstructed.setLegAngles(leg, angles);
+                const auto rebuilt = reconstructed.getToePositions().at(leg);
+                const auto expected = model->getToePositions().at(leg);
+                // At a straight knee, acos magnifies roundoff to nanometres.
+                EXPECT_NEAR(rebuilt.x.numerical_value_in(m), expected.x.numerical_value_in(m), 1e-8);
+                EXPECT_NEAR(rebuilt.y.numerical_value_in(m), expected.y.numerical_value_in(m), 1e-8);
+                EXPECT_NEAR(rebuilt.z.numerical_value_in(m), expected.z.numerical_value_in(m), 1e-8);
+            }
+        }
         ASSERT_TRUE(controller->motionStopped());
-        const auto actual = bodyPose(*model);
-        EXPECT_EQ(actual.head_orientation, origin.head_orientation);
-        for (size_t leg : {0u, 2u, 3u, 5u}) EXPECT_EQ(actual.toe_positions[leg], origin.toe_positions[leg]);
-        if (i <= 7) {
-            auto expected_model = *model;
-            const double elevation = i == 7 ? 0 : (i % 2 == 0 ? 25 : -10);
-            for (auto leg : {ELegIndex::RightMid, ELegIndex::LeftMid})
-                expected_model.setLegAngles(leg, CLegAngles(0, elevation, 90));
-            const auto expected = bodyPose(expected_model);
-            for (size_t leg : {1u, 4u}) {
-                EXPECT_NEAR(actual.toe_positions[leg].x, expected.toe_positions[leg].x, 1e-9);
-                EXPECT_NEAR(actual.toe_positions[leg].y, expected.toe_positions[leg].y, 1e-9);
-                EXPECT_NEAR(actual.toe_positions[leg].z, expected.toe_positions[leg].z, 1e-9);
-            }
-            EXPECT_EQ(actual.torso_pose, origin.torso_pose);
-            if (i == 7) horizontal = actual;
-        } else if (i <= 13) {
-            const double sign = i == 13 ? 0 : (i % 2 == 0 ? 1 : -1);
-            for (size_t leg : {1u, 4u}) {
-                EXPECT_NEAR(actual.toe_positions[leg].x, horizontal.toe_positions[leg].x, 1e-9);
-                EXPECT_NEAR(actual.toe_positions[leg].y, horizontal.toe_positions[leg].y + sign * 0.01, 1e-9);
-                EXPECT_NEAR(actual.toe_positions[leg].z, horizontal.toe_positions[leg].z, 1e-9);
-            }
-            EXPECT_NEAR(actual.torso_pose.position.y, origin.torso_pose.position.y + sign * 0.01, 1e-9);
-            EXPECT_NEAR(actual.torso_pose.orientation.roll, origin.torso_pose.orientation.roll, 1e-9);
+        if (i >= 8 && i <= 11) {
+            EXPECT_NEAR(model->getTorsoPose().orientation.roll.numerical_value_in(deg), i % 2 == 0 ? -6 : 6,
+                        1e-9);
         }
     }
-    EXPECT_DOUBLE_EQ(duration, 19.5);
+    EXPECT_DOUBLE_EQ(duration, 16.0);
     EXPECT_EQ(bodyPose(*model), origin);
 }
 
@@ -303,46 +304,90 @@ TEST_F(SinglePoseTargetTest, PendingRotationDeltaCapturesEndpointAndAddsAllAxes)
     EXPECT_EQ(bodyPose(*model), origin);
 }
 
-TEST_F(SinglePoseTargetTest, BiteAndStompExamplesRestoreStartingPoseWithoutVoiceTriggers) {
+TEST_F(SinglePoseTargetTest, BiteRestoresStartingPoseWithoutVoiceTrigger) {
     CSequenceParser parser(node);
-    ASSERT_TRUE(parser.parseDirectory(RUMBLEX_SEQUENCES_DIRECTORY));
+    ASSERT_TRUE(parser.parseFile(std::string(RUMBLEX_SEQUENCES_DIRECTORY) + "/bite.yaml"));
     EXPECT_FALSE(parser.getSequenceForVoiceRequest("commandBite"));
-    EXPECT_FALSE(parser.getSequenceForVoiceRequest("commandStomp"));
-    for (const std::string name : {"bite", "stomp"}) {
-        SCOPED_TRACE(name);
-        const auto sequence = parser.getSequence(name);
-        ASSERT_TRUE(sequence);
-        const auto& groups = sequence->get().actionGroups;
-        ASSERT_EQ(groups.size(), name == "bite" ? 2u : 4u);
-        const auto origin = bodyPose(*model);
-        for (size_t i = 0; i < groups.size(); ++i) {
-            ASSERT_EQ(groups[i].size(), 1u);
-            const auto action = std::dynamic_pointer_cast<RequestMovementType>(groups[i][0]);
-            ASSERT_TRUE(action);
-            const auto& request = action->movementRequest;
-            EXPECT_EQ(request.type, MovementRequest::SINGLE_POSE);
-            EXPECT_EQ(request.duration_s, 1.0 * s);
-            EXPECT_EQ(request.save_pose, i == 0);
-            EXPECT_EQ(request.restore_pose, i == groups.size() - 1);
-            if (!request.restore_pose) {
-                ASSERT_TRUE(request.pose_delta);
-                if (name == "bite") {
-                    EXPECT_DOUBLE_EQ(request.pose_delta->torso_translation.x, 0.015);
-                    EXPECT_DOUBLE_EQ(request.pose_delta->head_rotation.pitch, 10.0);
-                } else {
-                    const auto leg = i == 2 ? ELegIndex::LeftFront : ELegIndex::RightFront;
-                    EXPECT_DOUBLE_EQ(request.pose_delta->toe_translation[static_cast<size_t>(leg)].z,
-                                     i == 1 ? -0.02 : 0.02);
-                }
-            }
-            ASSERT_TRUE(controller->setGait(request));
-            advance(49);
-            EXPECT_FALSE(controller->motionStopped());
-            advance(1);
-            EXPECT_TRUE(controller->motionStopped());
+    const auto sequence = parser.getSequence("bite");
+    ASSERT_TRUE(sequence);
+    const auto& groups = sequence->get().actionGroups;
+    ASSERT_EQ(groups.size(), 2u);
+    const auto origin = bodyPose(*model);
+    for (size_t i = 0; i < groups.size(); ++i) {
+        ASSERT_EQ(groups[i].size(), 1u);
+        const auto action = std::dynamic_pointer_cast<RequestMovementType>(groups[i][0]);
+        ASSERT_TRUE(action);
+        const auto& request = action->movementRequest;
+        EXPECT_EQ(request.type, MovementRequest::SINGLE_POSE);
+        EXPECT_EQ(request.duration_s, 1.0 * s);
+        EXPECT_EQ(request.save_pose, i == 0);
+        EXPECT_EQ(request.restore_pose, i == 1);
+        if (!request.restore_pose) {
+            ASSERT_TRUE(request.pose_delta);
+            EXPECT_DOUBLE_EQ(request.pose_delta->torso_translation.x, 0.015);
+            EXPECT_DOUBLE_EQ(request.pose_delta->head_rotation.pitch, 10.0);
         }
-        EXPECT_EQ(bodyPose(*model), origin);
+        ASSERT_TRUE(controller->setGait(request));
+        advance(49);
+        EXPECT_FALSE(controller->motionStopped());
+        advance(1);
+        EXPECT_TRUE(controller->motionStopped());
     }
+    EXPECT_EQ(bodyPose(*model), origin);
+}
+
+TEST_F(SinglePoseTargetTest, StompAnnouncesLiftsStrikesAndRestoresRightFrontLeg) {
+    CSequenceParser parser(node);
+    ASSERT_TRUE(parser.parseFile(std::string(RUMBLEX_SEQUENCES_DIRECTORY) + "/stomp.yaml"));
+    EXPECT_FALSE(parser.getSequenceForVoiceRequest("commandStomp"));
+    const auto sequence = parser.getSequence("stomp");
+    ASSERT_TRUE(sequence);
+    const auto& groups = sequence->get().actionGroups;
+    ASSERT_EQ(groups.size(), 3u);
+    const auto origin = bodyPose(*model);
+    const std::array durations = {0.5, 0.1, 1.0};
+    const std::array offsets = {0.02, -0.02, 0.0};
+    for (size_t i = 0; i < groups.size(); ++i) {
+        SCOPED_TRACE(i);
+        ASSERT_EQ(groups[i].size(), i == 0 ? 2u : 1u);
+        std::shared_ptr<RequestMovementType> movement;
+        std::shared_ptr<RequestTalking> speech;
+        for (const auto& action : groups[i]) {
+            if (auto request = std::dynamic_pointer_cast<RequestMovementType>(action)) movement = request;
+            if (auto request = std::dynamic_pointer_cast<RequestTalking>(action)) speech = request;
+        }
+        if (i == 0) {
+            ASSERT_TRUE(speech);
+            EXPECT_EQ(speech->text, "Nein");
+        }
+        ASSERT_TRUE(movement);
+        const auto& request = movement->movementRequest;
+        EXPECT_EQ(request.type, MovementRequest::SINGLE_POSE);
+        EXPECT_EQ(request.duration_s, durations[i] * s);
+        EXPECT_EQ(request.save_pose, i == 0);
+        EXPECT_EQ(request.restore_pose, i == 2);
+        if (i < 2) {
+            ASSERT_TRUE(request.pose_delta);
+            EXPECT_DOUBLE_EQ(request.pose_delta->toe_translation[0].z, i == 0 ? 0.02 : -0.04);
+        }
+        ASSERT_TRUE(controller->setGait(request));
+        const int samples = std::lround(durations[i] / 0.02);
+        const double before = i == 0 ? 0.0 : offsets[i - 1];
+        for (int tick = 1; tick <= samples; ++tick) {
+            advance(1);
+            EXPECT_EQ(controller->motionStopped(), tick == samples);
+            const auto actual = bodyPose(*model);
+            EXPECT_EQ(actual.head_orientation, origin.head_orientation);
+            EXPECT_EQ(actual.torso_pose, origin.torso_pose);
+            for (size_t leg = 1; leg < 6; ++leg)
+                EXPECT_EQ(actual.toe_positions[leg], origin.toe_positions[leg]);
+            EXPECT_DOUBLE_EQ(actual.toe_positions[0].x, origin.toe_positions[0].x);
+            EXPECT_DOUBLE_EQ(actual.toe_positions[0].y, origin.toe_positions[0].y);
+            EXPECT_NEAR(actual.toe_positions[0].z,
+                        origin.toe_positions[0].z + before + (offsets[i] - before) * tick / samples, 1e-9);
+        }
+    }
+    EXPECT_EQ(bodyPose(*model), origin);
 }
 
 TEST_F(SinglePoseTargetTest, HighFiveCatalogRaisesHoldsAndRestoresEachInvocation) {
@@ -360,7 +405,8 @@ TEST_F(SinglePoseTargetTest, HighFiveCatalogRaisesHoldsAndRestoresEachInvocation
         model->setHeadOrientation(COrientation(3, 6 + invocation, 8 + invocation));
         const auto origin = bodyPose(*model);
         auto raised = *model;
-        raised.setLegAngles(ELegIndex::RightFront, CLegAngles(-20, 50, 60));
+        raised.moveTorso(raised.getToePositions(), CPose(0, 0, 0, 0, -8, 0));
+        raised.setLegAngles(ELegIndex::RightFront, CLegAngles(-25, 50, 60));
         raised.setHeadOrientation(COrientation(0, -20, 0));
         const auto raised_pose = bodyPose(raised);
         for (size_t i = 0; i < 3; ++i) {
@@ -379,7 +425,7 @@ TEST_F(SinglePoseTargetTest, HighFiveCatalogRaisesHoldsAndRestoresEachInvocation
             const auto actual = bodyPose(*model);
             const auto expected = i == 2 ? origin : raised_pose;
             EXPECT_EQ(actual.head_orientation, expected.head_orientation);
-            EXPECT_EQ(actual.torso_pose, origin.torso_pose);
+            EXPECT_EQ(actual.torso_pose, expected.torso_pose);
             for (size_t leg = 0; leg < 6; ++leg) {
                 EXPECT_NEAR(actual.toe_positions[leg].x, expected.toe_positions[leg].x, 1e-9);
                 EXPECT_NEAR(actual.toe_positions[leg].y, expected.toe_positions[leg].y, 1e-9);
@@ -411,54 +457,68 @@ TEST_F(SinglePoseTargetTest, SavedPoseIsCapturedAfterPendingMotionAndConsumedOnR
     EXPECT_FALSE(controller->setGait(restore));
 }
 
-TEST_F(SinglePoseTargetTest, ClapCatalogPreservesPhasesTimingAndStartingPose) {
+TEST_F(SinglePoseTargetTest, ClapKeepsSupportPlantedAndRestoresStartingPose) {
     CSequenceParser parser(node);
     ASSERT_TRUE(parser.parseFile(std::string(RUMBLEX_SEQUENCES_DIRECTORY) + "/clap.yaml"));
     const auto sequence = parser.getSequence("clap");
     ASSERT_TRUE(sequence);
-    ASSERT_EQ(sequence->get().actionGroups.size(), 20u);
+    ASSERT_EQ(sequence->get().actionGroups.size(), 28u);
     const auto origin = bodyPose(*model);
-    std::map<ELegIndex, CLegAngles> raised_angles;
     double elapsed = 0;
-    for (size_t i = 0; i < 20; ++i) {
-        const auto request =
+    for (size_t i = 0; i < sequence->get().actionGroups.size(); ++i) {
+        SCOPED_TRACE(i);
+        const auto action =
             std::dynamic_pointer_cast<RequestMovementType>(sequence->get().actionGroups[i].at(0));
-        ASSERT_TRUE(request);
-        ASSERT_EQ(request->movementRequest.type, MovementRequest::SINGLE_POSE);
+        ASSERT_TRUE(action);
+        const auto& request = action->movementRequest;
+        EXPECT_EQ(request.interpolation, InterpolationType::SinSquared);
         const auto before = bodyPose(*model);
-        ASSERT_TRUE(controller->setGait(request->movementRequest));
+        ASSERT_TRUE(controller->setGait(request));
         EXPECT_EQ(bodyPose(*model), before);
-        const int samples = (i >= 6 && i < 18) ? 25 : 50;
-        advance(samples - 1);
-        EXPECT_FALSE(controller->motionStopped());
-        advance(1);
-        EXPECT_TRUE(controller->motionStopped());
-        elapsed += samples * 0.02;
-        const auto pose = bodyPose(*model);
-        EXPECT_EQ(pose.head_orientation, origin.head_orientation);
-        EXPECT_EQ(pose.torso_pose.orientation, origin.torso_pose.orientation);
-        EXPECT_NEAR(pose.torso_pose.position.x, origin.torso_pose.position.x - (i == 19 ? 0.0 : 0.05), 1e-9);
-        for (size_t leg = 0; leg < 6; ++leg) {
-            if (i >= 6 && i < 18 && (leg == 0 || leg == 3)) continue;
-            const double lift = (i == 1 && leg == 2) || (i == 3 && leg == 5)   ? 0.05
-                                : (i >= 5 && i < 18 && (leg == 0 || leg == 3)) ? 0.1
-                                                                               : 0.0;
-            EXPECT_NEAR(pose.toe_positions[leg].x, origin.toe_positions[leg].x, 1e-8);
-            EXPECT_NEAR(pose.toe_positions[leg].y, origin.toe_positions[leg].y, 1e-8);
-            EXPECT_NEAR(pose.toe_positions[leg].z, origin.toe_positions[leg].z + lift, 1e-8);
-        }
-        if (i == 5) raised_angles = model->getLegAngles();
-        if (i >= 6 && i < 18) {
-            using mp_units::angular::unit_symbols::deg;
-            const double offset = i % 2 == 0 ? 30 : 0;
-            for (auto leg : {ELegIndex::RightFront, ELegIndex::LeftFront}) {
-                EXPECT_NEAR((model->getLegAngles(leg).torso_coxa - raised_angles.at(leg).torso_coxa)
-                                .numerical_value_in(deg),
-                            leg == ELegIndex::RightFront ? -offset : offset, 1e-8);
+        const int samples = std::lround(request.duration_s.numerical_value_in(s) / 0.02);
+        for (int sample = 0; sample < samples; ++sample) {
+            advance(1);
+            const auto pose = bodyPose(*model);
+            EXPECT_EQ(pose.head_orientation, origin.head_orientation);
+            EXPECT_EQ(pose.torso_pose.orientation, origin.torso_pose.orientation);
+            // Every commanded toe must be reachable: FK must reproduce the IK target.
+            auto check = *model;
+            for (const auto leg : bodyLegOrder) {
+                const auto target = model->getToePositions().at(leg);
+                check.setLegAngles(leg, model->getLegAngles(leg));
+                test_helpers::expectPositionNear(target, check.getToePositions().at(leg), "clap", 1e-8);
+            }
+            // Horizontal transfers happen only with the moving toe clear of the floor.
+            for (size_t leg = 0; leg < 6; ++leg) {
+                if (std::abs(pose.toe_positions[leg].x - before.toe_positions[leg].x) > 1e-8 &&
+                    (leg == 1 || leg == 4)) {
+                    EXPECT_GE(pose.toe_positions[leg].z - origin.toe_positions[leg].z, 0.02 - 1e-8);
+                }
+            }
+            if (i >= 7 && i <= 20) {
+                EXPECT_NEAR(pose.torso_pose.position.x, origin.torso_pose.position.x - 0.04, 1e-9);
+                EXPECT_NEAR(pose.torso_pose.position.z, origin.torso_pose.position.z - 0.01, 1e-9);
+                for (const size_t leg : {1u, 2u, 4u, 5u}) {
+                    EXPECT_NEAR(pose.toe_positions[leg].x,
+                                origin.toe_positions[leg].x + (leg == 1 || leg == 4 ? 0.04 : 0), 1e-8);
+                    EXPECT_NEAR(pose.toe_positions[leg].y, origin.toe_positions[leg].y, 1e-8);
+                    EXPECT_NEAR(pose.toe_positions[leg].z, origin.toe_positions[leg].z, 1e-8);
+                }
+                // Geometric proxy, not a mass model: allow 3 cm forward of the torso
+                // and require another 3 cm to the forward support edge.
+                const double front_edge = std::min(pose.toe_positions[1].x, pose.toe_positions[4].x);
+                EXPECT_GE(front_edge - (pose.torso_pose.position.x + 0.03), 0.03);
             }
         }
+        EXPECT_TRUE(controller->motionStopped());
+        elapsed += request.duration_s.numerical_value_in(s);
+        if (i == 20) {
+            for (const size_t leg : {0u, 3u})
+                EXPECT_NEAR(bodyPose(*model).toe_positions[leg].z, origin.toe_positions[leg].z, 1e-8);
+        }
     }
-    EXPECT_DOUBLE_EQ(elapsed, 14.0);
+    EXPECT_NEAR(elapsed, 12.34, 1e-9);
+    EXPECT_EQ(bodyPose(*model), origin);
 }
 
 TEST_F(SinglePoseTargetTest, PendingDeltaStartsAtOutgoingEndpointAndDoesNotLeak) {

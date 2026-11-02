@@ -30,19 +30,12 @@ actions:
   # Zero femur elevation and a 90-degree knee extend each wing horizontally.
   - movement:
       name: SINGLE_POSE
-      duration_s: 1.5
+      duration_s: 1.0
       interpolation: sin_squared
       joint_targets:
         right_mid: {torso_coxa: 0, coxa_femur: 0, femur_tibia: 90}
         left_mid: {torso_coxa: 0, coxa_femur: 0, femur_tibia: 90}
   # Move the extended wings with the torso; keep the four support toes fixed.
-  - movement:
-      name: SINGLE_POSE
-      duration_s: 1.5
-      interpolation: sin_squared
-      pose_delta:
-        torso_translation: {y: 0.01}
-        toe_translation: {right_mid: {y: 0.01}, left_mid: {y: 0.01}}
   - loop:
       times: 2
       actions:
@@ -50,23 +43,22 @@ actions:
             name: SINGLE_POSE
             duration_s: 1.5
             interpolation: sin_squared
-            pose_delta:
-              torso_translation: {y: -0.02}
-              toe_translation: {right_mid: {y: -0.02}, left_mid: {y: -0.02}}
+            joint_targets:
+              right_mid: {torso_coxa: 0, coxa_femur: 0, femur_tibia: 90}
+              left_mid: {torso_coxa: 0, coxa_femur: 0, femur_tibia: 90}
+            body_pose:
+              head_orientation: {yaw: 0, pitch: 0}
+              torso_pose: {orientation: {roll: -6}}
         - movement:
             name: SINGLE_POSE
             duration_s: 1.5
             interpolation: sin_squared
-            pose_delta:
-              torso_translation: {y: 0.02}
-              toe_translation: {right_mid: {y: 0.02}, left_mid: {y: 0.02}}
-  - movement:
-      name: SINGLE_POSE
-      duration_s: 1.5
-      interpolation: sin_squared
-      pose_delta:
-        torso_translation: {y: -0.01}
-        toe_translation: {right_mid: {y: -0.01}, left_mid: {y: -0.01}}
+            joint_targets:
+              right_mid: {torso_coxa: 0, coxa_femur: 0, femur_tibia: 90}
+              left_mid: {torso_coxa: 0, coxa_femur: 0, femur_tibia: 90}
+            body_pose:
+              head_orientation: {yaw: 0, pitch: 0}
+              torso_pose: {orientation: {roll: 6}}
   - movement:
       name: SINGLE_POSE
       duration_s: 1.5
