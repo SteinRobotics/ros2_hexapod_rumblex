@@ -58,9 +58,9 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
     gaits_[MovementRequest::HOLD_DISTANCE] = std::make_shared<CHoldDistanceGait>(node_, kinematics_, params_);
     gaits_[MovementRequest::LEVEL_TORSO] = std::make_shared<CLevelTorsoGait>(node_, kinematics_);
 
-    // Default active gait (robot starts laying down)
-    active_gait_ = gaits_[MovementRequest::SEQUENCE_LAYDOWN];
-    active_request_ = createMsg("SEQUENCE_LAYDOWN", MovementRequest::SEQUENCE_LAYDOWN);
+    // Default active gait (robot starts with no request)
+    active_gait_ = gaits_[MovementRequest::NO_REQUEST];
+    active_request_ = createMsg("NO_REQUEST", MovementRequest::NO_REQUEST);
     pending_request_ = createMsg("NO_REQUEST", MovementRequest::NO_REQUEST);
 }
 
