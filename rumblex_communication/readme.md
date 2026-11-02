@@ -36,11 +36,10 @@ survives colcon rebuilds; no generated launcher edits are needed. Avoid installi
 both `pygame` and `pygame-ce` with pip into the same virtual environment, since
 they provide the same module files.
 
-Build with the same Python interpreter and launch:
+Build with the same Python interpreter and source the overlay using
+[BUILD.md](../BUILD.md#incremental-builds), then launch:
 
 ```bash
-python -m colcon build --symlink-install --packages-select rumblex_communication
-source install/local_setup.bash
 ros2 launch rumblex_communication communication_launch.py robot:=nira
 ```
 

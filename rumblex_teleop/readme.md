@@ -19,6 +19,8 @@ scroll within the panel when the list exceeds the visible area. Releasing outsid
 the button or losing focus cancels the click. New sequence buttons have no
 long-press action or keyboard shortcut.
 
+For equivalent terminal requests, see [COMMANDS.md](../COMMANDS.md#trigger-named-sequences).
+
 These buttons publish the exact sequence name as `std_msgs/msg/String` on
 `sequence_request` (queue depth 10). The brain executes the named sequence with
 normal joystick priority (`standup` uses high priority); unknown names are logged

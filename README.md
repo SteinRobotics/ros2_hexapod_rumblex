@@ -42,11 +42,11 @@ needed to add Nira.
 
 ## Getting Started
 
-Follow [README_SETUP.md](README_SETUP.md) to install dependencies, create the ROS 2 Python virtual environment, and build the workspace on a Raspberry Pi 5 or developer PC.
+Follow [README_SETUP.md](README_SETUP.md) to install dependencies and create the ROS 2 Python virtual environment on a Raspberry Pi 5 or developer PC. Use [BUILD.md](BUILD.md) for terminal sourcing, colcon builds, tests, and build troubleshooting.
 
-See [README_LAUNCH.md](README_LAUNCH.md) for physical robot bringup, offline tests, individual components, RViz previews, Gazebo simulation, and example ROS commands. It includes the terminal environment and venv interpreter checks needed for Python nodes.
+See [README_LAUNCH.md](README_LAUNCH.md) for physical robot bringup, offline tests, individual components, RViz previews, Gazebo simulation, and simulation options.
 
-See [COMMANDS.md](COMMANDS.md) for terminal setup, build and test commands, launch commands, topic inspection, joystick requests, and direct servo maintenance.
+See [COMMANDS.md](COMMANDS.md) for ROS 2 topic inspection, named sequence requests, joystick input, and direct servo maintenance.
 
 ## Raspberry Pi 5 Pin Layout
 The Raspberry Pi 5 inside Nox hosts most of the human-machine interface hardware that lives in `rumblex_hmi/`. The table follows the standard 40-pin header (odd numbers on the left when the USB ports face you). Pins with descriptions are currently wired up; empty cells are free for experiments.

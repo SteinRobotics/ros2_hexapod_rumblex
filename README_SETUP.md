@@ -1,13 +1,12 @@
 # RumbleX setup
 
-This guide sets up **Nox**, the current RumbleX robot, on a headless Raspberry Pi 5 and sets up a separate developer PC for RViz and Gazebo. Nira is planned; use the lowercase `robot` launch argument to select a profile when its configuration and model are available. See [README.md](README.md) for the project overview, pin layout, and example ROS topics, and [ROBOT_PROFILES.md](ROBOT_PROFILES.md) for the profile layout.
+This guide sets up **Nox**, the current RumbleX robot, on a headless Raspberry Pi 5 and sets up a separate developer PC for RViz and Gazebo. Nira is planned; use the lowercase `robot` launch argument to select a profile when its configuration and model are available. See [README.md](README.md) for the project overview and pin layout, and [ROBOT_PROFILES.md](ROBOT_PROFILES.md) for the profile layout.
 
 The commands below assume **Ubuntu 26.04** and **ROS 2 Lyrical** on both machines. Use the Ubuntu system Python (3.14 on Ubuntu 26.04) for ROS and the virtual environment; mixing Python versions can break ROS Python extensions. Install ROS from the [official Lyrical Ubuntu instructions](https://docs.ros.org/en/lyrical/Get-Started/Installation/Ubuntu-Install-Debs.html) before continuing. Choose `ros-lyrical-ros-base` on the Pi and `ros-lyrical-desktop` on the PC. Both machines need the same ROS distribution to share topics reliably. The C++ packages require a C++23-capable compiler and CMake 3.25 or newer; Ubuntu 26.04 supplies both.
 
-Before compiling or testing, use the [resource-limited build/test guide](rumblex_doc/BUILD_AND_TEST.md).
-It has separate amd64 and Raspberry Pi 5 limits and explains Codex permission
-escalation. Define its `rumblex_limited` wrapper with the appropriate profile;
-use it for the build commands below.
+[BUILD.md](BUILD.md) contains terminal sourcing, platform-specific build selections,
+resource limits, tests, and build troubleshooting. Use its terminal environment
+instructions after creating the venv below, before installing ROS dependencies.
 
 ## Raspberry Pi 5: headless robot
 
@@ -41,7 +40,11 @@ For Nox's 2.4 GHz WiFi restriction, see [band verification and Netplan configura
    ```bash
    cd ~/Workspace/colcon_rumblex
    /usr/bin/python3 -m venv --system-site-packages .venv
-   source .venv/bin/activate
+   ```
+
+   Activate the venv using [BUILD.md](BUILD.md#terminal-environment), then install Python dependencies:
+
+   ```bash
    python -m pip install --upgrade pip wheel 'setuptools<80'
    python -m pip install \
      SpeechRecognition google-cloud-speech \
@@ -54,7 +57,6 @@ For Nox's 2.4 GHz WiFi restriction, see [band verification and Netplan configura
 5. Install the **runtime** ROS dependencies. If `usb_cam` has no Lyrical binary, first follow the [camera source-install fallback](rumblex_camera/README.md#dependencies-and-build) and include `src/usb_cam` in the rosdep paths below. Include `rumblex_description` because `rumblex_bringup` declares it as a dependency, but skip its RViz and joint slider dependencies on the Pi. The Python rosdep keys listed below are handled by the venv installation above; `magic_enum` and `fonts-liberation` are installed explicitly because their rosdep mappings are missing for Ubuntu 26.04.
 
    ```bash
-   source /opt/ros/lyrical/setup.bash
    cd ~/Workspace/colcon_rumblex
    rosdep install --from-paths \
      src/ros2_hexapod_rumblex/rumblex_interfaces \
@@ -73,9 +75,9 @@ For Nox's 2.4 GHz WiFi restriction, see [band verification and Netplan configura
      src/ros2_hexapod_rumblex/rumblex_bringup \
      --ignore-src -r -y \
      --skip-keys 'ydlidar_ros2_driver rviz2 joint_state_publisher_gui magic_enum fonts-liberation python-google-cloud-speech-pip python3-sounddevice-pip python-gTTS-pip'
-   rumblex_limited python -m colcon build --executor sequential --symlink-install --packages-up-to rumblex_bringup
-   source install/local_setup.bash
    ```
+
+   Build the robot runtime using [BUILD.md](BUILD.md#initial-builds), then source the overlay.
 
    The Nox-only setup skips `ydlidar_ros2_driver`; Nira requires the external driver and SDK described in [SENSORS.md](SENSORS.md).
 
@@ -129,7 +131,11 @@ For offline robot-name recognition, follow the [openWakeWord ONNX setup](rumblex
    git submodule update --init --recursive
    cd ~/Workspace/colcon_rumblex
    /usr/bin/python3 -m venv --system-site-packages .venv
-   source .venv/bin/activate
+   ```
+
+   Activate the venv using [BUILD.md](BUILD.md#terminal-environment), then install Python dependencies:
+
+   ```bash
    python -m pip install --upgrade pip wheel 'setuptools<80'
    python -m pip install \
      SpeechRecognition google-cloud-speech \
@@ -143,7 +149,6 @@ For offline robot-name recognition, follow the [openWakeWord ONNX setup](rumblex
 3. Install the PC packages' dependencies and build the simulation and shared packages:
 
    ```bash
-   source /opt/ros/lyrical/setup.bash
    cd ~/Workspace/colcon_rumblex
    rosdep install --from-paths \
      src/ros2_hexapod_rumblex/rumblex_interfaces \
@@ -163,12 +168,9 @@ For offline robot-name recognition, follow the [openWakeWord ONNX setup](rumblex
      src/ros2_hexapod_rumblex/rumblex_gazebo \
      --ignore-src -r -y \
      --skip-keys 'ydlidar_ros2_driver magic_enum fonts-liberation python-google-cloud-speech-pip python3-sounddevice-pip python-gTTS-pip'
-   rumblex_limited python -m colcon build --executor sequential --symlink-install \
-     --packages-up-to rumblex_gazebo rumblex_description rumblex_navigation
-   source install/local_setup.bash
    ```
 
-4. Preview the model or run Gazebo:
+4. Build the developer PC selection and source the overlay using [BUILD.md](BUILD.md#initial-builds), then preview the model or run Gazebo:
 
    ```bash
    ros2 launch rumblex_description display.launch.py robot:=nox
@@ -182,35 +184,8 @@ For offline robot-name recognition, follow the [openWakeWord ONNX setup](rumblex
 
    Run one launch command at a time. [README_LAUNCH.md](README_LAUNCH.md#simulation-and-visualization) includes examples for navigation, worlds, and simulated joint commands.
 
-## Upgrading an existing workspace to Lyrical
+## Build, terminal setup, and upgrades
 
-After upgrading to Ubuntu 26.04 and installing ROS 2 Lyrical, open a fresh terminal and source `/opt/ros/lyrical/setup.bash`. Remove any old ROS setup commands from your shell startup files and update the robot's boot service to use Lyrical as shown above.
-
-Archive the existing `build/`, `install/`, and `log/` directories before rebuilding. Recreate `.venv` with `/usr/bin/python3` on Ubuntu 26.04 and reinstall its Python dependencies using the steps above. Then rerun `rosdep install` and the build command for the Pi or PC. Source the new `install/local_setup.bash` after the build completes.
-
-If an existing build reports `Could NOT find Python3` even though the system Python development headers and NumPy are installed, its CMake cache may still contain Python 3.12 metadata from Jazzy. Reconfigure all packages with `rumblex_limited python -m colcon build --executor sequential --symlink-install --cmake-clean-cache` (include the package selection from the Pi or PC instructions if needed). This refreshes cached Python and ROS dependency paths. Archiving the old build and install directories as described above also removes obsolete installed files after a distribution upgrade.
-
-## Every new terminal
-
-On **either** machine, activate the venv and source ROS and the workspace before using the built packages:
-
-```bash
-cd ~/Workspace/colcon_rumblex
-source .venv/bin/activate
-source /opt/ros/lyrical/setup.bash
-source install/local_setup.bash
-```
-
-Check the interpreter with `which python` and `python -c 'import rclpy; print(rclpy.__file__)'`. For a package-level check, run `python -m colcon test --packages-select <package_name> --event-handlers console_direct+` followed by `colcon test-result --verbose` from the workspace root.
-
-If a communication node reports `ModuleNotFoundError: No module named 'openwakeword'` even though it is installed in `.venv`, rebuild the package with the venv's Python:
-
-```bash
-rumblex_limited python -m colcon build --executor sequential --symlink-install --packages-select rumblex_communication
-source install/local_setup.bash
-head -n 1 install/rumblex_communication/lib/rumblex_communication/node_communication
-```
-
-The executable's first line should point to `.venv/bin/python`. Activating a venv after a build does not change the interpreter recorded in existing ROS Python executables.
-
-For offline robot-name recognition, follow the [openWakeWord ONNX setup](rumblex_communication/readme.md) before launching communication.
+See [BUILD.md](BUILD.md) for all source and colcon build commands, tests, ROS/Python
+upgrade steps, and interpreter troubleshooting. Launch examples are in
+[README_LAUNCH.md](README_LAUNCH.md); topic commands are in [COMMANDS.md](COMMANDS.md).

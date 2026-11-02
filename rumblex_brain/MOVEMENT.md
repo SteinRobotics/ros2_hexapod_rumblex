@@ -133,16 +133,10 @@ together; external publishers must migrate to the BodyPose presence flags and
 
 ## Build
 
-Build the interface, shared utilities, and both nodes together. C++23 and CMake
-3.25 or newer are required. `rumblex_utils` locates mp-units 2.5 or fetches the
-pinned 2.5.0 release. An offline build can supply
-`-DFETCHCONTENT_SOURCE_DIR_MP-UNITS=/path/to/mp-units-2.5.0`.
-
-```bash
-colcon build --packages-up-to rumblex_brain rumblex_movement
-colcon test --packages-select rumblex_utils rumblex_brain rumblex_movement rumblex_navigation --event-handlers console_direct+
-colcon test-result --verbose
-```
+Use [BUILD.md](../BUILD.md#incremental-builds) to build the interfaces, shared
+utilities, brain, and movement together, and its [test instructions](../BUILD.md#tests)
+for the affected packages. The guide also covers C++23/CMake requirements and
+[offline mp-units builds](../BUILD.md#offline-mp-units-build).
 
 ## Motion trajectory and handoff contract
 

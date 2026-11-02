@@ -1,34 +1,12 @@
 # Launching RumbleX
 
-Install dependencies and build the workspace using [README_SETUP.md](README_SETUP.md) first. These commands use ROS 2 Lyrical. Nox is the default robot profile; launch files with a `robot` argument load configuration from `config/<robot>/`. See [ROBOT_PROFILES.md](ROBOT_PROFILES.md) for profile details.
+Install dependencies and build the workspace using [README_SETUP.md](README_SETUP.md) and [BUILD.md](BUILD.md) first. These commands use ROS 2 Lyrical. Nox is the default robot profile; launch files with a `robot` argument load configuration from `config/<robot>/`. See [ROBOT_PROFILES.md](ROBOT_PROFILES.md) for profile details.
 
 ## Prepare every terminal
 
-Run this in each terminal used for launching nodes or sending commands:
-
-```bash
-cd ~/Workspace/colcon_rumblex
-source /opt/ros/lyrical/setup.bash
-source .venv/bin/activate
-source install/local_setup.bash
-```
-
-The venv must have been created with `--system-site-packages` so ROS modules remain available. Check the Python environment and communication dependencies:
-
-```bash
-which python
-python -c 'import rclpy, openwakeword, speech_recognition, sounddevice, gtts; print("Python dependencies OK")'
-```
-
-Build Python packages with the active venv using `python -m colcon build`. Their generated executables record the build interpreter, so activating `.venv` afterward does not repair an executable built with `/usr/bin/python3`. If communication reports missing dependencies such as `openwakeword`, rebuild it:
-
-```bash
-python -m colcon build --symlink-install --packages-select rumblex_communication
-source install/local_setup.bash
-head -n 1 install/rumblex_communication/lib/rumblex_communication/node_communication
-```
-
-The first line should point to the workspace's `.venv/bin/python`. If the import check itself fails, install the Python dependencies as described in [README_SETUP.md](README_SETUP.md).
+Follow [BUILD.md](BUILD.md#terminal-environment) to source ROS, activate the venv,
+and load the workspace overlay. For missing Python dependencies or an executable
+using the wrong interpreter, see [build troubleshooting](BUILD.md#python-executable-uses-the-wrong-interpreter).
 
 Choose one complete bringup or simulation at a time and stop it with **Ctrl+C** before starting another. Complete launches already include several component nodes; start individual components separately only when needed.
 
@@ -205,45 +183,5 @@ ros2 launch rumblex_gazebo simulation_mesh.launch.py robot:=nox
 
 This spawns the STL model in the empty world, loads the 20-joint controller configuration, and starts the joint-state broadcaster, position controller, and clock bridge. It does not start brain, movement, communication, or navigation. Nox's mesh model omits head visuals but retains invisible head yaw and pitch joints for controller compatibility.
 
-Command all 20 joints directly in radians:
-
-```bash
-ros2 topic pub --once /forward_position_controller/commands std_msgs/msg/Float64MultiArray \
-  "{data: [0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0]}"
-```
-
-The array follows the joint order in `rumblex_gazebo/config/nox/joint_controllers.yaml`. Use direct controller commands with the mesh-only launch; the full simulation's joint-command bridge continuously publishes its own targets.
-
-## Interact with running nodes
-
-Monitor available topics and servo status:
-
-```bash
-ros2 topic list
-ros2 topic echo /servos_status
-```
-
-Inject a recognized speech command for the brain:
-
-```bash
-ros2 topic pub --once /speech_recognition_online std_msgs/msg/String "{data: 'steh auf'}"
-```
-
-Inspect the body-pose interface before sending a custom movement command:
-
-```bash
-ros2 interface show rumblex_interfaces/msg/BodyPose
-ros2 topic echo /cmd_movement --once
-```
-
-Publish a complete `BodyPose` YAML payload to `/cmd_movement` using `ros2 topic pub --once`. Angles are in degrees, positions in metres, and the six toe targets are ordered right front, right middle, right back, left front, left middle, left back. The active brain also publishes movement targets, so use offline movement separately when testing custom poses.
-
-Inject a joystick request, for example to cycle the brain's gait mode:
-
-```bash
-ros2 topic pub --once /joystick_request rumblex_interfaces/msg/JoystickRequest "{button_start: true}"
-```
-
-Use `ros2 interface show rumblex_interfaces/msg/JoystickRequest` to inspect the other buttons and stick fields.
-
-For offline robot-name recognition, follow the [openWakeWord ONNX setup](rumblex_communication/readme.md) before launching communication.
+For direct joint commands and topic inspection, see [COMMANDS.md](COMMANDS.md),
+including the [Gazebo joint controller](COMMANDS.md#gazebo-joint-controller).

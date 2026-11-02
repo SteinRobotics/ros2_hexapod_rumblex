@@ -142,12 +142,10 @@ Setup erneut mit dem anderen Roboternamen ausführen, damit insbesondere Niras
 zusätzlicher Lidar-Treiber installiert wird. Navigation und automatisches Zuhören
 bleiben bei den Standardwerten des Target-Launches (`false`).
 
-Für manuelle ROS-Kommandos:
+Für manuelle ROS-Kommandos zuerst die Umgebung gemäß
+[BUILD.md](../../BUILD.md#terminal-environment) vorbereiten:
 
 ```bash
-source /opt/ros/lyrical/setup.bash
-source ~/Workspace/colcon_rumblex/.venv/bin/activate
-source ~/Workspace/colcon_rumblex/install/local_setup.bash
 ros2 node list
 wpctl status
 ls -l /dev/i2c-1 /dev/gpiochip* /dev/serial/by-id/

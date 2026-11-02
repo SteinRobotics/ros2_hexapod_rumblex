@@ -56,6 +56,13 @@ avoids duplicate colcon package discovery. Existing checkouts are switched to
 `lyrical` and updated only by fast-forward; local changes require manual resolution.
 A Nox-only installation can skip the `ydlidar_ros2_driver` rosdep key.
 
+To update the maintained driver checkout after installing the SDK, run from the
+repository root (requires GitHub SSH access):
+
+```bash
+./scripts/update_ydlidar_driver.sh
+```
+
 `rumblex_lidar_2d/config/nira/lidar.yaml` uses the upstream
 [Tmini settings](https://github.com/YDLIDAR/ydlidar_ros2_driver/blob/humble/params/Tmini.yaml),
 with `frame_id: lidar_link` matching the existing Nira URDF. Verify the serial port

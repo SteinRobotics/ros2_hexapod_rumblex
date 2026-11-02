@@ -75,15 +75,9 @@ The fallback disables optional contract checks to avoid a GSL dependency; it use
 the compiler's standard formatting support or requires fmt if unavailable.
 mp-units is managed by CMake, so no additional rosdep key is needed.
 
-For an offline build, install mp-units first and add its prefix to
-`CMAKE_PREFIX_PATH`, or supply a local release checkout:
-
-```bash
-colcon build --packages-up-to rumblex_movement \
-  --cmake-args -DFETCHCONTENT_SOURCE_DIR_MP-UNITS=/path/to/mp-units-2.5.0
-colcon test --packages-select rumblex_movement --event-handlers console_direct+
-colcon test-result --verbose
-```
+For an offline mp-units checkout, use the
+[offline build instructions](../BUILD.md#offline-mp-units-build). Movement build
+and test commands are centralized in [BUILD.md](../BUILD.md).
 
 Velocity commands use m/s and rad/s. Movement consumes poses at 50 Hz and sends
 servo durations matching pose delivery intervals. Servo targets are rounded to

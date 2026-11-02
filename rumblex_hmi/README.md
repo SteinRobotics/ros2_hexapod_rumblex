@@ -60,11 +60,6 @@ does not confirm that framebuffer writes work. Snow-like pixels with this error
 are a transfer failure, not a missing font. The renderer separately requires
 `/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf`.
 
-Validate with:
-
-```bash
-colcon test --packages-select rumblex_hmi --event-handlers console_direct+
-colcon test-result --verbose
-```
+Validate `rumblex_hmi` using the [package test commands](../BUILD.md#tests).
 
 GUI tests use SDL's dummy video driver and run without a desktop.

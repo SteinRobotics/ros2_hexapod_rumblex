@@ -72,17 +72,43 @@ class GaitControllerTest : public ::testing::Test {
     std::unique_ptr<CGaitController> controller_;
 };
 
-// Test: Verify default gait is LAYDOWN (robot starts laying down)
-TEST_F(GaitControllerTest, DefaultGaitIsLaydown) {
-    EXPECT_EQ(controller_->currentGait(), MovementRequestMsg::SEQUENCE_LAYDOWN);
+TEST_F(GaitControllerTest, StartupWithoutRequestIsStoppedAndPreservesPose) {
+    const auto initial_pose = bodyPose(*kinematics_);
+    EXPECT_EQ(controller_->currentGait(), MovementRequestMsg::NO_REQUEST);
+    EXPECT_TRUE(controller_->motionStopped());
+    EXPECT_FALSE(controller_->moving());
+    EXPECT_FALSE(controller_->hasPendingGait());
+    EXPECT_FALSE(controller_->takeSequenceAbort());
+    EXPECT_FALSE(controller_->finishesAutomatically());
+    EXPECT_EQ(controller_->commandedVelocity(createForwardVelocity()).toMsg(), createZeroVelocity().toMsg());
+    EXPECT_FALSE(controller_->updateSelectedGait(createForwardVelocity()));
+    controller_->requestStopSelectedGait();
+    EXPECT_FALSE(controller_->stopRequested());
+    EXPECT_FALSE(controller_->updateSelectedGait(createZeroVelocity()));
+    brain::MovementRequest request;
+    request.type = MovementRequestMsg::NO_REQUEST;
+    EXPECT_FALSE(controller_->setGait(request));
+    EXPECT_EQ(controller_->currentGait(), MovementRequestMsg::NO_REQUEST);
+    EXPECT_EQ(bodyPose(*kinematics_), initial_pose);
 }
 
-// Test: Switch from LAYDOWN to WAITING
-TEST_F(GaitControllerTest, SwitchFromLaydownToWaiting) {
+TEST_F(GaitControllerTest, FirstRequestActivatesFromIdleWithoutChangingPose) {
+    const auto initial_pose = bodyPose(*kinematics_);
+    brain::MovementRequest request;
+    request.type = MovementRequestMsg::SEQUENCE_LAYDOWN;
+    ASSERT_TRUE(controller_->setGait(request));
+    EXPECT_EQ(controller_->currentGait(), MovementRequestMsg::SEQUENCE_LAYDOWN);
+    EXPECT_FALSE(controller_->hasPendingGait());
+    EXPECT_EQ(bodyPose(*kinematics_), initial_pose);
+    EXPECT_TRUE(controller_->updateSelectedGait(createZeroVelocity()));
+}
+
+// Test: Switch from idle to WAITING
+TEST_F(GaitControllerTest, SwitchFromIdleToWaiting) {
     auto vel = createZeroVelocity();
 
-    // Verify we start with LAYDOWN
-    EXPECT_EQ(controller_->currentGait(), MovementRequestMsg::SEQUENCE_LAYDOWN);
+    // Verify we start idle
+    EXPECT_EQ(controller_->currentGait(), MovementRequestMsg::NO_REQUEST);
 
     // Request stop and wait for it to complete
     controller_->requestStopSelectedGait();
@@ -159,7 +185,7 @@ TEST_F(GaitControllerTest, SwitchToTorsoRoll) {
 TEST_F(GaitControllerTest, SwitchFromTorsoRollToStandUp) {
     auto vel = createZeroVelocity();
 
-    // First stop current gait (LAYDOWN)
+    // First stop current gait
     controller_->requestStopSelectedGait();
     for (int i = 0; i < kMaxIterations; ++i) {
         controller_->updateSelectedGait(vel);
@@ -255,7 +281,9 @@ TEST_F(GaitControllerTest, RequestSameGaitTwice) {
 TEST_F(GaitControllerTest, SwitchWhileRunning) {
     auto vel = createForwardVelocity();
 
-    // Start with LAYDOWN (default)
+    brain::MovementRequest initial_request;
+    initial_request.type = MovementRequestMsg::SEQUENCE_LAYDOWN;
+    ASSERT_TRUE(controller_->setGait(initial_request));
     EXPECT_EQ(controller_->currentGait(), MovementRequestMsg::SEQUENCE_LAYDOWN);
 
     // Run a few iterations to ensure gait is active

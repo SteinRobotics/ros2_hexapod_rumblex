@@ -36,18 +36,9 @@ The source fallback has not been built against this host's Lyrical installation;
 0.8.1 uses deprecated image_transport APIs with warnings treated as errors, so
 it may need an upstream compatibility patch before it can be used on Lyrical.
 
-Before building, check for other builds, tests, simulations, or CAD jobs. Run only
-one workload, with the repository resource limits. For a host with a systemd user
-manager, the following inherits the sourced ROS environment and applies those limits:
-
-```bash
-systemd-run --user --scope -p MemoryHigh=6G -p MemoryMax=8G -p MemorySwapMax=1G \
-  timeout --kill-after=10s 300s env CMAKE_BUILD_PARALLEL_LEVEL=2 \
-  colcon build --executor sequential --packages-up-to rumblex_camera
-source install/local_setup.bash
-```
-
-Rebuild `rumblex_perception` and `rumblex_bringup` too when using integrated launch.
+Build the camera and, when needed, its perception/bringup integration using
+[BUILD.md](../BUILD.md#incremental-builds), then source the workspace overlay.
+That guide applies the platform-specific resource limits and worker controls.
 
 ## Select the physical camera
 

@@ -71,10 +71,10 @@ PIP_BREAK_SYSTEM_PACKAGES=1 rosdep install --from-paths ~/Workspace/colcon_rumbl
 git clone https://github.com/garmin/LIDARLite_RaspberryPi_Library.git
 sudo apt install libmagicenum-dev
 nano ~/Workspace/colcon_rumblex/src/ros2_hexapod_rumblex/rumblex_lidar_1d/src/LIDARLite_RaspberryPi_Library/include/lidarlite_v3.h
-colcon build --symlink-install
-source /opt/ros/kilted/setup.bash
-source ~/.bashrc
 ```
+
+Aktuelle Source- und Build-Kommandos: [BUILD.md](../../BUILD.md).
+Diese gelten für Lyrical; die übrigen Schritte hier sind historische Kilted-Notizen.
 
 ### install dependencies
 ```

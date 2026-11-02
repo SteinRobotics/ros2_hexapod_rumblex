@@ -25,8 +25,9 @@ layers 2 and 3, with three tabs at each end. Their matching diagonal slot rows
 follow the inner octagonal opening with the same clearance as the horizontal
 rows. The plate body is 40 x 45 x 1.5 mm; including tabs, its height is 48 mm.
 
+Activate the CAD environment using [BUILD.md](../../BUILD.md#cad-virtual-environment).
+
 ```bash
-source .venv/bin/activate
 python -m robot_nox.assembly_leg
 python robot_nox.py
 python -m unittest discover -s tests -v

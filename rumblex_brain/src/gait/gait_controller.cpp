@@ -15,6 +15,22 @@ using namespace mp_units;
 using namespace mp_units::si::unit_symbols;
 using mp_units::angular::unit_symbols::deg;
 
+namespace {
+// NO_REQUEST must support controller queries without moving the pose model.
+class CIdleGait final : public IGait {
+   public:
+    void start(units::Duration, uint8_t) override {
+    }
+    void requestStop() override {
+    }
+    void cancelStop() override {
+    }
+    EGaitState state() const override {
+        return EGaitState::Stopped;
+    }
+};
+}  // namespace
+
 brain::MovementRequest CGaitController::createMsg(std::string name, MovementRequestType type) {
     brain::MovementRequest msg;
     msg.name = name;
@@ -28,6 +44,7 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
     params_ = Parameters::declare(node_);
 
     // Create all gait instances
+    gaits_[MovementRequest::NO_REQUEST] = std::make_shared<CIdleGait>();
     gaits_[MovementRequest::SEQUENCE_BODY_ROLL] =
         std::make_shared<CTorsoRollGait>(node_, kinematics_, params_.torso_roll);
     gaits_[MovementRequest::SEQUENCE_LAYDOWN] = std::make_shared<CSinglePoseGait>(

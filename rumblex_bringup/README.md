@@ -67,13 +67,8 @@ locations to take effect.
 
 ## Launch files
 
-For manual launches, source ROS and the built workspace first:
-
-```bash
-source /opt/ros/lyrical/setup.bash
-source ~/Workspace/colcon_rumblex/.venv/bin/activate
-source ~/Workspace/colcon_rumblex/install/local_setup.bash
-```
+For manual launches, prepare the terminal using
+[BUILD.md](../BUILD.md#terminal-environment).
 
 Stop the autostart service before manually launching the robot stack to avoid
 duplicate nodes and competing hardware access. Run one bringup stack at a time.

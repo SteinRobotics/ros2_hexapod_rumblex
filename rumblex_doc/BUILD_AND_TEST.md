@@ -1,9 +1,8 @@
 # Resource-limited builds and tests
 
-Run these commands from `~/Workspace/colcon_rumblex`, not the repository's `src`
-directory. Source `/opt/ros/lyrical/setup.bash` and activate the project's Python
-venv if your installation uses one. For an incremental build or tests, also source
-`install/local_setup.bash`; omit this on a fresh workspace with no installation.
+Use [BUILD.md](../BUILD.md) for terminal sourcing and colcon build/test commands.
+This guide defines resource controls and recovery procedures. Run from the
+workspace root, `~/Workspace/colcon_rumblex`.
 
 ## Access to memory controls (both architectures)
 
@@ -133,23 +132,10 @@ systemctl --user show <printed-scope>.scope \
 
 ## Build and test commands
 
-For an existing workspace with dependencies installed:
-
-```bash
-rumblex_limited python -m colcon build --symlink-install \
-  --executor sequential --packages-select rumblex_brain
-source install/local_setup.bash
-rumblex_limited python -m colcon test --executor sequential \
-  --packages-select rumblex_brain --event-handlers console_direct+ \
-  --ctest-args -j1 --output-on-failure
-python -m colcon test-result --test-result-base build/rumblex_brain --verbose
-```
-
-On a fresh workspace, use `--packages-up-to rumblex_brain` to build its workspace
-dependencies. For full robot setup on Pi, use `--packages-up-to rumblex_bringup`;
-for the amd64 visualization setup, use the package selection in `README_SETUP.md`.
-Keep the same wrapper and sequential executor. These larger builds may exceed a
-five-minute batch; do not automatically restart the full command after a timeout.
+Follow [BUILD.md](../BUILD.md#initial-builds) for initial and incremental colcon
+builds, package selections, and tests. Define and verify the wrapper above first.
+Larger builds may exceed a five-minute batch; inspect logs before retrying and
+reduce to focused targets after an interruption.
 
 For focused checks after CMake configuration, select only the targets needed:
 
