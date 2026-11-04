@@ -47,16 +47,53 @@ actions:
 
 Anchors must be defined before use and are local to the YAML document; included
 snippet files cannot reference the parent file's anchors. The `variables` field
-is supported on named sequences, not snippets or catalog wrappers. These are
+is supported on named sequences and snippets, not catalog wrappers. These are
 static values, with no arithmetic, automatic negation, or runtime overrides.
 Define negative counterparts separately (for example, `kLowerMiddle: &kLowerMiddle -0.02`).
 Add units as inline comments (`# s`, `# m`, `# deg`, or `# m/s`); mark loop
 counts with `# repetitions`. Extract the main tuning values and frequently reused
 settings, leaving neutral zeros and simple one-action sequences inline. Snippets
-can define anchors at first use instead of using a `variables` mapping.
+can also define anchors at first use.
 Keep settings with different purposes independent even when their values match.
 See `clap.yaml` for durations in seconds, translations in meters, and coxa angles
 in degrees.
+
+### Shared constants
+
+Import shared defaults explicitly; paths are relative to the importing file:
+
+```yaml
+name: example_shared
+imports: [variables/common.yaml]
+variables:
+  kLegLiftHeight: 0.025  # m; optional local override
+  kLiftFront: &kLiftFront "${kLegLiftHeight}"  # m
+actions:
+  - movement:
+      name: SINGLE_POSE
+      duration_s: 0.5
+      pose_delta:
+        toe_translation: {right_front: {z: *kLiftFront}}
+```
+
+`variables/common.yaml` contains only a `variables` mapping. Store shared files
+in a subdirectory so catalog discovery does not treat them as named sequences.
+Shared files cannot import other files. Multiple imports must have distinct
+variable names; local definitions override imported defaults. Duplicate local
+keys, missing files, undefined variables, and reference cycles are errors.
+
+A whole-value reference such as `"${kLegLiftHeight}"` preserves the referenced
+YAML type, including numbers, strings, lists, and mappings. References work in
+action values (including loops) and variable definitions; names and mapping keys
+are not substituted. Definitions may refer to other definitions, including local
+overrides of imported defaults. Unused definitions are validated too. Expansion
+is limited to 64 nested levels. Embedded string substitution and arithmetic are
+not supported; define signed values separately.
+
+Snippets can declare their own `imports` and `variables`. Their scope is independent:
+they do not inherit their caller's definitions or overrides. Existing native YAML
+anchors still work within each file. String parsing supports local references but
+cannot resolve file imports because it has no source directory.
 
 ## Body poses
 
@@ -409,7 +446,7 @@ Cancellation clears pending targets and lets the active trajectory stop graceful
 
 ## Snippets and validation
 
-Snippets live in `config/sequences/snippets` and contain only an `actions` list. `include`
+Snippets live in `config/sequences/snippets` and contain an `actions` list, with optional `imports` and `variables`. `include`
 must be the only key in its entry. Paths resolve relative to the containing file,
 including nested snippets. Repeated includes are allowed. Circular includes and
 nesting beyond 64 files are rejected. Keep snippets in this subdirectory so they

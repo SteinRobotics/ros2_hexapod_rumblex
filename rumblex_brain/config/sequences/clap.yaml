@@ -3,6 +3,7 @@
 name: clap
 trigger:
   voice: commandClap
+imports: [variables/common.yaml]
 variables:
   # Durations are seconds, translations meters, and coxa rotations degrees.
   # Signed counterparts are independent constants; YAML aliases cannot negate values.
@@ -18,8 +19,8 @@ variables:
   kLandFrontDuration: &kLandFrontDuration 1.0  # s
   kReturnTorsoDuration: &kReturnTorsoDuration 1.0  # s
   kRestoreDuration: &kRestoreDuration 1.0  # s
-  kLiftMiddle: &kLiftMiddle 0.02  # m
-  kLowerMiddle: &kLowerMiddle -0.02  # m
+  kLiftMiddle: &kLiftMiddle "${kLegLiftHeight}"  # m
+  kLowerMiddle: &kLowerMiddle "${kLegLowerHeight}"  # m
   kForwardMiddle: &kForwardMiddle 0.06  # m
   kBackwardMiddle: &kBackwardMiddle -0.06  # m
   kBackwardTorso: &kBackwardTorso -0.06  # m

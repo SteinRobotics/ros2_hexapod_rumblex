@@ -292,6 +292,105 @@ class SequenceFilesTest : public SequenceParserTest {
     std::filesystem::path directory_;
 };
 
+TEST_F(SequenceFilesTest, ImportsTypedDefaultsWithLocalOverridesAndIndependentSnippets) {
+    write("variables/common.yaml", R"(
+variables:
+  kDuration: 0.5
+  kAlias: "${kDuration}"
+  kCount: 2
+  kMovement: SINGLE_POSE
+  kPose: {head_orientation: {yaw: 10}}
+)");
+    write("sequence.yaml", R"(
+name: shared
+imports: [variables/common.yaml]
+variables:
+  kDuration: 0.7
+actions:
+  - loop:
+      times: "${kCount}"
+      actions:
+        - movement:
+            name: "${kMovement}"
+            duration_s: "${kAlias}"
+            body_pose: "${kPose}"
+  - include: snippets/shared.yaml
+)");
+    write("snippets/shared.yaml", R"(
+imports: [../variables/common.yaml]
+variables:
+  kLocalAlias: "${kAlias}"
+actions:
+  - movement:
+      name: "${kMovement}"
+      duration_s: "${kLocalAlias}"
+      body_pose: "${kPose}"
+)");
+    ASSERT_TRUE(parser_.parseDirectory(directory_.string()));
+    ASSERT_EQ(parser_.getSequences().size(), 1u);
+    ASSERT_EQ(parser_.getSequence("shared")->get().actionGroups.size(), 3u);
+    for (size_t i = 0; i < 3; ++i) {
+        const auto parsed = request<RequestMovementType>("shared", i, 0);
+        ASSERT_TRUE(parsed);
+        EXPECT_DOUBLE_EQ(parsed->movementRequest.duration_s.numerical_value_in(s), i < 2 ? 0.7 : 0.5);
+    }
+    write("snippets/shared.yaml", "actions: [{say: \"${kMovement}\"}]");
+    EXPECT_FALSE(parser_.parseFile((directory_ / "sequence.yaml").string()));
+    EXPECT_TRUE(parser_.getSequence("shared"));
+}
+
+TEST_F(SequenceFilesTest, RejectsInvalidImportsWithoutReplacingCatalog) {
+    ASSERT_TRUE(parser_.parseString("name: kept\nactions: [{say: hello}]"));
+    write("variables/a.yaml", "variables: {kValue: 1}");
+    write("variables/b.yaml", "variables: {kValue: 2}");
+    for (const auto* imports :
+         {"null", "{}", "variables/a.yaml", "[{}]", "['']", "[missing.yaml]",
+          "[variables/a.yaml, variables/b.yaml]", "[variables/a.yaml, variables/a.yaml]"}) {
+        write("sequence.yaml",
+              std::string("name: invalid\nimports: ") + imports + "\nactions: [{say: hello}]");
+        EXPECT_FALSE(parser_.parseFile((directory_ / "sequence.yaml").string())) << imports;
+        EXPECT_TRUE(parser_.getSequence("kept"));
+    }
+    for (const auto* contents :
+         {"{}", "variables: []", "variables: null", "variables: {kValue: 1, kValue: 2}",
+          "variables: {}\nimports: []", "actions: [{say: hello}]"}) {
+        write("variables/broken.yaml", contents);
+        write("sequence.yaml", "name: invalid\nimports: [variables/broken.yaml]\nactions: [{say: hello}]");
+        EXPECT_FALSE(parser_.parseFile((directory_ / "sequence.yaml").string())) << contents;
+        EXPECT_TRUE(parser_.getSequence("kept"));
+    }
+}
+
+TEST_F(SequenceParserTest, ResolvesLocalReferencesAndListsWithExistingAnchors) {
+    ASSERT_TRUE(parser_.parseString(R"(
+name: local
+variables:
+  kText: &kText hello
+  kAlias: "${kText}"
+  kActions: [{say: "${kAlias}"}]
+actions:
+  - loop:
+      times: 2
+      actions: "${kActions}"
+  - say: *kText
+)"));
+    ASSERT_EQ(parser_.getSequence("local")->get().actionGroups.size(), 3u);
+}
+
+TEST_F(SequenceParserTest, RejectsInvalidReferencesAndDefinitionsTransactionally) {
+    ASSERT_TRUE(parser_.parseString("name: kept\nactions: [{say: hello}]"));
+    for (const auto* variables : {"{kA: \"${missing}\"}", "{kA: \"${kA}\"}", "{kA: \"${kB}\", kB: \"${kA}\"}",
+                                  "{kA: 1, kA: 2}", "{'': 1}"}) {
+        EXPECT_FALSE(parser_.parseString(std::string("name: invalid\nvariables: ") + variables +
+                                         "\nactions: [{say: hello}]"))
+            << variables;
+        EXPECT_TRUE(parser_.getSequence("kept"));
+    }
+    EXPECT_FALSE(parser_.parseString("name: invalid\nactions: [{say: \"${missing}\"}]"));
+    EXPECT_FALSE(parser_.parseString("name: invalid\nimports: [common.yaml]\nactions: [{say: hello}]"));
+    EXPECT_TRUE(parser_.getSequence("kept"));
+}
+
 TEST_F(SequenceFilesTest, LoadsFeedbackFromSnippetWithIndependentLoopRequests) {
     write("hold.yaml", "name: hold\nactions: [{include: snippets/hold.yaml}]\n");
     write("snippets/hold.yaml",
