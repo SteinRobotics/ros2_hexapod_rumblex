@@ -8,7 +8,8 @@ variables:
   kSwayCount: &kSwayCount 2  # repetitions
   kWingRaised: &kWingRaised 25  # deg
   kWingLowered: &kWingLowered -10  # deg
-  kWingKnee: &kWingKnee 90  # deg
+  kWingKneeUp: &kWingKneeUp 110  # deg
+  kWingKneeDown: &kWingKneeDown 80  # deg
   kRollRight: &kRollRight -6  # deg
   kRollLeft: &kRollLeft 6  # deg
 actions:
@@ -18,8 +19,11 @@ actions:
       interpolation: sin_squared
       save_pose: true  # Capture the pose before this movement begins.
       joint_targets:
-        right_mid: {torso_coxa: 0, coxa_femur: *kWingRaised, femur_tibia: *kWingKnee}
-        left_mid: {torso_coxa: 0, coxa_femur: *kWingRaised, femur_tibia: *kWingKnee}
+        right_mid: {torso_coxa: 0, coxa_femur: *kWingRaised, femur_tibia: *kWingKneeUp}
+        left_mid: {torso_coxa: 0, coxa_femur: *kWingRaised, femur_tibia: *kWingKneeUp}
+      body_pose:
+        head_orientation: {yaw: 0, pitch: 0}
+        torso_pose: {orientation: {pitch: -5}}
   # Repeat synchronized down/up wing beats using the configured count.
   - loop:
       times: *kWingBeatCount
@@ -29,23 +33,23 @@ actions:
             duration_s: *kWingBeatDuration
             interpolation: sin_squared
             joint_targets:
-              right_mid: {torso_coxa: 0, coxa_femur: *kWingLowered, femur_tibia: *kWingKnee}
-              left_mid: {torso_coxa: 0, coxa_femur: *kWingLowered, femur_tibia: *kWingKnee}
+              right_mid: {torso_coxa: 0, coxa_femur: *kWingLowered, femur_tibia: *kWingKneeDown}
+              left_mid: {torso_coxa: 0, coxa_femur: *kWingLowered, femur_tibia: *kWingKneeDown}
         - movement:
             name: SINGLE_POSE
             duration_s: *kWingBeatDuration
             interpolation: sin_squared
             joint_targets:
-              right_mid: {torso_coxa: 0, coxa_femur: *kWingRaised, femur_tibia: *kWingKnee}
-              left_mid: {torso_coxa: 0, coxa_femur: *kWingRaised, femur_tibia: *kWingKnee}
+              right_mid: {torso_coxa: 0, coxa_femur: *kWingRaised, femur_tibia: *kWingKneeUp}
+              left_mid: {torso_coxa: 0, coxa_femur: *kWingRaised, femur_tibia: *kWingKneeUp}
   # Zero femur elevation and a 90-degree knee extend each wing horizontally.
   - movement:
       name: SINGLE_POSE
       duration_s: *kWingBeatDuration
       interpolation: sin_squared
       joint_targets:
-        right_mid: {torso_coxa: 0, coxa_femur: 0, femur_tibia: *kWingKnee}
-        left_mid: {torso_coxa: 0, coxa_femur: 0, femur_tibia: *kWingKnee}
+        right_mid: {torso_coxa: 0, coxa_femur: 0, femur_tibia: *kWingKneeUp}
+        left_mid: {torso_coxa: 0, coxa_femur: 0, femur_tibia: *kWingKneeUp}
   # Move the extended wings with the torso; keep the four support toes fixed.
   - loop:
       times: *kSwayCount
@@ -55,21 +59,21 @@ actions:
             duration_s: *kTransitionDuration
             interpolation: sin_squared
             joint_targets:
-              right_mid: {torso_coxa: 0, coxa_femur: 0, femur_tibia: *kWingKnee}
-              left_mid: {torso_coxa: 0, coxa_femur: 0, femur_tibia: *kWingKnee}
+              right_mid: {torso_coxa: 0, coxa_femur: 0, femur_tibia: *kWingKneeUp}
+              left_mid: {torso_coxa: 0, coxa_femur: 0, femur_tibia: *kWingKneeUp}
             body_pose:
               head_orientation: {yaw: 0, pitch: 0}
-              torso_pose: {orientation: {roll: *kRollRight}}
+              torso_pose: {orientation: {roll: *kRollRight, pitch: 5}}
         - movement:
             name: SINGLE_POSE
             duration_s: *kTransitionDuration
             interpolation: sin_squared
             joint_targets:
-              right_mid: {torso_coxa: 0, coxa_femur: 0, femur_tibia: *kWingKnee}
-              left_mid: {torso_coxa: 0, coxa_femur: 0, femur_tibia: *kWingKnee}
+              right_mid: {torso_coxa: 0, coxa_femur: 0, femur_tibia: *kWingKneeUp}
+              left_mid: {torso_coxa: 0, coxa_femur: 0, femur_tibia: *kWingKneeUp}
             body_pose:
               head_orientation: {yaw: 0, pitch: 0}
-              torso_pose: {orientation: {roll: *kRollLeft}}
+              torso_pose: {orientation: {roll: *kRollLeft, pitch: 5}}
   - movement:
       name: SINGLE_POSE
       duration_s: *kTransitionDuration

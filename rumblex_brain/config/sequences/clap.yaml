@@ -5,7 +5,7 @@ trigger:
   voice: commandClap
 imports: [variables/common.yaml]
 variables:
-  # Durations are seconds, translations meters, and coxa rotations degrees.
+  # Durations are seconds, translations meters, and joint angles degrees.
   # Signed counterparts are independent constants; YAML aliases cannot negate values.
   kMovement: &kMovement SINGLE_POSE
   kInterpolation: &kInterpolation sin_squared
@@ -16,22 +16,21 @@ variables:
   kLiftFrontDuration: &kLiftFrontDuration 0.8  # s
   kCloseDuration: &kCloseDuration 0.24  # s
   kOpenDuration: &kOpenDuration 0.4  # s
-  kLandFrontDuration: &kLandFrontDuration 1.0  # s
   kReturnTorsoDuration: &kReturnTorsoDuration 1.0  # s
   kRestoreDuration: &kRestoreDuration 1.0  # s
-  kLiftMiddle: &kLiftMiddle "${kLegLiftHeight}"  # m
+  kLiftMiddle: &kLiftMiddle 0.02  # m
   kLowerMiddle: &kLowerMiddle "${kLegLowerHeight}"  # m
-  kForwardMiddle: &kForwardMiddle 0.06  # m
-  kBackwardMiddle: &kBackwardMiddle -0.06  # m
-  kBackwardTorso: &kBackwardTorso -0.06  # m
+  kForwardMiddle: &kForwardMiddle 0.08  # m
+  kBackwardTorso: &kBackwardTorso -0.02  # m
   kLowerTorso: &kLowerTorso -0.01  # m
   kForwardTorso: &kForwardTorso 0.04  # m
   kRaiseTorso: &kRaiseTorso 0.01  # m
-  kLiftFront: &kLiftFront 0.08  # m
-  kLowerFront: &kLowerFront -0.08  # m
+  kFrontFemur: &kFrontFemur 50  # deg
+  kFrontTibia: &kFrontTibia 90  # deg; held throughout the clap
+  kCoxaOpen: &kCoxaOpen 0  # deg; absolute joint target
   kCoxaPositive: &kCoxaPositive 30  # deg
   kCoxaNegative: &kCoxaNegative -30  # deg
-# Start standing. Relative targets preserve the starting orientation and head pose.
+# Start standing. The starting torso and head pose are preserved during the clap.
 actions:
   # Step both middle feet forward together to extend the four-foot support
   # polygon toward the head. Lift before translating; never drag a planted toe.
@@ -41,13 +40,13 @@ actions:
       interpolation: *kInterpolation
       save_pose: true
       pose_delta:
-        toe_translation: {right_mid: {z: *kLiftMiddle}, left_mid: {z: *kLiftMiddle}}
+        toe_translation: {right_mid: {z: 0.01}, left_mid: {z: 0.01}}
   - movement:
       name: *kMovement
       duration_s: *kMoveMiddleDuration
       interpolation: *kInterpolation
       pose_delta:
-        toe_translation: {right_mid: {x: *kForwardMiddle}, left_mid: {x: *kForwardMiddle}}
+        toe_translation: {right_mid: {x: *kForwardMiddle, z: *kLiftMiddle}, left_mid: {x: *kForwardMiddle, z: *kLiftMiddle}}
   - movement:
       name: *kMovement
       duration_s: *kLiftMiddleDuration
@@ -60,13 +59,14 @@ actions:
       name: *kMovement
       duration_s: *kSettleTorsoDuration
       interpolation: *kInterpolation
-      pose_delta: {torso_translation: {x: *kBackwardTorso, z: *kLowerTorso}}
+      pose_delta: {torso_translation: {x: *kBackwardTorso}}
   - movement:
       name: *kMovement
       duration_s: *kLiftFrontDuration
       interpolation: *kInterpolation
-      pose_delta:
-        toe_translation: {right_front: {z: *kLiftFront}, left_front: {z: *kLiftFront}}
+      joint_targets:
+        right_front: {torso_coxa: *kCoxaOpen, coxa_femur: *kFrontFemur, femur_tibia: *kFrontTibia}
+        left_front: {torso_coxa: *kCoxaOpen, coxa_femur: *kFrontFemur, femur_tibia: *kFrontTibia}
   # A brisk close and a more relaxed opening, with eased reversals.
   - loop:
       times: *kClapCount
@@ -75,39 +75,18 @@ actions:
             name: *kMovement
             duration_s: *kCloseDuration
             interpolation: *kInterpolation
-            pose_delta:
-              coxa_rotation_deg: {right_front: *kCoxaNegative, left_front: *kCoxaPositive}
+            joint_targets:
+              right_front: {torso_coxa: *kCoxaNegative, coxa_femur: *kFrontFemur, femur_tibia: *kFrontTibia}
+              left_front: {torso_coxa: *kCoxaPositive, coxa_femur: *kFrontFemur, femur_tibia: *kFrontTibia}
         - movement:
             name: *kMovement
             duration_s: *kOpenDuration
             interpolation: *kInterpolation
-            pose_delta:
-              coxa_rotation_deg: {right_front: *kCoxaPositive, left_front: *kCoxaNegative}
-  # Land both front feet before bringing the body forward or resetting support.
-  - movement:
-      name: *kMovement
-      duration_s: *kLandFrontDuration
-      interpolation: *kInterpolation
-      pose_delta:
-        toe_translation: {right_front: {z: *kLowerFront}, left_front: {z: *kLowerFront}}
-  - movement:
-      name: *kMovement
-      duration_s: *kReturnTorsoDuration
-      interpolation: *kInterpolation
-      pose_delta: {torso_translation: {x: *kForwardTorso, z: *kRaiseTorso}}
-  - movement:
-      name: *kMovement
-      duration_s: *kLiftMiddleDuration
-      interpolation: *kInterpolation
-      pose_delta:
-        toe_translation: {right_mid: {z: *kLiftMiddle}, left_mid: {z: *kLiftMiddle}}
-  - movement:
-      name: *kMovement
-      duration_s: *kMoveMiddleDuration
-      interpolation: *kInterpolation
-      pose_delta:
-        toe_translation: {right_mid: {x: *kBackwardMiddle}, left_mid: {x: *kBackwardMiddle}}
-  # Only the left-middle and right-middle toes remain raised; land them gently and remove any drift.
+            joint_targets:
+              right_front: {torso_coxa: *kCoxaOpen, coxa_femur: *kFrontFemur, femur_tibia: *kFrontTibia}
+              left_front: {torso_coxa: *kCoxaOpen, coxa_femur: *kFrontFemur, femur_tibia: *kFrontTibia}
+  # Restore all toes to the captured starting pose; a fixed downward offset
+  # cannot undo the absolute front-leg joint targets. This also resets support.
   - movement:
       name: *kMovement
       duration_s: *kRestoreDuration
