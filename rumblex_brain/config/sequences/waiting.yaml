@@ -1,11 +1,16 @@
+# Stand up, run the built-in waiting motion for a bounded duration, then hold the pose.
 name: waiting
+variables:
+  kWaitDuration: &kWaitDuration 5.0  # s
 actions:
+  # Establish the standing pose before starting the timed activity.
   - movement:
       name: SEQUENCE_STAND_UP
       duration_s: 1.5
   - movement:
       name: SEQUENCE_WAITING
-      duration_s: 5.0
+      duration_s: *kWaitDuration
+  # End the active gait and clear velocity while retaining the resulting pose.
   - movement:
       name: CONTINUOUS_POSE
     velocity:

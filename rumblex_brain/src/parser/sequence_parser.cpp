@@ -254,7 +254,9 @@ bool CSequenceParser::parseSingleSequence(const YAML::Node& j) {
         return false;
     }
 
-    keys(j, {"name", "trigger", "actions"});
+    keys(j, {"name", "trigger", "variables", "actions"});
+    if (j["variables"] && !j["variables"].IsMap())
+        throw std::runtime_error("Sequence variables must be a mapping");
     // Parse sequence name
     if (j["name"] && j["name"].IsScalar()) {
         sequence.name = j["name"].as<std::string>();

@@ -1,40 +1,49 @@
+# Exercise torso translation and rotation axes with spoken labels.
+# Targets are absolute; omitted pose components retain their previous targets.
 name: test_body
 trigger:
   joystick: dpad_horizontal_right
   voice: commandTestBody
+variables:
+  kMoveDuration: &kMoveDuration 2.0  # s
+  kHorizontalOffset: &kHorizontalOffset 0.05  # m
+  kVerticalOffset: &kVerticalOffset 0.03  # m
+  kRotation: &kRotation 15.0  # deg
 actions:
   - say: teste x Richtung
     body_pose:
-      duration_s: 2.0
+      duration_s: *kMoveDuration
       torso_pose:
-        position: {x: 0.05, y: 0.0, z: 0.0}
+        position: {x: *kHorizontalOffset, y: 0.0, z: 0.0}
   - say: teste y Richtung
     body_pose:
-      duration_s: 2.0
+      duration_s: *kMoveDuration
       torso_pose:
-        position: {x: 0.0, y: 0.05, z: 0.0}
+        position: {x: 0.0, y: *kHorizontalOffset, z: 0.0}
   - say: teste z Richtung
     body_pose:
-      duration_s: 2.0
+      duration_s: *kMoveDuration
       torso_pose:
-        position: {x: 0.0, y: 0.0, z: 0.03}
+        position: {x: 0.0, y: 0.0, z: *kVerticalOffset}
+  # Change orientation only; the preceding translation target remains in effect.
   - say: teste rollen
     body_pose:
-      duration_s: 2.0
+      duration_s: *kMoveDuration
       torso_pose:
-        orientation: {roll: 15.0, pitch: 0.0, yaw: 0.0}
+        orientation: {roll: *kRotation, pitch: 0.0, yaw: 0.0}
   - say: teste nicken
     body_pose:
-      duration_s: 2.0
+      duration_s: *kMoveDuration
       torso_pose:
-        orientation: {roll: 0.0, pitch: 15.0, yaw: 0.0}
+        orientation: {roll: 0.0, pitch: *kRotation, yaw: 0.0}
   - say: teste drehen
     body_pose:
-      duration_s: 2.0
+      duration_s: *kMoveDuration
       torso_pose:
-        orientation: {roll: 0.0, pitch: 0.0, yaw: 15.0}
+        orientation: {roll: 0.0, pitch: 0.0, yaw: *kRotation}
+  # Reset orientation only; this does not restore the initial torso translation.
   - say: ausgangsposition
     body_pose:
-      duration_s: 2.0
+      duration_s: *kMoveDuration
       torso_pose:
         orientation: {roll: 0.0, pitch: 0.0, yaw: 0.0}

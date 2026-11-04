@@ -1,3 +1,5 @@
+# Set torso translation and torso/head orientation to their neutral zero targets.
+# Toe targets are omitted; this is a body-pose reset, not a standup gait.
 name: neutral
 trigger:
   voice: commandNeutral

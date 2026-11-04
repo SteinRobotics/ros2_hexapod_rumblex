@@ -1,3 +1,5 @@
+# Voice/joystick entry point for the shared Hot Dogs for Breakfast choreography.
+# Edit the included snippet to update both this sequence and the default dance.
 name: dance_hot_dogs_for_breakfast
 trigger:
   joystick: button_r2

@@ -1,85 +1,114 @@
+# Raise the front legs and clap while the middle and rear legs provide support.
+# Normal completion restores the pose captured by the first action.
 name: clap
 trigger:
   voice: commandClap
+variables:
+  # Durations are seconds, translations meters, and coxa rotations degrees.
+  # Signed counterparts are independent constants; YAML aliases cannot negate values.
+  kMovement: &kMovement SINGLE_POSE
+  kInterpolation: &kInterpolation sin_squared
+  kClapCount: &kClapCount 6  # repetitions
+  kLiftMiddleDuration: &kLiftMiddleDuration 0.3  # s
+  kMoveMiddleDuration: &kMoveMiddleDuration 0.4  # s
+  kSettleTorsoDuration: &kSettleTorsoDuration 1.0  # s
+  kLiftFrontDuration: &kLiftFrontDuration 0.8  # s
+  kCloseDuration: &kCloseDuration 0.24  # s
+  kOpenDuration: &kOpenDuration 0.4  # s
+  kLandFrontDuration: &kLandFrontDuration 1.0  # s
+  kReturnTorsoDuration: &kReturnTorsoDuration 1.0  # s
+  kRestoreDuration: &kRestoreDuration 1.0  # s
+  kLiftMiddle: &kLiftMiddle 0.02  # m
+  kLowerMiddle: &kLowerMiddle -0.02  # m
+  kForwardMiddle: &kForwardMiddle 0.06  # m
+  kBackwardMiddle: &kBackwardMiddle -0.06  # m
+  kBackwardTorso: &kBackwardTorso -0.06  # m
+  kLowerTorso: &kLowerTorso -0.01  # m
+  kForwardTorso: &kForwardTorso 0.04  # m
+  kRaiseTorso: &kRaiseTorso 0.01  # m
+  kLiftFront: &kLiftFront 0.08  # m
+  kLowerFront: &kLowerFront -0.08  # m
+  kCoxaPositive: &kCoxaPositive 30  # deg
+  kCoxaNegative: &kCoxaNegative -30  # deg
 # Start standing. Relative targets preserve the starting orientation and head pose.
 actions:
-  # Step the middle feet forward individually to extend the four-foot support
+  # Step both middle feet forward together to extend the four-foot support
   # polygon toward the head. Lift before translating; never drag a planted toe.
   - movement:
-      name: SINGLE_POSE
-      duration_s: 0.3
-      interpolation: sin_squared
+      name: *kMovement
+      duration_s: *kLiftMiddleDuration
+      interpolation: *kInterpolation
       save_pose: true
       pose_delta:
-        toe_translation: {right_mid: {z: 0.02}, left_mid: {z: 0.02}}
+        toe_translation: {right_mid: {z: *kLiftMiddle}, left_mid: {z: *kLiftMiddle}}
   - movement:
-      name: SINGLE_POSE
-      duration_s: 0.4
-      interpolation: sin_squared
+      name: *kMovement
+      duration_s: *kMoveMiddleDuration
+      interpolation: *kInterpolation
       pose_delta:
-        toe_translation: {right_mid: {x: 0.06}, left_mid: {x: 0.06}}
+        toe_translation: {right_mid: {x: *kForwardMiddle}, left_mid: {x: *kForwardMiddle}}
   - movement:
-      name: SINGLE_POSE
-      duration_s: 0.3
-      interpolation: sin_squared
+      name: *kMovement
+      duration_s: *kLiftMiddleDuration
+      interpolation: *kInterpolation
       pose_delta:
-        toe_translation: {right_mid: {z: -0.02}, left_mid: {z: -0.02}}
+        toe_translation: {right_mid: {z: *kLowerMiddle}, left_mid: {z: *kLowerMiddle}}
   # Settle back and down with all six feet planted before lifting the front pair.
   # Keep this torso position and all four support toes fixed throughout the clap.
   - movement:
-      name: SINGLE_POSE
-      duration_s: 1.0
-      interpolation: sin_squared
-      pose_delta: {torso_translation: {x: -0.06, z: -0.01}}
+      name: *kMovement
+      duration_s: *kSettleTorsoDuration
+      interpolation: *kInterpolation
+      pose_delta: {torso_translation: {x: *kBackwardTorso, z: *kLowerTorso}}
   - movement:
-      name: SINGLE_POSE
-      duration_s: 0.8
-      interpolation: sin_squared
+      name: *kMovement
+      duration_s: *kLiftFrontDuration
+      interpolation: *kInterpolation
       pose_delta:
-        toe_translation: {right_front: {z: 0.08}, left_front: {z: 0.08}}
+        toe_translation: {right_front: {z: *kLiftFront}, left_front: {z: *kLiftFront}}
   # A brisk close and a more relaxed opening, with eased reversals.
   - loop:
-      times: 6
+      times: *kClapCount
       actions:
         - movement:
-            name: SINGLE_POSE
-            duration_s: 0.24
-            interpolation: sin_squared
+            name: *kMovement
+            duration_s: *kCloseDuration
+            interpolation: *kInterpolation
             pose_delta:
-              coxa_rotation_deg: {right_front: -30, left_front: 30}
+              coxa_rotation_deg: {right_front: *kCoxaNegative, left_front: *kCoxaPositive}
         - movement:
-            name: SINGLE_POSE
-            duration_s: 0.4
-            interpolation: sin_squared
+            name: *kMovement
+            duration_s: *kOpenDuration
+            interpolation: *kInterpolation
             pose_delta:
-              coxa_rotation_deg: {right_front: 30, left_front: -30}
+              coxa_rotation_deg: {right_front: *kCoxaPositive, left_front: *kCoxaNegative}
   # Land both front feet before bringing the body forward or resetting support.
   - movement:
-      name: SINGLE_POSE
-      duration_s: 1.0
-      interpolation: sin_squared
+      name: *kMovement
+      duration_s: *kLandFrontDuration
+      interpolation: *kInterpolation
       pose_delta:
-        toe_translation: {right_front: {z: -0.08}, left_front: {z: -0.08}}
+        toe_translation: {right_front: {z: *kLowerFront}, left_front: {z: *kLowerFront}}
   - movement:
-      name: SINGLE_POSE
-      duration_s: 1.0
-      interpolation: sin_squared
-      pose_delta: {torso_translation: {x: 0.04, z: 0.01}}
+      name: *kMovement
+      duration_s: *kReturnTorsoDuration
+      interpolation: *kInterpolation
+      pose_delta: {torso_translation: {x: *kForwardTorso, z: *kRaiseTorso}}
   - movement:
-      name: SINGLE_POSE
-      duration_s: 0.3
-      interpolation: sin_squared
+      name: *kMovement
+      duration_s: *kLiftMiddleDuration
+      interpolation: *kInterpolation
       pose_delta:
-        toe_translation: {right_mid: {z: 0.02}, left_mid: {z: 0.02}}
+        toe_translation: {right_mid: {z: *kLiftMiddle}, left_mid: {z: *kLiftMiddle}}
   - movement:
-      name: SINGLE_POSE
-      duration_s: 0.4
-      interpolation: sin_squared
+      name: *kMovement
+      duration_s: *kMoveMiddleDuration
+      interpolation: *kInterpolation
       pose_delta:
-        toe_translation: {right_mid: {x: -0.06}, left_mid: {x: -0.06}}
+        toe_translation: {right_mid: {x: *kBackwardMiddle}, left_mid: {x: *kBackwardMiddle}}
   # Only the left-middle and right-middle toes remain raised; land them gently and remove any drift.
   - movement:
-      name: SINGLE_POSE
-      duration_s: 1.0
-      interpolation: sin_squared
+      name: *kMovement
+      duration_s: *kRestoreDuration
+      interpolation: *kInterpolation
       restore_pose: true

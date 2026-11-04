@@ -24,6 +24,40 @@ List entries run sequentially. Actions in the same entry are dispatched together
 the next entry waits for the handlers' completion rules. Music, speech, listening,
 and chat retain their existing communication-status completion behavior.
 
+## Reusable constants
+
+Named sequences may define an optional `variables` mapping before `actions`.
+Use C++-style `kPascalCase` names for keys and native YAML anchors (`&name`),
+then reuse them with aliases (`*name`), including inside loops:
+
+```yaml
+name: example_constants
+variables:
+  kLiftMiddle: &kLiftMiddle 0.02  # m
+  kLiftDuration: &kLiftDuration 0.3  # s
+actions:
+  - movement:
+      name: SINGLE_POSE
+      duration_s: *kLiftDuration
+      pose_delta:
+        toe_translation:
+          right_mid: {z: *kLiftMiddle}
+          left_mid: {z: *kLiftMiddle}
+```
+
+Anchors must be defined before use and are local to the YAML document; included
+snippet files cannot reference the parent file's anchors. The `variables` field
+is supported on named sequences, not snippets or catalog wrappers. These are
+static values, with no arithmetic, automatic negation, or runtime overrides.
+Define negative counterparts separately (for example, `kLowerMiddle: &kLowerMiddle -0.02`).
+Add units as inline comments (`# s`, `# m`, `# deg`, or `# m/s`); mark loop
+counts with `# repetitions`. Extract the main tuning values and frequently reused
+settings, leaving neutral zeros and simple one-action sequences inline. Snippets
+can define anchors at first use instead of using a `variables` mapping.
+Keep settings with different purposes independent even when their values match.
+See `clap.yaml` for durations in seconds, translations in meters, and coxa angles
+in degrees.
+
 ## Body poses
 
 A `body_pose` action is one movement request: `SINGLE_POSE`, duration, and the same

@@ -1,3 +1,4 @@
+# Default voice-command dance; reuse the same choreography as Hot Dogs for Breakfast.
 name: dance_standard
 trigger:
   voice: commandDance

@@ -1,3 +1,4 @@
+# Run the built-in leg-wave gesture; leg ordering and shape come from the gait configuration.
 name: leg_wave
 trigger:
   joystick: button_y

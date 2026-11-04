@@ -1,20 +1,27 @@
+# Lift the right-front toe, drive it downward, then restore the starting pose.
 name: stomp
 # Suggested gesture; start standing. No automatic voice or joystick trigger.
+variables:
+  kLiftDuration: &kLiftDuration 0.5  # s
+  kStompDuration: &kStompDuration 0.1  # s
+  kLiftFront: &kLiftFront 0.02  # m
+  kStompFront: &kStompFront -0.04  # m
 actions:
   - say:
       text: "Nein"
     movement:
       name: SINGLE_POSE
-      duration_s: 0.5
-      save_pose: true
+      duration_s: *kLiftDuration
+      save_pose: true  # Capture the pose before this movement begins.
       pose_delta:
-        toe_translation: {right_front: {z: 0.02}}
+        toe_translation: {right_front: {z: *kLiftFront}}
   - movement:
       name: SINGLE_POSE
-      duration_s: 0.1
+      # This delta starts at the lifted toe, not at its original ground position.
+      duration_s: *kStompDuration
       pose_delta:
-        toe_translation: {right_front: {z: -0.04}}
+        toe_translation: {right_front: {z: *kStompFront}}
   - movement:
       name: SINGLE_POSE
       duration_s: 1.0
-      restore_pose: true
+      restore_pose: true  # Return to the captured pose on normal completion.

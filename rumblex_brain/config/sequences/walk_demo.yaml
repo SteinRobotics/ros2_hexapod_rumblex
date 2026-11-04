@@ -1,16 +1,23 @@
+# Stand up, demonstrate forward combined-gait walking, then explicitly stop.
+# The forward speed is in m/s; the final zero velocity prevents continued travel.
 name: walk_demo
 trigger:
   voice: commandWalkDemo
+variables:
+  kMoveDuration: &kMoveDuration 3.0  # s
+  kForwardSpeed: &kForwardSpeed 0.03  # m/s
 actions:
+  # Establish the standing pose before starting the timed activity.
   - movement:
       name: SEQUENCE_STAND_UP
       duration_s: 1.5
   - movement:
       name: MOVE_COMBINED
-      duration_s: 3.0
+      duration_s: *kMoveDuration
     velocity:
-      linear: {x: 0.03}
+      linear: {x: *kForwardSpeed}
       angular: {z: 0.0}
+  # End the active gait and clear velocity while retaining the resulting pose.
   - movement:
       name: CONTINUOUS_POSE
     velocity:

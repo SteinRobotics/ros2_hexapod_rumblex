@@ -1,3 +1,5 @@
+# Start background music only; this sequence contains no robot motion.
+# Playback continues after the sequence ends until stopped or replaced by another track.
 name: dance_excess_party
 trigger:
   joystick: button_l2

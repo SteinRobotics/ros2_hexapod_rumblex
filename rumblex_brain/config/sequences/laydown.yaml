@@ -1,3 +1,4 @@
+# Run the built-in laydown transition while announcing the action.
 name: laydown
 trigger:
   joystick: dpad_vertical_down

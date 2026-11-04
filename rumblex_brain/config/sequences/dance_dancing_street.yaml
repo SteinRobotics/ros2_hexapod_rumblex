@@ -1,103 +1,108 @@
+# Play the track alongside a sequence of absolute torso and head poses.
+# The shared beat duration controls pose timing; it does not change audio playback speed.
 # Keep combined torso translations and rotations within the standing-leg workspace.
 name: dance_dancing_street
 trigger:
   voice: commandDanceDancingStreet
+variables:
+  kBeatDuration: &kBeatDuration 1.92  # s
 actions:
   - music: musicfox_dancing_street.mp3
     body_pose:
-      duration_s: 1.92
+      duration_s: *kBeatDuration
       torso_pose:
         position: {x: 0.0, y: 0.018, z: 0.0}
         orientation: {roll: -4.8, pitch: 0.0, yaw: 0.0}
       head_orientation: {roll: 0.0, yaw: -12.0, pitch: 0.0}
   - body_pose:
-      duration_s: 1.92
+      duration_s: *kBeatDuration
       torso_pose:
         position: {x: 0.0, y: -0.018, z: 0.0}
         orientation: {roll: 4.8, pitch: 0.0, yaw: 0.0}
       head_orientation: {roll: 0.0, yaw: 12.0, pitch: 0.0}
   - body_pose:
-      duration_s: 1.92
+      duration_s: *kBeatDuration
       torso_pose:
         position: {x: 0.0, y: 0.018, z: -0.006}
         orientation: {roll: -6.0, pitch: 0.0, yaw: 3.0}
       head_orientation: {roll: 0.0, yaw: -15.0, pitch: 5.0}
   - body_pose:
-      duration_s: 1.92
+      duration_s: *kBeatDuration
       torso_pose:
         position: {x: 0.0, y: -0.018, z: -0.006}
         orientation: {roll: 6.0, pitch: 0.0, yaw: -3.0}
       head_orientation: {roll: 0.0, yaw: 15.0, pitch: 5.0}
   - body_pose:
-      duration_s: 1.92
+      duration_s: *kBeatDuration
       torso_pose:
         position: {x: 0.012, y: 0.015, z: -0.009}
         orientation: {roll: -3.0, pitch: 3.0, yaw: 6.0}
       head_orientation: {roll: 0.0, yaw: -10.0, pitch: -5.0}
   - body_pose:
-      duration_s: 1.92
+      duration_s: *kBeatDuration
       torso_pose:
         position: {x: 0.012, y: -0.015, z: 0.0}
         orientation: {roll: 3.0, pitch: 3.0, yaw: -6.0}
       head_orientation: {roll: 0.0, yaw: 10.0, pitch: -5.0}
   - body_pose:
-      duration_s: 1.92
+      duration_s: *kBeatDuration
       torso_pose:
         position: {x: -0.012, y: -0.015, z: -0.009}
         orientation: {roll: 3.0, pitch: -3.0, yaw: 6.0}
       head_orientation: {roll: 0.0, yaw: -10.0, pitch: 5.0}
   - body_pose:
-      duration_s: 1.92
+      duration_s: *kBeatDuration
       torso_pose:
         position: {x: -0.012, y: 0.015, z: 0.0}
         orientation: {roll: -3.0, pitch: -3.0, yaw: -6.0}
       head_orientation: {roll: 0.0, yaw: 10.0, pitch: 5.0}
   - body_pose:
-      duration_s: 1.92
+      duration_s: *kBeatDuration
       torso_pose:
         position: {x: 0.015, y: 0.0, z: -0.006}
         orientation: {roll: 0.0, pitch: 6.0, yaw: 0.0}
       head_orientation: {roll: 0.0, yaw: 0.0, pitch: -10.0}
   - body_pose:
-      duration_s: 1.92
+      duration_s: *kBeatDuration
       torso_pose:
         position: {x: 0.0, y: 0.015, z: 0.0}
         orientation: {roll: -6.0, pitch: 0.0, yaw: 0.0}
       head_orientation: {roll: 0.0, yaw: -12.0, pitch: 0.0}
   - body_pose:
-      duration_s: 1.92
+      duration_s: *kBeatDuration
       torso_pose:
         position: {x: -0.015, y: 0.0, z: 0.009}
         orientation: {roll: 0.0, pitch: -6.0, yaw: 0.0}
       head_orientation: {roll: 0.0, yaw: 0.0, pitch: 10.0}
   - body_pose:
-      duration_s: 1.92
+      duration_s: *kBeatDuration
       torso_pose:
         position: {x: 0.0, y: -0.015, z: 0.0}
         orientation: {roll: 6.0, pitch: 0.0, yaw: 0.0}
       head_orientation: {roll: 0.0, yaw: 12.0, pitch: 0.0}
   - body_pose:
-      duration_s: 1.92
+      duration_s: *kBeatDuration
       torso_pose:
         position: {x: 0.0, y: 0.012, z: 0.006}
         orientation: {roll: -4.8, pitch: 0.0, yaw: 6.0}
       head_orientation: {roll: 0.0, yaw: -15.0, pitch: 0.0}
   - body_pose:
-      duration_s: 1.92
+      duration_s: *kBeatDuration
       torso_pose:
         position: {x: 0.0, y: -0.012, z: 0.006}
         orientation: {roll: 4.8, pitch: 0.0, yaw: -6.0}
       head_orientation: {roll: 0.0, yaw: 15.0, pitch: 0.0}
   - body_pose:
-      duration_s: 1.92
+      duration_s: *kBeatDuration
       torso_pose:
         position: {x: 0.015, y: 0.0, z: -0.009}
         orientation: {roll: 0.0, pitch: 6.0, yaw: 0.0}
       head_orientation: {roll: 0.0, yaw: 0.0, pitch: 10.0}
   - body_pose:
-      duration_s: 1.92
+      duration_s: *kBeatDuration
       torso_pose:
         position: {x: 0.0, y: 0.0, z: 0.0}
         orientation: {roll: 0.0, pitch: 0.0, yaw: 0.0}
       head_orientation: {roll: 0.0, yaw: 0.0, pitch: 0.0}
+  # Explicitly stop the track after the final neutral pose.
   - music: STOP

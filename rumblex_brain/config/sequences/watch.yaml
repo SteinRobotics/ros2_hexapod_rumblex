@@ -1,3 +1,4 @@
+# Run the built-in two-sided look-around gait, then announce completion.
 name: watch
 trigger:
   joystick: button_a

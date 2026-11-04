@@ -1,12 +1,19 @@
+# Stand up, use 1D lidar feedback to maintain the target distance, then stop.
+# The feedback phase requires valid 1D lidar readings.
 name: hold_distance
+variables:
+  kTargetDistance: &kTargetDistance 0.6  # m
+  kHoldDuration: &kHoldDuration 10.0  # s
 actions:
+  # Establish the standing pose before starting the timed activity.
   - movement:
       name: SEQUENCE_STAND_UP
       duration_s: 1.5
   - movement:
       name: HOLD_DISTANCE
-      distance_m: 0.6
-      duration_s: 10.0
+      distance_m: *kTargetDistance
+      duration_s: *kHoldDuration
+  # End the active gait and clear velocity while retaining the resulting pose.
   - movement:
       name: CONTINUOUS_POSE
     velocity:

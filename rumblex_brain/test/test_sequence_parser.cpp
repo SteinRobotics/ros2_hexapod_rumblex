@@ -37,6 +37,43 @@ class SequenceParserTest : public ::testing::Test {
     }
 };
 
+TEST_F(SequenceParserTest, ReusesYamlConstantsInsideLoops) {
+    ASSERT_TRUE(parser_.parseString(R"(
+name: constants
+variables:
+  kMovement: &kMovement SINGLE_POSE
+  kDuration: &kDuration 0.3
+  kInterpolation: &kInterpolation sin_squared
+  kCount: &kCount 2
+actions:
+  - loop:
+      times: *kCount
+      actions:
+        - movement:
+            name: *kMovement
+            duration_s: *kDuration
+            interpolation: *kInterpolation
+            body_pose: {head_orientation: {yaw: 10}}
+)"));
+    ASSERT_EQ(parser_.getSequence("constants")->get().actionGroups.size(), 2u);
+    for (size_t i = 0; i < 2; ++i) {
+        const auto parsed = request<RequestMovementType>("constants", i, 0);
+        ASSERT_TRUE(parsed);
+        EXPECT_DOUBLE_EQ(parsed->movementRequest.duration_s.numerical_value_in(s), 0.3);
+        EXPECT_EQ(parsed->movementRequest.interpolation, InterpolationType::SinSquared);
+    }
+}
+
+TEST_F(SequenceParserTest, ValidatesVariablesWithoutAllowingUnknownSequenceFields) {
+    for (const auto* value : {"null", "[]", "0.02", "constant"}) {
+        EXPECT_FALSE(parser_.parseString(std::string("name: invalid\nvariables: ") + value +
+                                         "\nactions: [{say: hello}]"));
+    }
+    EXPECT_TRUE(parser_.parseString("name: empty\nvariables: {}\nactions: [{say: hello}]"));
+    EXPECT_FALSE(parser_.parseString("name: invalid\nconstants: {}\nactions: [{say: hello}]"));
+    EXPECT_FALSE(parser_.parseString("name: invalid\nactions: [{say: *kUndefined}]"));
+}
+
 TEST_F(SequenceParserTest, InterpolationDefaultsAndExplicitCurves) {
     const std::vector<std::pair<std::string, InterpolationType>> cases = {
         {"", InterpolationType::Linear},

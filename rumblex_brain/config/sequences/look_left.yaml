@@ -1,19 +1,25 @@
+# Turn head and torso left relative to the starting pose, then return.
+# Positive yaw turns left; the return restores the saved pose rather than assuming zero yaw.
 name: look_left
 trigger:
   joystick: button_l1
   voice: commandLookLeft
+variables:
+  kMoveDuration: &kMoveDuration 1.5  # s
+  kHeadYaw: &kHeadYaw 25  # deg
+  kTorsoYaw: &kTorsoYaw 20  # deg
 actions:
   - say: Ich schaue nach links
     movement:
       name: SINGLE_POSE
-      duration_s: 1.5
+      duration_s: *kMoveDuration
       interpolation: sin_squared
-      save_pose: true
+      save_pose: true  # Capture the pose before this movement begins.
       pose_delta:
-        head_rotation: {yaw: 25}
-        torso_rotation: {yaw: 20}
+        head_rotation: {yaw: *kHeadYaw}
+        torso_rotation: {yaw: *kTorsoYaw}
   - movement:
       name: SINGLE_POSE
-      duration_s: 1.5
+      duration_s: *kMoveDuration
       interpolation: sin_squared
-      restore_pose: true
+      restore_pose: true  # Return to the captured pose on normal completion.

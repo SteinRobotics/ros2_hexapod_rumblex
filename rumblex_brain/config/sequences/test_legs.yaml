@@ -1,3 +1,4 @@
+# Run the built-in leg test with a spoken announcement; the gait defines the leg motions.
 name: test_legs
 trigger:
   joystick: dpad_horizontal_left

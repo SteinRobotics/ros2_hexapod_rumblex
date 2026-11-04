@@ -1,11 +1,17 @@
+# Stand up, level the torso using IMU feedback, then hold the resulting pose.
+# The leveling phase requires valid IMU readings.
 name: level_torso
+variables:
+  kLevelDuration: &kLevelDuration 5.0  # s
 actions:
+  # Establish the standing pose before starting the timed activity.
   - movement:
       name: SEQUENCE_STAND_UP
       duration_s: 1.5
   - movement:
       name: LEVEL_TORSO
-      duration_s: 5.0
+      duration_s: *kLevelDuration
+  # End the active gait and clear velocity while retaining the resulting pose.
   - movement:
       name: CONTINUOUS_POSE
     velocity:
