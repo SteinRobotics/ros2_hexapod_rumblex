@@ -153,28 +153,34 @@ The ROS message encodes optional components with `has_head_orientation`,
 Published brain trajectory samples and `body_pose_actual` are complete snapshots
 with all three flags set. Feedback consumers require complete snapshots.
 
-## Relative pose movements and clap
+## Clap and relative pose movements
 
-`clap.yaml` starts from a standing pose and steps each middle foot forward 4 cm,
-one at a time with 2 cm clearance. With all feet planted it shifts the torso back
-4 cm and down 1 cm, then raises the front toes 8 cm. This moves the front edge of
-the four-foot support polygon forward while moving the body rearward. The middle
-and rear toes and torso stay fixed during all six 30-degree close/open cycles.
-The front toes land before the torso recenters and the middle feet step back.
-The final landing restores the saved starting pose, including head and torso orientation.
+`clap.yaml` starts standing on level ground and keeps both middle and both rear
+feet planted for the entire sequence. Absolute torso targets first level the
+body and shift it back 6.5 cm and down 1 cm with all six feet planted. Absolute
+front joint targets then raise the front legs for six 30-degree close/open
+cycles. Each close adds a gentle 3 mm downward body pulse; each opening returns
+to the settled height. There is no forward sway, lateral sway, or torso rotation
+while the front legs are raised.
 
-All actions use `sin_squared` easing. Middle-foot steps take 0.3/0.4/0.3 seconds
-for lift/transfer/landing, with a gentle one-second final landing. Torso shifts
-and front-foot landing take one second, front-foot lift takes 0.8 seconds, and
-each clap closes in 0.24 seconds and opens in 0.4 seconds (12.34 seconds total,
-plus scheduler handoffs). The `commandClap` voice trigger and `clap` sequence name
-are unchanged. The old `SEQUENCE_CLAP` movement selector is removed.
-This improves the geometric support margin; actual center of gravity depends on
-payload and starting posture, and the motion still requires hardware validation.
+The pose is saved **after** settling. Restoring it lands the front toes while
+keeping the body rearward; only then does a separate action return the torso to
+neutral. The original toe positions and head orientation are preserved. The
+initial torso offset/orientation is intentionally replaced by neutral on completion.
+All actions use `sin_squared` easing and absolute targets, with no accumulated
+deltas. Settling/lift/landing/recentering take 2/1.6/2/2 seconds; closes take
+1 second and openings 1.2 seconds, for 20.8 seconds plus scheduler handoffs.
+The `commandClap` voice trigger and `clap` sequence name are unchanged.
 
-These actions use `movement: {name: SINGLE_POSE, ...}` with `pose_delta` instead
-of `body_pose`. Deltas resolve when the action starts, including after a pending
-outgoing movement completes, so no robot-specific stance coordinates are needed.
+The rearward bias provides a geometric support margin for the configured standing
+stance, but is not a measured center-of-mass guarantee. Actual stability depends
+on payload, contact, and starting stance; validate the motion on hardware before
+unrestrained use. Cancellation finishes the active action without executing the
+remaining landing/recentering actions.
+
+Other sequences can use `movement: {name: SINGLE_POSE, ...}` with `pose_delta`
+instead of `body_pose`. Deltas resolve when the action starts, including after a
+pending outgoing movement completes.
 
 ```yaml
 - movement:
@@ -197,7 +203,7 @@ together while keeping toe targets in the existing command frame.
 Coxa rotations are degree offsets from the current joint angles, applied after
 translations and torso rotations. Forward kinematics converts them to toe targets using the selected
 robot's geometry. The trajectory smoothly interpolates toes to those endpoints;
-the clap follows a chord rather than the former joint-space arc. Head pose and
+these relative coxa moves follow a chord rather than a joint-space arc. Head pose and
 torso orientation are retained unless their rotation offsets are supplied. `pose_delta` cannot be combined with `body_pose`
 and requires a finite positive duration; unlike absolute poses, it supports
 sub-second motions. Inverse deltas restore the starting pose within numerical

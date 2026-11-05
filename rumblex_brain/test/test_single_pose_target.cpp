@@ -457,12 +457,12 @@ TEST_F(SinglePoseTargetTest, SavedPoseIsCapturedAfterPendingMotionAndConsumedOnR
     EXPECT_FALSE(controller->setGait(restore));
 }
 
-TEST_F(SinglePoseTargetTest, ClapKeepsSupportPlantedAndRestoresStartingPose) {
+TEST_F(SinglePoseTargetTest, ClapKeepsSupportPlantedAndLandsBeforeRecentering) {
     CSequenceParser parser(node);
     ASSERT_TRUE(parser.parseFile(std::string(RUMBLEX_SEQUENCES_DIRECTORY) + "/clap.yaml"));
     const auto sequence = parser.getSequence("clap");
     ASSERT_TRUE(sequence);
-    ASSERT_EQ(sequence->get().actionGroups.size(), 28u);
+    ASSERT_EQ(sequence->get().actionGroups.size(), 16u);
     const auto origin = bodyPose(*model);
     double elapsed = 0;
     for (size_t i = 0; i < sequence->get().actionGroups.size(); ++i) {
@@ -471,54 +471,61 @@ TEST_F(SinglePoseTargetTest, ClapKeepsSupportPlantedAndRestoresStartingPose) {
             std::dynamic_pointer_cast<RequestMovementType>(sequence->get().actionGroups[i].at(0));
         ASSERT_TRUE(action);
         const auto& request = action->movementRequest;
+        EXPECT_FALSE(request.pose_delta);
         EXPECT_EQ(request.interpolation, InterpolationType::SinSquared);
-        const auto before = bodyPose(*model);
         ASSERT_TRUE(controller->setGait(request));
-        EXPECT_EQ(bodyPose(*model), before);
         const int samples = std::lround(request.duration_s.numerical_value_in(s) / 0.02);
         for (int sample = 0; sample < samples; ++sample) {
             advance(1);
             const auto pose = bodyPose(*model);
             EXPECT_EQ(pose.head_orientation, origin.head_orientation);
-            EXPECT_EQ(pose.torso_pose.orientation, origin.torso_pose.orientation);
-            // Every commanded toe must be reachable: FK must reproduce the IK target.
+            // Validate reachability throughout the trajectory, including landing.
             auto check = *model;
             for (const auto leg : bodyLegOrder) {
                 const auto target = model->getToePositions().at(leg);
                 check.setLegAngles(leg, model->getLegAngles(leg));
                 test_helpers::expectPositionNear(target, check.getToePositions().at(leg), "clap", 1e-8);
             }
-            // Horizontal transfers happen only with the moving toe clear of the floor.
-            for (size_t leg = 0; leg < 6; ++leg) {
-                if (std::abs(pose.toe_positions[leg].x - before.toe_positions[leg].x) > 1e-8 &&
-                    (leg == 1 || leg == 4)) {
-                    EXPECT_GE(pose.toe_positions[leg].z - origin.toe_positions[leg].z, 0.02 - 1e-8);
+            for (const size_t leg : {1u, 2u, 4u, 5u})
+                EXPECT_EQ(pose.toe_positions[leg], origin.toe_positions[leg]);
+            if (i >= 1 && i <= 14) {
+                EXPECT_NEAR(pose.torso_pose.position.x, -0.065, 1e-9);
+                EXPECT_NEAR(pose.torso_pose.position.y, 0, 1e-9);
+                EXPECT_GE(pose.torso_pose.position.z, -0.013 - 1e-9);
+                EXPECT_LE(pose.torso_pose.position.z, -0.010 + 1e-9);
+                EXPECT_NEAR(pose.torso_pose.orientation.roll, 0, 1e-9);
+                EXPECT_NEAR(pose.torso_pose.orientation.pitch, 0, 1e-9);
+                EXPECT_NEAR(pose.torso_pose.orientation.yaw, 0, 1e-9);
+                // Geometric proxy: 3 cm forward of the torso, with at least
+                // 3 cm clearance from EVERY edge of the four-foot polygon.
+                // This is deliberately not a measured center-of-mass assertion.
+                const std::array<size_t, 4> support = {1, 4, 5, 2};
+                const double x = pose.torso_pose.position.x + 0.03;
+                const double y = pose.torso_pose.position.y;
+                for (size_t edge = 0; edge < support.size(); ++edge) {
+                    const auto& a = pose.toe_positions[support[edge]];
+                    const auto& b = pose.toe_positions[support[(edge + 1) % support.size()]];
+                    const double dx = b.x - a.x;
+                    const double dy = b.y - a.y;
+                    EXPECT_GE((dx * (y - a.y) - dy * (x - a.x)) / std::hypot(dx, dy), 0.03);
                 }
             }
-            if (i >= 7 && i <= 20) {
-                EXPECT_NEAR(pose.torso_pose.position.x, origin.torso_pose.position.x - 0.04, 1e-9);
-                EXPECT_NEAR(pose.torso_pose.position.z, origin.torso_pose.position.z - 0.01, 1e-9);
-                for (const size_t leg : {1u, 2u, 4u, 5u}) {
-                    EXPECT_NEAR(pose.toe_positions[leg].x,
-                                origin.toe_positions[leg].x + (leg == 1 || leg == 4 ? 0.04 : 0), 1e-8);
-                    EXPECT_NEAR(pose.toe_positions[leg].y, origin.toe_positions[leg].y, 1e-8);
-                    EXPECT_NEAR(pose.toe_positions[leg].z, origin.toe_positions[leg].z, 1e-8);
-                }
-                // Geometric proxy, not a mass model: allow 3 cm forward of the torso
-                // and require another 3 cm to the forward support edge.
-                const double front_edge = std::min(pose.toe_positions[1].x, pose.toe_positions[4].x);
-                EXPECT_GE(front_edge - (pose.torso_pose.position.x + 0.03), 0.03);
+            if (i == 15) {
+                for (const size_t leg : {0u, 3u})
+                    EXPECT_EQ(pose.toe_positions[leg], origin.toe_positions[leg]);
             }
         }
         EXPECT_TRUE(controller->motionStopped());
         elapsed += request.duration_s.numerical_value_in(s);
-        if (i == 20) {
+        if (i == 14) {
             for (const size_t leg : {0u, 3u})
-                EXPECT_NEAR(bodyPose(*model).toe_positions[leg].z, origin.toe_positions[leg].z, 1e-8);
+                EXPECT_EQ(bodyPose(*model).toe_positions[leg], origin.toe_positions[leg]);
         }
     }
-    EXPECT_NEAR(elapsed, 12.34, 1e-9);
-    EXPECT_EQ(bodyPose(*model), origin);
+    EXPECT_NEAR(elapsed, 20.8, 1e-9);
+    auto expected = origin;
+    expected.torso_pose = rumblex_interfaces::msg::BodyPose().torso_pose;
+    EXPECT_EQ(bodyPose(*model), expected);
 }
 
 TEST_F(SinglePoseTargetTest, PendingDeltaStartsAtOutgoingEndpointAndDoesNotLeak) {

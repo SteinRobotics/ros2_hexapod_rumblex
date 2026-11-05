@@ -1,0 +1,40 @@
+# Shared sequence defaults. Import explicitly from each sequence.
+# Signed counterparts are independent; references do not perform arithmetic.
+variables:
+  # Pose limits matching the current Nox and Nira gait/parameter defaults.
+  # These are static sequence values, not enforced runtime limits.
+  kTorsoRollMax: 12.0  # deg
+  kTorsoRollMin: -12.0  # deg
+  kTorsoPitchMax: 12.0  # deg
+  kTorsoPitchMin: -12.0  # deg
+  kTorsoYawMax: 10.0  # deg
+  kTorsoYawMin: -10.0  # deg
+  kTorsoHeightMax: 0.10  # m
+  kTorsoHeightMin: -0.04  # m
+
+  kHeadYawMax: 30.0  # deg
+  kHeadYawMin: -30.0  # deg
+  kHeadPitchMax: 20.0  # deg
+  kHeadPitchMin: -20.0  # deg
+
+  kLegLiftHeight: 0.02  # m
+  kLegLowerHeight: -0.05  # m
+
+  # SEQUENCE_STAND_UP targets; toe positions match both robots' anatomy.yaml.
+  # Absolute targets before the torso transformation, not pose deltas.
+  kStandingDuration: 1.5  # s; standup.yaml transition duration
+  kStandingTorsoPose:
+    position: {x: 0.0, y: 0.0, z: 0.0}  # m
+    orientation: {roll: 0.0, pitch: 0.0, yaw: 0.0}  # deg
+  kStandingHeadOrientation: {pitch: 0.0, yaw: 0.0}  # deg
+  kStandingToePositions:  # m
+    right_front: {x: 0.201, y: -0.160, z: -0.050}
+    right_mid: {x: 0.000, y: -0.218, z: -0.050}
+    right_back: {x: -0.201, y: -0.160, z: -0.050}
+    left_front: {x: 0.201, y: 0.160, z: -0.050}
+    left_mid: {x: 0.000, y: 0.218, z: -0.050}
+    left_back: {x: -0.201, y: 0.160, z: -0.050}
+  kStandingBodyPose:
+    torso_pose: "${kStandingTorsoPose}"
+    head_orientation: "${kStandingHeadOrientation}"
+    toe_positions: "${kStandingToePositions}"
