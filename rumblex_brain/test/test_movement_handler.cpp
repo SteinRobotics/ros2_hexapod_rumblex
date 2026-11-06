@@ -23,16 +23,24 @@ TEST_F(MovementHandlerTest, AlreadyLayingDownDoesNotCommandMotion) {
     EXPECT_EQ(velocities.back(), geometry_msgs::msg::Twist());
     EXPECT_TRUE(handler->requestFinished());
 }
-TEST_F(MovementHandlerTest, StartupMovesToLaydownAfterValidFeedback) {
+TEST_F(MovementHandlerTest, StartupRemainsIdleAfterValidFeedback) {
+    std::vector<std::string> names;
+    auto name_subscription = node->create_subscription<std_msgs::msg::String>(
+        "movement_name", rclcpp::QoS(1).transient_local(),
+        [&names](const std_msgs::msg::String& msg) { names.push_back(msg.data); });
+    bool activated = false;
+    handler->on_gait_changed = [&](const MovementRequest&) { activated = true; };
     pump(150ms);
     EXPECT_TRUE(poses.empty());
+    EXPECT_TRUE(handler->requestFinished());
+    ASSERT_FALSE(names.empty());
+    EXPECT_EQ(names.back(), "NO_REQUEST");
     auto invalid = initialPose();
     invalid.head_orientation.pitch = std::numeric_limits<double>::quiet_NaN();
     feedback->publish(invalid);
     pump(150ms);
     EXPECT_TRUE(poses.empty());
 
-    const auto target = initialPose();
     rclcpp::NodeOptions options;
     options.parameter_overrides(test_helpers::defaultKinematicsParameters());
     auto model_node = std::make_shared<rclcpp::Node>("standing_seed", options);
@@ -41,18 +49,18 @@ TEST_F(MovementHandlerTest, StartupMovesToLaydownAfterValidFeedback) {
     const auto seed = bodyPose(model);
     feedback->publish(seed);
     pump(250ms);
-    ASSERT_FALSE(poses.empty());
-    EXPECT_NE(poses.back(), seed);
-    EXPECT_NE(poses.back(), target);
-    EXPECT_FALSE(handler->requestFinished());
+    EXPECT_TRUE(poses.empty());
+    EXPECT_TRUE(handler->requestFinished());
+    EXPECT_TRUE(handler->motionStopped());
 
     pump(1000ms);
-    EXPECT_EQ(poses.back(), target);
-    EXPECT_TRUE(handler->requestFinished());
-    const auto command_count = poses.size();
-    feedback->publish(seed);
+    feedback->publish(initialPose());
     pump(200ms);
-    EXPECT_EQ(poses.size(), command_count);
+    EXPECT_TRUE(poses.empty());
+    EXPECT_TRUE(handler->requestFinished());
+    EXPECT_TRUE(handler->motionStopped());
+    EXPECT_FALSE(activated);
+    EXPECT_EQ(names.back(), "NO_REQUEST");
 }
 TEST_F(MovementHandlerTest, PublishesHighFiveRestorationAndIgnoresLaterFeedback) {
     const auto seed = initialPose();
@@ -205,7 +213,10 @@ TEST_F(MovementHandlerTest, PendingFiniteGaitWaitsForItsOwnCompletion) {
 TEST_F(MovementHandlerTest, SameTypeFiniteRequestCompletesAndInvalidRequestDoesNotBlock) {
     feedback->publish(initialPose());
     pump(150ms);
-    // Laydown is already selected when the controller is constructed.
+    // Explicitly select laydown before repeating the same finite request.
+    request(MovementRequest::SEQUENCE_LAYDOWN, 0.2);
+    pump(1200ms);
+    ASSERT_TRUE(handler->requestFinished());
     request(MovementRequest::SEQUENCE_LAYDOWN, 0.2);
     pump(1200ms);
     EXPECT_TRUE(handler->requestFinished());

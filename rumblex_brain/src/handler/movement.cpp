@@ -27,7 +27,7 @@ CMovement::CMovement(std::shared_ptr<rclcpp::Node> node) : node_(std::move(node)
         if (on_gait_changed) on_gait_changed(request);
     };
     std_msgs::msg::String name;
-    name.data = "SEQUENCE_LAYDOWN";
+    name.data = "NO_REQUEST";
     pub_movement_name_->publish(name);
     setRequestFinished(true);
 }
@@ -43,13 +43,6 @@ void CMovement::onInitialPose(const rumblex_interfaces::msg::BodyPose& pose) {
     if (pending_request_) {
         const auto request = *pending_request_;
         pending_request_.reset();
-        startRequest(request);
-    } else if (!face_preview_->previewMode()) {
-        // Start from measured feedback so startup follows the normal pose trajectory.
-        MovementRequest request;
-        request.type = MovementRequest::SEQUENCE_LAYDOWN;
-        request.name = "SEQUENCE_LAYDOWN";
-        setRequestFinished(false);
         startRequest(request);
     }
 }
