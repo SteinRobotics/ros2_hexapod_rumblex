@@ -35,7 +35,7 @@ def context(robot, driver='true', sweep='true', camera='false'):
 @pytest.mark.parametrize('robot,package,count', [
     ('nox', 'rumblex_lidar_1d', 2), ('nira', 'rumblex_lidar_2d', 1)])
 def test_selected_pipeline(robot, package, count):
-    module = load('rumblex_perception', 'sensors_launch')
+    module = load('rumblex_bringup', 'sensors_launch')
     with patch.object(module, 'get_package_share_directory', side_effect=lambda name: str(ROOT / name)):
         ctx = context(robot)
         actions = module._launch_sensors(ctx)
@@ -48,14 +48,14 @@ def test_selected_pipeline(robot, package, count):
         assert not actions[0].condition.evaluate(context(robot, driver='false'))
         if robot == 'nox':
             actions[1].launch_description_source.get_launch_description(ctx)
-            assert 'rumblex_perception' in actions[1].launch_description_source.location
+            assert 'rumblex_perception_lidar' in actions[1].launch_description_source.location
             assert actions[1].condition.evaluate(ctx)
             assert not actions[1].condition.evaluate(context(robot, sweep='false'))
 
 
 @pytest.mark.parametrize('robot', ['unknown', '../nox', 'Nox'])
 def test_invalid_profiles_fail(robot):
-    module = load('rumblex_perception', 'sensors_launch')
+    module = load('rumblex_bringup', 'sensors_launch')
     with patch.object(module, 'get_package_share_directory', side_effect=lambda name: str(ROOT / name)):
         with pytest.raises(RuntimeError):
             module._launch_sensors(context(robot))
@@ -66,7 +66,7 @@ def test_invalid_profiles_fail(robot):
     ('nox', 'true', False), ('nox', 'false', False),
 ])
 def test_camera_selection_is_optional(robot, enabled, expected):
-    module = load('rumblex_perception', 'sensors_launch')
+    module = load('rumblex_bringup', 'sensors_launch')
     ctx = context(robot, driver='false', camera=enabled)
     with patch.object(module, 'get_package_share_directory', side_effect=lambda name: str(ROOT / name)) as lookup:
         actions = module._launch_sensors(ctx)
@@ -84,7 +84,7 @@ def test_camera_selection_is_optional(robot, enabled, expected):
 
 
 @pytest.mark.parametrize('package,launch_name', [
-    ('rumblex_bringup', 'target_launch'), ('rumblex_bringup', 'sensors_launch'),
+    ('rumblex_bringup', 'target_launch'),
 ])
 def test_camera_arguments_forwarded_through_bringup(package, launch_name):
     description = load(package, launch_name).generate_launch_description()

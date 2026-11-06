@@ -5,6 +5,7 @@
 #include <optional>
 
 #include "gait/gait_controller.hpp"
+#include "handler/face_preview.hpp"
 #include "ihandler.hpp"
 #include "requester/irequester.hpp"
 #include "rumblex_utils/body_pose.hpp"
@@ -42,6 +43,7 @@ class CMovement : public IHandler {
     rclcpp::Subscription<rumblex_interfaces::msg::BodyPose>::SharedPtr sub_body_pose_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_movement_name_;
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_movement_velocity_;
+    std::unique_ptr<FacePreview> face_preview_;
     Velocity velocity_;
     CPose torso_;
     COrientation head_;

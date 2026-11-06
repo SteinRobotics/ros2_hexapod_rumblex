@@ -171,9 +171,9 @@ def _launch_robot(context):
 
     perception_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution([
-            FindPackageShare('rumblex_perception'), 'launch', 'sensors_launch.py'])),
+            FindPackageShare('rumblex_perception_lidar'), 'launch', 'perception_launch.py'])),
         launch_arguments={
-            'robot': robot, 'enable_driver': 'false', 'enable_head_scan': 'true',
+            'robot': robot,
         }.items(),
         condition=IfCondition(LaunchConfiguration('enable_navigation')),
     )
@@ -199,7 +199,7 @@ def _launch_robot(context):
         gz_ros_bridge,
         communication_launch,
         delayed_nodes,
-        perception_launch,
+        *([perception_launch] if robot == 'nox' else []),
         navigation_launch,
     ]
 

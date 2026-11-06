@@ -111,7 +111,7 @@ fi
 # are intentionally skipped; pip dependencies above are satisfied in the venv.
 packages=(rumblex_interfaces rumblex_utils rumblex_brain rumblex_movement
     rumblex_description rumblex_bringup rumblex_hmi rumblex_communication
-    rumblex_teleop rumblex_lidar_1d rumblex_lidar_2d rumblex_camera rumblex_perception rumblex_navigation)
+    rumblex_teleop rumblex_lidar_1d rumblex_lidar_2d rumblex_camera rumblex_perception_lidar rumblex_perception_face rumblex_navigation)
 paths=()
 for package in "${packages[@]}"; do paths+=("$repo/$package"); done
 for package in "${extra_packages[@]}"; do paths+=("$workspace/src/$package"); done

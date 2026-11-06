@@ -51,6 +51,7 @@ def generate_launch_description():
                     'robot': robot,
                     'use_sim_time': 'true',
                     'enable_display': 'false',
+                    'enable_camera': 'false', 'enable_face_tracking': 'false',
                     'movement_joint_states_topic': 'target_joint_states',
                     'publish_gazebo_map': 'true',
                     'start_x': LaunchConfiguration('start_x'),

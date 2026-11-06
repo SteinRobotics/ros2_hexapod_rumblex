@@ -13,6 +13,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 set(msg_files
+  "msg/FaceTarget.msg"
   "msg/CommunicationStatus.msg"
   "msg/BodyPose.msg"
   "msg/ServoDirectRequest.msg"

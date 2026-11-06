@@ -10,7 +10,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('robot', default_value='nox', choices=['nox']),
         DeclareLaunchArgument('params_file', default_value=PathJoinSubstitution([
-            FindPackageShare('rumblex_perception'), 'config', LaunchConfiguration('robot'), 'perception.yaml'])),
-        Node(package='rumblex_perception', executable='node_head_scan', name='node_head_scan',
+            FindPackageShare('rumblex_perception_lidar'), 'config', LaunchConfiguration('robot'), 'perception.yaml'])),
+        Node(package='rumblex_perception_lidar', executable='node_head_scan', name='node_head_scan',
              output='screen', parameters=[LaunchConfiguration('params_file')]),
     ])

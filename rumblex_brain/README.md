@@ -33,3 +33,18 @@ Normalized trajectory progress, filter coefficients, joystick deflection, gait
 selection thresholds remain scalars. Gait timing,
 velocity limits, robot-specific configuration, and monitoring thresholds are
 unchanged. See [MOVEMENT.md](MOVEMENT.md) for the motion pipeline and build setup.
+
+## Offline face preview
+
+Nira's desktop test launch enables `face_tracking.desktop_preview` in the brain.
+`FacePreview` reads timestamped face rays and produces bounded absolute yaw/pitch
+for the fixed host camera. `CMovement` merges the head into its existing pose
+publication while idle; it remains the sole brain writer of `/cmd_movement`.
+No preview targets modify torso or toe positions. Missing observations hold pose.
+Any movement request, nonzero velocity request, or cancellation disables preview;
+`/brain/set_face_tracking` explicitly re-enables it once the operator is ready.
+
+Limits/gain are in `config/nira/parameter.yaml`. The mode defaults to false in
+`brain_launch.py` and is not wired into physical `target_launch.py`. Physical
+camera TF, feedback-based control, actuator limit enforcement, and commissioning
+remain required before hardware face tracking is enabled.

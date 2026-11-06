@@ -149,3 +149,12 @@ require calibration and that transform.
 
 Vendor auto-framing/HDR/zoom integration, detection, recording, microphone capture,
 and simulated camera images are future work.
+
+## Desktop webcam capture
+
+For built-in laptop cameras and PC webcams, `desktop_camera_launch.py` uses
+OpenCV/V4L2 with an independently negotiated capture mode. It supports an explicit
+`camera_device`, `camera_params_file`, and local `camera_info_url`. With no device
+override it selects and logs the first usable persistent capture path. See
+[the offline face preview](../README_LAUNCH.md#nira-desktop-face-tracking-preview).
+The hardware `camera_launch.py` and its OBSBOT configuration are unchanged.

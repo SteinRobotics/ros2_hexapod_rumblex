@@ -22,6 +22,13 @@ from the physical controller or `ros2 launch rumblex_teleop teleop_simulated_lau
 identical to the hardware node, including `movement_name`, `servo_status`,
 `scan_1d`, and `bno055/imu`.
 
+SYSTEM also shows a compact host CPU reading, for example `CPU: 23%`, updated
+every second. It measures busy time across all cores from Linux `/proc/stat`;
+100% means all cores are busy, and idle/I/O-wait time is excluded. This works
+on Raspberry Pi 5 and amd64 Ubuntu 26.04 without extra dependencies. The desktop
+preview shows the development computer's actual usage. `CPU: --%` means the
+initial interval is pending or a reading is unavailable.
+
 Synthetic voltage/current default to 12.0 V / 0.0 A. These are simulator defaults,
 not robot configuration. The node publishes `supply_voltage` every second;
 current is displayed as an absolute value. Parameters can also change while running:

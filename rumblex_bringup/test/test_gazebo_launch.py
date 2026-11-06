@@ -32,6 +32,7 @@ def test_composes_test_stack_without_duplicate_display():
             for key, value in includes[1].launch_arguments}
     assert args == {'robot': 'nox', 'use_sim_time': 'true', 'enable_display': 'false',
                     'movement_joint_states_topic': 'target_joint_states', 'publish_gazebo_map': 'true',
+                    'enable_camera': 'false', 'enable_face_tracking': 'false',
                     'start_x': '-2.26', 'start_y': '-2.13', 'start_yaw': '0.0'}
     spawn_args = {key: perform_substitutions(ctx, normalize_to_list_of_substitutions(value))
                   for key, value in includes[0].launch_arguments}

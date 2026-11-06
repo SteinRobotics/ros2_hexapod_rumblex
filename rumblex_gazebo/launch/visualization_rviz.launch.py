@@ -96,9 +96,9 @@ def _launch_robot(context):
     lidar_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([
-                FindPackageShare('rumblex_perception'),
+                FindPackageShare('rumblex_lidar_1d' if robot == 'nox' else 'rumblex_lidar_2d'),
                 'launch',
-                'sensors_launch.py',
+                'lidar_launch.py',
             ])
         ),
         launch_arguments={'robot': robot}.items(),
@@ -111,7 +111,15 @@ def _launch_robot(context):
         package='rviz2',
         executable='rviz2',
         arguments=['-d', rviz_config],
-        additional_env=_SNAP_GUI_OVERRIDES,
+        # Avoid Qt/Ogre viewport flicker on scaled displays (rviz#1052).
+        additional_env={
+            **_SNAP_GUI_OVERRIDES,
+            'QT_QPA_PLATFORM': 'xcb',
+            'QT_ENABLE_HIGHDPI_SCALING': '0',
+            'QT_AUTO_SCREEN_SCALE_FACTOR': '0',
+            'QT_SCALE_FACTOR': '1',
+            'QT_SCREEN_SCALE_FACTORS': '1',
+        },
     )
 
     # --- teleop_twist_keyboard for cmd_vel input ---

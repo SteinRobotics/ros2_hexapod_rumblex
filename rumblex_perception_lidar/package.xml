@@ -1,18 +1,13 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>rumblex_perception</name>
+  <name>rumblex_perception_lidar</name>
   <version>0.0.1</version>
-  <description>Sensor observation processing for RumbleX</description>
+  <description>Lidar head-sweep processing for RumbleX</description>
   <maintainer email="stein.robotics@gmail.com">christian</maintainer>
   <license>MIT</license>
   <buildtool_depend>ament_cmake</buildtool_depend>
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
-  <exec_depend>ament_index_python</exec_depend>
-  <exec_depend>python3-yaml</exec_depend>
-  <exec_depend>rumblex_lidar_1d</exec_depend>
-  <exec_depend>rumblex_lidar_2d</exec_depend>
-  <exec_depend>rumblex_camera</exec_depend>
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
   <depend>rumblex_interfaces</depend>

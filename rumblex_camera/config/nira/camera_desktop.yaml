@@ -1,0 +1,6 @@
+node_desktop_camera:
+  ros__parameters:
+    video_device: ""
+    image_width: 640
+    image_height: 480
+    framerate: 15.0

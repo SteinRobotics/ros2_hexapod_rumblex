@@ -15,6 +15,7 @@ find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
@@ -47,6 +48,7 @@ src/requester/text_interpreter.cpp
 src/handler/system.cpp
 src/handler/communication.cpp
 src/handler/movement.cpp
+src/handler/face_preview.cpp
 src/gait/hold_distance_control.cpp
 src/gait/level_torso_control.cpp
 src/gait/gait_hold_distance.cpp
@@ -60,6 +62,7 @@ target_include_directories(rumblex_brain_lib PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(rumblex_brain_lib PUBLIC
+  ${std_srvs_TARGETS}
   rumblex_utils::rumblex_geometry
   ${sensor_msgs_TARGETS}
   tf2::tf2
@@ -111,6 +114,8 @@ install(DIRECTORY
 # Unit tests
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_face_preview test/test_face_preview.cpp)
+  target_link_libraries(test_face_preview rumblex_brain_lib)
   ament_add_gtest(test_sensor_gaits test/test_sensor_gaits.cpp)
   target_link_libraries(test_sensor_gaits rumblex_brain_lib)
   ament_add_gtest(test_leveling_movement_handler test/test_leveling_movement_handler.cpp)

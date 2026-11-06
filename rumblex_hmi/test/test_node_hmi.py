@@ -56,6 +56,13 @@ def test_refresh_publishes_voltage_and_missing_reading_is_ignored(node):
     node.pub_supply_voltage.publish.assert_not_called()
 
 
+def test_refresh_shows_host_cpu_usage_and_unavailable_reading(node):
+    node.cpu_usage.sample = Mock(side_effect=[23.4, 100.0, None])
+    for expected in ('CPU: 23%', 'CPU: 100%', 'CPU: --%'):
+        node.timer_callback()
+        assert node.get_page_data('system')[4] == expected
+
+
 def test_relay_and_shutdown_request(node):
     node.callback_servo_relay(Bool(data=True))
     node.backend.set_relay.assert_called_with(True)

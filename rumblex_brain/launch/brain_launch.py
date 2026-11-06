@@ -21,10 +21,12 @@ def generate_launch_description():
             PathJoinSubstitution([get_package_share_directory('rumblex_brain'), 'config', robot, 'gait.yaml']),
             PathJoinSubstitution([get_package_share_directory('rumblex_description'), 'config', robot, 'anatomy.yaml']),
             {'robot': ParameterValue(robot, value_type=str),
+             'face_tracking.desktop_preview': ParameterValue(LaunchConfiguration('face_tracking_preview'), value_type=bool),
              'autostart_listening': ParameterValue(
                 LaunchConfiguration('autostart_listening'), value_type=bool)}],
     )
     return LaunchDescription([
+        DeclareLaunchArgument('face_tracking_preview', default_value='false'),
         DeclareLaunchArgument(
             'autostart_listening', default_value='false',
             description='Activate speech-to-text listening when the brain starts'),

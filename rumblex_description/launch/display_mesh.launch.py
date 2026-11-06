@@ -41,6 +41,16 @@ def _launch_robot(context):
             executable='rviz2',
             arguments=['-d', os.path.join(share, 'rviz', 'model.rviz'),
                        '-f', LaunchConfiguration('fixed_frame')],
+            # Keep Qt and Ogre pixel sizes equal on scaled displays. Otherwise
+            # resizing can flicker between a full viewport and a small rectangle.
+            # https://github.com/ros2/rviz/issues/1052
+            additional_env={
+                'QT_QPA_PLATFORM': 'xcb',
+                'QT_ENABLE_HIGHDPI_SCALING': '0',
+                'QT_AUTO_SCREEN_SCALE_FACTOR': '0',
+                'QT_SCALE_FACTOR': '1',
+                'QT_SCREEN_SCALE_FACTORS': '1',
+            },
         ),
     ]
 

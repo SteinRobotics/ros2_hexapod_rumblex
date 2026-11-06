@@ -1,12 +1,44 @@
 import launch
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
 from launch.conditions import IfCondition
 from launch.launch_description_sources import AnyLaunchDescriptionSource, PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
+
+
+def _face_preview(context):
+    camera = IfCondition(LaunchConfiguration('enable_camera')).evaluate(context)
+    tracking = IfCondition(LaunchConfiguration('enable_face_tracking')).evaluate(context)
+    if not camera and not tracking:
+        return []
+    if LaunchConfiguration('robot').perform(context) != 'nira':
+        raise RuntimeError('Desktop face preview currently supports robot:=nira only')
+    if IfCondition(LaunchConfiguration('use_sim_time')).evaluate(context):
+        raise RuntimeError('Desktop camera preview requires use_sim_time:=false')
+    if tracking and not camera:
+        raise RuntimeError('Face preview requires enable_camera:=true')
+    actions = []
+    if camera:
+        actions.append(IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(PathJoinSubstitution([
+                FindPackageShare('rumblex_camera'), 'launch', 'desktop_camera_launch.py'])),
+            launch_arguments={
+                'camera_device': LaunchConfiguration('camera_device'),
+                'camera_info_url': LaunchConfiguration('camera_info_url'),
+                'camera_params_file': LaunchConfiguration('camera_params_file'),
+            }.items()))
+    if tracking:
+        actions.append(IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(PathJoinSubstitution([
+                FindPackageShare('rumblex_perception_face'), 'launch', 'face_tracking_launch.py'])),
+            launch_arguments={'robot': 'nira', 'desktop_preview': 'true',
+                              'publish_debug_image': LaunchConfiguration('enable_face_tracking_view')}.items()))
+        actions.append(Node(package='rumblex_camera', executable='face_preview.py',
+                            condition=IfCondition(LaunchConfiguration('enable_face_tracking_view'))))
+    return actions
 
 
 def generate_launch_description():
@@ -63,6 +95,7 @@ def generate_launch_description():
             launch_arguments={
                 'robot': robot,
                 'autostart_listening': LaunchConfiguration('autostart_listening'),
+                'face_tracking_preview': LaunchConfiguration('enable_face_tracking'),
             }.items(),
         )],
     )
@@ -108,6 +141,14 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'publish_test_map_tf', default_value='true',
             description='Estimate pose from supporting feet; disable when providing odometry/localization'),
+        DeclareLaunchArgument('enable_camera', default_value=PythonExpression(["'", robot, "' == 'nira'"])),
+        DeclareLaunchArgument('enable_face_tracking', default_value=PythonExpression(["'", robot, "' == 'nira'"])),
+        DeclareLaunchArgument('enable_face_tracking_view', default_value='true'),
+        DeclareLaunchArgument('camera_device', default_value=''),
+        DeclareLaunchArgument('camera_info_url', default_value=''),
+        DeclareLaunchArgument('camera_params_file', default_value=PathJoinSubstitution([
+            FindPackageShare('rumblex_camera'), 'config', 'nira', 'camera_desktop.yaml'])),
+        OpaqueFunction(function=_face_preview),
         house_map,
         Node(
             package='rumblex_navigation', executable='test_map_walls.py',

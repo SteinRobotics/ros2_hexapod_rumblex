@@ -30,7 +30,9 @@
   <exec_depend>rumblex_communication</exec_depend>
   <exec_depend>rumblex_movement</exec_depend>
   <exec_depend>rumblex_navigation</exec_depend>
-  <exec_depend>rumblex_perception</exec_depend>
+  <exec_depend>rumblex_perception_lidar</exec_depend>
+  <exec_depend>rumblex_lidar_1d</exec_depend>
+  <exec_depend>rumblex_lidar_2d</exec_depend>
   <exec_depend>teleop_twist_keyboard</exec_depend>
 
   <export>

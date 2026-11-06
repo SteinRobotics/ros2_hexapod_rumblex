@@ -1,16 +1,17 @@
 # Robot sensor pipelines
 
-`rumblex_perception/config/<robot>/sensors.yaml` selects the lidar integration package
+`rumblex_bringup/config/<robot>/sensors.yaml` selects the lidar integration package
 and whether head-sweep processing is needed, plus an optional camera package. Drivers publish relative topic names,
 so ROS namespaces and remappings remain available. Sensor mounting transforms belong
 to `rumblex_description`; neither lidar integration publishes its own mounting TF.
 
-The bringup sensor launch forwards to `rumblex_perception/launch/sensors_launch.py`.
-Gazebo uses that shared launch directly, keeping its dependencies independent of bringup.
+The bringup sensor launch owns sensor composition. Older Gazebo launches include the
+selected lidar driver or Nox scan processor directly to avoid a circular dependency
+with bringup. Face observations live separately in `rumblex_perception_face`.
 
 | Robot | Driver | Processing | Navigation input |
 | --- | --- | --- | --- |
-| Nox | `rumblex_lidar_1d`: Garmin LIDAR-Lite v3 | `rumblex_perception`: `scan_1d` (`Range`) plus head position → `scan` | `LaserScan` |
+| Nox | `rumblex_lidar_1d`: Garmin LIDAR-Lite v3 | `rumblex_perception_lidar`: `scan_1d` (`Range`) plus head position → `scan` | `LaserScan` |
 | Nira | `rumblex_lidar_2d`: upstream YDLIDAR T-mini driver | Native planar scan; no head movement | `LaserScan` |
 
 ## Launching

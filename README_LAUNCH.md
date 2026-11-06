@@ -83,7 +83,7 @@ ros2 launch rumblex_hmi hmi_simulated_launch.py
 ros2 launch rumblex_teleop teleop_simulated_launch.py
 ```
 
-Navigation consumes `scan` and odometry. For Nox, also launch `ros2 launch rumblex_perception perception_launch.py robot:=nox` to assemble head sweeps; movement and a LiDAR source must be running. See [SENSORS.md](SENSORS.md) for robot-specific pipelines. Include the bundled simple-room map server for simulation with:
+Navigation consumes `scan` and odometry. For Nox, also launch `ros2 launch rumblex_perception_lidar perception_launch.py robot:=nox` to assemble head sweeps; movement and a LiDAR source must be running. See [SENSORS.md](SENSORS.md) for robot-specific pipelines. Include the bundled simple-room map server for simulation with:
 
 ```bash
 ros2 launch rumblex_navigation navigation_launch.py robot:=nox enable_map:=true
@@ -131,6 +131,12 @@ ros2 launch rumblex_description display_mesh.launch.py robot:=nira
 Mesh assets live in `rumblex_description/meshes/nox/` and `rumblex_description/meshes/nira/`. Model availability does not imply that a robot's hardware configuration is ready for bringup.
 
 The mesh display supports `joint_state_publisher_gui:=false` when another node supplies joint states, `joint_states_topic:=<topic>` to select those states, and `fixed_frame:=<frame>` to select RViz's fixed frame.
+
+The RViz launchers use Qt's `xcb` backend and disable Qt high-DPI scaling for the
+RViz process. This works around [RViz's scaled-display rendering bug](https://github.com/ros2/rviz/issues/1052),
+which can produce flickering, a black viewport, or a small rectangle in its upper-left
+corner after resizing. Desktop scaling and other GUI processes keep their settings.
+RViz icons may appear smaller; enlarge the window or its side panels as needed.
 
 ### Full Gazebo simulation
 
@@ -185,3 +191,65 @@ This spawns the STL model in the empty world, loads the 20-joint controller conf
 
 For direct joint commands and topic inspection, see [COMMANDS.md](COMMANDS.md),
 including the [Gazebo joint controller](COMMANDS.md#gazebo-joint-controller).
+
+## Nira desktop face-tracking preview
+
+With the new camera, face-perception, interfaces, brain, and bringup packages built
+and the overlay sourced:
+
+```bash
+ros2 launch rumblex_bringup test_launch.py robot:=nira
+```
+
+This uses the host's webcam, runs local YuNet face detection, and moves the **offline**
+Nira head in RViz. An annotated image window opens alongside RViz. No servo hardware
+is opened by movement. The desktop camera stays fixed, so the brain treats face
+bearings as absolute virtual pointing directions; a stationary off-centre face
+settles at a bounded head angle. This preview does not validate physical head control.
+
+The file form `ros2 launch test_launch.py robot:=nira` works from
+`rumblex_bringup/launch`. With multiple cameras, the first usable persistent device
+path is selected and logged; select the desired camera explicitly when needed:
+
+```bash
+ros2 launch rumblex_bringup test_launch.py robot:=nira \
+  camera_device:=/dev/v4l/by-id/YOUR_CAMERA-video-index0
+
+# No GUI processes from the test stack (speech/audio behavior is unchanged):
+ros2 launch rumblex_bringup test_launch.py robot:=nira enable_display:=false \
+  enable_simulated_teleop:=false enable_simulated_hmi:=false enable_face_tracking_view:=false
+
+# Preserve the previous Nira offline workflow without camera tracking:
+ros2 launch rumblex_bringup test_launch.py robot:=nira enable_camera:=false enable_face_tracking:=false
+```
+
+Dependencies: OpenCV >=4.8, `cv_bridge`, Python OpenCV, and the standard ROS message
+packages. The desktop detector and image view use compressed image topics to reduce transport
+losses; raw images are published when subscribed. The small detector model is
+bundled with its license; no startup download
+is needed. Desktop capture uses OpenCV/V4L2 and does not require `usb_cam`; physical
+camera launch still uses `usb_cam`. Camera access may require a desktop-session ACL
+or `video` group membership. In a sandbox that hides `/dev/video*`, run the launch
+from the host terminal. Missing/busy cameras leave the rest of the offline stack
+running and the head waits for observations.
+
+Optional `camera_params_file` uses the `node_desktop_camera` YAML selector and
+controls resolution/rate. `camera_info_url:=file:///absolute/calibration.yaml`
+loads calibration for this camera and matching resolution. Without it, the preview
+uses an approximate 65° horizontal field of view, reported in status; this is not
+physical calibration. `use_sim_time:=true` is rejected for live desktop capture.
+Gazebo and Nox keep camera tracking disabled by default.
+
+Manual movement/velocity commands, sequences, and cancellation disable preview.
+Once idle, explicitly re-enable it with:
+
+```bash
+ros2 service call /brain/set_face_tracking std_srvs/srv/SetBool '{data: true}'
+ros2 topic echo /brain/face_tracking_status
+ros2 topic echo /perception/face_status
+```
+
+A false service request disables tracking. Lost/stale face observations stop head
+updates after 300 ms; the last virtual pose is held. Camera disconnection requires
+restarting capture/launch. This increment does not enable physical face tracking,
+identify people, or add walking while tracking.

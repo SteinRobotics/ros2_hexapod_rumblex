@@ -30,7 +30,8 @@ needed to add Nira.
 - `rumblex_teleop/`        — Teleoperation (joystick, remote)
 - `rumblex_lidar_1d/`         — Nox single-beam lidar driver
 - `rumblex_lidar_2d/`      — Nira planar lidar integration
-- `rumblex_perception/`    — Head-sweep scan processing
+- `rumblex_perception_face/`     — Face observations and temporary target association
+- `rumblex_perception_lidar/`    — Head-sweep scan processing
 - `rumblex_navigation/`    — 1D-lidar head-sweep navigation with obstacle avoidance
 - `rumblex_camera/`        — Nira head camera capture and standard controls ([setup](rumblex_camera/README.md))
 - `rumblex_interfaces/`    — Custom ROS2 message and service definitions

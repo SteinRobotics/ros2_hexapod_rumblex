@@ -17,3 +17,10 @@ node_brain:
     servo_voltage_critical_low: 10.1
     servo_temperature_high: 70.0
     servo_temperature_critical_high: 75.0
+    # Offline desktop preview only; physical face tracking is not commissioned.
+    face_tracking.max_yaw_deg: 30.0
+    face_tracking.max_pitch_deg: 20.0
+    face_tracking.max_speed_deg_s: 25.0
+    face_tracking.acceleration_deg_s2: 60.0
+    face_tracking.gain: 3.0
+    face_tracking.deadband_deg: 0.5

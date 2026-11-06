@@ -1,0 +1,11 @@
+node_face_detector:
+  ros__parameters:
+    processing_hz: 12.0
+    input_width: 320
+    confidence_threshold: 0.85
+    minimum_face_pixels: 24.0
+    acquisition_frames: 3
+    max_image_age_s: 0.3
+    allow_approximate_intrinsics: false
+    desktop_horizontal_fov_deg: 65.0
+    publish_debug_image: false

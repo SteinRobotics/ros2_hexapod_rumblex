@@ -8,6 +8,7 @@ using mp_units::angular::unit_symbols::rad;
 CMovement::CMovement(std::shared_ptr<rclcpp::Node> node) : node_(std::move(node)) {
     pose_model_ = std::make_shared<CPoseModel>(node_);
     gait_controller_ = std::make_unique<CGaitController>(node_, pose_model_);
+    face_preview_ = std::make_unique<FacePreview>(node_);
     pub_body_pose_ =
         node_->create_publisher<rumblex_interfaces::msg::BodyPose>("cmd_movement", rclcpp::QoS(1));
     pub_movement_name_ =
@@ -43,7 +44,7 @@ void CMovement::onInitialPose(const rumblex_interfaces::msg::BodyPose& pose) {
         const auto request = *pending_request_;
         pending_request_.reset();
         startRequest(request);
-    } else {
+    } else if (!face_preview_->previewMode()) {
         // Start from measured feedback so startup follows the normal pose trajectory.
         MovementRequest request;
         request.type = MovementRequest::SEQUENCE_LAYDOWN;
@@ -54,6 +55,7 @@ void CMovement::onInitialPose(const rumblex_interfaces::msg::BodyPose& pose) {
 }
 
 void CMovement::startRequest(const MovementRequest& request) {
+    face_preview_->suspend();
     dwell_deadline_.reset();
     tracked_request_.reset();
     if (!gait_controller_->setGait(request)) {
@@ -92,10 +94,12 @@ void CMovement::run(std::shared_ptr<RequestVelocity> request) {
         RCLCPP_WARN(node_->get_logger(), "Ignoring non-finite velocity request");
         return;
     }
+    if (request->velocity != geometry_msgs::msg::Twist()) face_preview_->suspend();
     velocity_ = limited;
 }
 
 void CMovement::cancel() {
+    face_preview_->suspend();
     pending_request_.reset();
     dwell_deadline_.reset();
     tracked_request_.reset();
@@ -132,11 +136,11 @@ void CMovement::update() {
     if (now < next_update_) return;
     const auto gait = gait_controller_->currentGait();
     const bool frequent =
-        gait == MovementRequest::HOLD_DISTANCE || gait == MovementRequest::LEVEL_TORSO ||
-        isLocomotion(gait) || gait == MovementRequest::CONTINUOUS_POSE ||
-        gait == MovementRequest::SINGLE_POSE || gait == MovementRequest::SEQUENCE_STAND_UP ||
-        gait == MovementRequest::SEQUENCE_LAYDOWN || gait == MovementRequest::SEQUENCE_WATCH ||
-        gait == MovementRequest::SEQUENCE_BODY_ROLL;
+        face_preview_->active() || gait == MovementRequest::HOLD_DISTANCE ||
+        gait == MovementRequest::LEVEL_TORSO || isLocomotion(gait) ||
+        gait == MovementRequest::CONTINUOUS_POSE || gait == MovementRequest::SINGLE_POSE ||
+        gait == MovementRequest::SEQUENCE_STAND_UP || gait == MovementRequest::SEQUENCE_LAYDOWN ||
+        gait == MovementRequest::SEQUENCE_WATCH || gait == MovementRequest::SEQUENCE_BODY_ROLL;
     const auto period = std::chrono::milliseconds(frequent ? 20 : 100);
     const units::Duration elapsed_s =
         (last_update_ ? std::chrono::duration<double>(now - *last_update_).count()
@@ -152,6 +156,13 @@ void CMovement::update() {
     if (initialized_) {
         const bool progressed = gait_controller_->updateSelectedGait(velocity_, torso_, head_, elapsed_s);
         updateRequestCompletion();
+        if (const auto head =
+                face_preview_->update(pose_model_->getHeadOrientation(), elapsed_s,
+                                      gait_controller_->motionStopped() &&
+                                          !gait_controller_->hasPendingGait() && !tracked_request_)) {
+            head_ = *head;
+            pose_model_->setHeadOrientation(head_);
+        }
         auto pose = bodyPose(*pose_model_);
         // Some sequences restore their final pose while returning false on completion.
         if ((progressed || pose != last_pose_) && validBodyPose(pose)) {

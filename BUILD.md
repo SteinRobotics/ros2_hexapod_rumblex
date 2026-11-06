@@ -85,9 +85,9 @@ rumblex_limited python -m colcon build --executor sequential --symlink-install \
 rumblex_limited python -m colcon build --executor sequential --symlink-install \
   --packages-up-to rumblex_camera
 
-# Camera integration with perception and bringup:
+# Camera, lidar perception, face perception, and bringup integration:
 rumblex_limited python -m colcon build --executor sequential --symlink-install \
-  --packages-up-to rumblex_perception rumblex_bringup
+  --packages-up-to rumblex_perception_lidar rumblex_perception_face rumblex_bringup
 
 # Movement pipeline: interfaces, utilities, brain, and movement:
 rumblex_limited python -m colcon build --executor sequential --symlink-install \

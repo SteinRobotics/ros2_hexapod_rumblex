@@ -45,7 +45,15 @@ def _launch_robot(context):
             package='rviz2',
             executable='rviz2',
             arguments=['-d', os.path.join(share, 'rviz', 'model.rviz')],
-            additional_env=_SNAP_GUI_OVERRIDES,
+            # Avoid Qt/Ogre viewport flicker on scaled displays (rviz#1052).
+            additional_env={
+                **_SNAP_GUI_OVERRIDES,
+                'QT_QPA_PLATFORM': 'xcb',
+                'QT_ENABLE_HIGHDPI_SCALING': '0',
+                'QT_AUTO_SCREEN_SCALE_FACTOR': '0',
+                'QT_SCALE_FACTOR': '1',
+                'QT_SCREEN_SCALE_FACTORS': '1',
+            },
         ),
     ]
 

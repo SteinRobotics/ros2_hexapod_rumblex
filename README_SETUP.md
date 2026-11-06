@@ -68,7 +68,8 @@ For Nox's 2.4 GHz WiFi restriction, see [band verification and Netplan configura
      src/ros2_hexapod_rumblex/rumblex_lidar_1d \
      src/ros2_hexapod_rumblex/rumblex_lidar_2d \
      src/ros2_hexapod_rumblex/rumblex_camera \
-     src/ros2_hexapod_rumblex/rumblex_perception \
+     src/ros2_hexapod_rumblex/rumblex_perception_lidar \
+     src/ros2_hexapod_rumblex/rumblex_perception_face \
      src/ros2_hexapod_rumblex/rumblex_navigation \
      src/ros2_hexapod_rumblex/rumblex_teleop \
      src/ros2_hexapod_rumblex/rumblex_description \
@@ -162,7 +163,8 @@ For offline robot-name recognition, follow the [openWakeWord ONNX setup](rumblex
      src/ros2_hexapod_rumblex/rumblex_lidar_1d \
      src/ros2_hexapod_rumblex/rumblex_lidar_2d \
      src/ros2_hexapod_rumblex/rumblex_camera \
-     src/ros2_hexapod_rumblex/rumblex_perception \
+     src/ros2_hexapod_rumblex/rumblex_perception_lidar \
+     src/ros2_hexapod_rumblex/rumblex_perception_face \
      src/ros2_hexapod_rumblex/rumblex_navigation \
      src/ros2_hexapod_rumblex/rumblex_description \
      src/ros2_hexapod_rumblex/rumblex_gazebo \

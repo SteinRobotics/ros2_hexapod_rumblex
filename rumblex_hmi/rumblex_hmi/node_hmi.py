@@ -14,6 +14,7 @@ from rumblex_interfaces.msg import ServoStatus
 from rumblex_interfaces.msg import JoystickRequest
 
 from rumblex_hmi.oled import HmiBackend, OledRenderer
+from rumblex_hmi.cpu_usage import CpuUsage
 
 
 class NodeHmi(Node):
@@ -37,6 +38,7 @@ class NodeHmi(Node):
             from rumblex_hmi.hardware import HardwareBackend
             backend = HardwareBackend()
         self.backend = backend
+        self.cpu_usage = CpuUsage()
         self.is_ip_address_identified = False
         self.timeout_identifying_ip_address = 60
 
@@ -44,7 +46,7 @@ class NodeHmi(Node):
         self.text_ip_address = ""  # line number 1
         self.text_movement_request = ""  # line number 2
         self.text_supply_voltage_and_current = ""  # line number 3
-        self.text_cpu_temperature = ""  # line number 4
+        self.text_cpu_usage = "CPU: --%"  # line number 4
 
         # Servo text lines
         self.text_servo_relay_status = ""  # line number 1
@@ -93,7 +95,7 @@ class NodeHmi(Node):
                 self.text_ip_address,
                 self.text_movement_request,
                 self.text_supply_voltage_and_current,
-                self.text_cpu_temperature,
+                self.text_cpu_usage,
                 ""
             ]
         elif page_name == 'servos':
@@ -147,6 +149,8 @@ class NodeHmi(Node):
     def timer_callback(self):
         self.update_ip_address()
         self.update_power()
+        usage = self.cpu_usage.sample()
+        self.text_cpu_usage = f"CPU: {usage:.0f}%" if usage is not None else "CPU: --%"
         self.update_active_page()
 
     def callback_lidar(self, msg):

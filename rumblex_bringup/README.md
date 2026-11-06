@@ -76,7 +76,7 @@ duplicate nodes and competing hardware access. Run one bringup stack at a time.
 | Launch file | Purpose |
 | --- | --- |
 | `target_launch.py` | Physical robot: communication, hardware HMI, movement, teleoperation, robot-specific lidar, and BNO055 IMU. Starts the brain after five seconds. Optionally includes navigation and a camera. |
-| `sensors_launch.py` | Sensor-only compatibility entry point that forwards to `rumblex_perception`: selects the lidar driver and optional head scanning and camera from the robot profile. |
+| `sensors_launch.py` | Sensor-only compatibility entry point that owns sensor selection: selects the lidar driver and optional head scanning and camera from the robot profile. |
 | `test_launch.py` | Offline development: communication, offline movement, simulated teleoperation and HMI, a house map with wall visualization and simulated lidar, supporting-foot odometry, robot visualization in RViz, and the brain after two seconds. |
 | `test_gazebo_launch.py` | Gazebo mesh robot with physical map walls, the test stack, and a joint-state bridge. Uses simulation time, routes movement targets to `target_joint_states`, and disables the separate offline RViz display. |
 
@@ -149,3 +149,7 @@ To inspect the arguments exposed by any entry point, use, for example:
 ```bash
 ros2 launch rumblex_bringup target_launch.py --show-args
 ```
+
+Nira desktop testing now includes host camera capture, face observations, and offline
+head preview by default. See [desktop face tracking](../README_LAUNCH.md#nira-desktop-face-tracking-preview)
+for overrides, dependencies, calibration, and enable/disable behavior.

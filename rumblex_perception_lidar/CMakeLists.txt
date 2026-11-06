@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(rumblex_perception)
+project(rumblex_perception_lidar)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 23)
