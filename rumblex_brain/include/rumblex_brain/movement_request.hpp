@@ -59,6 +59,7 @@ struct MovementRequest {
         LEVEL_TORSO = 34,
         MOVE_RIPPLE = 35,
         MOVE_WAVE = 36,
+        MOVE_CRAWL = 37,
     };
     enum Direction : uint8_t { CLOCKWISE = 0, ANTICLOCKWISE = 1 };
     using _type_type = uint8_t;
@@ -96,6 +97,7 @@ struct MovementRequest {
 };
 constexpr bool isLocomotion(uint32_t type) {
     return type == MovementRequest::MOVE_COMBINED || type == MovementRequest::MOVE_TRIPOD ||
-           type == MovementRequest::MOVE_RIPPLE || type == MovementRequest::MOVE_WAVE;
+           type == MovementRequest::MOVE_RIPPLE || type == MovementRequest::MOVE_WAVE ||
+           type == MovementRequest::MOVE_CRAWL;
 }
 }  // namespace brain

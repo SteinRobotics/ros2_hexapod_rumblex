@@ -31,6 +31,7 @@ src/gait/gait_continuous_pose.cpp
 src/gait/gait_controller.cpp
 src/gait/gait_leg_wave.cpp
 src/gait/gait_move_combined.cpp
+src/gait/gait_move_crawl.cpp
 src/gait/gait_move_tripod.cpp
 src/gait/gait_move_ripple.cpp
 src/gait/gait_move_wave.cpp

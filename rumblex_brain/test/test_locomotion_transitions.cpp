@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "gait/gait_move_combined.hpp"
+#include "gait/gait_move_crawl.hpp"
 #include "gait/gait_move_ripple.hpp"
 #include "gait/gait_move_tripod.hpp"
 #include "gait/gait_move_wave.hpp"
@@ -39,6 +40,8 @@ class LocomotionTransitionTest : public ::testing::TestWithParam<MovementRequest
         if (GetParam() == MovementRequest::MOVE_TRIPOD) {
             return std::make_unique<CMoveTripodGait>(node_, model, params_.tripod);
         }
+        if (GetParam() == MovementRequest::MOVE_CRAWL)
+            return std::make_unique<CMoveCrawlGait>(node_, model, params_.crawl);
         if (GetParam() == MovementRequest::MOVE_RIPPLE)
             return std::make_unique<CMoveRippleGait>(node_, model, params_.ripple);
         if (GetParam() == MovementRequest::MOVE_WAVE)
@@ -155,6 +158,9 @@ TEST_P(LocomotionTransitionTest, SteadyVelocitySwingsExpectedLegGroups) {
         case MovementRequest::MOVE_RIPPLE:
             groups = {{RightBack, LeftFront}, {RightMid, LeftMid}, {RightFront, LeftBack}};
             break;
+        case MovementRequest::MOVE_CRAWL:
+            groups = {{RightBack, LeftBack}, {RightMid, LeftMid}, {RightFront, LeftFront}};
+            break;
         case MovementRequest::MOVE_WAVE:
             groups = {{RightBack}, {RightMid}, {RightFront}, {LeftBack}, {LeftMid}, {LeftFront}};
             break;
@@ -162,19 +168,36 @@ TEST_P(LocomotionTransitionTest, SteadyVelocitySwingsExpectedLegGroups) {
             FAIL() << "Missing expected leg groups for gait " << GetParam();
     }
     gait_->start(0.0 * s, MovementRequest::CLOCKWISE);
-    // At this low velocity all patterns use one-second segments.
-    for (const auto& group : groups) {
-        ASSERT_TRUE(gait_->updateTimed(forward_, CPose(), COrientation(), 0.5 * s));
-        for (const auto& [index, toe] : model_->getToePositions()) {
-            const auto standing = model_->getStandingToePositions().at(index);
-            EXPECT_EQ(toe.z > standing.z, std::ranges::contains(group, index));
+    // At this low velocity all patterns use one-second segments. Check two
+    // cycles to cover wraparound and steady support motion after startup.
+    const auto standing = model_->getStandingToePositions();
+    for (int cycle = 0; cycle < 2; ++cycle) {
+        for (const auto& group : groups) {
+            for (int tick = 1; tick <= 10; ++tick) {
+                const auto before = model_->getToePositions();
+                ASSERT_TRUE(gait_->updateTimed(forward_, CPose(), COrientation(), 0.1 * s));
+                int airborne = 0;
+                for (const auto& [index, toe] : model_->getToePositions()) {
+                    const bool swing = std::ranges::contains(group, index);
+                    EXPECT_EQ(toe.z > standing.at(index).z, swing && tick < 10);
+                    if (toe.z > standing.at(index).z) ++airborne;
+                    if (!swing) {
+                        EXPECT_EQ(toe.z, standing.at(index).z);
+                        EXPECT_EQ(toe.y, before.at(index).y);
+                        if (cycle > 0) {
+                            EXPECT_LT(toe.x, before.at(index).x);
+                        }
+                    }
+                }
+                EXPECT_EQ(airborne, tick < 10 ? static_cast<int>(group.size()) : 0);
+            }
         }
-        ASSERT_TRUE(gait_->updateTimed(forward_, CPose(), COrientation(), 0.5 * s));
     }
 }
 
 INSTANTIATE_TEST_SUITE_P(AllLocomotionGaits, LocomotionTransitionTest,
                          ::testing::Values(MovementRequest::MOVE_COMBINED, MovementRequest::MOVE_TRIPOD,
-                                           MovementRequest::MOVE_RIPPLE, MovementRequest::MOVE_WAVE));
+                                           MovementRequest::MOVE_RIPPLE, MovementRequest::MOVE_WAVE,
+                                           MovementRequest::MOVE_CRAWL));
 
 }  // namespace

@@ -18,11 +18,12 @@ TEST(MovementTypes, EveryMovementNameRoundTrips) {
     }
 }
 
-TEST(MovementTypes, LocomotionContainsOnlyTheFourWalkingModes) {
+TEST(MovementTypes, LocomotionContainsOnlyTheWalkingModes) {
     for (uint32_t type = 0; type <= 255; ++type) {
         const bool expected =
             type == brain::MovementRequest::MOVE_COMBINED || type == brain::MovementRequest::MOVE_TRIPOD ||
-            type == brain::MovementRequest::MOVE_RIPPLE || type == brain::MovementRequest::MOVE_WAVE;
+            type == brain::MovementRequest::MOVE_RIPPLE || type == brain::MovementRequest::MOVE_WAVE ||
+            type == brain::MovementRequest::MOVE_CRAWL;
         EXPECT_EQ(brain::isLocomotion(type), expected) << type;
     }
     EXPECT_FALSE(brain::isLocomotion(256));

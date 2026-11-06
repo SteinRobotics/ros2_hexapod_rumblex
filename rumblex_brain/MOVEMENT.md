@@ -186,9 +186,15 @@ A full single-axis input selects tripod directly at the next contact boundary.
 `MOVE_COMBINED` keeps automatic selection through `gait_move_combined`.
 `MOVE_TRIPOD` (formerly `CONTINUOUS_RUNNING`) fixes alternating three-leg support,
 `MOVE_RIPPLE` cycles three pairs, and `MOVE_WAVE` swings one leg at a time.
+`MOVE_CRAWL` swings matching left/right pairs in rear → middle → front order,
+repeating like a caterpillar. During each swing, the other four feet stay grounded
+and push the body forward (moving backward relative to the body). All feet touch
+down between swings. Select it through joystick gait cycling or use `MOVE_CRAWL`
+in a YAML movement action; `/movement_name` reports the selected gait.
 These fixed gaits use the same physical velocity contract and their respective
-`gait.tripod`, `gait.ripple`, and `gait.wave` parameters. The retired
-`gait.running` parameters are replaced by `gait.tripod`; fixed tripod now shares
+`gait.tripod`, `gait.ripple`, `gait.wave`, and `gait.crawl` parameters.
+Crawl shares the generic step length and lift height; its head yaw defaults to zero.
+The retired `gait.running` parameters are replaced by `gait.tripod`; fixed tripod now shares
 the configured tripod head amplitude with the combined gait.
 
 Each stance follows a planar rigid-body transform derived from the requested

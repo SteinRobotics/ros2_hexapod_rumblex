@@ -25,6 +25,12 @@ struct Parameters {
         units::Length leg_lift_height = 0.0 * m;
     };
 
+    struct Crawl {
+        units::Angle head_yaw_amplitude = 0.0 * deg;
+        units::Length gait_step_length = 0.0 * m;
+        units::Length leg_lift_height = 0.0 * m;
+    };
+
     struct Ripple {
         units::Angle head_yaw_amplitude = 0.0 * deg;
         units::Length gait_step_length = 0.0 * m;
@@ -68,6 +74,7 @@ struct Parameters {
 
     TorsoRoll torso_roll;
     LegWave leg_wave;
+    Crawl crawl;
     Ripple ripple;
     SinglePose single_pose;
     TestLegs test_legs;
@@ -104,6 +111,12 @@ inline Parameters Parameters::declare(std::shared_ptr<rclcpp::Node> node) {
     params.tripod.head_yaw_amplitude = node->declare_parameter<double>("gait.tripod.head_max_yaw_deg") * deg;
     params.tripod.gait_step_length = step_length;
     params.tripod.leg_lift_height = leg_lift_height;
+
+    // Crawl
+    params.crawl.head_yaw_amplitude =
+        node->declare_parameter<double>("gait.crawl.head_max_yaw_deg", 0.0) * deg;
+    params.crawl.gait_step_length = step_length;
+    params.crawl.leg_lift_height = leg_lift_height;
 
     // Ripple
     params.ripple.head_yaw_amplitude =

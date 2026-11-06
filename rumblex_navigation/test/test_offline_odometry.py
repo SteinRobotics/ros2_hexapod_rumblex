@@ -139,6 +139,18 @@ class OfflineOdometryTest(unittest.TestCase):
         odom = self.send(self.sample(dx=0.01))
         self.assertEqual(odom.pose.pose.position.x, 0.0)
 
+    def test_crawl_uses_four_supporting_feet(self):
+        self.node.on_movement_name(String(data='MOVE_CRAWL'))
+        a, b = self.sample(), self.sample(dx=0.01)
+        for index in (2, 5):  # Matching rear legs swing together.
+            a.toe_positions[index].z += 0.02
+            b.toe_positions[index].z += 0.02
+            b.toe_positions[index].x += 0.04
+        self.send(a)
+        odom = self.send(b)
+        self.assertAlmostEqual(odom.pose.pose.position.x, 0.01)
+        self.assertAlmostEqual(odom.twist.twist.linear.x, 0.1)
+
     def test_support_contact_change_uses_only_shared_feet(self):
         a, b = self.sample(), self.sample(dx=0.01)
         a.toe_positions[0].z += 0.02

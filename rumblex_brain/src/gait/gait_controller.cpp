@@ -55,6 +55,7 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
         std::make_shared<CLegWaveGait>(node_, kinematics_, params_.leg_wave);
     gaits_[MovementRequest::MOVE_COMBINED] = std::make_shared<CMoveCombinedGait>(
         node_, kinematics_, params_.wave, params_.ripple, params_.tripod, params_.move_combined);
+    gaits_[MovementRequest::MOVE_CRAWL] = std::make_shared<CMoveCrawlGait>(node_, kinematics_, params_.crawl);
     gaits_[MovementRequest::MOVE_TRIPOD] =
         std::make_shared<CMoveTripodGait>(node_, kinematics_, params_.tripod);
     gaits_[MovementRequest::MOVE_RIPPLE] =

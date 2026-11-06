@@ -48,7 +48,7 @@ the robot's pose with this map before using it for navigation.
 The offline `test_launch.py` uses `map` as the RViz fixed frame and publishes an
 identity `map` to `odom` transform. Its `offline_odometry.py` node estimates
 planar motion from supporting toe targets in `/body_pose_actual` during
-`MOVE_COMBINED`, `MOVE_TRIPOD`, `MOVE_RIPPLE`, and `MOVE_WAVE`, selected through `/movement_name`.
+`MOVE_COMBINED`, `MOVE_TRIPOD`, `MOVE_RIPPLE`, `MOVE_WAVE`, and `MOVE_CRAWL`, reported through `/movement_name`.
 Standing toe heights come from the selected robot's anatomy profile; the default
 `support_tolerance_m` is 0.001 m. At least two distinct feet must support in both
 successive samples. Missing support or a feedback gap over 0.5 s holds the planar

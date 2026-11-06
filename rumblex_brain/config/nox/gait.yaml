@@ -11,6 +11,9 @@ node_brain:
     #### GAIT TRIPOD PARAMETERS ####
     gait.tripod.head_max_yaw_deg: 15.0 # deg
 
+    #### GAIT CRAWL PARAMETERS ####
+    gait.crawl.head_max_yaw_deg: 0.0                     # deg
+
     #### GAIT RIPPLE PARAMETERS ####
     gait.ripple.head_max_yaw_deg: 10.0                   # deg
 

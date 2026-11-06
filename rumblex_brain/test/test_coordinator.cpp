@@ -374,8 +374,9 @@ TEST_F(CoordinatorTest, ExpirationPreservesNewerFeedback) {
 
 TEST_F(CoordinatorTest, WalkingAndRunningClearPreviousDeadline) {
     create();
-    for (auto type : {MovementRequest::MOVE_COMBINED, MovementRequest::MOVE_TRIPOD,
-                      MovementRequest::MOVE_RIPPLE, MovementRequest::MOVE_WAVE}) {
+    for (auto type :
+         {MovementRequest::MOVE_COMBINED, MovementRequest::MOVE_TRIPOD, MovementRequest::MOVE_RIPPLE,
+          MovementRequest::MOVE_WAVE, MovementRequest::MOVE_CRAWL}) {
         CoordinatorTestAccess::submit(*coordinator_, MovementRequest::SEQUENCE_WAITING, 10.0);
         CoordinatorTestAccess::expire(*coordinator_);
         CoordinatorTestAccess::submit(*coordinator_, type, 0.0);

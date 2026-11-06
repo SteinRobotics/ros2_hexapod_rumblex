@@ -153,7 +153,7 @@ TEST_F(TrajectoryTransitionTest, AllBehaviorPairsHandOffFromLastCommandedPose) {
         MovementRequest::SEQUENCE_BODY_ROLL, MovementRequest::SEQUENCE_LEGS_WAVE,
         MovementRequest::SEQUENCE_WATCH,     MovementRequest::SEQUENCE_WAITING,
         MovementRequest::SEQUENCE_TESTLEGS,  MovementRequest::SINGLE_POSE,
-        MovementRequest::CONTINUOUS_POSE};
+        MovementRequest::CONTINUOUS_POSE,    MovementRequest::MOVE_CRAWL};
     CGaitController controller(node, model);
     ASSERT_EQ(rcl_enable_ros_time_override(node->get_clock()->get_clock_handle()), RCL_RET_OK);
     int64_t time = 1000000000;

@@ -406,8 +406,9 @@ TEST_F(GaitControllerTest, SwitchBackToMoveWithVelocity) {
 }
 
 TEST_F(GaitControllerTest, StartupWithoutVelocityDoesNotBlockPendingSwitch) {
-    for (auto type : {MovementRequest::MOVE_COMBINED, MovementRequest::MOVE_TRIPOD,
-                      MovementRequest::MOVE_RIPPLE, MovementRequest::MOVE_WAVE}) {
+    for (auto type :
+         {MovementRequest::MOVE_COMBINED, MovementRequest::MOVE_TRIPOD, MovementRequest::MOVE_RIPPLE,
+          MovementRequest::MOVE_WAVE, MovementRequest::MOVE_CRAWL}) {
         SCOPED_TRACE(type);
         brain::MovementRequest request;
         request.type = type;
@@ -424,8 +425,9 @@ TEST_F(GaitControllerTest, StartupWithoutVelocityDoesNotBlockPendingSwitch) {
 }
 
 TEST_F(GaitControllerTest, SameGaitRequestCancelsPendingStop) {
-    for (auto type : {MovementRequest::MOVE_COMBINED, MovementRequest::MOVE_TRIPOD,
-                      MovementRequest::MOVE_RIPPLE, MovementRequest::MOVE_WAVE}) {
+    for (auto type :
+         {MovementRequest::MOVE_COMBINED, MovementRequest::MOVE_TRIPOD, MovementRequest::MOVE_RIPPLE,
+          MovementRequest::MOVE_WAVE, MovementRequest::MOVE_CRAWL}) {
         SCOPED_TRACE(type);
         brain::MovementRequest request;
         request.type = type;

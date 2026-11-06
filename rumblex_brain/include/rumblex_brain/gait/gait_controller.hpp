@@ -16,6 +16,7 @@
 #include "gait/gait_interfaces.hpp"
 #include "gait/gait_leg_wave.hpp"
 #include "gait/gait_move_combined.hpp"
+#include "gait/gait_move_crawl.hpp"
 #include "gait/gait_move_ripple.hpp"
 #include "gait/gait_move_tripod.hpp"
 #include "gait/gait_move_wave.hpp"

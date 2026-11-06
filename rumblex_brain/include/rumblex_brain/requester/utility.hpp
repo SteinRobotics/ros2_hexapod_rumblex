@@ -35,6 +35,7 @@ inline const std::map<const uint32_t, const std::string> movementTypeToName = {
     {brain::MovementRequest::MOVE_TRIPOD, "MOVE_TRIPOD"},
     {brain::MovementRequest::MOVE_RIPPLE, "MOVE_RIPPLE"},
     {brain::MovementRequest::MOVE_WAVE, "MOVE_WAVE"},
+    {brain::MovementRequest::MOVE_CRAWL, "MOVE_CRAWL"},
 };
 
 // Auto-generated reverse map from movementTypeToName
