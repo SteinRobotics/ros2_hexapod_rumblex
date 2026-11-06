@@ -411,8 +411,9 @@ Positive measured tilt produces a negative torso correction. Commands integrate
 bounded correction rates and stop at the absolute tilt limits. IMU orientation
 is transformed into the body frame using mounting TF; acceleration is not used.
 Hardware axis remapping must agree with the IMU header frame. Nira's measurement
-frame is upright, with roll/pitch/yaw `(0, 0, -pi/2)`. Nox's primitive URDF includes
-`imu_link`; its mesh URDF needs a verified mounting TF supplied separately.
+frame is upright, with roll/pitch/yaw `(0, 0, -pi/2)`. Both Nox URDFs include
+`imu_link`. Hardware bringup starts `robot_state_publisher` with the selected
+robot's mesh URDF to publish the mounting TF, including when navigation is disabled.
 For simulation, override `level_torso.imu_topic` with `/imu/data` at startup and
 use the simulation clock consistently. These gains still require physical tuning.
 

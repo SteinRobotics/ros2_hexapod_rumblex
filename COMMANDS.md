@@ -38,6 +38,60 @@ priority, except `standup`, which has high priority. Unknown names are logged an
 ignored. Rebuild `rumblex_brain` and restart the brain and GUI after catalog changes;
 see [BUILD.md](BUILD.md#incremental-builds).
 
+## Activate IMU torso balancing
+
+With the hardware stack running, request the built-in `level_torso` sequence:
+
+```bash
+ros2 topic pub --once /sequence_request std_msgs/msg/String "{data: 'level_torso'}"
+```
+
+This stands up first, then uses IMU orientation to correct torso roll/pitch for
+**5 seconds**, and finally holds the resulting pose. Feet, torso position/yaw,
+and head pose stay fixed during leveling. This is a timed standing activity;
+it does not enable continuous balancing while walking.
+
+For Nox, start hardware bringup if it is not already running:
+
+```bash
+ros2 launch rumblex_bringup target_launch.py robot:=nox
+```
+
+This starts the brain, movement, and BNO055 driver. Leveling also requires a TF
+transform from `base_link` to the IMU message's `header.frame_id` (normally
+`imu_link`). Hardware bringup does not start a robot-state publisher. If no
+existing publisher supplies that transform, run the primitive model's publisher
+in another sourced terminal, provided its mounting matches the physical IMU:
+
+```bash
+ros2 run robot_state_publisher robot_state_publisher --ros-args \
+  -p robot_description:="$(xacro "$(ros2 pkg prefix --share rumblex_description)/urdf/nox.urdf.xacro" use_sim:=false)"
+```
+
+Nox's mesh model does not include `imu_link`; it needs a separately verified
+mounting TF. Hardware axis remapping must agree with the frame used by the IMU.
+Check the sensor and transform before requesting leveling:
+
+```bash
+ros2 topic echo --once --qos-reliability best_effort /bno055/imu
+ros2 run tf2_ros tf2_echo base_link imu_link
+```
+
+The IMU must publish valid orientation quaternions with current timestamps and
+`orientation_covariance[0]` other than `-1`. Defaults allow 2 seconds to acquire
+valid IMU/TF data and require readings fresher than 0.5 seconds. Missing, invalid,
+or stale data aborts the sequence; check the brain log for
+`LEVEL_TORSO ended sequence`.
+
+To change the active duration, edit `kLevelDuration` in
+[`level_torso.yaml`](rumblex_brain/config/sequences/level_torso.yaml), rebuild
+`rumblex_brain`, and restart the brain. Configure the topic, gains, and limits
+under `level_torso` in `rumblex_brain/config/<robot>/gait.yaml`, then rebuild and
+restart to load the updated file. Defaults are approximately a 1-degree deadband,
+8-degree maximum correction, and 2 degrees/second maximum correction rate;
+physical tuning is still required. See the
+[sensor gait documentation](rumblex_brain/config/sequences/README.md) for details.
+
 ## Send requests
 
 Inject recognized speech into the running brain:

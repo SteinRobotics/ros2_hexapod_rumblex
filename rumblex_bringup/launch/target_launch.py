@@ -3,13 +3,24 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.conditions import IfCondition
 from launch.launch_description_sources import AnyLaunchDescriptionSource, PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
     robot = LaunchConfiguration('robot')
+    model = PathJoinSubstitution([
+        FindPackageShare('rumblex_description'), 'urdf', [robot, '_mesh.urdf.xacro']])
+    robot_state = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        output='screen',
+        parameters=[{'robot_description': ParameterValue(
+            Command([FindExecutable(name='xacro'), ' ', model, ' use_sim:=false']),
+            value_type=str)}],
+    )
 
     communication = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
@@ -78,6 +89,7 @@ def generate_launch_description():
         DeclareLaunchArgument('camera_device', default_value=''),
         DeclareLaunchArgument('camera_params_file', default_value=''),
         DeclareLaunchArgument('camera_info_url', default_value=''),
+        robot_state,
         communication,
         hmi,
         movement,

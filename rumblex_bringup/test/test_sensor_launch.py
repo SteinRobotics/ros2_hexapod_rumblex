@@ -2,6 +2,7 @@
 import importlib.util
 from pathlib import Path
 from unittest.mock import patch
+import xml.etree.ElementTree as ET
 
 import pytest
 import yaml
@@ -9,6 +10,7 @@ from launch import LaunchContext
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.utilities import normalize_to_list_of_substitutions, perform_substitutions
 from launch_ros.actions import Node
+from launch_ros.utilities import evaluate_parameters
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -102,6 +104,28 @@ def test_camera_arguments_forwarded_through_bringup(package, launch_name):
     assert len(forwarded) == 1
     for name, value in values.items():
         assert evaluate(defaults, forwarded[0][name]) == value
+
+
+@pytest.mark.parametrize('robot', ['nox', 'nira'])
+def test_hardware_bringup_publishes_imu_mount_without_navigation(robot):
+    description = load('rumblex_bringup', 'target_launch').generate_launch_description()
+    ctx = context(robot)
+    ctx.launch_configurations['enable_navigation'] = 'false'
+    publishers = [action for action in description.entities
+                  if isinstance(action, Node) and
+                  evaluate(ctx, action.node_package) == 'robot_state_publisher']
+    assert len(publishers) == 1
+    publisher = publishers[0]
+    assert publisher.condition is None
+    parameters = evaluate_parameters(ctx, publisher._Node__parameters)
+    model = ET.fromstring(parameters[0]['robot_description'])
+    assert model.get('name') == robot
+    joint = model.find("joint[@name='imu_joint']")
+    assert joint is not None
+    assert joint.get('type') == 'fixed'
+    assert joint.find('parent').get('link') == 'base_link'
+    assert joint.find('child').get('link') == 'imu_link'
+    assert model.find('ros2_control') is None
 
 
 def test_navigation_has_no_sensor_or_head_controller():
