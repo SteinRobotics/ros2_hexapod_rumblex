@@ -18,7 +18,7 @@ cfg = PlateConfig(
     width = 20.4,
     thickness = 10.0,
     corner_radius = 1.0,
-    hole_diameter = 2.2,
+    hole_diameter = 2.5,
     hole_edge_offset = 3.0,
     hole_count = 2,
     spacer_height = 4.0,
@@ -61,4 +61,3 @@ if __name__ == "__main__":
     # export_step(result, "generated/step/board_ina228.step")
 
     show(result, name="board_ina228", clear=True)
-    

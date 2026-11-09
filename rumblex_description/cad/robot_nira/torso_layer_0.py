@@ -52,6 +52,10 @@ def place_board_holes(
     offset = Location((placement.x, placement.y))
     rotation = Rotation(0, 0, placement.rotation)
     for x, y in hole_positions:
+        # Match the assembly's Y half-turn before its Z rotation.
+        x = -x
+        if placement.flip_x:
+            y = -y  # additional X half-turn for component-up boards
         with Locations(offset * rotation * Location((x, y))):
             Circle(hole_radius, mode=Mode.SUBTRACT)
 

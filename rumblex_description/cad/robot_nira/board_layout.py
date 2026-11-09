@@ -18,12 +18,20 @@ class Placement:
     x: float
     y: float
     rotation: float = 0.0
+    flip_x: bool = False  # additional local X half-turn; components face upward
 
 
-LOCATION_RPI5 = Placement(-34.0, -11.5)  # upper-left hole shares BNO055's (-5, 8) center
-LOCATION_SERVO_PLUG = Placement(10.0, 32.5)  # combined ten-plug board; clears relay
-LOCATION_RELAY = Placement(51.0, 32.0)  # links oben
-LOCATION_BNO055 = Placement(0.0, -2.0, 90.0)  # mitte, ggf leicht verschoben
+LOCATION_RPI5 = Placement(-24.0, -7.5, 180.0)
+LOCATION_SERVO_PLUG = Placement(14.0, 32.5)  # combined ten-plug board
+LOCATION_RELAY = Placement(51.0, 32.0, 90.0)  # links oben
+# With this orientation, the chip's local (x, y) becomes (y, -x).
+# Offset the PCB so the chip center lies at the torso's XY origin.
+LOCATION_BNO055 = Placement(
+    -(-board_bno055.cfg.width / 2 + board_bno055.CHIP_OFFSET_Y + board_bno055.CHIP_WIDTH / 2),
+    -board_bno055.cfg.length / 2 + board_bno055.CHIP_OFFSET_X + board_bno055.CHIP_LENGTH / 2,
+    90.0,
+    flip_x=True,
+)
 LOCATION_INA228 = Placement(-60.0, 33.0, 90.0)  # lower left, rotated 45 degrees clockwise
 LOCATION_SERVO_INTERFACE = Placement(52.0, 0.0)  # oben, mitte
 LOCATION_I2C_DISTRIBUTOR = Placement(-29.0, 35.0)  # lower left, beside Raspberry Pi

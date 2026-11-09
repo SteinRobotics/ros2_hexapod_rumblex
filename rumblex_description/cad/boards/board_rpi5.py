@@ -9,20 +9,35 @@ from pathlib import Path
 from build123d import *
 from utils.ocp_utils import show
 
-from utils.plate_with_holes import build_plate, PlateConfig, default_hole_positions
+from utils.plate_with_holes import build_plate, PlateConfig
 import utils.spacer as spacer
 from utils.colors import *
 
+# Board outline and hole centers from the official Raspberry Pi 5 drawing:
+# https://datasheets.raspberrypi.com/rpi5/raspberry-pi-5-mechanical-drawing.pdf
+MOUNTING_HOLE_SPACING_X = 58.0
+MOUNTING_HOLE_SPACING_Y = 49.0
+
 cfg = PlateConfig(
-    length = 68.0,
-    width = 49.0,
+    length = 85.0,
+    width = 56.0,
     thickness = 30.0,        # including power supply board
     corner_radius = 2.0,
-    hole_diameter = 2.2,
-    hole_edge_offset = 5.0,
+    hole_diameter = 2.5,  # requested mounting bore; official PCB holes are 2.7 mm
+    hole_edge_offset = 3.5,
     hole_count = 4,
     spacer_height = 15.0,
 )
+
+def default_hole_positions(cfg: PlateConfig = cfg) -> list[tuple[float, float]]:
+    """Hole centers relative to the board center, starting at the -X edge."""
+    x_left = -cfg.length / 2 + cfg.hole_edge_offset
+    x_right = x_left + MOUNTING_HOLE_SPACING_X
+    y_bottom = -cfg.width / 2 + cfg.hole_edge_offset
+    y_top = y_bottom + MOUNTING_HOLE_SPACING_Y
+    return [(x_right, y_top), (x_left, y_bottom),
+            (x_left, y_top), (x_right, y_bottom)][:cfg.hole_count]
+
 
 def build_surface() -> Sketch:
     hole_positions = default_hole_positions(cfg)
@@ -37,7 +52,7 @@ def build_surface() -> Sketch:
 
 def build_board_with_spacers() -> Compound:
     hole_positions = default_hole_positions(cfg)
-    board = build_plate(cfg=cfg)
+    board = build_plate(cfg=cfg, hole_positions=hole_positions)
     spacer_z = cfg.thickness + cfg.spacer_height / 2
     spacers = [
         Pos(x, y, spacer_z)

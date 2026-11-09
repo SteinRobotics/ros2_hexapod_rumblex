@@ -51,7 +51,7 @@ def servo_location(config: torso_common.ServoCutoutConfig, z: float = SERVO_Z):
 
 
 def place_board(board_module, placement: Placement):
-    """Build a board-with-spacers assembly and place it (component-side down) on the body.
+    """Build a board-with-spacers assembly and place it on the body with the requested orientation.
 
     The board is flipped and rotated around its own center first, then
     moved to the placement's XY offset - matching the hole pattern cut in
@@ -59,9 +59,13 @@ def place_board(board_module, placement: Placement):
     """
     board = board_module.build_board_with_spacers()
     z_pos = board_module.cfg.thickness + board_module.cfg.spacer_height + torso_common.THICKNESS
+    if placement.flip_x:
+        # Component-up boards model their spacers below the PCB already.
+        z_pos = board_module.cfg.spacer_height + torso_common.THICKNESS
     return (
         Pos(placement.x, placement.y, z_pos)
         * Rot(0, 0, placement.rotation)
+        * Rot(180 if placement.flip_x else 0, 0, 0)
         * Rot(0, 180, 0)
         * board
     )

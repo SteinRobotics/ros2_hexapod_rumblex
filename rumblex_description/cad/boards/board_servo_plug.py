@@ -8,7 +8,7 @@ if __package__ in (None, ""):
 from build123d import *
 from utils.ocp_utils import show
 
-from utils.plate_with_holes import PlateConfig, default_hole_positions
+from utils.plate_with_holes import PlateConfig
 import utils.spacer as spacer
 from utils.colors import *
 
@@ -25,15 +25,19 @@ PLUG_ROWS = 2
 # Smallest whole-grid steps that accommodate the rotated 4.9 x 9.9 mm bodies.
 PLUG_COLUMN_PITCH = 2 * GRID_PITCH
 PLUG_ROW_PITCH = 4 * GRID_PITCH
+# Center the connector group on the PCB.
+PLUG_OFFSET_X = 0.0
+# Nearest whole-grid spacing to the requested 36.5 mm.
+MOUNTING_HOLE_SPACING_X = 14 * GRID_PITCH
 PLUG_POSITIONS = tuple(
-    ((column - (PLUG_COLUMNS - 1) / 2) * PLUG_COLUMN_PITCH,
+    (PLUG_OFFSET_X + (column - (PLUG_COLUMNS - 1) / 2) * PLUG_COLUMN_PITCH,
      (row - (PLUG_ROWS - 1) / 2) * PLUG_ROW_PITCH)
     for row in range(PLUG_ROWS)
     for column in range(PLUG_COLUMNS)
 )
 
 cfg = PlateConfig(
-    length = (PLUG_COLUMNS + 2) * PLUG_COLUMN_PITCH,
+    length = 45.5,
     width = 10 * GRID_PITCH,
     thickness = PLUG_HEIGHT + PCB_THICKNESS,
     corner_radius = 1.0,
@@ -42,6 +46,12 @@ cfg = PlateConfig(
     hole_count = 4,
     spacer_height = 4.0,
 )
+
+
+def default_hole_positions(cfg: PlateConfig = cfg) -> list[tuple[float, float]]:
+    x = MOUNTING_HOLE_SPACING_X / 2
+    y = cfg.width / 2 - cfg.hole_edge_offset
+    return [(x, y), (-x, -y), (-x, y), (x, -y)][:cfg.hole_count]
 
 
 def pin_positions() -> list[tuple[float, float]]:

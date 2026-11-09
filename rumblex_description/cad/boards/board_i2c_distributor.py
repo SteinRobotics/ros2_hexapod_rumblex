@@ -9,20 +9,28 @@ from pathlib import Path
 from build123d import *
 from utils.ocp_utils import show
 
-from utils.plate_with_holes import build_plate, PlateConfig, default_hole_positions
+from utils.plate_with_holes import build_plate, PlateConfig
 import utils.spacer as spacer
 from utils.colors import *
+
+MOUNTING_HOLE_SPACING_X = 33.0
 
 cfg = PlateConfig(
     length = 40.0,
     width = 20.0,
     thickness = 10.0, 
     corner_radius = 1.0,
-    hole_diameter = 2.2,
+    hole_diameter = 2.5,
     hole_edge_offset = 2.0,
     hole_count = 4,
     spacer_height = 4.0,
 )
+
+def default_hole_positions(cfg: PlateConfig = cfg) -> list[tuple[float, float]]:
+    x = MOUNTING_HOLE_SPACING_X / 2
+    y = cfg.width / 2 - cfg.hole_edge_offset
+    return [(x, y), (-x, -y), (-x, y), (x, -y)][:cfg.hole_count]
+
 
 def build_surface() -> Sketch:
     hole_positions = default_hole_positions(cfg)
@@ -37,7 +45,7 @@ def build_surface() -> Sketch:
 
 def build_board_with_spacers() -> Compound:
     hole_positions = default_hole_positions(cfg)
-    board = build_plate(cfg=cfg)
+    board = build_plate(cfg=cfg, hole_positions=hole_positions)
     spacer_z = cfg.thickness + cfg.spacer_height / 2
     spacers = [
         Pos(x, y, spacer_z)
@@ -61,4 +69,3 @@ if __name__ == "__main__":
     # export_step(result, "generated/step/board_relay.step")
 
     show(result, name="board_relay", clear=True)
-    
