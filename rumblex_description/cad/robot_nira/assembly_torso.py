@@ -27,6 +27,7 @@ import robot_nira.torso_layer_3 as torso_layer_3
 import robot_nira.torso_layer_4 as torso_layer_4
 import robot_nira.chassis_diagonal_back as chassis_diagonal_back
 import robot_nira.chassis_side as chassis_side
+from robot_nira import chassis_back_inner
 import robot_nira.chassis_slope_cover as chassis_slope_cover
 from robot_nira import board_ydlidar_tmini_interface
 from robot_nira import lidar_ydlidar_tmini
@@ -207,6 +208,7 @@ def build_assembly() -> Compound:
             housing,
             lidar,
             *chassis_side_parts,
+            chassis_back_inner.build_plate(),
             *chassis_diagonal_parts,
             chassis_slope_cover_part,
             *speaker_parts,
