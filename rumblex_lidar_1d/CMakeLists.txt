@@ -9,6 +9,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+  # The vendor driver ignores an I2C write result; keep its warning non-fatal.
+  set_source_files_properties(src/LIDARLite_RaspberryPi_Library/src/lidarlite_v3.cpp
+    PROPERTIES COMPILE_OPTIONS -Wno-error=unused-result)
 endif()
 
 find_package(ament_cmake REQUIRED)
