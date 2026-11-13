@@ -6,11 +6,18 @@ trigger:
 variables:
   kMovement: &kMovement SINGLE_POSE
   kInterpolation: &kInterpolation sin_squared
-  kClapCount: &kClapCount 6  # repetitions
+  kMiddleClapCount: &kMiddleClapCount 4  # repetitions; plus opening and final claps
   kSettleDuration: &kSettleDuration 2.0  # s
   kLiftDuration: &kLiftDuration 1.6  # s
-  kCloseDuration: &kCloseDuration 1.0  # s
-  kOpenDuration: &kOpenDuration 1.2  # s
+  kFirstCloseDuration: &kFirstCloseDuration 0.6  # s
+  kFirstOpenDuration: &kFirstOpenDuration 1.2  # s; twice the closing duration
+  kFinalOpenDuration: &kFinalOpenDuration 1.4  # s; longer final release
+  kContactDuration: &kContactDuration 0.12  # s; small head follow-through
+  kHeadReady: &kHeadReady -4  # deg
+  kHeadContact: &kHeadContact 3  # deg
+  kHeadFollow: &kHeadFollow 2  # deg; relative nod after closing
+  kCloseDuration: &kCloseDuration 0.5  # s
+  kOpenDuration: &kOpenDuration 1.0  # s; twice the closing duration
   kLandDuration: &kLandDuration 2.0  # s
   kReturnDuration: &kReturnDuration 2.0  # s
   kTorsoBack: &kTorsoBack -0.065  # m; retain this rearward bias until front toes land
@@ -39,25 +46,66 @@ actions:
       duration_s: *kLiftDuration
       interpolation: *kInterpolation
       save_pose: true
+      body_pose:
+        head_orientation: {pitch: *kHeadReady}
       joint_targets:
         right_front: {torso_coxa: *kCoxaOpen, coxa_femur: *kFrontFemur, femur_tibia: *kFrontTibia}
         left_front: {torso_coxa: *kCoxaOpen, coxa_femur: *kFrontFemur, femur_tibia: *kFrontTibia}
-  # Slow eased claps with a small body pulse. Repeat absolute front joint targets
-  # so the raised legs follow the torso; all four support toes stay planted.
+  # Establish the rhythm with one slightly slower clap.
+  - movement:
+      name: *kMovement
+      duration_s: *kFirstCloseDuration
+      interpolation: cos
+      body_pose:
+        torso_pose:
+          position: {x: *kTorsoBack, y: 0, z: *kTorsoPulse}
+          orientation: {roll: 0, pitch: 0, yaw: 0}
+        head_orientation: {pitch: *kHeadContact}
+      joint_targets:
+        right_front: {torso_coxa: *kCoxaRightClosed, coxa_femur: *kFrontFemur, femur_tibia: *kFrontTibia}
+        left_front: {torso_coxa: *kCoxaLeftClosed, coxa_femur: *kFrontFemur, femur_tibia: *kFrontTibia}
+  # The feet and torso hold while the head completes a small delayed nod.
+  - movement:
+      name: *kMovement
+      duration_s: *kContactDuration
+      interpolation: *kInterpolation
+      pose_delta:
+        head_rotation: {pitch: *kHeadFollow}
+  - movement:
+      name: *kMovement
+      duration_s: *kFirstOpenDuration
+      interpolation: *kInterpolation
+      body_pose:
+        torso_pose:
+          position: {x: *kTorsoBack, y: 0, z: *kTorsoLow}
+          orientation: {roll: 0, pitch: 0, yaw: 0}
+        head_orientation: {pitch: *kHeadReady}
+      joint_targets:
+        right_front: {torso_coxa: *kCoxaOpen, coxa_femur: *kFrontFemur, femur_tibia: *kFrontTibia}
+        left_front: {torso_coxa: *kCoxaOpen, coxa_femur: *kFrontFemur, femur_tibia: *kFrontTibia}
+  # Four steady claps: quick-start closes, a short nod, and relaxed reopening.
   - loop:
-      times: *kClapCount
+      times: *kMiddleClapCount
       actions:
         - movement:
             name: *kMovement
             duration_s: *kCloseDuration
-            interpolation: *kInterpolation
+            interpolation: cos
             body_pose:
               torso_pose:
                 position: {x: *kTorsoBack, y: 0, z: *kTorsoPulse}
                 orientation: {roll: 0, pitch: 0, yaw: 0}
+              head_orientation: {pitch: *kHeadContact}
             joint_targets:
               right_front: {torso_coxa: *kCoxaRightClosed, coxa_femur: *kFrontFemur, femur_tibia: *kFrontTibia}
               left_front: {torso_coxa: *kCoxaLeftClosed, coxa_femur: *kFrontFemur, femur_tibia: *kFrontTibia}
+        # The feet and torso hold while the head completes a small delayed nod.
+        - movement:
+            name: *kMovement
+            duration_s: *kContactDuration
+            interpolation: *kInterpolation
+            pose_delta:
+              head_rotation: {pitch: *kHeadFollow}
         - movement:
             name: *kMovement
             duration_s: *kOpenDuration
@@ -66,9 +114,42 @@ actions:
               torso_pose:
                 position: {x: *kTorsoBack, y: 0, z: *kTorsoLow}
                 orientation: {roll: 0, pitch: 0, yaw: 0}
+              head_orientation: {pitch: *kHeadReady}
             joint_targets:
               right_front: {torso_coxa: *kCoxaOpen, coxa_femur: *kFrontFemur, femur_tibia: *kFrontTibia}
               left_front: {torso_coxa: *kCoxaOpen, coxa_femur: *kFrontFemur, femur_tibia: *kFrontTibia}
+  # Finish with a longer release before landing.
+  - movement:
+      name: *kMovement
+      duration_s: *kCloseDuration
+      interpolation: cos
+      body_pose:
+        torso_pose:
+          position: {x: *kTorsoBack, y: 0, z: *kTorsoPulse}
+          orientation: {roll: 0, pitch: 0, yaw: 0}
+        head_orientation: {pitch: *kHeadContact}
+      joint_targets:
+        right_front: {torso_coxa: *kCoxaRightClosed, coxa_femur: *kFrontFemur, femur_tibia: *kFrontTibia}
+        left_front: {torso_coxa: *kCoxaLeftClosed, coxa_femur: *kFrontFemur, femur_tibia: *kFrontTibia}
+  # The feet and torso hold while the head completes a small delayed nod.
+  - movement:
+      name: *kMovement
+      duration_s: *kContactDuration
+      interpolation: *kInterpolation
+      pose_delta:
+        head_rotation: {pitch: *kHeadFollow}
+  - movement:
+      name: *kMovement
+      duration_s: *kFinalOpenDuration
+      interpolation: *kInterpolation
+      body_pose:
+        torso_pose:
+          position: {x: *kTorsoBack, y: 0, z: *kTorsoLow}
+          orientation: {roll: 0, pitch: 0, yaw: 0}
+        head_orientation: {pitch: *kHeadReady}
+      joint_targets:
+        right_front: {torso_coxa: *kCoxaOpen, coxa_femur: *kFrontFemur, femur_tibia: *kFrontTibia}
+        left_front: {torso_coxa: *kCoxaOpen, coxa_femur: *kFrontFemur, femur_tibia: *kFrontTibia}
   # Land before moving the torso forward. The saved pose has the original toes
   # and head, but the settled rearward torso, so this cannot recenter in mid-air.
   - movement:

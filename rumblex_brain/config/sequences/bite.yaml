@@ -1,19 +1,80 @@
-# Lean the torso forward and pitch the head, then restore the starting pose.
+# A head-led snap: gather, aim, strike, recoil, and settle. Start standing.
+# All six toes stay planted. Offsets below are incremental, not absolute targets.
 name: bite
-# Suggested gesture; start standing. No automatic voice or joystick trigger.
+# No automatic voice or joystick trigger.
 variables:
-  kMoveDuration: &kMoveDuration 1.0  # s
-  kForwardTorso: &kForwardTorso 0.015  # m
-  kHeadPitch: &kHeadPitch 10  # deg
+  kGatherDuration: &kGatherDuration 0.22  # s
+  kLeadDuration: &kLeadDuration 0.12  # s
+  kStrikeDuration: &kStrikeDuration 0.18  # s
+  kRecoilDuration: &kRecoilDuration 0.28  # s
+  kSettleDuration: &kSettleDuration 0.35  # s
+  kRestoreDuration: &kRestoreDuration 1.0  # s
+  kGatherBack: &kGatherBack -0.008  # m
+  kGatherDown: &kGatherDown -0.004  # m
+  kLeadForward: &kLeadForward 0.004  # m
+  kStrikeForward: &kStrikeForward 0.026  # m; peak offset from entrance is +0.022 m
+  kStrikeUp: &kStrikeUp 0.004  # m
+  kRecoilBack: &kRecoilBack -0.028  # m
+  kRecoilDown: &kRecoilDown -0.003  # m
+  kSettleForward: &kSettleForward 0.006  # m
+  kSettleUp: &kSettleUp 0.003  # m
+  kGatherHead: &kGatherHead -5  # deg
+  kLeadHead: &kLeadHead 10  # deg
+  kStrikeHead: &kStrikeHead 9  # deg; peak entrance-relative pitch is +14 deg
+  kRecoilHead: &kRecoilHead -10  # deg
+  kSettleHead: &kSettleHead -4  # deg
+  kGatherTorso: &kGatherTorso -2  # deg
+  kStrikeTorso: &kStrikeTorso 5  # deg
+  kRecoilTorso: &kRecoilTorso -4  # deg
+  kSettleTorso: &kSettleTorso 1  # deg
 actions:
+  # Small compression before the attack; capture the entrance before moving.
   - movement:
       name: SINGLE_POSE
-      duration_s: *kMoveDuration
-      save_pose: true  # Capture the pose before this movement begins.
+      duration_s: *kGatherDuration
+      interpolation: sin_squared
+      save_pose: true
       pose_delta:
-        torso_translation: {x: *kForwardTorso}
-        head_rotation: {pitch: *kHeadPitch}
+        torso_translation: {x: *kGatherBack, z: *kGatherDown}
+        torso_rotation: {pitch: *kGatherTorso}
+        head_rotation: {pitch: *kGatherHead}
+  # Head initiates; the torso only begins to follow.
   - movement:
       name: SINGLE_POSE
-      duration_s: *kMoveDuration
-      restore_pose: true  # Return to the captured pose on normal completion.
+      duration_s: *kLeadDuration
+      interpolation: sin
+      pose_delta:
+        torso_translation: {x: *kLeadForward}
+        head_rotation: {pitch: *kLeadHead}
+  # Fast forward snap, easing out at its furthest extent.
+  - movement:
+      name: SINGLE_POSE
+      duration_s: *kStrikeDuration
+      interpolation: cos
+      pose_delta:
+        torso_translation: {x: *kStrikeForward, z: *kStrikeUp}
+        torso_rotation: {pitch: *kStrikeTorso}
+        head_rotation: {pitch: *kStrikeHead}
+  # Pull back past the entrance slightly, then settle without a second strike.
+  - movement:
+      name: SINGLE_POSE
+      duration_s: *kRecoilDuration
+      interpolation: sin_squared
+      pose_delta:
+        torso_translation: {x: *kRecoilBack, z: *kRecoilDown}
+        torso_rotation: {pitch: *kRecoilTorso}
+        head_rotation: {pitch: *kRecoilHead}
+  - movement:
+      name: SINGLE_POSE
+      duration_s: *kSettleDuration
+      interpolation: sin_squared
+      pose_delta:
+        torso_translation: {x: *kSettleForward, z: *kSettleUp}
+        torso_rotation: {pitch: *kSettleTorso}
+        head_rotation: {pitch: *kSettleHead}
+  # Deltas already sum to zero; restore the exact snapshot and consume its slot.
+  - movement:
+      name: SINGLE_POSE
+      duration_s: *kRestoreDuration
+      interpolation: sin_squared
+      restore_pose: true

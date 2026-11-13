@@ -1,0 +1,91 @@
+# Generated from a Python choreography recipe; edit the recipe and regenerate.
+# Units: metres, degrees, seconds.
+name: curious_look
+actions:
+- loop:
+    times: 2
+    actions:
+    - movement:
+        name: SINGLE_POSE
+        duration_s: 1.0
+        interpolation: sin_squared
+        pose_delta:
+          head_rotation:
+            pitch: -3.0
+        save_pose: true
+    - movement:
+        name: SINGLE_POSE
+        duration_s: 1.2
+        interpolation: sin_squared
+        pose_delta:
+          head_rotation:
+            yaw: 16.0
+    - movement:
+        name: SINGLE_POSE
+        duration_s: 1.4
+        interpolation: sin_squared
+        pose_delta:
+          torso_rotation:
+            yaw: 5.6
+    - movement:
+        name: SINGLE_POSE
+        duration_s: 1.0
+        interpolation: sin_squared
+        pose_delta:
+          head_rotation:
+            roll: 5.0
+            pitch: 2.0
+    - movement:
+        name: SINGLE_POSE
+        duration_s: 1.2
+        interpolation: sin_squared
+        pose_delta:
+          head_rotation:
+            yaw: 0
+    - movement:
+        name: SINGLE_POSE
+        duration_s: 1.8
+        interpolation: sin_squared
+        restore_pose: true
+    - movement:
+        name: SINGLE_POSE
+        duration_s: 1.0
+        interpolation: sin_squared
+        pose_delta:
+          head_rotation:
+            pitch: -3.0
+        save_pose: true
+    - movement:
+        name: SINGLE_POSE
+        duration_s: 1.2
+        interpolation: sin_squared
+        pose_delta:
+          head_rotation:
+            yaw: -13.0
+    - movement:
+        name: SINGLE_POSE
+        duration_s: 1.4
+        interpolation: sin_squared
+        pose_delta:
+          torso_rotation:
+            yaw: -4.55
+    - movement:
+        name: SINGLE_POSE
+        duration_s: 1.0
+        interpolation: sin_squared
+        pose_delta:
+          head_rotation:
+            roll: -5.0
+            pitch: 2.0
+    - movement:
+        name: SINGLE_POSE
+        duration_s: 1.38
+        interpolation: sin_squared
+        pose_delta:
+          head_rotation:
+            yaw: 0
+    - movement:
+        name: SINGLE_POSE
+        duration_s: 1.8
+        interpolation: sin_squared
+        restore_pose: true

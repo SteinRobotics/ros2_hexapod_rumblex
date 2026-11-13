@@ -148,8 +148,11 @@ Every gait captures the current command-frame pose on entry. `start`,
 then starts the incoming gait from that endpoint. Fixed poses and gestures use
 `trajectoryProgress(t) = 10t³ - 15t⁴ + 6t⁵`, with zero velocity and acceleration
 at both ends. Pose requests are captured once per finite segment; changing a
-request cannot move an existing segment's destination. Pose transitions retain
-their minimum duration of one second, sampled at 50 Hz. In `CONTINUOUS_POSE`,
+request cannot move an existing segment's destination. Absolute `SINGLE_POSE`
+transitions have a minimum duration of 0.1 seconds, sampled at 50 Hz; the default
+duration remains one second. Relative poses accept any finite positive duration.
+The minimum provides nominally five command samples, not a physical speed limit;
+completion tracks planned motion rather than measured servo arrival. In `CONTINUOUS_POSE`,
 the head completes its smooth trajectory in 0.5 seconds and holds its target
 while the torso finishes the one-second segment. Both targets are captured at
 the segment boundary; this preserves zero velocity and acceleration at handoff
@@ -275,3 +278,18 @@ checks, one-tick servo commands, and pose-mode request grouping.
 The former `gait.*.rotation_weight` settings have been removed: the physical
 stride planner did not use them. Translation and rotation are determined by
 the requested physical velocity. Remove these unused settings from custom configurations.
+
+## Sequence parsing and request validation
+
+The public `CSequenceParser` owns catalog loading, transactional replacement, and
+trigger lookup. Internal `sequence_loader` resolves variables and expands includes
+and loops; `action_decoder` maps supported action names and constructs requests. Deprecated
+YAML wrappers and request aliases are rejected; see the sequence migration notes.
+Shared YAML field checks remain internal to the parser implementation.
+
+`MovementRequest` supplies reusable predicates for pose options, duration, relative
+poses, toe targets, and sensor requests. Each entry point selects its existing
+checks: YAML structure belongs to decoding, and saved-pose availability belongs to
+the controller. The predicates do not impose a new universal validation policy.
+The named pose-duration constants preserve the one-second default and 0.1-second
+absolute floor; the Python authoring helper names its corresponding floor explicitly.

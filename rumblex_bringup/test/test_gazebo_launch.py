@@ -50,6 +50,23 @@ def test_gazebo_test_launch_spawns_map_without_rviz():
     assert spawn['arguments'][:2] == ['-topic', 'gazebo_map_description']
 
 
+def test_gazebo_house_spawns_packaged_furniture_in_world_frame():
+    module = load('rumblex_bringup', 'test_gazebo_launch.py')
+    with patch.object(module, 'Node', wraps=module.Node) as node:
+        module.generate_launch_description()
+    furniture = next(call.kwargs for call in node.call_args_list
+                     if call.kwargs.get('name') == 'spawn_house_furniture')
+    args = furniture['arguments']
+    assert furniture['package'] == 'ros_gz_sim' and furniture['executable'] == 'create'
+    assert args[0] == '-file'
+    with patch('launch_ros.substitutions.find_package.get_package_share_directory',
+               side_effect=lambda name: str(ROOT / name)):
+        path = Path(args[1].perform(LaunchContext()))
+    assert path == ROOT / 'rumblex_gazebo/models/house_furniture.sdf'
+    assert path.is_file()
+    assert args[2:] == ['-name', 'house_furniture', '-world', 'hexapod_world']
+
+
 @pytest.mark.parametrize('robot', ['nox', 'nira'])
 def test_bridge_joint_order_covers_mesh_model(robot):
     module = load('rumblex_bringup', 'test_gazebo_launch.py')

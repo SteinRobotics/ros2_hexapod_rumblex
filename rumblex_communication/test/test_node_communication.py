@@ -114,3 +114,21 @@ def test_background_music_failure_does_not_finish_foreground_request():
     node.callback_background_music(Mock(data='party.mp3'))
     node.get_logger().error.assert_called_once()
     assert node.status == CommunicationStatus.STT_OFFLINE_ACTIVE
+
+
+def test_background_fade_preserves_foreground_request_and_handles_failure():
+    node = make_node()
+    node.callback_talking(Mock(data='Hallo'))
+    pending, generation = node._pending, node._generation
+    node.music_player.reset_mock()
+    node.callback_background_music_fade(Mock(data=4.0))
+    node.music_player.fade_background.assert_called_once_with(4.0)
+    node.music_player.stop_playing.assert_not_called()
+    node.music_player.stop_background.assert_not_called()
+    assert node._pending is pending
+    assert node._generation == generation
+    assert node.status == CommunicationStatus.TTS_ACTIVE
+    node.music_player.fade_background.side_effect = ValueError('invalid fade')
+    node.callback_background_music_fade(Mock(data=-1.0))
+    node.get_logger().error.assert_called_once()
+    assert node.status == CommunicationStatus.TTS_ACTIVE

@@ -139,3 +139,33 @@ TEST_F(CommunicationHandlerTest, PlannerStartsNextSequenceWhileBackgroundMusicPl
     // The next sequence has started and is waiting for its speech response.
     EXPECT_FALSE(planner.requestGroupFinished());
 }
+
+TEST_F(CommunicationHandlerTest, BackgroundFadePublishesDurationWithoutBlockingOrFinishingSpeech) {
+    CCommunication handler(node);
+    rclcpp::executors::SingleThreadedExecutor executor;
+    executor.add_node(node);
+    float received = 0;
+    auto subscription = node->create_subscription<std_msgs::msg::Float32>(
+        "request_background_music_fade", 10, [&](const std_msgs::msg::Float32& msg) { received = msg.data; });
+    const auto discovery_deadline = std::chrono::steady_clock::now() + 2s;
+    while (subscription->get_publisher_count() == 0 &&
+           std::chrono::steady_clock::now() < discovery_deadline) {
+        executor.spin_some();
+        std::this_thread::sleep_for(10ms);
+    }
+    ASSERT_GT(subscription->get_publisher_count(), 0u);
+    auto fade = std::make_shared<RequestMusic>();
+    fade->song = "STOP";
+    fade->fade_out_s = 4.0f;
+    handler.run(fade);
+    EXPECT_TRUE(handler.requestFinished());
+    const auto deadline = std::chrono::steady_clock::now() + 2s;
+    while (received == 0 && std::chrono::steady_clock::now() < deadline) {
+        executor.spin_some();
+        std::this_thread::sleep_for(10ms);
+    }
+    EXPECT_FLOAT_EQ(received, 4.0f);
+    handler.run(std::make_shared<RequestTalking>());
+    handler.run(fade);
+    EXPECT_FALSE(handler.requestFinished());
+}

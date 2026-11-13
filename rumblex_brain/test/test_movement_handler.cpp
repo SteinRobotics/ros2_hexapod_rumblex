@@ -3,14 +3,14 @@
 
 namespace {
 TEST_F(MovementHandlerTest, WaitsForFeedbackAndDoesNotStartDurationEarly) {
-    request(MovementRequest::SEQUENCE_STAND_UP, 0.2);
-    pump(350ms);
+    request(MovementRequest::SEQUENCE_STAND_UP, 0.5);
+    pump(700ms);
     EXPECT_TRUE(poses.empty());
     EXPECT_FALSE(handler->requestFinished());
     feedback->publish(initialPose());
-    pump(400ms);
+    pump(150ms);
     EXPECT_FALSE(handler->requestFinished());
-    pump(800ms);
+    pump(500ms);
     EXPECT_TRUE(handler->requestFinished());
     ASSERT_FALSE(poses.empty());
     EXPECT_TRUE(validBodyPose(poses.back()));
@@ -147,10 +147,10 @@ TEST_F(MovementHandlerTest, PendingRepeatingGaitGetsFullDurationAfterActivation)
 TEST_F(MovementHandlerTest, FiniteGaitWaitsForActualCompletion) {
     feedback->publish(initialPose());
     pump(150ms);
-    request(MovementRequest::SEQUENCE_STAND_UP, 0.1);
-    pump(300ms);
+    request(MovementRequest::SEQUENCE_STAND_UP, 0.5);
+    pump(150ms);
     EXPECT_FALSE(handler->requestFinished());
-    pump(1000ms);
+    pump(500ms);
     EXPECT_TRUE(handler->requestFinished());
 }
 

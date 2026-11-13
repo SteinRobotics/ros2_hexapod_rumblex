@@ -17,6 +17,8 @@ CCommunication::CCommunication(std::shared_ptr<rclcpp::Node> node) : node_(node)
     m_pubListening = node_->create_publisher<std_msgs::msg::Bool>("request_listening", 10);
     m_pubMusic = node_->create_publisher<std_msgs::msg::String>("request_music", 10);
     pub_background_music_ = node_->create_publisher<std_msgs::msg::String>("request_background_music", 10);
+    pub_background_music_fade_ =
+        node_->create_publisher<std_msgs::msg::Float32>("request_background_music_fade", 10);
 }
 
 void CCommunication::onCommunicationStatus(const rumblex_interfaces::msg::CommunicationStatus& msg) {
@@ -61,6 +63,14 @@ void CCommunication::run(std::shared_ptr<RequestChat> request) {
 
 void CCommunication::run(std::shared_ptr<RequestMusic> request) {
     RCLCPP_INFO_STREAM(node_->get_logger(), "CCommunication::run Music |" << request->song.c_str());
+    if (request->song == "STOP" && request->fade_out_s > 0.0f) {
+        std_msgs::msg::Float32 fade;
+        fade.data = request->fade_out_s;
+        pub_background_music_fade_->publish(fade);
+        background_music_ = true;
+        // Like playback, fading must not finish pending speech or block motion.
+        return;
+    }
     std_msgs::msg::String msg;
     msg.data = request->song;
     background_music_ = request->background && request->song != "STOP";

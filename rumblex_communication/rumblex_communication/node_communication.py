@@ -8,7 +8,7 @@ import time
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Bool, String
+from std_msgs.msg import Bool, Float32, String
 
 from rumblex_interfaces.msg import CommunicationStatus
 from rumblex_communication.music_player import MusicPlayer
@@ -33,6 +33,7 @@ class NodeCommunication(Node):
 
         self.create_subscription(String, 'request_music', self.callback_music, 10)
         self.create_subscription(String, 'request_background_music', self.callback_background_music, 10)
+        self.create_subscription(Float32, 'request_background_music_fade', self.callback_background_music_fade, 10)
         self.create_subscription(String, 'request_talking', self.callback_talking, 10)
         self.create_subscription(String, 'request_chat', self.callback_chatbot, 10)
         self.create_subscription(Bool, 'request_listening', self.callback_listening, 10)
@@ -150,6 +151,12 @@ class NodeCommunication(Node):
             self.music_player.play(msg.data, background=True)
         except Exception as exc:
             self.get_logger().error(f'Background music failed: {exc}')
+
+    def callback_background_music_fade(self, msg):
+        try:
+            self.music_player.fade_background(msg.data)
+        except Exception as exc:
+            self.get_logger().error(f'Background music fade failed: {exc}')
 
     def callback_talking(self, msg):
         self._cancel()

@@ -1,4 +1,4 @@
-"""Run the test stack with the Gazebo mesh robot and physical map walls.
+"""Run the test stack with the Gazebo mesh robot, physical map walls and furniture.
 """
 
 import os
@@ -64,6 +64,13 @@ def generate_launch_description():
                 package='ros_gz_sim', executable='create', name='spawn_map_walls',
                 arguments=['-topic', 'gazebo_map_description', '-name', 'map_walls',
                            '-world', 'hexapod_world'], output='screen',
+            ),
+            Node(
+                package='ros_gz_sim', executable='create', name='spawn_house_furniture',
+                arguments=['-file', PathJoinSubstitution([
+                    FindPackageShare('rumblex_gazebo'), 'models', 'house_furniture.sdf']),
+                    '-name', 'house_furniture', '-world', 'hexapod_world'],
+                output='screen',
             ),
         ]),
     ])

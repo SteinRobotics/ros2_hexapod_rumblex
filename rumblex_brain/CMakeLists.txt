@@ -55,6 +55,8 @@ src/gait/level_torso_control.cpp
 src/gait/gait_hold_distance.cpp
 src/gait/gait_level_torso.cpp
 src/parser/sequence_parser.cpp
+src/parser/sequence_loader.cpp
+src/parser/action_decoder.cpp
 )
 add_library(rumblex_brain_lib ${SOURCES})
 target_compile_features(rumblex_brain_lib PUBLIC cxx_std_23)
@@ -112,8 +114,18 @@ install(DIRECTORY
   DESTINATION share/${PROJECT_NAME}/
 )
 
+install(DIRECTORY tools
+  DESTINATION share/${PROJECT_NAME}/
+  PATTERN "__pycache__" EXCLUDE
+  PATTERN "*.pyc" EXCLUDE)
+
 # Unit tests
 if(BUILD_TESTING)
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  add_test(NAME test_choreography
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_choreography.py)
+  add_test(NAME test_sequence_generator
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_sequence_generator.py)
   find_package(ament_cmake_gtest REQUIRED)
   ament_add_gtest(test_face_preview test/test_face_preview.cpp)
   target_link_libraries(test_face_preview rumblex_brain_lib)
@@ -129,6 +141,9 @@ if(BUILD_TESTING)
   target_link_libraries(test_level_torso_control rumblex_brain_lib)
   ament_add_gtest(test_sequence_parser test/test_sequence_parser.cpp)
   target_link_libraries(test_sequence_parser rumblex_brain_lib)
+  add_test(NAME test_section_parser
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_section_parser.py
+      $<TARGET_FILE:test_sequence_parser>)
   target_compile_definitions(test_sequence_parser PRIVATE
     RUMBLEX_SEQUENCES_DIRECTORY="${CMAKE_CURRENT_SOURCE_DIR}/config/sequences")
   ament_add_gtest(test_orientation_timing test/test_orientation_timing.cpp)

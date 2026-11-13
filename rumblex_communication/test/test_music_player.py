@@ -80,3 +80,72 @@ def test_background_music_rejects_invalid_paths():
             with pytest.raises(ValueError):
                 player.play(filename, background=True)
         mixer.Sound.assert_not_called()
+
+
+def test_background_fade_is_nonblocking_and_preserves_speech():
+    with patch('rumblex_communication.music_player.mixer') as mixer:
+        player = MusicPlayer()
+        player.play('party.mp3', background=True)
+        channel = mixer.Sound.return_value.play.return_value
+        done = Mock()
+        player.play_file('speech.mp3', cb=done)
+        mixer.music.reset_mock()
+        player.fade_background(4)
+        channel.fadeout.assert_called_once_with(4000)
+        channel.stop.assert_not_called()
+        mixer.music.stop.assert_not_called()
+        mixer.music.fadeout.assert_not_called()
+        mixer.music.get_busy.return_value = False
+        player.poll()
+        done.assert_called_once_with()
+        # Replacing a fading track cancels it immediately, not the new track.
+        replacement = Mock()
+        mixer.Sound.return_value.play.return_value = replacement
+        player.play('next.mp3', background=True)
+        channel.stop.assert_called_once_with()
+        replacement.stop.assert_not_called()
+        replacement.fadeout.assert_not_called()
+
+
+def test_background_fade_validates_duration_and_handles_no_track_or_zero():
+    import pytest
+
+    with patch('rumblex_communication.music_player.mixer') as mixer:
+        player = MusicPlayer()
+        player.fade_background(4)
+        mixer.Sound.assert_not_called()
+        player.play('party.mp3', background=True)
+        channel = mixer.Sound.return_value.play.return_value
+        for duration in (-1, float('nan'), float('inf'), 61):
+            with pytest.raises(ValueError):
+                player.fade_background(duration)
+        channel.fadeout.assert_not_called()
+        channel.stop.assert_not_called()
+        player.fade_background(0)
+        channel.stop.assert_called_once_with()
+
+
+def test_real_background_channel_fades_to_silence_without_blocking():
+    # Exercise SDL's real fade behavior without opening speakers or audio files.
+    result = subprocess.run(
+        [sys.executable, '-c', '''
+import os
+import time
+os.environ['SDL_AUDIODRIVER'] = 'dummy'
+from rumblex_communication.music_player import MusicPlayer, mixer
+player = MusicPlayer()
+try:
+    frequency, format_, channels = mixer.get_init()
+    sound = mixer.Sound(buffer=bytes(frequency * channels * (abs(format_) // 8)))
+    player._background_channel = sound.play(loops=-1)
+    channel = player._background_channel
+    player.fade_background(0.3)
+    assert channel.get_busy(), 'fade blocked until playback stopped'
+    deadline = time.monotonic() + 2
+    while channel.get_busy() and time.monotonic() < deadline:
+        time.sleep(0.01)
+    assert not channel.get_busy(), 'fade did not stop playback'
+finally:
+    player.close()
+'''], capture_output=True, text=True, timeout=10)
+    assert result.returncode == 0, result.stderr

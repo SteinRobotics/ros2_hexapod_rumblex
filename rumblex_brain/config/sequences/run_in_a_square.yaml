@@ -1,0 +1,36 @@
+# Timed counterclockwise square, approximately 0.50 m per side.
+# Midrange speeds for the current Nox/Nira limits (0.10 m/s and 0.40 rad/s).
+# Distance and heading are open-loop estimates; gait transitions/slip add error.
+name: run_in_a_square
+variables:
+  kSideDuration: &kSideDuration 10.0  # s; 0.50 m / 0.05 m/s
+  kForwardSpeed: &kForwardSpeed 0.05  # m/s
+  kTurnDuration: &kTurnDuration 7.853981634  # s; (pi / 2) rad / 0.20 rad/s
+  kTurnSpeed: &kTurnSpeed 0.20  # rad/s; positive yaw turns left
+  kSideCount: &kSideCount 4  # repetitions
+actions:
+  - movement:
+      name: SEQUENCE_STAND_UP
+      duration_s: 1.5
+  - loop:
+      times: *kSideCount
+      actions:
+        - movement:
+            name: MOVE_COMBINED
+            duration_s: *kSideDuration
+          velocity:
+            linear: {x: *kForwardSpeed}
+            angular: {z: 0.0}
+        # Turn in place; explicitly clear the forward velocity.
+        - movement:
+            name: MOVE_COMBINED
+            duration_s: *kTurnDuration
+          velocity:
+            linear: {x: 0.0}
+            angular: {z: *kTurnSpeed}
+  # The fourth turn restores the nominal entrance heading. End all travel.
+  - movement:
+      name: CONTINUOUS_POSE
+    velocity:
+      linear: {x: 0.0}
+      angular: {z: 0.0}

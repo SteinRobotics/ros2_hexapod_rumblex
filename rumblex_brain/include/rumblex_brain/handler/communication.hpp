@@ -38,6 +38,7 @@ class CCommunication : public IHandler {
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr m_pubListening;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr m_pubMusic;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_background_music_;
+    rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr pub_background_music_fade_;
     rclcpp::Subscription<rumblex_interfaces::msg::CommunicationStatus>::SharedPtr m_subStatus;
 
     rumblex_interfaces::msg::CommunicationStatus m_communication =

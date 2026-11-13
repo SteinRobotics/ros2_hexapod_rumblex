@@ -66,11 +66,9 @@ void CMovement::startRequest(const MovementRequest& request) {
 
 void CMovement::run(std::shared_ptr<RequestMovementType> request) {
     const auto& movement = request->movementRequest;
-    if (!movement.validPoseOptions() || !validBodyPose(movement.body_pose) ||
-        !isfinite(movement.duration_s) ||
-        (movement.type == MovementRequest::SINGLE_POSE && !hasBodyPose(movement.body_pose) &&
-         !movement.pose_delta && !movement.hasJointTargets() && !movement.restore_pose) ||
-        (movement.type != MovementRequest::SINGLE_POSE && movement.body_pose.has_toe_positions)) {
+    if (!movement.validPoseOptions() || !validBodyPose(movement.body_pose) || !movement.hasFiniteDuration() ||
+        (movement.type == MovementRequest::SINGLE_POSE && !movement.hasPoseTarget()) ||
+        !movement.validToeTargetType()) {
         RCLCPP_WARN(node_->get_logger(), "Ignoring invalid movement pose or duration");
         return;
     }

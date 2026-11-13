@@ -1,0 +1,1402 @@
+# Generated from a Python choreography recipe; edit the recipe and regenerate.
+# Units: metres, degrees, seconds.
+name: dance_rock
+actions:
+- movement:
+    name: SINGLE_POSE
+    duration_s: 1.0714285714285714
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -8.0
+      torso_translation:
+        z: -0.01
+    save_pose: true
+  music:
+    song: musicfox_excess_party.mp3
+    background: true
+- movement:
+    name: SINGLE_POSE
+    duration_s: 1.0714285714285714
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 18.0
+      torso_rotation:
+        pitch: 3.0
+      torso_translation:
+        z: 0.004
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -10.0
+      torso_rotation:
+        pitch: -3.0
+      torso_translation:
+        z: 0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -8.0
+        yaw: -18.0
+      torso_rotation:
+        roll: 4.0
+        yaw: 7.0
+      torso_translation:
+        y: 0.012
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 20.0
+        yaw: 8.0
+      torso_rotation:
+        pitch: 4.0
+        roll: -4.0
+        yaw: -3.0
+      torso_translation:
+        y: -0.006
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -20.0
+        yaw: 28.0
+      torso_rotation:
+        pitch: -4.0
+        roll: -4.0
+        yaw: -11.0
+      torso_translation:
+        y: -0.018
+        z: 0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 20.0
+        yaw: -8.0
+      torso_rotation:
+        pitch: 4.0
+        roll: 4.0
+        yaw: 3.0
+      torso_translation:
+        y: 0.006
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -20.0
+        yaw: -28.0
+      torso_rotation:
+        pitch: -4.0
+        roll: 4.0
+        yaw: 11.0
+      torso_translation:
+        y: 0.018
+        z: 0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 20.0
+        yaw: 8.0
+      torso_rotation:
+        pitch: 4.0
+        roll: -4.0
+        yaw: -3.0
+      torso_translation:
+        y: -0.006
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -20.0
+        yaw: 28.0
+      torso_rotation:
+        pitch: -4.0
+        roll: -4.0
+        yaw: -11.0
+      torso_translation:
+        y: -0.018
+        z: 0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 20.0
+        yaw: -8.0
+      torso_rotation:
+        pitch: 4.0
+        roll: 4.0
+        yaw: 3.0
+      torso_translation:
+        y: 0.006
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -12.0
+        yaw: -10.0
+      torso_rotation:
+        pitch: -4.0
+        yaw: 4.0
+      torso_translation:
+        y: 0.006
+        z: 0.012
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        yaw: -12.0
+      torso_translation:
+        x: -0.012
+        y: 0.01
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -6.0
+        yaw: -6.0
+      toe_translation:
+        right_front:
+          z: 0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 16.0
+        yaw: 30.0
+      toe_translation:
+        right_front:
+          x: 0.025
+          y: -0.012
+      torso_rotation:
+        yaw: 4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -15.0
+        yaw: -22.0
+      toe_translation:
+        right_front:
+          x: -0.025
+          y: 0.012
+      torso_rotation:
+        yaw: -4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 13.0
+        yaw: 10.0
+      toe_translation:
+        right_front:
+          z: -0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -8.0
+      torso_translation:
+        x: 0.012
+        y: -0.01
+        z: 0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        yaw: 12.0
+      torso_translation:
+        x: -0.012
+        y: -0.01
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -6.0
+        yaw: 6.0
+      toe_translation:
+        left_front:
+          z: 0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 16.0
+        yaw: -30.0
+      toe_translation:
+        left_front:
+          x: 0.025
+          y: 0.012
+      torso_rotation:
+        yaw: -4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -15.0
+        yaw: 22.0
+      toe_translation:
+        left_front:
+          x: -0.025
+          y: -0.012
+      torso_rotation:
+        yaw: 4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 13.0
+        yaw: -10.0
+      toe_translation:
+        left_front:
+          z: -0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -8.0
+      torso_translation:
+        x: 0.012
+        y: 0.01
+        z: 0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        yaw: -12.0
+      torso_translation:
+        x: -0.012
+        y: 0.01
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -6.0
+        yaw: -6.0
+      toe_translation:
+        right_front:
+          z: 0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 16.0
+        yaw: 30.0
+      toe_translation:
+        right_front:
+          x: 0.025
+          y: -0.012
+      torso_rotation:
+        yaw: 4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -15.0
+        yaw: -22.0
+      toe_translation:
+        right_front:
+          x: -0.025
+          y: 0.012
+      torso_rotation:
+        yaw: -4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 13.0
+        yaw: 10.0
+      toe_translation:
+        right_front:
+          z: -0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -8.0
+      torso_translation:
+        x: 0.012
+        y: -0.01
+        z: 0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        yaw: 12.0
+      torso_translation:
+        x: -0.012
+        y: -0.01
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -6.0
+        yaw: 6.0
+      toe_translation:
+        left_front:
+          z: 0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 16.0
+        yaw: -30.0
+      toe_translation:
+        left_front:
+          x: 0.025
+          y: 0.012
+      torso_rotation:
+        yaw: -4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -15.0
+        yaw: 22.0
+      toe_translation:
+        left_front:
+          x: -0.025
+          y: -0.012
+      torso_rotation:
+        yaw: 4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 13.0
+        yaw: -10.0
+      toe_translation:
+        left_front:
+          z: -0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -8.0
+      torso_translation:
+        x: 0.012
+        y: 0.01
+        z: 0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 10.0
+      torso_rotation:
+        pitch: -5.0
+      torso_translation:
+        z: -0.008
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -10.0
+        roll: -5.0
+      torso_rotation:
+        pitch: 5.0
+        roll: 5.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -10.0
+        roll: 5.0
+      torso_rotation:
+        pitch: 5.0
+        roll: -5.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 10.0
+        roll: 5.0
+      torso_rotation:
+        pitch: -5.0
+        roll: -5.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        roll: -5.0
+      torso_rotation:
+        roll: 5.0
+      torso_translation:
+        z: 0.008
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        yaw: -12.0
+      torso_translation:
+        x: -0.012
+        y: 0.01
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -6.0
+        yaw: -6.0
+      toe_translation:
+        right_front:
+          z: 0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 16.0
+        yaw: 30.0
+      toe_translation:
+        right_front:
+          x: 0.016
+          y: -0.012
+      torso_rotation:
+        yaw: 4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -15.0
+        yaw: -22.0
+      toe_translation:
+        right_front:
+          x: -0.016
+          y: 0.012
+      torso_rotation:
+        yaw: -4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 13.0
+        yaw: 10.0
+      toe_translation:
+        right_front:
+          z: -0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -8.0
+      torso_translation:
+        x: 0.012
+        y: -0.01
+        z: 0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        yaw: 12.0
+      torso_translation:
+        x: -0.012
+        y: -0.01
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -6.0
+        yaw: 6.0
+      toe_translation:
+        left_front:
+          z: 0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 16.0
+        yaw: -30.0
+      toe_translation:
+        left_front:
+          x: 0.016
+          y: 0.012
+      torso_rotation:
+        yaw: -4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -15.0
+        yaw: 22.0
+      toe_translation:
+        left_front:
+          x: -0.016
+          y: -0.012
+      torso_rotation:
+        yaw: 4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 13.0
+        yaw: -10.0
+      toe_translation:
+        left_front:
+          z: -0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -8.0
+      torso_translation:
+        x: 0.012
+        y: 0.01
+        z: 0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        yaw: -12.0
+      torso_translation:
+        y: 0.01
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -6.0
+        yaw: -6.0
+      toe_translation:
+        right_mid:
+          z: 0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 16.0
+        yaw: 30.0
+      toe_translation:
+        right_mid:
+          y: -0.016
+      torso_rotation:
+        yaw: 4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -15.0
+        yaw: -22.0
+      toe_translation:
+        right_mid:
+          y: 0.016
+      torso_rotation:
+        yaw: -4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 13.0
+        yaw: 10.0
+      toe_translation:
+        right_mid:
+          z: -0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -8.0
+      torso_translation:
+        y: -0.01
+        z: 0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        yaw: 12.0
+      torso_translation:
+        y: -0.01
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -6.0
+        yaw: 6.0
+      toe_translation:
+        left_mid:
+          z: 0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 16.0
+        yaw: -30.0
+      toe_translation:
+        left_mid:
+          y: 0.016
+      torso_rotation:
+        yaw: -4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -15.0
+        yaw: 22.0
+      toe_translation:
+        left_mid:
+          y: -0.016
+      torso_rotation:
+        yaw: 4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 13.0
+        yaw: -10.0
+      toe_translation:
+        left_mid:
+          z: -0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -8.0
+      torso_translation:
+        y: 0.01
+        z: 0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        yaw: -12.0
+      torso_translation:
+        x: 0.012
+        y: 0.01
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -6.0
+        yaw: -6.0
+      toe_translation:
+        right_back:
+          z: 0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 16.0
+        yaw: 30.0
+      toe_translation:
+        right_back:
+          x: -0.016
+          y: -0.012
+      torso_rotation:
+        yaw: 4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -15.0
+        yaw: -22.0
+      toe_translation:
+        right_back:
+          x: 0.016
+          y: 0.012
+      torso_rotation:
+        yaw: -4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 13.0
+        yaw: 10.0
+      toe_translation:
+        right_back:
+          z: -0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -8.0
+      torso_translation:
+        x: -0.012
+        y: -0.01
+        z: 0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        yaw: 12.0
+      torso_translation:
+        x: 0.012
+        y: -0.01
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -6.0
+        yaw: 6.0
+      toe_translation:
+        left_back:
+          z: 0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 16.0
+        yaw: -30.0
+      toe_translation:
+        left_back:
+          x: -0.016
+          y: 0.012
+      torso_rotation:
+        yaw: -4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -15.0
+        yaw: 22.0
+      toe_translation:
+        left_back:
+          x: 0.016
+          y: -0.012
+      torso_rotation:
+        yaw: 4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 13.0
+        yaw: -10.0
+      toe_translation:
+        left_back:
+          z: -0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -8.0
+      torso_translation:
+        x: -0.012
+        y: 0.01
+        z: 0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 14.0
+      torso_rotation:
+        pitch: 5.0
+      torso_translation:
+        z: -0.012
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.6696428571428571
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -24.0
+      torso_rotation:
+        pitch: -8.0
+      torso_translation:
+        z: 0.009
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 24.0
+      torso_rotation:
+        pitch: 8.0
+      torso_translation:
+        z: -0.009
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.6696428571428571
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -24.0
+      torso_rotation:
+        pitch: -8.0
+      torso_translation:
+        z: 0.009
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 24.0
+      torso_rotation:
+        pitch: 8.0
+      torso_translation:
+        z: -0.009
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.6696428571428571
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -24.0
+      torso_rotation:
+        pitch: -8.0
+      torso_translation:
+        z: 0.009
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 24.0
+      torso_rotation:
+        pitch: 8.0
+      torso_translation:
+        z: -0.009
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.6696428571428571
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -24.0
+      torso_rotation:
+        pitch: -8.0
+      torso_translation:
+        z: 0.009
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 10.0
+      torso_rotation:
+        pitch: 3.0
+      torso_translation:
+        z: 0.003
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -8.0
+        yaw: -18.0
+      torso_rotation:
+        roll: 4.0
+        yaw: 7.0
+      torso_translation:
+        y: 0.012
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 20.0
+        yaw: 8.0
+      torso_rotation:
+        pitch: 4.0
+        roll: -4.0
+        yaw: -3.0
+      torso_translation:
+        y: -0.006
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -20.0
+        yaw: 28.0
+      torso_rotation:
+        pitch: -4.0
+        roll: -4.0
+        yaw: -11.0
+      torso_translation:
+        y: -0.018
+        z: 0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 20.0
+        yaw: -8.0
+      torso_rotation:
+        pitch: 4.0
+        roll: 4.0
+        yaw: 3.0
+      torso_translation:
+        y: 0.006
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -20.0
+        yaw: -28.0
+      torso_rotation:
+        pitch: -4.0
+        roll: 4.0
+        yaw: 11.0
+      torso_translation:
+        y: 0.018
+        z: 0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 20.0
+        yaw: 8.0
+      torso_rotation:
+        pitch: 4.0
+        roll: -4.0
+        yaw: -3.0
+      torso_translation:
+        y: -0.006
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -20.0
+        yaw: 28.0
+      torso_rotation:
+        pitch: -4.0
+        roll: -4.0
+        yaw: -11.0
+      torso_translation:
+        y: -0.018
+        z: 0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 20.0
+        yaw: -8.0
+      torso_rotation:
+        pitch: 4.0
+        roll: 4.0
+        yaw: 3.0
+      torso_translation:
+        y: 0.006
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -12.0
+        yaw: -10.0
+      torso_rotation:
+        pitch: -4.0
+        yaw: 4.0
+      torso_translation:
+        y: 0.006
+        z: 0.012
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        yaw: -12.0
+      torso_translation:
+        y: 0.01
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -6.0
+        yaw: -6.0
+      toe_translation:
+        right_mid:
+          z: 0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 16.0
+        yaw: 30.0
+      toe_translation:
+        right_mid:
+          y: -0.025
+      torso_rotation:
+        yaw: 4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -15.0
+        yaw: -22.0
+      toe_translation:
+        right_mid:
+          y: 0.025
+      torso_rotation:
+        yaw: -4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 13.0
+        yaw: 10.0
+      toe_translation:
+        right_mid:
+          z: -0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -8.0
+      torso_translation:
+        y: -0.01
+        z: 0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        yaw: 12.0
+      torso_translation:
+        y: -0.01
+        z: -0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -6.0
+        yaw: 6.0
+      toe_translation:
+        left_mid:
+          z: 0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 16.0
+        yaw: -30.0
+      toe_translation:
+        left_mid:
+          y: 0.025
+      torso_rotation:
+        yaw: -4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -15.0
+        yaw: 22.0
+      toe_translation:
+        left_mid:
+          y: -0.025
+      torso_rotation:
+        yaw: 4.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.4017857142857143
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 13.0
+        yaw: -10.0
+      toe_translation:
+        left_mid:
+          z: -0.025
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.26785714285714285
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -8.0
+      torso_translation:
+        y: 0.01
+        z: 0.006
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 10.0
+      torso_rotation:
+        pitch: -5.0
+      torso_translation:
+        z: -0.008
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -10.0
+        roll: -5.0
+      torso_rotation:
+        pitch: 5.0
+        roll: 5.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -10.0
+        roll: 5.0
+      torso_rotation:
+        pitch: 5.0
+        roll: -5.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 10.0
+        roll: 5.0
+      torso_rotation:
+        pitch: -5.0
+        roll: -5.0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 0.5357142857142857
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        roll: -5.0
+      torso_rotation:
+        roll: 5.0
+      torso_translation:
+        z: 0.008
+- movement:
+    name: SINGLE_POSE
+    duration_s: 1.0714285714285714
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: 14.0
+      torso_rotation:
+        pitch: 6.0
+      torso_translation:
+        x: 0.012
+        z: -0.012
+  music:
+    song: STOP
+    fade_out_s: 5.214285714285714
+- movement:
+    name: SINGLE_POSE
+    duration_s: 1.0714285714285714
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        yaw: 0
+- movement:
+    name: SINGLE_POSE
+    duration_s: 1.0714285714285714
+    interpolation: sin_squared
+    pose_delta:
+      head_rotation:
+        pitch: -14.0
+      torso_rotation:
+        pitch: -6.0
+      torso_translation:
+        x: -0.012
+        z: 0.012
+- movement:
+    name: SINGLE_POSE
+    duration_s: 2.0
+    interpolation: sin_squared
+    restore_pose: true
+- music: STOP

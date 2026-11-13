@@ -98,18 +98,10 @@ bool CGaitController::setGait(brain::MovementRequest request) {
     if (request.restore_pose &&
         !std::static_pointer_cast<CSinglePoseGait>(gaits_.at(MovementRequest::SINGLE_POSE))->hasSavedPose())
         return false;
-    if (request.pose_delta &&
-        (request.type != MovementRequest::SINGLE_POSE || hasBodyPose(request.body_pose) ||
-         !request.pose_delta->valid() || !isfinite(request.duration_s) || request.duration_s <= 0.0 * s))
-        return false;
+    if (!request.validRelativePose()) return false;
 
-    const bool sensor_gait =
-        request.type == MovementRequest::HOLD_DISTANCE || request.type == MovementRequest::LEVEL_TORSO;
-    if ((sensor_gait && (!isfinite(request.duration_s) || request.duration_s <= 0.0 * s ||
-                         hasBodyPose(request.body_pose))) ||
-        (request.type == MovementRequest::HOLD_DISTANCE &&
-         (!request.distance_m || !isfinite(*request.distance_m) || *request.distance_m <= 0.0 * m)) ||
-        (request.type != MovementRequest::HOLD_DISTANCE && request.distance_m)) {
+    const bool sensor_gait = request.isSensorGait();
+    if (!request.validSensorPose() || !request.validDistance()) {
         RCLCPP_WARN(node_->get_logger(), "Invalid sensor gait parameters");
         return false;
     }

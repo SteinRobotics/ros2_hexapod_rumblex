@@ -187,10 +187,11 @@ TEST_F(SensorGaitsTest, StoppingDoesNotRequestSequenceEndAgain) {
     EXPECT_EQ(sequence_ends, 0);
 }
 TEST_F(SensorGaitsTest, InvalidDistanceIsRejectedBeforeTheCurrentGaitChanges) {
+    const auto initial_gait = controller->currentGait();
     MovementRequest request;
     request.type = MovementRequest::HOLD_DISTANCE;
     EXPECT_FALSE(controller->setGait(request));
-    EXPECT_EQ(controller->currentGait(), MovementRequest::SEQUENCE_LAYDOWN);
+    EXPECT_EQ(controller->currentGait(), initial_gait);
     request.distance_m = -0.6 * m;
     EXPECT_FALSE(controller->setGait(request));
     request.type = MovementRequest::LEVEL_TORSO;

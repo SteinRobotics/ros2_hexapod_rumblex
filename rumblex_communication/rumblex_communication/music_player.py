@@ -1,6 +1,7 @@
 """Audio playback; completion is polled by the ROS executor."""
 
 import logging
+import math
 import os
 from pathlib import Path
 
@@ -40,6 +41,15 @@ class MusicPlayer:
         if self._background_channel is not None:
             self._background_channel.stop()
             self._background_channel = None
+
+    def fade_background(self, duration_s):
+        """Fade just the background channel; SDL performs the ramp asynchronously."""
+        if not math.isfinite(duration_s) or not 0 <= duration_s <= 60:
+            raise ValueError('Background fade duration must be 0-60 seconds')
+        if duration_s == 0:
+            self.stop_background()
+        elif self._background_channel is not None:
+            self._background_channel.fadeout(max(1, round(duration_s * 1000)))
 
     def play_file(self, filepath, volume=0.5, cb=None):
         self.stop_playing()

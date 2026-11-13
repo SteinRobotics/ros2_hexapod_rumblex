@@ -13,6 +13,9 @@ namespace brain {
 using namespace mp_units;
 using namespace mp_units::si::unit_symbols;
 namespace units = rumblex_geometry::units;
+inline constexpr units::Duration kDefaultPoseDuration = 1.0 * s;
+inline constexpr units::Duration kMinimumAbsolutePoseDuration = 0.1 * s;
+
 // Deltas are resolved from the current pose when SINGLE_POSE starts.
 struct PoseDelta {
     geometry_msgs::msg::Vector3 torso_translation;
@@ -65,7 +68,7 @@ struct MovementRequest {
     using _type_type = uint8_t;
     uint8_t type = NO_REQUEST;
     uint8_t direction = CLOCKWISE;
-    units::Duration duration_s = 1.0 * s;
+    units::Duration duration_s = kDefaultPoseDuration;
     std::string name;
     InterpolationType interpolation = InterpolationType::Linear;
     std::optional<units::Length> distance_m;
@@ -80,18 +83,45 @@ struct MovementRequest {
             if (target) return true;
         return false;
     }
+    bool hasBodyTarget() const {
+        return body_pose.has_torso_pose || body_pose.has_head_orientation || body_pose.has_toe_positions;
+    }
+    bool hasPoseTarget() const {
+        return hasBodyTarget() || pose_delta || hasJointTargets() || restore_pose;
+    }
+    bool hasFiniteDuration() const {
+        return std::isfinite(duration_s.numerical_value_in(s));
+    }
+    bool hasPositiveDuration() const {
+        return hasFiniteDuration() && duration_s > 0.0 * s;
+    }
+    bool validToeTargetType() const {
+        return type == SINGLE_POSE || !body_pose.has_toe_positions;
+    }
+    bool validRelativePose() const {
+        return !pose_delta ||
+               (type == SINGLE_POSE && !hasBodyTarget() && pose_delta->valid() && hasPositiveDuration());
+    }
+    bool isSensorGait() const {
+        return type == HOLD_DISTANCE || type == LEVEL_TORSO;
+    }
+    bool validSensorPose() const {
+        return !isSensorGait() || (hasPositiveDuration() && !hasBodyTarget());
+    }
+    bool validDistance() const {
+        return type == HOLD_DISTANCE
+                   ? distance_m && std::isfinite(distance_m->numerical_value_in(m)) && *distance_m > 0.0 * m
+                   : !distance_m;
+    }
     bool validPoseOptions() const {
         for (const auto& target : joint_targets)
             if (target)
                 for (double angle : *target)
                     if (!std::isfinite(angle)) return false;
-        const bool has_pose =
-            body_pose.has_torso_pose || body_pose.has_head_orientation || body_pose.has_toe_positions;
-        if (restore_pose && (save_pose || has_pose || pose_delta || hasJointTargets())) return false;
+        if (restore_pose && (save_pose || hasBodyTarget() || pose_delta || hasJointTargets())) return false;
         if (hasJointTargets() && (pose_delta || body_pose.has_toe_positions)) return false;
         return !(save_pose || restore_pose || hasJointTargets()) ||
-               (type == SINGLE_POSE && std::isfinite(duration_s.numerical_value_in(s)) &&
-                duration_s > 0.0 * s);
+               (type == SINGLE_POSE && hasPositiveDuration());
     }
     rumblex_interfaces::msg::BodyPose body_pose{};
 };

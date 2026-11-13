@@ -113,6 +113,11 @@ map transform. The standalone `rumblex_gazebo` simulation launches use the
 same position defaults through `spawn_x`, `spawn_y`, and `spawn_yaw`; their
 empty world does not load the house map.
 The Gazebo house includes dark floor lettering for all six room names.
-These labels are visual geometry without collisions. The map-origin transform
+These labels are visual geometry without collisions.
+It also spawns `rumblex_gazebo/models/house_furniture.sdf`: a dining table with
+six chairs, a TV-room couch, and kitchen cabinets, sink, cooker, and fridge.
+These are static Gazebo obstacles; furniture remains absent from the occupancy
+map and the offline RViz range simulator.
+The map-origin transform
 is stored on the wall link so the spawn tool's model-pose override cannot move
 the walls away from their map coordinates.

@@ -24,7 +24,8 @@ void CSinglePoseGait::start(units::Duration duration_s, uint8_t /*direction*/) {
     RCLCPP_INFO(node_->get_logger(), "Starting CSinglePoseGait");
     state_ = EGaitState::Running;
     phase_ = 0.0 * s;
-    duration_s_ = delta_ ? duration_s : std::max(duration_s, 1.0 * s);
+    // At 50 Hz, 0.1 s provides five samples. This floor is not a joint-speed limit.
+    duration_s_ = delta_ ? duration_s : std::max(duration_s, kMinimumAbsolutePoseDuration);
 
     torso_origin_ = kinematics_->getTorsoPose();
     head_origin_ = kinematics_->getHeadOrientation();

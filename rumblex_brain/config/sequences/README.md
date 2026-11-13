@@ -1,5 +1,11 @@
 # Sequences and snippets
 
+For choreography and walking routes, use the offline
+[Sequence Studio GUI and Python builder](../../tools/README.md):
+`python3 rumblex_brain/tools/sequence_generator.py` from the repository root.
+It provides editable blocks, dance/route presets, YAML export, and a nominal route
+preview. Existing hand-written YAML remains supported.
+
 The brain loads every `.yaml` and `.yml` file directly in `config/sequences`,
 ordered by filename. Each file defines a named sequence, optional voice/joystick
 triggers, and actions. The former `normal_` name prefix has been removed: use
@@ -121,7 +127,9 @@ outgoing trajectory finishes. They are not resolved when the YAML is loaded.
 The second action above resets the head while retaining the torso and toes.
 
 At least one component is required. `duration_s` defaults to 1.0 seconds and must
-be finite and at least one second, the existing pose trajectory minimum. Every
+be finite and at least 0.1 seconds. The runtime clamps shorter absolute `movement`
+requests to 0.1 seconds; the `body_pose` shorthand rejects them. This is a sampling
+minimum (five updates at nominal 50 Hz), not a joint velocity or acceleration limit. Every
 pose action consumes its duration, including repeated identical targets.
 
 When provided, `toe_positions` maps all six leg names to `{x, y, z}` targets,
@@ -167,9 +175,18 @@ The pose is saved **after** settling. Restoring it lands the front toes while
 keeping the body rearward; only then does a separate action return the torso to
 neutral. The original toe positions and head orientation are preserved. The
 initial torso offset/orientation is intentionally replaced by neutral on completion.
-All actions use `sin_squared` easing and absolute targets, with no accumulated
-deltas. Settling/lift/landing/recentering take 2/1.6/2/2 seconds; closes take
-1 second and openings 1.2 seconds, for 20.8 seconds plus scheduler handoffs.
+The head lifts slightly during preparation, nods to 3 degrees during closing,
+then adds a delayed 2-degree nod over a 0.12-second contact pause. It returns to
+-4 degrees during reopening. Closings use `cos` easing for an immediate start
+and soft finish; other actions use `sin_squared`. Feet and torso hold during
+the short head-only relative nod, so there is no accumulated body/foot drift.
+
+The first clap closes/opens in 0.6/1.2 seconds, four middle claps use 0.5/1 seconds,
+and the final clap closes in 0.5 seconds and opens over 1.4 seconds. Closing therefore
+has twice the average coxa speed of reopening (2.8 times for the final clap).
+All six have the 0.12-second nod pause.
+Settling/lift/landing/recentering remain 2/1.6/2/2 seconds, for 18.02 seconds plus
+scheduler handoffs. The original head orientation returns during landing.
 The `commandClap` voice trigger and `clap` sequence name are unchanged.
 
 The rearward bias provides a geometric support margin for the configured standing
@@ -205,8 +222,8 @@ translations and torso rotations. Forward kinematics converts them to toe target
 robot's geometry. The trajectory smoothly interpolates toes to those endpoints;
 these relative coxa moves follow a chord rather than a joint-space arc. Head pose and
 torso orientation are retained unless their rotation offsets are supplied. `pose_delta` cannot be combined with `body_pose`
-and requires a finite positive duration; unlike absolute poses, it supports
-sub-second motions. Inverse deltas restore the starting pose within numerical
+and requires a finite positive duration; unlike absolute poses, it has no
+0.1-second runtime floor. Inverse deltas restore the starting pose within numerical
 precision for reachable poses.
 
 As with other YAML sequences, cancellation discards remaining actions and lets
@@ -245,11 +262,46 @@ snapshot and consumes it. Restore actions cannot carry other pose targets or
 save again. There is one saved-pose slot per controller; another save replaces
 it, so nested save/restore pairs are not supported. A restore without a saved
 pose is rejected. Saving/restoring requires a finite positive duration and uses
-the ordinary absolute-pose minimum of one second.
+the ordinary absolute-pose minimum of 0.1 seconds.
 
 Cancellation follows normal YAML sequence behavior: finish the active pose and
 discard remaining actions, including the return. A new high-five invocation
 captures its own starting pose, replacing any snapshot left by cancellation.
+
+## Run in a square
+
+`run_in_a_square` stands up and uses `MOVE_COMBINED` for four forward legs and
+four left turns. Each side commands 0.05 m/s for 10 s (nominally 0.50 m), followed
+by an in-place turn at 0.20 rad/s for 7.853981634 s (nominally 90 degrees).
+Both speeds are half the current Nox/Nira configured maxima. The final turn
+restores the nominal starting heading; a `CONTINUOUS_POSE` action with zero
+velocity explicitly stops travel. No voice or joystick trigger is assigned.
+
+Travel takes approximately 71.42 s plus stand-up and gait handoffs. This is timed
+open-loop locomotion, not odometry-based path tracking: actual side lengths,
+corner angles, and return position depend on gait transitions and foot slip.
+Tune durations and speeds together; durations are not recomputed from speed.
+
+## Metal dance
+
+`dance_metal` is a generated in-place routine with eight named sections, from
+stalking and uneven chug riffs to hammer feet, windmill circles, air rakes, and
+a blast-beat finale. It uses all six feet, with at most one lifted at a time,
+and restores the entrance pose on normal completion. Default motion duration
+is 50.50 s at 120 BPM, excluding scheduler delays. No music or triggers are set.
+Use the [recipe and rehearsal guide](../../tools/README.md) to regenerate it or
+export individual sections with reduced tempo/amplitude.
+
+## Hot Dogs for Breakfast
+
+The named dance and `dance_standard` include the same generated snippet.
+Its [Python recipe](../../tools/examples/dance_hot_dogs_for_breakfast.py) preserves
+16 phrases of 1.752 seconds, subdivided into 64 dynamic 0.438-second accents.
+Speech and neutral preparation happen before background music starts with the
+first accent. Head leads, torso rebounds, and alternating single-foot kicks add
+character; the final pose has neutral head/torso and the original toe positions.
+The final action explicitly stops music. See the [authoring guide](../../tools/README.md)
+for regeneration, contact reports, timing limitations, and cancellation behavior.
 
 ## Bite and stomp examples
 
@@ -257,8 +309,15 @@ captures its own starting pose, replacing any snapshot left by cancellation.
 joystick triggers. Start from a standing pose; they do not automatically stand up.
 The existing `commandBite` and `commandStomp` voice commands remain unconnected.
 
-`bite` saves the starting pose, moves the torso forward 15 mm and adds 10 degrees
-of head pitch over one second, then restores the saved pose over one second.
+`bite` is a head-led snap with all six toes planted: 0.22 s gathering back/down,
+0.12 s head lead, 0.18 s forward strike, 0.28 s recoil, and 0.35 s settling.
+The head lead accelerates with `sin` easing; the strike decelerates with `cos`.
+Other phases use `sin_squared`. Peak entrance-relative offsets are 22 mm forward,
+14 degrees of head pitch, and 3 degrees of torso pitch. All deltas sum to zero
+before the final one-second saved-pose restoration. Expressive motion takes
+1.15 s; total duration is 2.15 s plus scheduler handoffs. Relative saving captures
+the entrance pose during the short gathering phase.
+This sharper version has not been visually or physically validated on hardware.
 `stomp` saves the starting pose while lifting the right-front toe 20 mm, lowers
 it by 20 mm, lifts the left-front toe 20 mm, then restores the saved pose.
 Each stomp action takes one second. These use relative targets rather than
@@ -313,12 +372,22 @@ durations advance the sequence; include an explicit stop action after walking.
 
 Existing mapping forms for speech/music/system requests remain available.
 
-Use `music: {song: musicfox_excess_party.mp3, background: true}` to start music
-and immediately continue scheduling other actions and sequences. Planner
-cancellation leaves background music playing; `music: STOP` (as in `standup`)
-stops it explicitly. The default `background: false` waits for playback to finish.
+All YAML music playback runs in the background, including shorthand such as
+`music: musicfox_excess_party.mp3` and mapping forms. The legacy `background`
+field no longer changes this behavior. Playback does not block later actions;
+an explicit `minDuration` still applies. Planner cancellation leaves background
+music playing; `music: STOP` (as in `standup`) stops it explicitly.
 Background music uses a separate audio channel so speech and listening can run
 while it plays. Starting another music track replaces the previous track.
+
+Use `music: {song: STOP, fade_out_s: 4}` alongside movement to fade background
+music over four seconds while the sequence continues. `fade_out_s` accepts
+0–60 seconds; positive values require `song: STOP`. Zero retains the immediate
+STOP behavior. The fade does not interrupt speech/listening or wait for audio
+completion. Schedule movement for the fade interval before a final cleanup STOP.
+Both brain and communication must include fade support; older communication
+nodes do not subscribe to the new `request_background_music_fade` topic.
+
 
 Velocity uses metres/second and radians/second. `movement` can carry a nested
 `body_pose` with the same component fields; its duration goes on `movement`.
@@ -465,12 +534,12 @@ names/keys, conflicting aliases, malformed includes/loops, and expansion-limit
 failures retain the previous catalog. Unknown requests are errors instead of
 being silently skipped. String parsing supports loops but cannot resolve includes.
 
-The parser also accepts a `sequences: [...]` wrapper. Legacy `behaviors: [...]`
-and `Request*` action keys remain migration inputs; legacy torso/head requests
-are combined into their group's movement request. Do not combine legacy pose
-components or a movement selector with a `body_pose` shorthand in one entry.
-Runtime code uses `CSequenceParser` and one movement request carrying `BodyPose`;
-the old separate torso/head request classes have been removed.
+The parser also accepts a `sequences: [...]` wrapper. Deprecated `behaviors`
+wrappers, `Request*` action keys, and movement `type` aliases are rejected.
+For external sequences, replace `behaviors` with `sequences`, use the documented
+short action keys (`say`, `movement`, etc.), and replace movement `type` with `name`.
+Move separate torso/head requests into the movement's `body_pose.torso_pose` and
+`body_pose.head_orientation`. Keep movement timing on the movement action.
 
 The `head_pose` → `head_orientation` rename and new presence flags change the ROS
 interface. Rebuild and restart all consumers together, including movement,
@@ -495,3 +564,13 @@ saved starting pose. All actions use `sin_squared`; the 13 expanded actions take
 16 seconds plus scheduler handoffs. Geometry comes from the selected robot's
 forward kinematics. The knees remain at 90 degrees throughout the wing beats.
 As with high-five, cancellation finishes the active action and skips the return.
+
+### Epic dance
+
+`dance_epic.yaml` performs a 30-second opening excerpt of **Iron Star March**
+with fast alternating foot taps, six-foot ripples, and small head/torso accents.
+At 26 seconds, foot lifts and body gestures diminish while background music
+fades over four seconds. The final second restores the entrance pose, followed
+by a cleanup `music: STOP`. Start standing. The 30 seconds include restoration
+but exclude scheduler/audio latency. See the recipe and validation limitations
+in the [authoring guide](../../tools/README.md#epic-30-second-iron-star-march-opening).

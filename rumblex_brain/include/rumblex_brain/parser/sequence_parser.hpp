@@ -42,14 +42,6 @@ class CSequenceParser {
    private:
     bool parseSequences(const YAML::Node& sequences);
     bool parseSingleSequence(const YAML::Node& sequence);
-    std::vector<std::shared_ptr<RequestBase>> parseActionGroup(const YAML::Node& action);
-    std::shared_ptr<RequestTalking> createRequestTalking(const YAML::Node& value);
-    std::shared_ptr<RequestChat> createRequestChat(const YAML::Node& value);
-    std::shared_ptr<RequestMusic> createRequestMusic(const YAML::Node& value);
-    std::shared_ptr<RequestListening> createRequestListening(const YAML::Node& value);
-    std::shared_ptr<RequestSystem> createRequestSystem(const YAML::Node& value);
-    std::shared_ptr<RequestMovementType> createRequestMovementType(const YAML::Node& value);
-    std::shared_ptr<RequestVelocity> createRequestMoveVelocity(const YAML::Node& value);
     rclcpp::Node::SharedPtr node_;
     std::vector<Sequence> sequences_;
     std::map<std::string, SequenceTrigger> sequenceTriggers_;

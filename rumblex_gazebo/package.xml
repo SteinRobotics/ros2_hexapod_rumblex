@@ -8,6 +8,7 @@
   <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <test_depend>ament_cmake_pytest</test_depend>
 
   <exec_depend>rumblex_description</exec_depend>
   <exec_depend>ros_gz_sim</exec_depend>

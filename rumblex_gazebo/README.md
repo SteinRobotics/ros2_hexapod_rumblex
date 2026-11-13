@@ -1,6 +1,29 @@
-# Nira sensor simulation
+# Gazebo simulation
 
-## BNO055 IMU
+## Furnished house
+
+Launch the house map, robot, and furniture together after building and sourcing
+the workspace:
+
+```bash
+ros2 launch rumblex_bringup test_gazebo_launch.py robot:=nox
+```
+
+The dining room contains a wooden table and six chairs; the TV room has a
+three-seat couch. The kitchen has an L-shaped cabinet layout with countertops,
+a sink, cooker/oven, and refrigerator. `robot:=nira` uses the same furnishings.
+The installed `models/house_furniture.sdf` uses house-map coordinates on its
+links, with static visual and collision geometry for every part. Table and chair
+legs leave open space underneath for the robot. No mesh downloads are required.
+Door approaches and the living-room spawn area remain clear.
+
+Furniture is spawned by the house launch only. The standalone simulation launches
+still use an empty world. The navigation occupancy map and offline RViz lidar
+contain only walls; Gazebo physics and sensors see the added furniture.
+
+## Nira sensor simulation
+
+### BNO055 IMU
 
 Nira's `imu_link` follows the CAD board origin at `(0, -0.002, 0.0185)` metres
 from `base_link`. Its measurement-frame roll/pitch/yaw is `(0, 0, -pi/2)`:
@@ -36,7 +59,7 @@ stationary angular velocity, downward local-Z acceleration and a quaternion
 equivalent to `(x, y, z, w) = (0.7071, -0.7071, 0, 0)`. Regression tests also
 check that the sensor pose survives Gazebo's fixed-joint reduction.
 
-## T-mini lidar
+### T-mini lidar
 
 Nira's torso-mounted YDLIDAR T-mini is a planar 2D lidar. Its `lidar_link`
 origin is the CAD scan centre: `(0.093, 0, 0.0933)` metres from `base_link`,

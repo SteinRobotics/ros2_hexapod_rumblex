@@ -479,7 +479,7 @@ TEST_F(GaitControllerTest, FixedPosesPreserveRequestsAndIgnoreLivePoseTargets) {
         EXPECT_EQ(controller_->currentGait(), type);
         const CPose unrelated_pose(0.01, 0.02, 0.03, 0.0, 0.0, 0.0);
         const COrientation unrelated_head(0.1, 0.2, 0.3);
-        for (int i = 0; i < 10; ++i)
+        for (int i = 0; i < 2; ++i)
             EXPECT_TRUE(
                 controller_->updateSelectedGait(createZeroVelocity(), unrelated_pose, unrelated_head));
         EXPECT_FALSE(controller_->updateSelectedGait(createZeroVelocity(), unrelated_pose, unrelated_head));
@@ -496,7 +496,7 @@ TEST_F(GaitControllerTest, FixedPosesPreserveRequestsAndIgnoreLivePoseTargets) {
 }
 
 TEST_F(GaitControllerTest, SinglePoseEnforcesMinimumTrajectoryDuration) {
-    for (const double duration : {0.0, 0.2, 0.5}) {
+    for (const double duration : {0.0, 0.05, 0.1, 0.2, 0.5, 1.0}) {
         MovementRequest request;
         request.type = MovementRequestMsg::SINGLE_POSE;
         request.duration_s = duration * s;
@@ -510,7 +510,7 @@ TEST_F(GaitControllerTest, SinglePoseEnforcesMinimumTrajectoryDuration) {
         while (controller_->updateSelectedGait(createZeroVelocity(), target, head) && updates < 20) {
             ++updates;
         }
-        EXPECT_EQ(updates, 10);
+        EXPECT_EQ(updates, std::lround(std::max(duration, 0.1) / 0.1));
         EXPECT_EQ(kinematics_->getTorsoPose(), target);
         EXPECT_EQ(kinematics_->getHeadOrientation(), head);
     }

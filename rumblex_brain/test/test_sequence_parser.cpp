@@ -37,6 +37,134 @@ class SequenceParserTest : public ::testing::Test {
     }
 };
 
+TEST_F(SequenceParserTest, GeneratedSectionRehearsals) {
+    const char* directory = std::getenv("RUMBLEX_REHEARSAL_DIRECTORY");
+    if (!directory) GTEST_SKIP() << "Run via test_section_parser for generated temporary fixtures";
+    ASSERT_TRUE(parser_.parseDirectory(directory));
+    ASSERT_EQ(parser_.getSequences().size(), 8u);
+    for (const auto* name :
+         {"intro", "verse", "guitar_solo", "body_roll", "drum_fill", "breakdown", "encore", "finale"}) {
+        const std::string sequence_name = std::string("dance_rock_") + name;
+        const auto sequence = parser_.getSequence(sequence_name);
+        ASSERT_TRUE(sequence);
+        const auto count = sequence->get().actionGroups.size();
+        ASSERT_GT(count, 2u);
+        const auto first = request<RequestMovementType>(sequence_name, 0, 0);
+        const auto last = request<RequestMovementType>(sequence_name, count - 1, 0);
+        ASSERT_TRUE(first);
+        ASSERT_TRUE(last);
+        EXPECT_TRUE(first->movementRequest.save_pose);
+        EXPECT_TRUE(last->movementRequest.restore_pose);
+    }
+}
+
+TEST_F(SequenceParserTest, EpicDancePlaysThirtySecondOpeningAndStops) {
+    ASSERT_TRUE(parser_.parseFile(std::string(RUMBLEX_SEQUENCES_DIRECTORY) + "/dance_epic.yaml"));
+    const auto sequence = parser_.getSequence("dance_epic");
+    ASSERT_TRUE(sequence);
+    const auto count = sequence->get().actionGroups.size();
+    ASSERT_GT(count, 2u);
+    const auto music = request<RequestMusic>("dance_epic", 0, 1);
+    ASSERT_TRUE(music);
+    EXPECT_EQ(music->song, "lovemusic_ai__Iron_Star_March.mp3");
+    EXPECT_TRUE(music->background);
+    double duration = 0;
+    for (size_t i = 0; i + 1 < count; ++i) {
+        const auto movement = request<RequestMovementType>("dance_epic", i, 0);
+        ASSERT_TRUE(movement);
+        if (sequence->get().actionGroups[i].size() == 2 && i != 0) {
+            const auto fade = request<RequestMusic>("dance_epic", i, 1);
+            ASSERT_TRUE(fade);
+            EXPECT_EQ(fade->song, "STOP");
+            EXPECT_FLOAT_EQ(fade->fade_out_s, 4.0f);
+            EXPECT_NEAR(duration, 26.0, 1e-6);
+        }
+        duration += movement->movementRequest.duration_s.numerical_value_in(s);
+        if (i == 0) {
+            EXPECT_TRUE(movement->movementRequest.save_pose);
+        }
+        if (i + 2 == count) {
+            EXPECT_TRUE(movement->movementRequest.restore_pose);
+        }
+    }
+    EXPECT_NEAR(duration, 30.0, 1e-9);
+    const auto stop = request<RequestMusic>("dance_epic", count - 1, 0);
+    ASSERT_TRUE(stop);
+    EXPECT_EQ(stop->song, "STOP");
+}
+
+TEST_F(SequenceParserTest, GeneratedMetalDanceRestoresEntrancePose) {
+    ASSERT_TRUE(parser_.parseFile(std::string(RUMBLEX_SEQUENCES_DIRECTORY) + "/dance_metal.yaml"));
+    const auto sequence = parser_.getSequence("dance_metal");
+    ASSERT_TRUE(sequence);
+    ASSERT_EQ(sequence->get().actionGroups.size(), 122u);
+    const auto first = request<RequestMovementType>("dance_metal", 0, 0);
+    const auto last = request<RequestMovementType>("dance_metal", 121, 0);
+    ASSERT_TRUE(first);
+    ASSERT_TRUE(last);
+    EXPECT_TRUE(first->movementRequest.save_pose);
+    EXPECT_TRUE(last->movementRequest.restore_pose);
+    double duration = 0;
+    for (size_t i = 0; i < 122; ++i) {
+        const auto movement = request<RequestMovementType>("dance_metal", i, 0);
+        ASSERT_TRUE(movement);
+        duration += movement->movementRequest.duration_s.numerical_value_in(s);
+    }
+    EXPECT_DOUBLE_EQ(duration, 50.5);
+}
+
+TEST_F(SequenceParserTest, GeneratedRockDanceRestoresEntrancePose) {
+    ASSERT_TRUE(parser_.parseFile(std::string(RUMBLEX_SEQUENCES_DIRECTORY) + "/dance_rock.yaml"));
+    const auto sequence = parser_.getSequence("dance_rock");
+    ASSERT_TRUE(sequence);
+    ASSERT_EQ(sequence->get().actionGroups.size(), 117u);
+    const auto first = request<RequestMovementType>("dance_rock", 0, 0);
+    const auto last = request<RequestMovementType>("dance_rock", 115, 0);
+    ASSERT_TRUE(first);
+    ASSERT_TRUE(last);
+    EXPECT_TRUE(first->movementRequest.save_pose);
+    EXPECT_TRUE(last->movementRequest.restore_pose);
+    EXPECT_DOUBLE_EQ(last->movementRequest.duration_s.numerical_value_in(s), 2.0);
+    const auto music = request<RequestMusic>("dance_rock", 0, 1);
+    ASSERT_TRUE(music);
+    EXPECT_EQ(music->song, "musicfox_excess_party.mp3");
+    EXPECT_TRUE(music->background);
+    const auto fade = request<RequestMusic>("dance_rock", 112, 1);
+    ASSERT_TRUE(fade);
+    EXPECT_EQ(fade->song, "STOP");
+    double remaining_duration = 0;
+    for (size_t i = 112; i <= 115; ++i) {
+        const auto movement = request<RequestMovementType>("dance_rock", i, 0);
+        ASSERT_TRUE(movement);
+        remaining_duration += movement->movementRequest.duration_s.numerical_value_in(s);
+    }
+    EXPECT_NEAR(fade->fade_out_s, remaining_duration, 1e-6);
+    const auto stop = request<RequestMusic>("dance_rock", 116, 0);
+    ASSERT_TRUE(stop);
+    EXPECT_EQ(stop->song, "STOP");
+    EXPECT_FLOAT_EQ(stop->fade_out_s, 0.0f);
+}
+
+TEST_F(SequenceParserTest, GeneratedCuriousLookPreservesPhraseOrder) {
+    ASSERT_TRUE(parser_.parseFile(std::string(RUMBLEX_SEQUENCES_DIRECTORY) + "/curious_look.yaml"));
+    const auto sequence = parser_.getSequence("curious_look");
+    ASSERT_TRUE(sequence);
+    ASSERT_EQ(sequence->get().actionGroups.size(), 24u);
+    for (size_t phrase = 0; phrase < 4; ++phrase) {
+        const auto first = request<RequestMovementType>("curious_look", phrase * 6, 0);
+        const auto turn = request<RequestMovementType>("curious_look", phrase * 6 + 1, 0);
+        const auto last = request<RequestMovementType>("curious_look", phrase * 6 + 5, 0);
+        ASSERT_TRUE(first);
+        ASSERT_TRUE(turn);
+        ASSERT_TRUE(last);
+        EXPECT_TRUE(first->movementRequest.save_pose);
+        EXPECT_TRUE(turn->movementRequest.pose_delta.has_value());
+        EXPECT_DOUBLE_EQ(turn->movementRequest.duration_s.numerical_value_in(s), 1.2);
+        EXPECT_TRUE(last->movementRequest.restore_pose);
+        EXPECT_EQ(last->movementRequest.interpolation, InterpolationType::SinSquared);
+    }
+}
+
 TEST_F(SequenceParserTest, ReusesYamlConstantsInsideLoops) {
     ASSERT_TRUE(parser_.parseString(R"(
 name: constants
@@ -406,18 +534,18 @@ TEST_F(SequenceFilesTest, LoadsFeedbackFromSnippetWithIndependentLoopRequests) {
 }
 
 TEST_F(SequenceFilesTest, LoadsAllFilesAndNestedSnippetsInOrder) {
-    write("sequences/b.yml", "name: second\nactions: [{RequestTalking: second}]\n");
+    write("sequences/b.yml", "name: second\nactions: [{say: second}]\n");
     write("sequences/a.yaml", R"(
 name: first
 trigger: {voice: firstCommand}
 actions:
-  - RequestTalking: before
+  - say: before
   - include: snippets/outer.yaml
   - include: snippets/inner.yaml
-  - RequestTalking: after
+  - say: after
 )");
     write("sequences/snippets/outer.yaml", "actions:\n  - include: inner.yaml\n");
-    write("sequences/snippets/inner.yaml", "actions: [{RequestTalking: inside, RequestMusic: STOP}]\n");
+    write("sequences/snippets/inner.yaml", "actions: [{say: inside, music: STOP}]\n");
     write("sequences/ignored.txt", "not yaml");
     ASSERT_TRUE(parser_.parseDirectory((directory_ / "sequences").string()));
     ASSERT_EQ(parser_.getSequences().size(), 2u);
@@ -442,17 +570,17 @@ TEST_F(SequenceFilesTest, RejectsBrokenIncludesWithoutReplacingCatalog) {
     EXPECT_FALSE(parser_.parseFile(file));
     for (const auto* snippet :
          {"actions: [{include: snippet.yaml}]", "actions: [{include: sequence.yaml}]", "actions: {}",
-          "actions: [", "name: invalid", "actions: [{include: [], RequestTalking: mixed}]"}) {
+          "actions: [", "name: invalid", "actions: [{include: [], say: mixed}]"}) {
         write("snippet.yaml", snippet);
         EXPECT_FALSE(parser_.parseFile(file)) << snippet;
-        EXPECT_EQ(parser_.getSequences().size(), 25u);
+        EXPECT_EQ(parser_.getSequences().size(), 30u);
         EXPECT_TRUE(parser_.getSequenceForVoiceRequest("commandStandup"));
     }
 }
 
 TEST_F(SequenceFilesTest, RejectsDuplicateNamesAndInvalidDirectoryEntries) {
-    write("a.yaml", "name: duplicate\nactions: [{RequestTalking: hello}]\n");
-    write("b.yaml", "name: duplicate\nactions: [{RequestTalking: other}]\n");
+    write("a.yaml", "name: duplicate\nactions: [{say: hello}]\n");
+    write("b.yaml", "name: duplicate\nactions: [{say: other}]\n");
     EXPECT_FALSE(parser_.parseDirectory(directory_.string()));
     EXPECT_TRUE(parser_.getSequences().empty());
     write("b.yaml", "name: invalid\nactions: []\n");
@@ -469,7 +597,7 @@ TEST_F(SequenceParserTest, RejectsIncludesWithoutSourceFile) {
 
 TEST_F(SequenceParserTest, LoadsCatalogAndResolvesTriggers) {
     ASSERT_TRUE(parser_.parseDirectory(RUMBLEX_SEQUENCES_DIRECTORY));
-    EXPECT_EQ(parser_.getSequences().size(), 25u);
+    EXPECT_EQ(parser_.getSequences().size(), 30u);
     EXPECT_FALSE(parser_.getSequence("missing"));
     EXPECT_FALSE(parser_.getSequenceForVoiceRequest("missing"));
     rumblex_interfaces::msg::JoystickRequest joystick;
@@ -494,6 +622,41 @@ TEST_F(SequenceParserTest, LoadsCatalogAndResolvesTriggers) {
     ASSERT_TRUE(party);
     EXPECT_EQ(party->song, "musicfox_excess_party.mp3");
     EXPECT_TRUE(party->background);
+}
+
+TEST_F(SequenceParserTest, SquareUsesCombinedGaitAndMidrangeVelocitiesThenStops) {
+    ASSERT_TRUE(parser_.parseFile(std::string(RUMBLEX_SEQUENCES_DIRECTORY) + "/run_in_a_square.yaml"));
+    const auto sequence = parser_.getSequence("run_in_a_square");
+    ASSERT_TRUE(sequence);
+    ASSERT_EQ(sequence->get().actionGroups.size(), 10u);
+    const auto standup = request<RequestMovementType>("run_in_a_square", 0, 0);
+    ASSERT_TRUE(standup);
+    EXPECT_EQ(standup->movementRequest.type, MovementRequest::SEQUENCE_STAND_UP);
+    for (size_t i = 1; i <= 8; ++i) {
+        SCOPED_TRACE(i);
+        const auto movement = request<RequestMovementType>("run_in_a_square", i, 0);
+        const auto velocity = request<RequestVelocity>("run_in_a_square", i, 1);
+        ASSERT_TRUE(movement);
+        ASSERT_TRUE(velocity);
+        EXPECT_EQ(movement->movementRequest.type, MovementRequest::MOVE_COMBINED);
+        geometry_msgs::msg::Twist expected;
+        const double seconds = movement->movementRequest.duration_s.numerical_value_in(s);
+        if (i % 2 == 1) {
+            expected.linear.x = 0.05;
+            EXPECT_DOUBLE_EQ(seconds, 10.0);
+            EXPECT_DOUBLE_EQ(seconds * velocity->velocity.linear.x, 0.5);
+        } else {
+            expected.angular.z = 0.20;
+            EXPECT_NEAR(seconds * velocity->velocity.angular.z, 1.5707963267948966, 1e-9);
+        }
+        EXPECT_EQ(velocity->velocity, expected);
+    }
+    const auto stationary = request<RequestMovementType>("run_in_a_square", 9, 0);
+    const auto stop = request<RequestVelocity>("run_in_a_square", 9, 1);
+    ASSERT_TRUE(stationary);
+    ASSERT_TRUE(stop);
+    EXPECT_EQ(stationary->movementRequest.type, MovementRequest::CONTINUOUS_POSE);
+    EXPECT_EQ(stop->velocity, geometry_msgs::msg::Twist());
 }
 
 TEST_F(SequenceParserTest, CatalogPresetsPrepareStandupAndFinishStationary) {
@@ -558,23 +721,60 @@ TEST_F(SequenceParserTest, PreservesDanceGroupsAndPoseUnits) {
     ASSERT_TRUE(parser_.parseDirectory(RUMBLEX_SEQUENCES_DIRECTORY));
     const auto dance = parser_.getSequence("dance_hot_dogs_for_breakfast");
     ASSERT_TRUE(dance);
-    EXPECT_EQ(dance->get().actionGroups.size(), 18u);
-    auto movement = request<RequestMovementType>(dance->get().name, 1, 0);
+    ASSERT_EQ(dance->get().actionGroups.size(), 66u);
     auto music = request<RequestMusic>(dance->get().name, 1, 1);
-    ASSERT_TRUE(movement);
     ASSERT_TRUE(music);
-    const auto& pose = movement->movementRequest.body_pose;
-    EXPECT_TRUE(pose.has_head_orientation);
-    EXPECT_TRUE(pose.has_torso_pose);
-    EXPECT_FALSE(pose.has_toe_positions);
-    EXPECT_DOUBLE_EQ(pose.head_orientation.yaw, -10.0);
-    EXPECT_DOUBLE_EQ(movement->movementRequest.duration_s.numerical_value_in(s), 1.752);
     EXPECT_EQ(music->song, "musicfox_hot_dogs_for_breakfast.mp3");
-    EXPECT_DOUBLE_EQ(pose.torso_pose.position.x, 0.015);
-    EXPECT_DOUBLE_EQ(pose.torso_pose.orientation.roll, -3.6);
-    auto stop = request<RequestMusic>(dance->get().name, 17, 0);
+    EXPECT_TRUE(music->background);
+    double duration = 0;
+    for (size_t i = 1; i <= 64; ++i) {
+        const auto movement = request<RequestMovementType>(dance->get().name, i, 0);
+        ASSERT_TRUE(movement);
+        ASSERT_TRUE(movement->movementRequest.pose_delta);
+        EXPECT_EQ(movement->movementRequest.interpolation, InterpolationType::SinSquared);
+        EXPECT_DOUBLE_EQ(movement->movementRequest.duration_s.numerical_value_in(s), 0.438);
+        duration += movement->movementRequest.duration_s.numerical_value_in(s);
+    }
+    EXPECT_NEAR(duration, 28.032, 1e-9);
+    const auto standard = parser_.getSequence("dance_standard");
+    ASSERT_TRUE(standard);
+    EXPECT_EQ(standard->get().actionGroups.size(), dance->get().actionGroups.size());
+    auto stop = request<RequestMusic>(dance->get().name, 65, 0);
     ASSERT_TRUE(stop);
     EXPECT_EQ(stop->song, "STOP");
+}
+
+TEST_F(SequenceParserTest, ValidatesMusicFadeDuration) {
+    for (const auto* value : {"-1", ".nan", ".inf", "61", "invalid"}) {
+        EXPECT_FALSE(parser_.parseString(
+            std::string("name: fade\nactions: [{music: {song: STOP, fade_out_s: ") + value + "}}]"));
+    }
+    EXPECT_FALSE(parser_.parseString("name: fade\nactions: [{music: {song: track.mp3, fade_out_s: 4}}]"));
+    ASSERT_TRUE(parser_.parseString("name: fade\nactions: [{music: {song: STOP, fade_out_s: 4}}]"));
+    const auto fade = request<RequestMusic>("fade", 0, 0);
+    ASSERT_TRUE(fade);
+    EXPECT_FLOAT_EQ(fade->fade_out_s, 4.0f);
+}
+
+TEST_F(SequenceParserTest, AllYamlMusicPlaybackRunsInBackground) {
+    ASSERT_TRUE(parser_.parseString(R"(
+sequences:
+  - name: background_music
+    actions:
+      - music: metal.mp3
+      - music: {song: dance.mp3}
+      - music: {song: legacy.mp3, background: false}
+      - music: {song: explicit.mp3, background: true}
+      - music: STOP
+)"));
+    for (size_t index = 0; index < 4; ++index) {
+        auto music = request<RequestMusic>("background_music", index, 0);
+        ASSERT_TRUE(music);
+        EXPECT_TRUE(music->background);
+    }
+    auto stop = request<RequestMusic>("background_music", 4, 0);
+    ASSERT_TRUE(stop);
+    EXPECT_FALSE(stop->background);
 }
 
 TEST_F(SequenceParserTest, ParsesScalarFormsAndDefaultsInLexicographicOrder) {
@@ -582,11 +782,11 @@ TEST_F(SequenceParserTest, ParsesScalarFormsAndDefaultsInLexicographicOrder) {
 sequences:
   - name: scalars
     actions:
-      - RequestTalking: "Hallo: Welt # gesprochen"
-        RequestMusic: STOP
-        RequestListening: true
-        RequestChat: Frage
-      - RequestListening: false
+      - say: "Hallo: Welt # gesprochen"
+        music: STOP
+        listening: true
+        chat: Frage
+      - listening: false
 )"));
     auto chat = request<RequestChat>("scalars", 0, 0);
     auto listening = request<RequestListening>("scalars", 0, 1);
@@ -614,15 +814,20 @@ TEST_F(SequenceParserTest, ParsesAllMappingForms) {
 sequences:
   - name: mappings
     actions:
-      - RequestVelocity: {linear: {x: 0.1}, angular: {z: 0.2}, minDuration: 0.9}
-        RequestTalking: {text: Hello, language: en, minDuration: 0.8}
-        RequestSystem: {turnOffServoRelay: true, systemShutdown: true, minDuration: 0.7}
-        RequestSinglePose: {position: {z: -0.05}, orientation: {pitch: 15}, minDuration: 0.6}
-        RequestMusic: {song: dance.mp3, volume: 0.3, minDuration: 0.5}
-        RequestMovementType: {type: SEQUENCE_WATCH, direction: ANTICLOCKWISE, duration_s: 3, minDuration: 0.4}
-        RequestListening: {active: true, minDuration: 0.3}
-        RequestHeadOrientation: {yaw: -12, minDuration: 0.2}
-        RequestChat: {text: Question, language: en, minDuration: 0.1}
+      - velocity: {linear: {x: 0.1}, angular: {z: 0.2}, minDuration: 0.9}
+        say: {text: Hello, language: en, minDuration: 0.8}
+        system: {turnOffServoRelay: true, systemShutdown: true, minDuration: 0.7}
+        music: {song: dance.mp3, volume: 0.3, minDuration: 0.5}
+        movement:
+          name: SEQUENCE_WATCH
+          direction: ANTICLOCKWISE
+          duration_s: 3
+          minDuration: 0.4
+          body_pose:
+            torso_pose: {position: {z: -0.05}, orientation: {pitch: 15}}
+            head_orientation: {yaw: -12}
+        listening: {active: true, minDuration: 0.3}
+        chat: {text: Question, language: en, minDuration: 0.1}
 )"));
     auto chat = request<RequestChat>("mappings", 0, 0);
     auto listening = request<RequestListening>("mappings", 0, 1);
@@ -667,11 +872,11 @@ TEST_F(SequenceParserTest, MappingDefaultsRemainUnchanged) {
 sequences:
   - name: defaults
     actions:
-      - RequestChat: {}
-        RequestListening: {}
-        RequestMusic: {}
-        RequestSystem: {}
-        RequestTalking: {}
+      - chat: {}
+        listening: {}
+        music: {}
+        system: {}
+        say: {}
 )"));
     auto chat = request<RequestChat>("defaults", 0, 0);
     auto listening = request<RequestListening>("defaults", 0, 1);
@@ -706,7 +911,7 @@ TEST_F(SequenceParserTest, InvalidExplicitNumberIsNotReplacedWithDefault) {
 sequences:
   - name: invalid
     actions:
-      - RequestMusic: {song: dance.mp3, volume: loud}
+      - music: {song: dance.mp3, volume: loud}
 )"));
 }
 
@@ -717,7 +922,7 @@ TEST_F(SequenceParserTest, InvalidActionsRetainPreviousCatalog) {
           "sequences: [{name: valid, actions: [{say: hi}]}, {name: invalid, actions: []}]",
           "name: invalid\nactions: [{movement: {name: SINGLE_POSE, duration_s: invalid}, say: hello}]"}) {
         EXPECT_FALSE(parser_.parseString(text));
-        EXPECT_EQ(parser_.getSequences().size(), 25u);
+        EXPECT_EQ(parser_.getSequences().size(), 30u);
     }
 }
 TEST_F(SequenceParserTest, BodyPoseUsesOneRequestAndPreservesComponentPresence) {
@@ -759,16 +964,38 @@ actions:
     EXPECT_TRUE(toes->movementRequest.body_pose.has_toe_positions);
     EXPECT_DOUBLE_EQ(toes->movementRequest.body_pose.toe_positions[5].x, -0.2);
 }
+TEST_F(SequenceParserTest, AbsolutePoseAllowsShortDurationsAndKeepsOneSecondDefault) {
+    ASSERT_TRUE(parser_.parseString(R"(
+name: short_poses
+actions:
+  - body_pose: {duration_s: 0.1, head_orientation: {yaw: 2}}
+  - body_pose: {duration_s: 0.5, head_orientation: {yaw: 0}}
+  - body_pose: {head_orientation: {}}
+  - movement: {name: SINGLE_POSE, duration_s: 0.1, save_pose: true,
+               joint_targets: {right_front: {torso_coxa: 0, coxa_femur: 50, femur_tibia: 90}}}
+  - movement: {name: SINGLE_POSE, duration_s: 0.1, restore_pose: true}
+)"));
+    const std::array durations = {0.1, 0.5, 1.0, 0.1, 0.1};
+    for (size_t i = 0; i < durations.size(); ++i) {
+        const auto movement = request<RequestMovementType>("short_poses", i, 0);
+        ASSERT_TRUE(movement);
+        EXPECT_EQ(movement->movementRequest.duration_s, durations[i] * s);
+    }
+}
+
 TEST_F(SequenceParserTest, RejectsMalformedPoseAndConflictingActions) {
     for (const auto* action :
          {"body_pose: {}", "body_pose: {head_orientation: null}", "body_pose: {head_orientation: {yaaw: 12}}",
           "body_pose: {head_orientation: {yaw: .nan}}", "body_pose: {torso_pose: {position: {x: .inf}}}",
-          "body_pose: {head_orientation: {}, duration_s: 0.5}",
+          "body_pose: {head_orientation: {}, duration_s: 0.099}",
+          "body_pose: {head_orientation: {}, duration_s: 0}",
+          "body_pose: {head_orientation: {}, duration_s: -1}",
+          "body_pose: {head_orientation: {}, duration_s: .nan}",
           "body_pose: {head_orientation: {}, duration_s: .inf}", "body_pose: {toe_positions: []}",
           "body_pose: {head_orientation: {}, head_orientation: {yaw: 3}}",
           "body_pose: {head_orientation: {}}, movement: {name: SINGLE_POSE}",
-          "body_pose: {head_orientation: {}}, RequestHeadOrientation: {yaw: 4}",
-          "say: one, RequestTalking: two", "movement: {name: UNKNOWN}", "movement: {name: SINGLE_POSE}"}) {
+          "body_pose: {head_orientation: {}}, RequestHeadOrientation: {yaw: 4}", "say: one, say: two",
+          "movement: {name: UNKNOWN}", "movement: {name: SINGLE_POSE}"}) {
         EXPECT_FALSE(parser_.parseString(std::string("name: invalid\nactions: [{") + action + "}]"))
             << action;
     }
@@ -836,28 +1063,17 @@ TEST_F(SequenceParserTest, RejectsInvalidLoopsAndExcessiveExpansionAtomically) {
     EXPECT_FALSE(parser_.parseString("name: invalid\nactions: [" + nested + "]"));
     ASSERT_TRUE(parser_.getSequence("kept"));
 }
-TEST_F(SequenceParserTest, LegacyWrapperAndRequestsProduceTheSameMovement) {
-    ASSERT_TRUE(parser_.parseString(R"(
-behaviors:
-  - name: legacy
-    actions:
-      - RequestMovementType: {name: SINGLE_POSE, duration_s: 1.5}
-        RequestSinglePose: {orientation: {roll: 8}}
-        RequestHeadOrientation: {yaw: -12}
-)"));
-    const auto old = request<RequestMovementType>("legacy", 0, 0)->movementRequest;
-    ASSERT_TRUE(parser_.parseString(R"(
-name: modern
-actions:
-  - body_pose:
-      duration_s: 1.5
-      torso_pose: {orientation: {roll: 8}}
-      head_orientation: {yaw: -12}
-)"));
-    const auto modern = request<RequestMovementType>("modern", 0, 0)->movementRequest;
-    EXPECT_EQ(old.body_pose, modern.body_pose);
-    EXPECT_EQ(old.type, modern.type);
-    EXPECT_EQ(old.duration_s, modern.duration_s);
+TEST_F(SequenceParserTest, RemovedLegacySyntaxIsRejectedTransactionally) {
+    ASSERT_TRUE(parser_.parseString("name: kept\nactions: [{say: hello}]"));
+    for (const auto* input : {"behaviors: [{name: old, actions: [{say: hello}]}]",
+                              "name: old\nactions: [{RequestTalking: hello}]",
+                              "name: old\nactions: [{RequestMovementType: {name: SINGLE_POSE}}]",
+                              "name: old\nactions: [{movement: {type: SEQUENCE_WATCH}}]",
+                              "name: old\nactions: [{RequestSinglePose: {orientation: {roll: 8}}}]",
+                              "name: old\nactions: [{RequestHeadOrientation: {yaw: -12}}]"}) {
+        EXPECT_FALSE(parser_.parseString(input));
+        ASSERT_TRUE(parser_.getSequence("kept"));
+    }
 }
 TEST_F(SequenceFilesTest, CatalogExpansionBudgetIsSharedAcrossFiles) {
     const std::string actions = R"(
