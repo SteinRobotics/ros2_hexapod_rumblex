@@ -5,7 +5,8 @@ from unittest.mock import Mock
 import pytest
 import rclpy
 from std_msgs.msg import Bool, String
-from sensor_msgs.msg import Imu, Range
+from geometry_msgs.msg import Vector3
+from sensor_msgs.msg import Range
 from rumblex_interfaces.msg import JoystickRequest, ServoStatus
 
 from rumblex_hmi.node_hmi import NodeHmi
@@ -29,9 +30,7 @@ def node(monkeypatch):
 def test_callbacks_and_page_cycle(node):
     node.callback_movement_type(String(data='WALK'))
     node.callback_lidar(Range(range=1.25))
-    imu = Imu()
-    imu.linear_acceleration.z = 9.81
-    node.callback_imu(imu)
+    node.callback_gravity(Vector3(z=9.81))
     node.callback_servo_status(ServoStatus(
         servo_max_temperature='LEFT_FRONT', min_voltage=10.7, max_temperature=42.5))
     assert node.text_movement_request == 'walk'
@@ -44,6 +43,22 @@ def test_callbacks_and_page_cycle(node):
         node.callback_joystick_request(JoystickRequest(button_select=True))
         assert node.active_page_name == page
         assert node.backend.present.call_args.args[0].size == (128, 64)
+
+
+@pytest.mark.parametrize('xyz', [
+    (0.0, 0.0, 9.81),
+    (0.0, 0.0, -9.81),
+    (9.81, 0.0, 0.0),
+    (0.0, 5.886, 7.848),
+])
+def test_gravity_display_is_independent_of_tilt(node, xyz):
+    node.callback_gravity(Vector3(x=xyz[0], y=xyz[1], z=xyz[2]))
+    assert node.get_page_data('sensors')[2] == 'g: 9.81m/s^2'
+
+
+def test_gravity_subscription_uses_driver_gravity_topic(node):
+    node.create_subscription.assert_any_call(
+        Vector3, 'bno055/grav', node.callback_gravity, 10)
 
 
 def test_refresh_publishes_voltage_and_missing_reading_is_ignored(node):

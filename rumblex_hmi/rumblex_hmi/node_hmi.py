@@ -4,12 +4,14 @@
 __copyright__ = "Copyright (C) 2025 Christian Stein"
 __license__ = "MIT"
 
+import math
 import socket
 
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Bool, Float32, String
-from sensor_msgs.msg import Imu, Range
+from geometry_msgs.msg import Vector3
+from sensor_msgs.msg import Range
 from rumblex_interfaces.msg import ServoStatus
 from rumblex_interfaces.msg import JoystickRequest
 
@@ -68,7 +70,7 @@ class NodeHmi(Node):
         self.create_subscription(String, 'movement_name', self.callback_movement_type, 10)
         self.create_subscription(ServoStatus, 'servo_status', self.callback_servo_status, 10)
         self.create_subscription(JoystickRequest, 'joystick_request', self.callback_joystick_request, 10)
-        self.create_subscription(Imu, 'bno055/imu', self.callback_imu, 10)
+        self.create_subscription(Vector3, 'bno055/grav', self.callback_gravity, 10)
         self.pub_supply_voltage = self.create_publisher(Float32, 'supply_voltage', 10)
 
         self.update_active_page()
@@ -131,9 +133,10 @@ class NodeHmi(Node):
             ip_address = self.get_ip_address()
             self.text_ip_address = "IP: " + ip_address
 
-    def callback_imu(self, msg):
-        gz = msg.linear_acceleration.z
-        self.text_bno055 = f"g: {gz:.2f}m/s^2"
+    def callback_gravity(self, msg):
+        # The driver's imu topic removes gravity; grav supplies its sensor-frame vector.
+        gravity = math.hypot(msg.x, msg.y, msg.z)
+        self.text_bno055 = f"g: {gravity:.2f}m/s^2"
 
     def update_power(self):
         voltage, current = self.backend.read_power()

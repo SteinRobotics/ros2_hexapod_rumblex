@@ -20,7 +20,12 @@ Cycle SYSTEM → SERVOS → SENSORS with `joystick_request.button_select`, eithe
 from the physical controller or `ros2 launch rumblex_teleop teleop_simulated_launch.py`
 (Backspace is Select). Telemetry topics and the one-second refresh interval are
 identical to the hardware node, including `movement_name`, `servo_status`,
-`scan_1d`, and `bno055/imu`.
+`scan_1d`, and `bno055/grav`.
+
+SENSORS shows the magnitude of the BNO055 gravity vector (`geometry_msgs/Vector3`
+on `bno055/grav`) as `g`, approximately 9.81 m/s² regardless of robot tilt.
+The driver's `bno055/imu` acceleration has gravity removed and is near zero
+at rest, so it is not used for this reading.
 
 SYSTEM also shows a compact host CPU reading, for example `CPU: 23%`, updated
 every second. It measures busy time across all cores from Linux `/proc/stat`;
